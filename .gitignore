@@ -1,0 +1,16 @@
+# Dados — reconstruídos pelo notebook 00 a partir das fontes públicas
+dados/raw/
+dados/processados/
+dados/curados/
+*.dbc
+*.dbf
+*.parquet
+
+# Ambiente
+.venv/
+__pycache__/
+.ipynb_checkpoints/
+
+# Sistema
+.DS_Store
+Thumbs.db
