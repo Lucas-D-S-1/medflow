@@ -94,7 +94,7 @@ apareceria como crítico**, e o produto inteiro perderia o sentido.
 **Onde a correção está aplicada (28/07/2026):** em todo o pipeline. O
 `01_engenharia_dados.ipynb` produz `patient_days` na `base_hospital_mes` e valida o
 IPH médio em 0,4403 antes de gravar. O notebook que usava a fórmula antiga foi
-arquivado em `notebooks/_legado/`.
+removido deste repositório — ver a nota de escopo no README.
 
 ---
 
@@ -109,8 +109,8 @@ Formato obrigatório de apresentação de qualquer indicador no painel:
 3. **Padrão histórico** — versus a média 2022–2023 do próprio hospital.
 4. **O que significa** — a leitura de gestão, não o número.
 
-Referência visual implementada: `figuras/oficiais/P5_storytelling_exemplo.png`
-(caso CNES 2097648).
+O caso de referência é o CNES 2097648, cujo IPH médio fica acima da capacidade
+teórica ao longo da série. A implementação visual entra com o notebook 02.
 
 ---
 
@@ -136,22 +136,6 @@ do bolo". Orientação explícita do mentor: **focar no bolo**, não na cereja.
 
 ---
 
-## 8. Decisões sobre as figuras (28/07/2026)
-
-Das 17 figuras herdadas do challenge_oracle, **9 são oficiais** e **8 foram
-descartadas**. Critério e lista completa em `sprint_2_em_andamento/figuras/` e
-em `PENDENCIAS.md`.
-
-**Regra que orientou o corte:** figura gerada antes da correção do IPH está
-errada e não vai para a apresentação, mesmo que visualmente bonita. Figura que
-não depende de IPH (TMH, CMI, IS, permanência) permanece válida.
-
----
-
----
-
----
-
 ## 11. Estrutura do pipeline (28/07/2026)
 
 Três notebooks, executados em ordem, cada um validando o próprio resultado:
@@ -160,7 +144,7 @@ Três notebooks, executados em ordem, cada um validando o próprio resultado:
 |---|---|---|
 | `00_extracao_dados` | FTP DATASUS + API IBGE | parquets brutos, cache `.dbc`/`.dbf`, tabela de municípios |
 | `01_engenharia_dados` | parquets brutos | 5 dimensões, 1 fato, 3 bases analíticas |
-| `02_analise_dados` | bases curadas | os 5 índices, figuras e achados |
+| `02_analise_dados` | bases curadas | os 5 índices, figuras e achados — **ainda não implementado** |
 
 **Os dados pesados não vão para o GitHub.** São ~4 GB reconstruídos das fontes
 públicas pelo notebook 00. O repositório carrega o código e a documentação; qualquer

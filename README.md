@@ -28,13 +28,10 @@ O IPH mede **ocupação**, não fluxo. O numerador é **paciente-dia** (`SUM(QT_
 não contagem de AIH. Uma internação de 30 dias e uma de 1 dia ocupam o leito de forma
 radicalmente diferente — contá-las igual subestima a pressão sobre a rede.
 
-| | `COUNT(AIH)` | Paciente-dia |
-|---|---|---|
-| IPH médio SP | ~0,14 | **0,4403** |
-| Top municípios | 0,20–0,29 | acima de 0,85 |
-
-Com a fórmula errada, **nenhum hospital jamais apareceria como crítico** e o produto
-perderia o sentido.
+Medido sobre SP 2022–2023, o IPH médio por hospital-mês é **0,4403** — valor que o
+notebook 01 verifica a cada execução. A fórmula por contagem de AIH achataria a
+distribuição para perto de 0,14, e **nenhum hospital jamais apareceria como crítico**:
+o produto perderia o sentido.
 
 ---
 
@@ -50,10 +47,26 @@ FTP DATASUS + API IBGE
   01_engenharia_dados.ipynb ─► dados/curados/  (5 dimensões + 1 fato + 3 bases)
         │
         ▼
-  02_analise_dados.ipynb ────► os 5 índices, figuras e achados
+  02_analise_dados.ipynb ────► os 5 índices, figuras e achados   (não implementado)
 ```
 
 Os notebooks rodam **em ordem** e cada um valida o próprio resultado antes de gravar.
+
+> ### Escopo desta v0
+>
+> Este repositório contém **apenas código e documentação**. Nenhum dado, nenhuma
+> figura, nenhum resultado pré-calculado: tudo o que aparece aqui é produzido pelos
+> notebooks presentes, a partir das fontes públicas.
+>
+> As duas primeiras etapas — extração e engenharia de dados — estão completas,
+> executadas e validadas.
+>
+> O cálculo dos 5 índices, as figuras e a integração com o Oracle vêm no
+> `02_analise_dados.ipynb`. Enquanto não existirem, não há figura nem resultado
+> publicado aqui: as bases entregam os **ingredientes** de cada índice, e a conta
+> final é a próxima entrega.
+>
+> As fórmulas documentadas abaixo são o contrato que o notebook 02 vai implementar.
 
 ### As bases curadas
 
@@ -69,7 +82,9 @@ divisão final acontece na análise, onde é fácil auditar.
 | `fato_internacao` | 5.210.357 | tabela-verdade, uma linha por AIH |
 
 Dimensões: `dim_hospital`, `dim_municipio`, `dim_especialidade`, `dim_cid`, `dim_tempo`.
-O dicionário completo de colunas é gerado em `dados/curados/DICIONARIO.md`.
+O dicionário completo — colunas, tipos e contagem de nulos de cada base — é gerado
+pelo notebook 01 em `dados/curados/DICIONARIO.md`, e uma cópia da última execução está
+em [`docs/DICIONARIO_BASES.md`](docs/DICIONARIO_BASES.md).
 
 ---
 
@@ -83,7 +98,7 @@ uv venv .venv
 uv pip install --python .venv/bin/python \
     pandas pyarrow matplotlib seaborn jupyter datasus-dbc dbfread
 
-.venv/bin/jupyter lab      # execute 00 → 01 → 02
+.venv/bin/jupyter lab      # execute 00 e depois 01
 ```
 
 A primeira execução do notebook 00 baixa ~400 MB de `.dbc` do FTP do DATASUS e expande
@@ -138,22 +153,14 @@ medflow/
 ├── notebooks/
 │   ├── 00_extracao_dados.ipynb        DATASUS + IBGE  →  brutos
 │   ├── 01_engenharia_dados.ipynb      brutos          →  bases curadas
-│   ├── *_executed.ipynb               as mesmas, com as saídas da execução
-│   └── _legado/                       material histórico, não executar
-├── dados/
-│   └── referencias/municipios_ibge.csv   único dado versionado (30 KB)
-├── docs/
-│   ├── DECISOES_TECNICAS.md           decisões vinculantes do pipeline
-│   └── DICIONARIO_BASES.md            colunas, tipos e nulos de cada base
-└── figuras/oficiais/                  9 figuras aprovadas
+│   └── *_executed.ipynb               as mesmas, com as saídas da execução
+└── docs/
+    ├── DECISOES_TECNICAS.md           decisões vinculantes do pipeline
+    └── DICIONARIO_BASES.md            colunas, tipos e nulos de cada base
 ```
 
 Os notebooks `*_executed.ipynb` carregam as saídas reais da última execução — dá para
-conferir os números sem rodar nada.
-
-> **Status:** v0. Os notebooks 00 e 01 estão completos e validados. O
-> `02_analise_dados.ipynb`, que calcula os 5 índices e desenha as figuras, é o
-> próximo passo.
+conferir cada número sem rodar nada.
 
 ## Fontes
 
