@@ -2,174 +2,128 @@
 
 **Enterprise Challenge FIAP × Oracle · Sprint 2 · Equipe Ômega Urban Tech · Turma 1TSCOA**
 
-O MedFlow não cria dados novos. Ele torna visível o que já existe no DATASUS, em
-linguagem de gestão, para quem precisa decidir onde alocar leitos e recursos.
+O MedFlow organiza dados públicos hospitalares para apoiar análises de acesso,
+capacidade e desempenho da rede SUS. A v0 cobre o Estado de São Paulo nas
+competências de 2022 e 2023.
 
-Recorte: **Estado de São Paulo, 2022–2023** — 5.210.357 internações SUS,
-669 hospitais, 331 municípios. 100% de dados públicos e abertos.
+## Visão geral da v0
 
----
+```mermaid
+flowchart TD
+    A["Fontes públicas<br/>SIH/RD e CNES/LT — DATASUS<br/>Municípios — IBGE<br/>Regiões e estabelecimentos — MS<br/>CID-10 — DATASUS/MS<br/>Natureza jurídica — CONCLA/IBGE"]
 
-## Os 5 índices
+    B["00_extracao_dados.ipynb<br/><b>Bronze</b><br/>Download e preservação das fontes<br/>Parquets sem tratamento de negócio<br/>Linhagem, hashes e manifesto"]
 
-| Sigla | Nome | Fórmula | Grão |
-|---|---|---|---|
-| **IPH** | Índice de Pressão Hospitalar | `SUM(QT_DIARIAS) ÷ (leitos_SUS × dias_do_mês)` | Hospital → Município → Região |
-| **IPR** | Índice de Permanência Relativa | permanência média do hospital ÷ média regional, mesmo CID | Hospital × CID-10 |
-| **IS** | Índice de Sazonalidade | internações do mês ÷ média histórica do mesmo mês | Hospital ou Município × Mês |
-| **TMH** | Taxa de Mortalidade Hospitalar | `SUM(MORTE) ÷ COUNT(AIH) × 100` | Hospital × Especialidade |
-| **CMI** | Custo Médio por Internação | `SUM(VAL_TOT) ÷ internações com valor` | Hospital × Especialidade × Mês |
+    C["01_engenharia_dados.ipynb<br/><b>Silver</b><br/>Tipos e de/paras<br/>Dimensões e fatos<br/>Agregados e controles de qualidade"]
 
-Faixas do IPH: **Normal** `< 0,70` · **Atenção** `0,70–0,85` · **Crítico** `> 0,85`.
+    D["02_analise_dados.ipynb<br/><b>Gold — próxima etapa</b><br/>Fórmulas finais dos índices<br/>Benchmarks, tabelas analíticas<br/>Achados e visualizações"]
 
-### A decisão técnica que sustenta o projeto
+    E["Consumo — etapas futuras<br/>Oracle Autonomous DB<br/>Dashboard e Select AI"]
 
-O IPH mede **ocupação**, não fluxo. O numerador é **paciente-dia** (`SUM(QT_DIARIAS)`),
-não contagem de AIH. Uma internação de 30 dias e uma de 1 dia ocupam o leito de forma
-radicalmente diferente — contá-las igual subestima a pressão sobre a rede.
-
-Medido sobre SP 2022–2023, o IPH médio por hospital-mês é **0,4403** — valor que o
-notebook 01 verifica a cada execução. A fórmula por contagem de AIH achataria a
-distribuição para perto de 0,14, e **nenhum hospital jamais apareceria como crítico**:
-o produto perderia o sentido.
-
----
-
-## Pipeline
-
-```
-FTP DATASUS + API IBGE
-        │
-        ▼
-  00_extracao_dados.ipynb ──► dados/raw/*.dbc,*.dbf
-        │                     dados/processados/*_raw.parquet
-        ▼                     dados/referencias/municipios_ibge.csv
-  01_engenharia_dados.ipynb ─► dados/curados/  (5 dimensões + 1 fato + 3 bases)
-        │
-        ▼
-  02_analise_dados.ipynb ────► os 5 índices, figuras e achados   (não implementado)
+    A --> B --> C --> D --> E
 ```
 
-Os notebooks rodam **em ordem** e cada um valida o próprio resultado antes de gravar.
+| Camada | O que contém | Estado |
+|---|---|---|
+| **Bronze** | Fontes preservadas, Parquets fiéis, metadados de origem, hashes e manifesto. Não aplica filtro, imputação ou de/para. | concluída e validada |
+| **Silver** | Tipagem, domínios, dimensões, fatos, agregados e reconciliações. Todo tratamento de dados fica aqui. | concluída e validada |
+| **Gold** | Fórmulas finais, comparações, indicadores e visualizações. | ainda não implementada |
+| **Consumo** | Carga no Oracle, dashboard e consultas via Select AI. | etapa futura |
 
-> ### Escopo desta v0
->
-> Este repositório contém **apenas código e documentação**. Nenhum dado, nenhuma
-> figura, nenhum resultado pré-calculado: tudo o que aparece aqui é produzido pelos
-> notebooks presentes, a partir das fontes públicas.
->
-> As duas primeiras etapas — extração e engenharia de dados — estão completas,
-> executadas e validadas.
->
-> O cálculo dos 5 índices, as figuras e a integração com o Oracle vêm no
-> `02_analise_dados.ipynb`. Enquanto não existirem, não há figura nem resultado
-> publicado aqui: as bases entregam os **ingredientes** de cada índice, e a conta
-> final é a próxima entrega.
->
-> As fórmulas documentadas abaixo são o contrato que o notebook 02 vai implementar.
+Os notebooks devem ser executados em ordem. As versões `*_executed.ipynb`
+registram a última execução integral e permitem conferir as validações sem
+reprocessar os dados.
 
-### As bases curadas
+## O que foi validado
 
-Cada base existe porque um índice precisa dela num grão específico. Elas guardam os
-**ingredientes** (paciente-dia, leitos, óbitos, custo), não os índices prontos — a
-divisão final acontece na análise, onde é fácil auditar.
+| Controle | Resultado |
+|---|---:|
+| Registros SIH/RD | 5.210.357 |
+| Registros CNES/LT | 200.075 |
+| AIHs distintas | 5.102.190 |
+| Internações novas (`IDENT=1`) | 5.097.456 |
+| Continuações de longa permanência (`IDENT=5`) | 112.901 |
+| Hospitais | 669 |
+| Municípios de São Paulo na referência | 645 |
+| Códigos CID observados com descrição | 9.212 / 9.212 |
+| Especialidades observadas com de/para | 16 / 16 |
+| Hospitais sem região analítica | 0 |
+| Hospitais sem nome, esfera atual ou natureza jurídica | 0 |
 
-| Base | Linhas | Alimenta |
+Nome e esfera administrativa vêm da fotografia atual do CNES. Eles são
+identificados como atributos atuais e não são apresentados como cadastro
+historicamente vigente em 2022–2023.
+
+## Principais saídas Silver
+
+| Base | Linhas | Papel |
 |---|---:|---|
-| `base_hospital_mes` | 14.821 | IPH, IS |
-| `base_hospital_espec_mes` | 43.407 | TMH, CMI |
-| `base_hospital_cid` | 361.273 | IPR |
-| `fato_internacao` | 5.210.357 | tabela-verdade, uma linha por AIH |
+| `fato_internacao` | 5.210.357 | AIHs aprovadas com identificadores, domínios e flags |
+| `fato_leitos_mensal` | 15.533 | capacidade de leitos por hospital e competência |
+| `base_hospital_mes` | 14.821 | insumos mensais por hospital |
+| `base_hospital_espec_mes` | 43.407 | insumos por hospital, especialidade e mês |
+| `base_hospital_cid` | 377.708 | insumos por hospital e CID |
 
-Dimensões: `dim_hospital`, `dim_municipio`, `dim_especialidade`, `dim_cid`, `dim_tempo`.
-O dicionário completo — colunas, tipos e contagem de nulos de cada base — é gerado
-pelo notebook 01 em `dados/curados/DICIONARIO.md`, e uma cópia da última execução está
-em [`docs/DICIONARIO_BASES.md`](docs/DICIONARIO_BASES.md).
+Também são geradas seis dimensões: tempo, hospital, município, especialidade,
+CID e domínios.
 
----
+## Escopo metodológico
+
+A Silver prepara e valida os insumos, mas não declara os cinco índices como
+metodologicamente aprovados. A sustentação das fórmulas de IPH, IPR, IS, TMH e
+CMI será documentada antes da implementação da camada Gold.
+
+Em particular, `QT_DIARIAS` representa diárias faturadas. O cálculo baseado
+nesse campo permanece identificado como proxy experimental e não como ocupação
+física real.
 
 ## Como reproduzir
 
-Os dados **não estão no repositório** — são 4 GB de arquivos brutos. Tudo é
-reconstruído a partir das fontes públicas.
+Os dados não são versionados. O notebook Bronze reconstrói tudo a partir das
+fontes públicas.
 
 ```bash
 uv venv .venv
 uv pip install --python .venv/bin/python \
-    pandas pyarrow matplotlib seaborn jupyter datasus-dbc dbfread
+    pandas numpy pyarrow jupyter datasus-dbc dbfread
 
-.venv/bin/jupyter lab      # execute 00 e depois 01
+.venv/bin/jupyter lab
 ```
 
-A primeira execução do notebook 00 baixa ~400 MB de `.dbc` do FTP do DATASUS e expande
-para ~3,9 GB de `.dbf`. As seguintes usam o cache em `dados/raw/`. A etapa mais longa é
-a leitura dos 24 arquivos do SIH — cerca de 9 minutos.
+Execute:
 
-### Critérios de aceite
+1. `notebooks/00_extracao_dados.ipynb`;
+2. `notebooks/01_engenharia_dados.ipynb`.
 
-A execução é considerada fiel se reproduzir:
-
-| Verificação | Valor |
-|---|---|
-| Linhas SIH/RD | 5.210.357 |
-| Linhas CNES/LT | 200.075 |
-| Linhas em `base_hospital_mes` | 14.821 |
-| Hospitais · municípios | 669 · 331 |
-| IPH médio (hospital-mês) | 0,4403 |
-| Hospital-meses Crítico · Atenção | 7,8% · 10,5% |
-
-Os notebooks 00 e 01 checam isso sozinhos e **abortam a gravação** se algo divergir.
-
----
-
-## Decisões de engenharia
-
-**Flag em vez de descarte.** As ~401 mil AIH com `QT_DIARIAS = 0` ficam nas bases,
-marcadas. Entram no IPH (ocupação zero é ocupação real) e saem só do IPR, onde
-distorceriam a permanência média. O filtro fica visível na análise, não escondido no ETL.
-
-**`REGSAUDE` normalizado sem inventar código.** O campo bruto mistura números de 1 a 4
-dígitos, 11 rótulos de texto livre (`DRS1`, `GSP`, `XVI`…) e 23% de vazios. Os numéricos
-são padronizados em 4 dígitos, fundindo `105` com `0105`. Os textuais viram **nulo** —
-preencher `GSP` com zeros fabricaria uma região inexistente. Falta de região é herdada
-do município, e `origem_regiao` registra a procedência: 579 declarada, 74 inferida,
-16 sem região.
-
-**`ESPEC` pela tabela oficial do SIH/SUS.** O material da Sprint 1 usou rótulos de
-apresentação (`04 = UTI`). A tabela oficial lê `04` como *Crônicos* e `09` como
-*Hospital-dia*. Consequência: **`ESPEC` não é fonte para recortes de UTI** — para isso
-existem `MARCA_UTI` e `UTI_MES_TO`, consolidados na flag `fl_uti`.
-
-**Código de município nas duas formas.** O SIH usa 6 dígitos, o IBGE usa 7. O dígito
-verificador não é derivável — vem da tabela de referência. Sem isso, cruzamentos com
-população, PIB ou malha geográfica quebram em silêncio.
-
----
+Por segurança, os notebooks não substituem saídas existentes sem
+`SOBRESCREVER=True`.
 
 ## Estrutura
 
-```
+```text
 medflow/
 ├── notebooks/
-│   ├── 00_extracao_dados.ipynb        DATASUS + IBGE  →  brutos
-│   ├── 01_engenharia_dados.ipynb      brutos          →  bases curadas
-│   └── *_executed.ipynb               as mesmas, com as saídas da execução
+│   ├── 00_extracao_dados.ipynb
+│   ├── 00_extracao_dados_executed.ipynb
+│   ├── 01_engenharia_dados.ipynb
+│   └── 01_engenharia_dados_executed.ipynb
 └── docs/
-    ├── DECISOES_TECNICAS.md           decisões vinculantes do pipeline
-    └── DICIONARIO_BASES.md            colunas, tipos e nulos de cada base
+    ├── PIPELINE.md
+    ├── DECISOES_TECNICAS.md
+    ├── PENDENCIAS.md
+    ├── DICIONARIO_BASES.md
+    ├── DOMINIOS.md
+    └── RELATORIO_QUALIDADE.md
 ```
-
-Os notebooks `*_executed.ipynb` carregam as saídas reais da última execução — dá para
-conferir cada número sem rodar nada.
 
 ## Fontes
 
-- **SIH/SUS — AIH reduzida (RD):** `ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados`
-- **CNES — Leitos (LT):** `ftp.datasus.gov.br/dissemin/publicos/CNES/200508_/Dados/LT`
-- **IBGE — Localidades:** `servicodados.ibge.gov.br/api/v1/localidades/estados/35/municipios`
-
-O DATASUS publica com 2 a 3 meses de defasagem. Isso é tratado como **decisão de
-design** — o MedFlow é um produto de análise retrospectiva — e não como limitação.
+- [SIH/SUS — AIH reduzida (RD)](ftp://ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados)
+- [CNES — Leitos (LT)](ftp://ftp.datasus.gov.br/dissemin/publicos/CNES/200508_/Dados/LT)
+- [IBGE — API de localidades](https://servicodados.ibge.gov.br/api/v1/localidades/estados/35/municipios)
+- [Ministério da Saúde — API de Dados Abertos](https://apidadosabertos.saude.gov.br/)
+- [DATASUS — tabelas CID-10](https://www2.datasus.gov.br/cid10/V2008/download.htm)
+- [CONCLA/IBGE — Natureza Jurídica 2021](https://concla.ibge.gov.br/documentacao/3051-concla/estrutura/natureza-juridica-2021.html)
 
 ## Equipe
 
