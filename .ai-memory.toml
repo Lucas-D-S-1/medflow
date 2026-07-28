@@ -18,4 +18,12 @@ ignore_paths = [
   "**/*x29*",
   "*do_aaa*",
   "**/*do_aaa*",
+
+  # Artefatos da Fase 4 com credencial Redis embutida.
+  # O .gitignore protege o repositorio; estas linhas protegem a memoria.
+  # Ver 01_pbl_cidade_alfa/entregues/fase_4/SEGURANCA.md
+  "*gera_mapa_html*",
+  "**/*gera_mapa_html*",
+  "Omega_Urban_Tech_PBL_Fase_4.zip",
+  "**/Omega_Urban_Tech_PBL_Fase_4.zip",
 ]
