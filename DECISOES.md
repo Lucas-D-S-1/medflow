@@ -88,10 +88,10 @@ subestima grosseiramente a pressão sobre a rede.
 A fórmula errada achatava tudo abaixo de 0,3 — **nenhum hospital jamais
 apareceria como crítico**, e o produto inteiro perderia o sentido.
 
-**Onde a correção está aplicada:** nos parquets
-`dados/processados/iph_por_*_mensal.parquet` (contêm a coluna `patient_days`)
-e no notebook `medflow_patches_v2.ipynb`.
-**Onde ela ainda NÃO está:** ver `PENDENCIAS.md`.
+**Onde a correção está aplicada (28/07/2026):** em todo o pipeline. O
+`01_engenharia_dados.ipynb` produz `patient_days` na `base_hospital_mes` e valida o
+IPH médio em 0,4403 antes de gravar. O notebook que usava a fórmula antiga foi
+arquivado em `notebooks/_legado/`.
 
 ---
 
@@ -170,6 +170,75 @@ errada e não vai para a apresentação, mesmo que visualmente bonita. Figura qu
 não depende de IPH (TMH, CMI, IS, permanência) permanece válida.
 
 ---
+
+---
+
+## 11. Estrutura do pipeline (28/07/2026)
+
+Três notebooks, executados em ordem, cada um validando o próprio resultado:
+
+| Notebook | Entrada | Saída |
+|---|---|---|
+| `00_extracao_dados` | FTP DATASUS + API IBGE | parquets brutos, cache `.dbc`/`.dbf`, tabela de municípios |
+| `01_engenharia_dados` | parquets brutos | 5 dimensões, 1 fato, 3 bases analíticas |
+| `02_analise_dados` | bases curadas | os 5 índices, figuras e achados |
+
+**Os dados pesados não vão para o GitHub.** São ~4 GB reconstruídos das fontes
+públicas pelo notebook 00. O repositório carrega o código e a documentação; qualquer
+máquina limpa refaz a base.
+
+**Extração pelo FTP direto, não pelo `pysus`.** A arquitetura da Sprint 1 declara
+`pysus 2.2`. Na versão 2.7 o catálogo interno devolve apenas 3 dos 24 arquivos RD de
+SP no período — não reproduz a base. O notebook 00 fala com
+`ftp.datasus.gov.br` pela `ftplib` da biblioteca padrão, que é o que o próprio `pysus`
+espelha.
+
+**Escrita nunca destrutiva.** Toda gravação verifica se o destino já existe e aborta,
+a menos que `SOBRESCREVER = True`. Downloads e parquets são escritos com sufixo
+`.parcial` e renomeados só ao final, para que uma interrupção nunca deixe arquivo
+válido pela metade.
+
+## 12. Tratamento de qualidade — flag em vez de descarte
+
+Registros problemáticos permanecem nas bases, marcados por flag. Quem consome decide
+o filtro, e o filtro fica visível na análise em vez de escondido no ETL.
+
+| Flag | Volume | Quem filtra |
+|---|---:|---|
+| `fl_sem_diaria` (`QT_DIARIAS = 0`) | 400.958 | só o IPR — entra normalmente no IPH |
+| `fl_sem_valor` (`VAL_TOT = 0`) | 7.827 | o CMI |
+| `fl_obito_sem_val` | 20 | o CMI |
+| `fl_uti` (`MARCA_UTI` / `UTI_MES_TO`) | 523.422 | fonte correta para recortes de UTI |
+
+## 13. Normalização do `REGSAUDE`
+
+Cumpre a promessa do slide 12 da Sprint 1. O campo bruto tem 82 valores distintos
+misturando números de 1 a 4 dígitos, 11 rótulos de texto livre e 23% de vazios.
+
+1. Numérico → `zfill(4)`, fundindo `105` com `0105`.
+2. Texto livre (`DRS1`, `GSP`, `XVI`, `MC`, `R17`…) → **nulo**. Preencher com zeros
+   fabricaria um código inexistente.
+3. Hospital sem região herda a região modal do seu município.
+
+Resultado nos 669 hospitais: **579 declarada · 74 inferida · 16 sem região**,
+rastreável pela coluna `origem_regiao`.
+
+## 14. `ESPEC` pela tabela oficial do SIH/SUS
+
+Os rótulos do material da Sprint 1 (`04 = UTI`, `09 = Crônico`) eram de apresentação,
+sem pretensão de oficialidade. A Sprint 2 adota a tabela oficial: `04` é **Crônicos**,
+`09` é **Hospital-dia (cirúrgico)**, e entram `06` (Tisiologia) e `08` (Reabilitação),
+antes fora do de-para.
+
+**Consequência vinculante:** `ESPEC` **não é fonte para recortes de UTI** — não existe
+código de UTI nessa tabela. Use a flag `fl_uti`.
+
+## 15. Código de município nas duas formas
+
+O SIH grava `MUNIC_MOV` com 6 dígitos; o IBGE usa 7. O dígito verificador **não é
+derivável** — vem da tabela de referência do IBGE, materializada pelo notebook 00.
+`dim_municipio` guarda as duas formas mais o nome. Sem isso, qualquer cruzamento com
+população, PIB ou malha geográfica quebra em silêncio.
 
 ## 9. Sprint 1 — entregue
 

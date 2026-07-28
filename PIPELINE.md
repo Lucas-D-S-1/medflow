@@ -1,5 +1,20 @@
 # PIPELINE — estado real do encadeamento de dados do MedFlow
 
+> **RESOLVIDO em 28/07/2026.** O pipeline foi reconstruído em dois notebooks novos,
+> executados e validados: `notebooks/00_extracao_dados.ipynb` e
+> `notebooks/01_engenharia_dados.ipynb`. O `inspecao_datasus.ipynb` descrito abaixo
+> foi arquivado em `notebooks/_legado/` e não deve ser executado.
+>
+> **A reconstrução não remendou o notebook antigo** — refez a cadeia desde o FTP do
+> DATASUS, e a fidelidade foi comprovada regerando os brutos do zero: esquema
+> idêntico, zero divergência de tipo, e todos os agregados batendo. Os critérios de
+> aceite listados na seção "Como reconstruir" passaram integralmente.
+>
+> Documentação atual: `README.md` desta pasta. O texto abaixo fica como registro do
+> diagnóstico que motivou a reconstrução.
+
+---
+
 > **Rastreio:** `AMEM-20260728-CLAUDE-CODEX`
 > **Registrado em:** 28/07/2026
 > **Escopo:** `02_oracle_medflow/sprint_2_em_andamento/`
