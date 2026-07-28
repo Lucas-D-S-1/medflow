@@ -1,7 +1,6 @@
-# Dados — reconstruídos pelo notebook 00 a partir das fontes públicas
-dados/raw/
-dados/processados/
-dados/curados/
+# Dados — nada é versionado. O notebook 00 reconstrói tudo das fontes públicas,
+# inclusive a tabela de municípios do IBGE.
+dados/
 *.dbc
 *.dbf
 *.parquet
@@ -14,3 +13,10 @@ __pycache__/
 # Sistema
 .DS_Store
 Thumbs.db
+
+# Configuracao local de memoria (nao pertence a versao publica)
+.ai-memory.toml
+.claude/
+.codex/
+.agents/
+.mcp.json
