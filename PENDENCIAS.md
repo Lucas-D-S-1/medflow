@@ -6,6 +6,24 @@
 
 ---
 
+## Sprint 1 — situação confirmada
+
+- Entregue em 16/06/2026.
+- Nota máxima: **10/10**.
+- Arquivo:
+  `EC_Sprint_1_1TSCO_ideacao_arquitetura_projeto_MedFlow_OmegaUrbanTech.zip`.
+- Feedback preservado em `entregues/sprint_1/AVALIACAO.md`.
+- ZIP original preservado em `entregues/sprint_1/original/` e apresentação
+  extraída em `entregues/sprint_1/conteudo_extraido/`.
+- Transcrição da mentoria de 07/06/2026 preservada em
+  `referencias/mentorias/challenge oracle mentoria.txt`.
+
+Para futuras entregas, repetir a separação `original/`,
+`conteudo_extraido/` e `AVALIACAO.md`. O procedimento operacional compartilhado
+com as fases está em `../00_fases/GUIA_IMPORTACAO_FASE.md`.
+
+---
+
 ## ORDEM DE ATAQUE — artefatos perdidos
 
 > Decisão aceita e registrada em
