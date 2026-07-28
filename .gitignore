@@ -1,0 +1,21 @@
+# Dados brutos e pesados
+*.dbf
+*.dbc
+*.parquet
+dados/raw/
+
+# Ambiente
+.venv/
+__pycache__/
+.ipynb_checkpoints/
+
+# ai-memory (gerados)
+.claude/
+.agents/
+.mcp.json
+
+# Material de trabalho - nunca versionar
+*motor_forecast*
+*Motor_Forecast*
+*x29*
+*do_aaa*
