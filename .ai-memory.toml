@@ -1,3 +1,9 @@
+# Projeto fixado de proposito. Sem esta linha, o hook derivaria o nome do
+# basename do repositorio git — e qualquer repo aninhado (ou clonado aqui
+# dentro) viraria um projeto novo no servidor.
+workspace = "default"
+project = "FIAP"
+
 [capture]
 ignore_paths = [
   ".env",
