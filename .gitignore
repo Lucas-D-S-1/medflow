@@ -13,6 +13,7 @@ __pycache__/
 .claude/
 .agents/
 .mcp.json
+.codex/
 
 # Material de trabalho - nunca versionar
 *motor_forecast*
