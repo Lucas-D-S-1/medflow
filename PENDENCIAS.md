@@ -1,7 +1,7 @@
 # PENDÊNCIAS — Challenge Oracle: MedFlow
 
-> Atualizado em 28/07/2026, após a consolidação do material de
-> `challenge_oracle` em `sprint_2_em_andamento/` e a triagem de Downloads.
+> Atualizado em 28/07/2026, após a reconstrução do pipeline em dois notebooks
+> novos (`00_extracao_dados` e `01_engenharia_dados`), ambos executados e validados.
 > Entrega da Sprint 2: **01/09/2026**.
 
 ---
@@ -24,77 +24,45 @@ com as fases está em `../00_fases/GUIA_IMPORTACAO_FASE.md`.
 
 ---
 
-## ORDEM DE ATAQUE — artefatos perdidos
+## RESOLVIDO em 28/07/2026 — o pipeline voltou a ser reprodutível
 
-> Decisão aceita e registrada em
-> `decisions/medflow-ordem-reconstrucao-artefatos.md`.
-> Rastreio: `AMEM-20260728-CODEX-CLAUDE`.
+> Detalhe técnico e decisões em `sprint_2_em_andamento/README.md`.
 
-| Prioridade | Artefato | Justificativa de avaliação |
+O bloqueio central da Sprint 2 — *"os parquets foram gerados por um notebook que não
+existe no repositório"* — está resolvido. Em vez de remendar o notebook quebrado,
+o pipeline foi reescrito em dois notebooks novos, ambos executados e validados:
+
+| Notebook | Faz | Validação |
 |---|---|---|
-| **1** | Pipeline que reproduz os parquets corrigidos do IPH | É a base de reprodutibilidade do GitHub (20%) e da defesa técnica dos números (50%); elimina também o risco de sobrescrever os parquets corretos com a fórmula antiga |
-| **2** | IPR calculado, persistido e navegável | Está totalmente ausente e impede cumprir o critério funcional dos cinco índices, diretamente exposto na avaliação técnica (50%) |
-| **3** | Nova `03_distribuicao_iph.png` | Restaura a evidência visual dos 7,8% críticos, mas o achado já pode ser verificado no parquet correto e não substitui a lacuna funcional do IPR |
+| `00_extracao_dados.ipynb` | FTP DATASUS + API IBGE → parquets brutos | 5.210.357 SIH · 200.075 CNES · 645 municípios |
+| `01_engenharia_dados.ipynb` | brutos → 5 dimensões + 1 fato + 3 bases analíticas | 14.821 linhas · IPH 0,4403 · 7,8% crítico · 10,5% atenção |
 
-**Regra de execução:** validar e promover o pipeline corrigido antes de usar seus
-resultados como base dos demais artefatos. O IPR pode ser especificado em
-paralelo, mas não desloca a prioridade 1.
+O notebook 00 foi conferido regerando os brutos do zero num diretório separado: esquema
+idêntico, mesma ordem de colunas, zero divergência de tipo, e todos os agregados que
+sustentam os índices batendo (soma de `QT_DIARIAS`, `MORTE`, `VAL_TOT`, contagens
+distintas). Leva ~9 minutos a partir do cache local.
 
----
+**Consequências:**
 
-## BLOQUEANTES — inconsistências técnicas do material herdado
+- O GitHub da entrega (peso 20%) passa a publicar um pipeline que gera os números do
+  pitch. Um avaliador que clonar e executar chega a IPH médio 0,4403.
+- Os dados pesados ficam fora do repositório e são reconstruídos das fontes públicas.
+- `inspecao_datasus.ipynb` foi movido para `notebooks/_legado/`, com README explicando
+  por que não deve ser executado. O risco de destruição dos parquets acabou.
+- Nomes de município resolvidos pela API do IBGE — `350570` agora é `Barueri`,
+  `351640` é `Franco da Rocha`, e o código de 7 dígitos existe para joins externos.
+- `REGSAUDE` normalizado sem fabricar código: 579 hospitais com região declarada,
+  74 inferidas do município, 16 sem região, tudo rastreável em `origem_regiao`.
+- `ESPEC` passa a usar a tabela oficial do SIH/SUS. **`04` é Crônicos, não UTI** —
+  para recortes de UTI existe a flag `fl_uti` (`MARCA_UTI` / `UTI_MES_TO`).
 
-### 1. `inspecao_datasus.ipynb` está desatualizado em relação aos parquets
+### O que ainda falta no pipeline
 
-**Prioridade 1 na reconstrução dos três artefatos.**
-
-O notebook em `sprint_2_em_andamento/notebooks/inspecao_datasus.ipynb` **ainda
-calcula o IPH com a fórmula errada**. Na célula 25:
-
-```python
-intern = sih_full.groupby([col_cnes_sih, "_ano", "_mes"]).size()   # COUNT(AIH)
-iph_hosp["iph"] = iph_hosp["internacoes"] / iph_hosp["denominador"]
-```
-
-Mas o parquet `iph_por_hospital_mensal.parquet` **já está correto** — tem a
-coluna `patient_days` e `iph = patient_days / denominador` (IPH médio 0,4403).
-
-Ou seja: **o pipeline que gerou os dados bons não está versionado.** Alguém
-rodou uma versão corrigida do notebook que se perdeu. O `medflow_patches_v2.ipynb`
-confirma isso no comentário da célula 10: *"Usar iph_por_hospital_mensal.parquet
-que já foi recalculado com patient-days"*.
-
-**Ação:** corrigir a célula 25 de `inspecao_datasus.ipynb` para
-`SUM(QT_DIARIAS)` e re-executar, validando que reproduz IPH médio = 0,4403.
-Sem isso o GitHub da Sprint 2 (peso 20%) publica um pipeline que não gera os
-números do pitch.
-
-### 2. `medflow_data_map.jsx` documenta a fórmula errada do IPH
-
-Em `sprint_2_em_andamento/referencias/medflow_data_map.jsx`, linha ~103:
-
-```
-formula: "internações_mês ÷ (QT_SUS × dias_do_mês)"
-```
-
-Deve ser `SUM(QT_DIARIAS) ÷ (QT_SUS × dias_do_mês)`. Este arquivo é material de
-referência da apresentação — corrigir antes de reaproveitar em slide.
-
-### 3. Não existe notebook-fonte para as figuras 08d a 13
-
-As figuras `08d`, `09`, `10`, `12` (oficiais) e `13` (descartada) **não são
-geradas por nenhum notebook presente no repositório**. `inspecao_datasus.ipynb`
-só salva `01`, `02`, `03` e `04_permanencia_por_especialidade.png` (que nem
-existe no disco — foi renomeada para `08d_...`).
-
-Os CSVs de apoio (`tmh_por_especialidade.csv`, `cmi_por_especialidade.csv`,
-`indice_sazonalidade_2023.csv`, `detalhe_regsaude_105.csv`) existem e batem com
-as figuras, então o código roda — só não foi salvo.
-
-**Ação:** reconstruir esse notebook (TMH, CMI, IS, permanência por especialidade
-e a agregação por REGSAUDE) e versioná-lo. É requisito do GitHub da entrega.
-
----
+| Prioridade | Artefato | Situação |
+|---|---|---|
+| **1** | **IPR calculado e navegável** | Base `base_hospital_cid` pronta (361.273 pares hospital×CID, já sem as AIH de diária zero). Falta o cálculo do índice no notebook 02 |
+| **2** | `02_analise_dados.ipynb` | Não iniciado. Consolida os 5 índices, o TMH/CMI/IS e as figuras — substitui os dois notebooks perdidos |
+| **3** | Nova `03_distribuicao_iph.png` | Regerar do `base_hospital_mes` com cortes em 0,70 e 0,85 |
 
 ## LACUNA DE CONTEÚDO
 

@@ -67,3 +67,22 @@ latest binary's recommended copy:
 Both are idempotent: re-runs replace the block delimited by the ai-memory
 start/end HTML-comment markers, without disturbing the rest of the file.
 <!-- ai-memory:end -->
+
+## Checkpoint de estado
+
+Se você perceber que está próximo de um limite de uso, de uma compactação de
+contexto, ou que a sessão vai terminar antes da tarefa, **pare e registre o
+estado antes de continuar**. Não tente espremer mais uma etapa.
+
+Grave uma página durável em `estado/onde-parei.md` com:
+
+- o que estava sendo feito e por quê;
+- o que já foi concluído e o que falta;
+- decisões tomadas que ainda não estão documentadas;
+- o próximo passo concreto, em uma frase.
+
+Escreva para alguém sem contexto nenhum — pode ser outro agente, ou você mesmo
+daqui a uma semana. Prefira frases curtas e verificáveis a resumo genérico.
+
+O usuário também pode disparar isso manualmente com `ai-memory-checkpoint`
+no terminal, que grava o estado do git sem precisar de API.
