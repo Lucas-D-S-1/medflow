@@ -1,0 +1,24 @@
+RELATÓRIO DE QUALIDADE — IPH DATASUS SP 2022–2023
+Gerado em: 2026-06-07 18:13
+
+=== DOWNLOAD ===
+SIH/RD baixados : 24 / 24
+CNES/LT baixados: 24 / 24
+SIH falhas       : nenhuma
+CNES falhas      : nenhuma
+
+=== DIMENSÕES ===
+SIH total  : (5210357, 115)
+CNES total : (200075, 30)
+
+=== PROBLEMAS IDENTIFICADOS ===
+6a) MUNIC_MOV inválidos          : 0
+6b) Hospitais SIH sem match CNES : 0
+6c) Meses com subnotificação     : 0
+6d) QT_DIARIAS = 0               : 400958
+6e) Óbitos sem VAL_TOT           : 20
+
+=== NOTAS ===
+- MUNIC_MOV usa 6 dígitos (SIH) vs 7 dígitos IBGE — ajustar em joins com tabelas externas
+- Campos de data vêm como string — converter com pd.to_datetime antes de análises temporais
+- Registros com denominador=0 recebem IPH=NaN e classe="Sem dados" (hospital sem leitos SUS registrados no CNES LT)

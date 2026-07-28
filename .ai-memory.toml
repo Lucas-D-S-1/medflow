@@ -1,11 +1,21 @@
 [capture]
 ignore_paths = [
   ".env",
+  ".env.*",
+  "**/.env",
+  "**/.env.*",
   "*.key",
+  "**/*.key",
   "*.pem",
-  "secrets/",
+  "**/*.pem",
+  "secrets/**",
+  "**/secrets/**",
   "credentials*",
+  "**/credentials*",
   "Motor_Forecast*",
+  "**/Motor_Forecast*",
   "*x29*",
+  "**/*x29*",
   "*do_aaa*",
+  "**/*do_aaa*",
 ]

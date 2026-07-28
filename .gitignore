@@ -19,3 +19,9 @@ __pycache__/
 *Motor_Forecast*
 *x29*
 *do_aaa*
+
+# Backups gerados pelos instaladores do ai-memory
+*.bak-*
+
+# Repositorio independente, com remote proprio
+01_pbl_cidade_alfa/pbl-cidade-alfa-transporte/
