@@ -1,7 +1,7 @@
-# PIPELINE — contrato Bronze e Silver do MedFlow
+# PIPELINE — contratos Bronze, Silver e Gold do MedFlow
 
-Atualizado em 29/07/2026 após duas execuções integrais e idempotentes da
-Silver para o recorte disponível de 2024-01 a 2026-05.
+Atualizado em 29/07/2026 após execuções integrais e idempotentes para o recorte
+disponível de 2024-01 a 2026-05.
 
 ## Contrato das camadas
 
@@ -17,6 +17,13 @@ Permitido:
 - serialização em Parquet;
 - metadados de linhagem;
 - manifesto, hashes, esquema e volumetria.
+
+Estrutura:
+
+- `origem/datasus`: DBC imutável;
+- `origem/referencias`: JSON, ZIP, HTML, CSV e malha oficial;
+- `intermediario/dbf`: cache técnico descartável e reproduzível;
+- `parquet`: serialização fiel e consolidada.
 
 Proibido:
 
@@ -34,16 +41,29 @@ Inclui:
 
 - tipagem;
 - todos os de/paras;
-- dimensões e fatos;
+- dimensões e fatos com nomes canônicos;
 - classificação de qualidade e origem;
-- agregações com `dropna=False`;
 - reconciliações antes da promoção;
 - documentação automática de esquema, domínios e qualidade.
 
-### Gold/análise — futuro `02_analise_dados.ipynb`
+Proibido:
 
-Responsabilidade: fórmulas finais, benchmarks, faixas, visualizações e narrativa.
-Nenhum índice é declarado validado apenas porque a Silver contém seus insumos.
+- indicador, benchmark ou classificação de negócio;
+- publicação de agregados `base_*`;
+- exposição de nomes brutos quando já existe conceito canônico.
+
+### Gold — `02_analise_dados.ipynb`
+
+Responsabilidade: aplicar os cinco contratos aprovados e publicar marts para
+Oracle e BI.
+
+Inclui:
+
+- TMH e CMI por hospital, especialidade e mês;
+- IPR por hospital/CID com benchmark regional que exclui o hospital;
+- IS regional de 2026 contra 2024–2025;
+- IPH por mês civil usando pacientes-dia reconstruídos;
+- CSV, GeoJSON e TopoJSON regionais.
 
 ## Oito controles implementados
 
@@ -59,9 +79,9 @@ Nenhum índice é declarado validado apenas porque a Silver contém seus insumos
    a declaração histórica do CNES/LT e seus quatro conflitos são preservados
    para auditoria.
 7. **Nulos em agrupamento:** `dropna=False` e reconciliação impedem perdas
-   silenciosas; a base CID tem 447.334 combinações hospital/CID.
-8. **Índices:** TMH e IPR têm insumos validados; CMI exige decisão da unidade;
-   IPH real está bloqueado.
+   silenciosas.
+8. **Índices:** os cinco contratos são calculados na Gold, com amostra,
+   denominador e limitação explícitos.
 
 ## Reconciliações bloqueantes
 
@@ -73,16 +93,16 @@ A Silver só grava se:
 - todos os CIDs tiverem capítulo e descrição;
 - todos os hospitais SIH existirem na dimensão hospital;
 - todos os hospitais tiverem região, natureza jurídica, nome e esfera atuais;
-- agregados hospital/mês e hospital/especialidade/mês somarem o fato;
-- agregado hospital/CID somar todas as internações novas;
-- internações com região nula continuarem presentes após o `groupby`.
+- a dimensão municipal cobrir 645 municípios e reconciliar API e CSV oficiais;
+- as chaves `cd_competencia`, `cd_cnes` e `cd_regiao_saude` não perderem
+  cobertura.
 
 Nome e esfera atuais não são usados para reescrever o cadastro histórico. A
 dimensão hospital os identifica com sufixo `_atual` e
 `fl_cadastro_atual_nao_historico=1`. Se o produto exigir o atributo vigente em
 cada competência de 2024–2026, será necessária uma fonte cadastral histórica.
 
-## Observação sobre o IPH histórico
+## IPH: proxy histórico e contrato atual
 
 O proxy:
 
@@ -95,11 +115,22 @@ reproduz a média `0,472168`, mas isso não comprova ocupação real.
 internações cruzam mês. Para medir ocupação física seria necessário distribuir
 intervalos de internação no calendário e validar as regras de leito/transferência.
 
-Até essa investigação, o campo chama-se `proxy_iph_diarias_faturadas` e recebe
-o status `experimental_nao_validado_como_ocupacao_real`.
+Esse proxy é mantido apenas na trilha de auditoria. O mart Gold reconstrói
+32.425.897 pacientes-dia pelas datas de entrada e saída e os relaciona à
+capacidade CNES do mês civil. Capacidade zero produz IPH nulo e status
+`sem_leito_sus_declarado`. Mesmo assim, o resultado continua sendo pressão
+estimada, não ocupação real.
+
+## Reconciliações Gold
+
+- 6.905.441 internações novas nos marts hospitalar, especialidade e regional;
+- 310 linhas de IS calculadas, correspondentes a 62 regiões × 5 meses de 2026;
+- 30.550 combinações hospital/CID elegíveis para IPR;
+- 645 municípios e 62 regiões associados à geometria sem imputação;
+- 142 hospital/mês com denominador CNES zero preservados com IPH nulo.
 
 ## Artefatos legados
 
-`dados/processados/`, `dados/curados/`, `medflow_patches_v2.ipynb` e
-`notebooks/_legado/` não fazem parte do contrato atual. Permanecem somente para
-rastreabilidade histórica e não devem alimentar novos resultados.
+`dados/legado/`, `figuras/legado/`, `notebooks/_legado/` e
+`referencias/legado_sprint_1/` não fazem parte do contrato atual. Permanecem
+somente para rastreabilidade histórica.

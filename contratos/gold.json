@@ -1,0 +1,944 @@
+{
+  "camada": "gold",
+  "versao_contrato": "0.2.0",
+  "gerado_em_utc": "2026-07-29T23:17:49.038842+00:00",
+  "principios": [
+    "Marts orientados às perguntas de gestão e ao consumo no BI.",
+    "Toda métrica expõe amostra, numerador, denominador ou estado de calculabilidade.",
+    "IPH é pressão estimada contra capacidade declarada, não ocupação real.",
+    "Valores financeiros são nominais enquanto o IPCA não for incorporado."
+  ],
+  "tabelas": [
+    {
+      "nome": "mart_indicador_hospital_mensal",
+      "caminho": "dados/gold/marts/mart_indicador_hospital_mensal.parquet",
+      "descricao": "Pressão estimada, capacidade e volume mensal por hospital.",
+      "grao": "uma linha por hospital e competência",
+      "chave_primaria_logica": [
+        "cd_cnes",
+        "cd_competencia"
+      ],
+      "linhas": 18690,
+      "colunas": [
+        {
+          "nome": "cd_cnes",
+          "tipo": "string",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Código de sete dígitos do estabelecimento no CNES."
+        },
+        {
+          "nome": "nr_ano_competencia",
+          "tipo": "int16",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Ano da competência de processamento."
+        },
+        {
+          "nome": "nr_mes_competencia",
+          "tipo": "int8",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Número do mês da competência de processamento."
+        },
+        {
+          "nome": "cd_competencia",
+          "tipo": "string",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Competência no formato AAAAMM."
+        },
+        {
+          "nome": "qt_leito_sus",
+          "tipo": "int32",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Quantidade mensal de leitos disponíveis ao SUS declarada no CNES."
+        },
+        {
+          "nome": "qt_leito_total",
+          "tipo": "int32",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Quantidade mensal total de leitos declarada no CNES."
+        },
+        {
+          "nome": "qt_tipo_leito",
+          "tipo": "int64",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Quantidade de tipos de leito distintos observados no mês."
+        },
+        {
+          "nome": "qt_dia_mes",
+          "tipo": "int64",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Quantidade de dias civis da competência."
+        },
+        {
+          "nome": "qt_capacidade_teorica_leito_dia",
+          "tipo": "int64",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Leitos SUS multiplicados pelos dias civis do mês."
+        },
+        {
+          "nome": "qt_paciente_dia_estimado",
+          "tipo": "int64",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Pacientes-dia reconstruídos pelas datas de entrada e saída."
+        },
+        {
+          "nome": "qt_internacao_nova",
+          "tipo": "int64",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Quantidade de internações novas, identificadas por AIH normal."
+        },
+        {
+          "nome": "qt_obito",
+          "tipo": "int64",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Quantidade de óbitos em internações novas."
+        },
+        {
+          "nome": "qt_dia_permanencia_soma",
+          "tipo": "int64",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Soma dos dias de permanência das internações novas."
+        },
+        {
+          "nome": "vl_aprovado_internacao_nova_soma",
+          "tipo": "float64",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Soma nominal dos valores aprovados para internações novas."
+        },
+        {
+          "nome": "nm_hospital_atual",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Nome fantasia atual do estabelecimento; não representa histórico mensal."
+        },
+        {
+          "nome": "cd_municipio_ibge_6",
+          "tipo": "string",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Código municipal de seis dígitos usado nas bases do DATASUS."
+        },
+        {
+          "nome": "cd_regiao_saude",
+          "tipo": "string",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Código oficial de cinco dígitos da região de saúde."
+        },
+        {
+          "nome": "nm_regiao_saude",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Nome oficial da região de saúde."
+        },
+        {
+          "nome": "cd_macrorregiao_saude",
+          "tipo": "string",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Código oficial da macrorregião de saúde."
+        },
+        {
+          "nome": "nm_macrorregiao_saude",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Nome oficial da macrorregião de saúde."
+        },
+        {
+          "nome": "cd_tipo_unidade",
+          "tipo": "string",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Código CNES do tipo de unidade."
+        },
+        {
+          "nome": "nm_tipo_unidade",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Descrição do tipo de unidade."
+        },
+        {
+          "nome": "nr_iph_estimado",
+          "tipo": "float64",
+          "aceita_nulo": true,
+          "nulos": 142,
+          "descricao": "Razão entre pacientes-dia estimados e leitos-dia declarados."
+        },
+        {
+          "nome": "pc_iph_estimado",
+          "tipo": "float64",
+          "aceita_nulo": true,
+          "nulos": 142,
+          "descricao": "IPH estimado expresso em percentual."
+        },
+        {
+          "nome": "st_capacidade",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Estado da disponibilidade de capacidade SUS para calcular o IPH."
+        },
+        {
+          "nome": "fl_acima_capacidade_declarada",
+          "tipo": "int8",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Indica IPH estimado superior à capacidade declarada; sinaliza investigação, não ocupação comprovada."
+        },
+        {
+          "nome": "pc_tmh",
+          "tipo": "float64",
+          "aceita_nulo": true,
+          "nulos": 998,
+          "descricao": "Óbitos em internações novas divididos pelas internações novas, em percentual."
+        },
+        {
+          "nome": "vl_cmi",
+          "tipo": "float64",
+          "aceita_nulo": true,
+          "nulos": 998,
+          "descricao": "Valor nominal aprovado nas internações novas dividido pela quantidade de internações novas."
+        },
+        {
+          "nome": "st_amostra",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Estado da amostra segundo os mínimos definidos no contrato do indicador."
+        }
+      ]
+    },
+    {
+      "nome": "mart_indicador_hospital_especialidade_mensal",
+      "caminho": "dados/gold/marts/mart_indicador_hospital_especialidade_mensal.parquet",
+      "descricao": "TMH e CMI por hospital, especialidade e competência.",
+      "grao": "uma linha por hospital, especialidade e competência",
+      "chave_primaria_logica": [
+        "cd_cnes",
+        "cd_especialidade_sih",
+        "cd_competencia"
+      ],
+      "linhas": 52525,
+      "colunas": [
+        {
+          "nome": "cd_cnes",
+          "tipo": "string",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Código de sete dígitos do estabelecimento no CNES."
+        },
+        {
+          "nome": "cd_especialidade_sih",
+          "tipo": "string",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Código de especialidade da internação no SIH."
+        },
+        {
+          "nome": "nm_especialidade",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Descrição da especialidade do SIH."
+        },
+        {
+          "nome": "cd_regiao_saude",
+          "tipo": "string",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Código oficial de cinco dígitos da região de saúde."
+        },
+        {
+          "nome": "nm_regiao_saude",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Nome oficial da região de saúde."
+        },
+        {
+          "nome": "cd_macrorregiao_saude",
+          "tipo": "string",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Código oficial da macrorregião de saúde."
+        },
+        {
+          "nome": "nm_macrorregiao_saude",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Nome oficial da macrorregião de saúde."
+        },
+        {
+          "nome": "nr_ano_competencia",
+          "tipo": "int16",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Ano da competência de processamento."
+        },
+        {
+          "nome": "nr_mes_competencia",
+          "tipo": "int8",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Número do mês da competência de processamento."
+        },
+        {
+          "nome": "cd_competencia",
+          "tipo": "string",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Competência no formato AAAAMM."
+        },
+        {
+          "nome": "qt_internacao_nova",
+          "tipo": "int64",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Quantidade de internações novas, identificadas por AIH normal."
+        },
+        {
+          "nome": "qt_obito",
+          "tipo": "int64",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Quantidade de óbitos em internações novas."
+        },
+        {
+          "nome": "qt_dia_permanencia_soma",
+          "tipo": "int32",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Soma dos dias de permanência das internações novas."
+        },
+        {
+          "nome": "vl_aprovado_internacao_nova_soma",
+          "tipo": "float64",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Soma nominal dos valores aprovados para internações novas."
+        },
+        {
+          "nome": "vl_aprovado_continuacao_soma",
+          "tipo": "float64",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Soma nominal dos valores aprovados para continuações de longa permanência."
+        },
+        {
+          "nome": "pc_tmh",
+          "tipo": "float64",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Óbitos em internações novas divididos pelas internações novas, em percentual."
+        },
+        {
+          "nome": "vl_cmi",
+          "tipo": "float64",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Valor nominal aprovado nas internações novas dividido pela quantidade de internações novas."
+        },
+        {
+          "nome": "st_amostra",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Estado da amostra segundo os mínimos definidos no contrato do indicador."
+        }
+      ]
+    },
+    {
+      "nome": "mart_indicador_hospital_cid_periodo",
+      "caminho": "dados/gold/marts/mart_indicador_hospital_cid_periodo.parquet",
+      "descricao": "IPR por hospital e diagnóstico no período completo.",
+      "grao": "uma linha por hospital e CID principal",
+      "chave_primaria_logica": [
+        "cd_cnes",
+        "cd_cid_principal"
+      ],
+      "linhas": 447334,
+      "colunas": [
+        {
+          "nome": "cd_cnes",
+          "tipo": "string",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Código de sete dígitos do estabelecimento no CNES."
+        },
+        {
+          "nome": "cd_regiao_saude",
+          "tipo": "string",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Código oficial de cinco dígitos da região de saúde."
+        },
+        {
+          "nome": "nm_regiao_saude",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Nome oficial da região de saúde."
+        },
+        {
+          "nome": "cd_macrorregiao_saude",
+          "tipo": "string",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Código oficial da macrorregião de saúde."
+        },
+        {
+          "nome": "nm_macrorregiao_saude",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Nome oficial da macrorregião de saúde."
+        },
+        {
+          "nome": "cd_cid_principal",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Código CID-10 do diagnóstico principal."
+        },
+        {
+          "nome": "ds_cid",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Descrição completa do diagnóstico CID-10."
+        },
+        {
+          "nome": "cd_capitulo_cid",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Código do capítulo da CID-10."
+        },
+        {
+          "nome": "ds_capitulo_cid",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Descrição do capítulo da CID-10."
+        },
+        {
+          "nome": "qt_internacao_nova",
+          "tipo": "int64",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Quantidade de internações novas, identificadas por AIH normal."
+        },
+        {
+          "nome": "qt_dia_permanencia_soma",
+          "tipo": "int32",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Soma dos dias de permanência das internações novas."
+        },
+        {
+          "nome": "qt_internacao_benchmark",
+          "tipo": "int64",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Quantidade de internações no benchmark regional, excluído o hospital avaliado."
+        },
+        {
+          "nome": "qt_dia_permanencia_benchmark",
+          "tipo": "int32",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Quantidade referente a dia permanencia benchmark."
+        },
+        {
+          "nome": "qt_hospital_benchmark",
+          "tipo": "int64",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Quantidade de outros hospitais que compõem o benchmark."
+        },
+        {
+          "nome": "nr_permanencia_media_hospital",
+          "tipo": "float64",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Valor numérico referente a permanencia media hospital."
+        },
+        {
+          "nome": "nr_permanencia_media_benchmark",
+          "tipo": "float64",
+          "aceita_nulo": true,
+          "nulos": 94813,
+          "descricao": "Valor numérico referente a permanencia media benchmark."
+        },
+        {
+          "nome": "nr_ipr",
+          "tipo": "float64",
+          "aceita_nulo": true,
+          "nulos": 416784,
+          "descricao": "Permanência média do hospital/CID dividida pelo benchmark regional que exclui o hospital."
+        },
+        {
+          "nome": "st_amostra",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Estado da amostra segundo os mínimos definidos no contrato do indicador."
+        }
+      ]
+    },
+    {
+      "nome": "mart_indicador_regiao_mensal",
+      "caminho": "dados/gold/marts/mart_indicador_regiao_mensal.parquet",
+      "descricao": "Indicadores consolidados para mapa e visão executiva regional.",
+      "grao": "uma linha por região de saúde e competência",
+      "chave_primaria_logica": [
+        "cd_regiao_saude",
+        "cd_competencia"
+      ],
+      "linhas": 1798,
+      "colunas": [
+        {
+          "nome": "cd_regiao_saude",
+          "tipo": "string",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Código oficial de cinco dígitos da região de saúde."
+        },
+        {
+          "nome": "nm_regiao_saude",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Nome oficial da região de saúde."
+        },
+        {
+          "nome": "cd_macrorregiao_saude",
+          "tipo": "string",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Código oficial da macrorregião de saúde."
+        },
+        {
+          "nome": "nm_macrorregiao_saude",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Nome oficial da macrorregião de saúde."
+        },
+        {
+          "nome": "nr_ano_competencia",
+          "tipo": "int16",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Ano da competência de processamento."
+        },
+        {
+          "nome": "nr_mes_competencia",
+          "tipo": "int8",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Número do mês da competência de processamento."
+        },
+        {
+          "nome": "cd_competencia",
+          "tipo": "string",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Competência no formato AAAAMM."
+        },
+        {
+          "nome": "qt_internacao_nova",
+          "tipo": "int64",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Quantidade de internações novas, identificadas por AIH normal."
+        },
+        {
+          "nome": "qt_obito",
+          "tipo": "int64",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Quantidade de óbitos em internações novas."
+        },
+        {
+          "nome": "qt_dia_permanencia_soma",
+          "tipo": "int32",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Soma dos dias de permanência das internações novas."
+        },
+        {
+          "nome": "vl_aprovado_internacao_nova_soma",
+          "tipo": "float64",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Soma nominal dos valores aprovados para internações novas."
+        },
+        {
+          "nome": "qt_hospital_com_internacao",
+          "tipo": "int64",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Quantidade referente a hospital com internacao."
+        },
+        {
+          "nome": "qt_paciente_dia_estimado",
+          "tipo": "int64",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Pacientes-dia reconstruídos pelas datas de entrada e saída."
+        },
+        {
+          "nome": "qt_leito_sus",
+          "tipo": "int32",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Quantidade mensal de leitos disponíveis ao SUS declarada no CNES."
+        },
+        {
+          "nome": "qt_capacidade_teorica_leito_dia",
+          "tipo": "int64",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Leitos SUS multiplicados pelos dias civis do mês."
+        },
+        {
+          "nome": "qt_populacao_ibge_2022",
+          "tipo": "int64",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "População municipal do Censo IBGE 2022 distribuída no CSV oficial do Ministério da Saúde."
+        },
+        {
+          "nome": "qt_internacao_por_100_mil_habitante",
+          "tipo": "float64",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Internações novas por 100 mil habitantes usando população do Censo IBGE 2022."
+        },
+        {
+          "nome": "pc_tmh",
+          "tipo": "float64",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Óbitos em internações novas divididos pelas internações novas, em percentual."
+        },
+        {
+          "nome": "vl_cmi",
+          "tipo": "float64",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Valor nominal aprovado nas internações novas dividido pela quantidade de internações novas."
+        },
+        {
+          "nome": "nr_iph_estimado",
+          "tipo": "float64",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Razão entre pacientes-dia estimados e leitos-dia declarados."
+        },
+        {
+          "nome": "pc_iph_estimado",
+          "tipo": "float64",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "IPH estimado expresso em percentual."
+        },
+        {
+          "nome": "qt_internacao_media_historica",
+          "tipo": "float64",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Quantidade referente a internacao media historica."
+        },
+        {
+          "nome": "qt_ano_historico",
+          "tipo": "int64",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Quantidade de anos históricos usados na referência sazonal."
+        },
+        {
+          "nome": "nr_indice_sazonalidade",
+          "tipo": "float64",
+          "aceita_nulo": true,
+          "nulos": 1488,
+          "descricao": "Volume atual dividido pela média do mesmo mês em 2024 e 2025."
+        },
+        {
+          "nome": "pc_variacao_sazonal",
+          "tipo": "float64",
+          "aceita_nulo": true,
+          "nulos": 1488,
+          "descricao": "Variação percentual correspondente ao índice de sazonalidade."
+        },
+        {
+          "nome": "st_indice_sazonalidade",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Estado de calculabilidade do índice sazonal."
+        }
+      ]
+    },
+    {
+      "nome": "mart_indicador_regiao_periodo",
+      "caminho": "dados/gold/marts/mart_indicador_regiao_periodo.parquet",
+      "descricao": "Resumo da distribuição do IPR elegível por região de saúde.",
+      "grao": "uma linha por região de saúde no período",
+      "chave_primaria_logica": [
+        "cd_regiao_saude"
+      ],
+      "linhas": 62,
+      "colunas": [
+        {
+          "nome": "cd_regiao_saude",
+          "tipo": "string",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Código oficial de cinco dígitos da região de saúde."
+        },
+        {
+          "nome": "nm_regiao_saude",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Nome oficial da região de saúde."
+        },
+        {
+          "nome": "cd_macrorregiao_saude",
+          "tipo": "string",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Código oficial da macrorregião de saúde."
+        },
+        {
+          "nome": "nm_macrorregiao_saude",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Nome oficial da macrorregião de saúde."
+        },
+        {
+          "nome": "qt_combinacao_hospital_cid",
+          "tipo": "int64",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Quantidade referente a combinacao hospital cid."
+        },
+        {
+          "nome": "qt_internacao_nova",
+          "tipo": "int64",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Quantidade de internações novas, identificadas por AIH normal."
+        },
+        {
+          "nome": "qt_combinacao_ipr_elegivel",
+          "tipo": "float64",
+          "aceita_nulo": true,
+          "nulos": 9,
+          "descricao": "Quantidade referente a combinacao ipr elegivel."
+        },
+        {
+          "nome": "nr_ipr_mediana",
+          "tipo": "float64",
+          "aceita_nulo": true,
+          "nulos": 9,
+          "descricao": "Valor numérico referente a ipr mediana."
+        },
+        {
+          "nome": "nr_ipr_media",
+          "tipo": "float64",
+          "aceita_nulo": true,
+          "nulos": 9,
+          "descricao": "Valor numérico referente a ipr media."
+        },
+        {
+          "nome": "qt_combinacao_ipr_acima_referencia",
+          "tipo": "float64",
+          "aceita_nulo": true,
+          "nulos": 9,
+          "descricao": "Quantidade referente a combinacao ipr acima referencia."
+        },
+        {
+          "nome": "pc_combinacao_ipr_acima_referencia",
+          "tipo": "float64",
+          "aceita_nulo": true,
+          "nulos": 9,
+          "descricao": "Percentual referente a combinacao ipr acima referencia."
+        }
+      ]
+    },
+    {
+      "nome": "dim_geografia_municipio",
+      "caminho": "dados/gold/geografia/dim_geografia_municipio.csv",
+      "descricao": "Municípios, população e hierarquia regional para integração geográfica.",
+      "grao": "uma linha por município",
+      "chave_primaria_logica": [
+        "cd_municipio_ibge_7"
+      ],
+      "linhas": 645,
+      "colunas": [
+        {
+          "nome": "cd_municipio_ibge_7",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Código oficial de sete dígitos do município no IBGE."
+        },
+        {
+          "nome": "cd_municipio_ibge_6",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Código municipal de seis dígitos usado nas bases do DATASUS."
+        },
+        {
+          "nome": "nm_municipio",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Nome oficial do município."
+        },
+        {
+          "nome": "sg_uf",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Sigla da unidade da Federação."
+        },
+        {
+          "nome": "cd_regiao_saude",
+          "tipo": "string",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Código oficial de cinco dígitos da região de saúde."
+        },
+        {
+          "nome": "nm_regiao_saude",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Nome oficial da região de saúde."
+        },
+        {
+          "nome": "cd_macrorregiao_saude",
+          "tipo": "string",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Código oficial da macrorregião de saúde."
+        },
+        {
+          "nome": "nm_macrorregiao_saude",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Nome oficial da macrorregião de saúde."
+        },
+        {
+          "nome": "qt_populacao_ibge_2022",
+          "tipo": "int64",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "População municipal do Censo IBGE 2022 distribuída no CSV oficial do Ministério da Saúde."
+        },
+        {
+          "nome": "ds_fonte_populacao",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Fonte e ano de referência da população municipal."
+        }
+      ]
+    },
+    {
+      "nome": "dim_geografia_regiao",
+      "caminho": "dados/gold/geografia/dim_geografia_regiao.csv",
+      "descricao": "Regiões de saúde, população agregada e quantidade de municípios.",
+      "grao": "uma linha por região de saúde",
+      "chave_primaria_logica": [
+        "cd_regiao_saude"
+      ],
+      "linhas": 62,
+      "colunas": [
+        {
+          "nome": "cd_regiao_saude",
+          "tipo": "string",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Código oficial de cinco dígitos da região de saúde."
+        },
+        {
+          "nome": "nm_regiao_saude",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Nome oficial da região de saúde."
+        },
+        {
+          "nome": "cd_macrorregiao_saude",
+          "tipo": "string",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Código oficial da macrorregião de saúde."
+        },
+        {
+          "nome": "nm_macrorregiao_saude",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Nome oficial da macrorregião de saúde."
+        },
+        {
+          "nome": "qt_municipio",
+          "tipo": "int64",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Quantidade referente a municipio."
+        },
+        {
+          "nome": "qt_populacao_ibge_2022",
+          "tipo": "int64",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "População municipal do Censo IBGE 2022 distribuída no CSV oficial do Ministério da Saúde."
+        }
+      ]
+    }
+  ],
+  "ativos": [
+    {
+      "nome": "mapa_regiao_saude_sp.geojson",
+      "caminho": "dados/gold/geografia/mapa_regiao_saude_sp.geojson",
+      "descricao": "Polígonos das 62 regiões de saúde, dissolvidos da malha municipal IBGE 2024.",
+      "fonte": "https://geoftp.ibge.gov.br/organizacao_do_territorio/malhas_territoriais/malhas_municipais/municipio_2024/UFs/SP/SP_Municipios_2024.zip",
+      "formato": "geojson"
+    },
+    {
+      "nome": "mapa_regiao_saude_sp.topojson",
+      "caminho": "dados/gold/geografia/mapa_regiao_saude_sp.topojson",
+      "descricao": "Topologia simplificada das regiões de saúde para mapas customizados no BI.",
+      "fonte": "https://geoftp.ibge.gov.br/organizacao_do_territorio/malhas_territoriais/malhas_municipais/municipio_2024/UFs/SP/SP_Municipios_2024.zip",
+      "formato": "topojson"
+    }
+  ]
+}

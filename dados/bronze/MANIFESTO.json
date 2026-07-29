@@ -1,6 +1,6 @@
 {
   "camada": "bronze",
-  "gerado_em_utc": "2026-07-29T21:18:40.644308+00:00",
+  "gerado_em_utc": "2026-07-29T23:19:04.708365+00:00",
   "recorte": {
     "uf": "SP",
     "periodo_solicitado": [
@@ -142,6 +142,8 @@
     "CNES_LT": "/dissemin/publicos/CNES/200508_/Dados/LT",
     "IBGE_municipios": "https://servicodados.ibge.gov.br/api/v1/localidades/estados/35/municipios",
     "MS_DEMAS_regioes_saude": "https://apidadosabertos.saude.gov.br/macrorregiao-e-regiao-de-saude/municipio?sigla_uf=SP&limit=860&offset=0",
+    "MS_DEMAS_regioes_saude_csv": "https://s3.sa-east-1.amazonaws.com/ckan.saude.gov.br/dbgeral/macroregiao_de_saude_csv.zip",
+    "IBGE_malha_municipal_2024": "https://geoftp.ibge.gov.br/organizacao_do_territorio/malhas_territoriais/malhas_municipais/municipio_2024/UFs/SP/SP_Municipios_2024.zip",
     "MS_DEMAS_cnes_atual": "https://apidadosabertos.saude.gov.br/cnes/estabelecimentos/{cnes}",
     "DATASUS_CID10": "http://www2.datasus.gov.br/cid10/V2008/downloads/CID10CSV.zip",
     "IBGE_CONCLA_natureza_juridica": "https://concla.ibge.gov.br/documentacao/3051-concla/estrutura/natureza-juridica-2021.html"
@@ -155,8 +157,10 @@
     "colunas_cnes": 31,
     "municipios_ibge": 645,
     "municipios_regiao_saude_ms": 645,
+    "municipios_regiao_saude_ms_csv": 645,
     "estabelecimentos_cnes_atuais": 653,
-    "arquivos_pacote_cid10": 6
+    "arquivos_pacote_cid10": 6,
+    "arquivos_malha_municipal_ibge": 5
   },
   "arquivos": {
     "sih": {
@@ -178,6 +182,16 @@
       "caminho": "ms_regioes_saude_sp_raw.json",
       "bytes": 215210,
       "sha256": "5a616e7c230baa47777b1dff7c14f1478c31b0bd0b2b837469a9ea9167cbe8dd"
+    },
+    "regioes_saude_ms_csv": {
+      "caminho": "macrorregiao_de_saude_csv.zip",
+      "bytes": 85086,
+      "sha256": "e27b30dd2c6c06f3f8c1d55795a3b9851946fdc62fcec0a6ca57e8f58cc7d774"
+    },
+    "malha_municipal_ibge_2024": {
+      "caminho": "SP_Municipios_2024.zip",
+      "bytes": 10501486,
+      "sha256": "92a54d06e6f5a9749368e522861b785eae8c797329c9fa09cbb1a0696319d8e3"
     },
     "cid10_datasus": {
       "caminho": "datasus_cid10_2008.zip",

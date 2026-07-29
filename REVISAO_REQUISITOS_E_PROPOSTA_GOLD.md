@@ -99,23 +99,25 @@ Conclusão: o arquivo da Sprint 1 é insumo de narrativa e identidade, não font
 dos números da apresentação final. Todas as figuras e métricas de 2022–2023
 devem ser regeneradas para 2024–2026.
 
-## 5. Definições que ainda precisam de aceite
+## 5. Definições aprovadas e decisões ainda abertas
 
-Antes de implementar `02_analise_dados.ipynb`, a equipe precisa aprovar:
+Em 29/07/2026, a equipe aprovou:
 
-1. contrato de cada indicador: pergunta, população, grão, fórmula, benchmark e
-   limitação;
-2. regra de amostra mínima e comportamento para denominador zero;
-3. significado do IPH e proibição ou não de classificações fixas;
-4. unidade do IS e janela histórica;
-5. significado financeiro do CMI e tratamento da inflação;
-6. grupos de comparação de hospitais;
-7. fonte CSV que será lida como External Table;
-8. ferramenta do dashboard e forma de publicação;
-9. tabelas que serão carregadas no Oracle;
-10. perguntas demonstradas no Select AI;
-11. se o agrupamento de hospitais será determinístico ou incluirá clustering;
-12. critérios de aceite do MVP, do pitch e da apresentação técnica.
+1. os cinco contratos de indicador descritos neste documento;
+2. as regras de amostra mínima e denominador zero;
+3. o IPH como pressão estimada, sem faixas fixas de ocupação;
+4. o IS de 2026 contra a média de 2024–2025;
+5. o CMI nominal por internação nova, com continuações separadas;
+6. o CSV oficial de regiões/população do Ministério da Saúde;
+7. a malha municipal IBGE 2024 para formar o mapa regional.
+
+Continuam abertas somente decisões da camada de entrega:
+
+1. ferramenta e forma de publicação do dashboard;
+2. tabelas e estratégia de carga no Oracle;
+3. perguntas demonstradas no Select AI;
+4. uso futuro de clustering após o MVP;
+5. critérios finais do pitch e da apresentação técnica.
 
 ## 6. Proposta metodológica dos cinco índices
 
@@ -280,12 +282,10 @@ Proposta de contrato:
 |---|---|---|
 | relacional | SIH/RD e tabelas Gold | fatos, dimensões, indicadores e consultas |
 | JSON | API atual do CNES | atributos variáveis e cadastro atual do estabelecimento |
-| CSV / External Table | população municipal IBGE e IPCA | taxas populacionais e valores reais |
+| CSV / External Table | regiões de saúde e população IBGE 2022, Ministério da Saúde | taxas populacionais e integração Oracle |
 
-População e IPCA devem vir de fonte pública oficial, com ano/mês e proveniência.
-Se apenas uma referência CSV couber no prazo, priorizar população municipal,
-pois ela melhora comparações regionais; nesse caso, manter CMI nominal e
-declarar a limitação.
+O CSV oficial foi incorporado, reconciliado com a API e preservado na Bronze.
+O CMI permanece nominal; IPCA continua como evolução opcional.
 
 ## 9. MVP e dashboard
 
@@ -322,15 +322,11 @@ O Select AI entra após essas respostas estarem validadas em SQL convencional.
 
 ## 11. Ordem recomendada
 
-1. aprovar este contrato metodológico;
-2. implementar as tabelas Gold sem visualização;
-3. validar reconciliações, amostras e casos extremos;
-4. adicionar população e, se couber, IPCA;
-5. carregar Oracle e validar SQL;
-6. construir as três páginas do dashboard;
-7. testar as perguntas do Select AI;
-8. atualizar a apresentação usando somente números reproduzidos pela Gold;
-9. ensaiar o pitch e uma bateria de perguntas técnicas.
+1. carregar Oracle e validar SQL;
+2. construir as três páginas do dashboard;
+3. testar as perguntas do Select AI;
+4. regenerar figuras e atualizar a apresentação usando somente a Gold;
+5. ensaiar o pitch e uma bateria de perguntas técnicas.
 
 ## 12. Critérios de aceite da Gold
 

@@ -2,10 +2,12 @@
 *.dbf
 *.dbc
 *.parquet
-dados/raw/
-02_oracle_medflow/sprint_2_em_andamento/dados/bronze/*_raw.json
-02_oracle_medflow/sprint_2_em_andamento/dados/bronze/*.zip
-02_oracle_medflow/sprint_2_em_andamento/dados/bronze/*.html
+02_oracle_medflow/sprint_2_em_andamento/dados/bronze/origem/datasus/
+02_oracle_medflow/sprint_2_em_andamento/dados/bronze/intermediario/dbf/
+02_oracle_medflow/sprint_2_em_andamento/dados/bronze/origem/referencias/*.json
+02_oracle_medflow/sprint_2_em_andamento/dados/bronze/origem/referencias/*.zip
+02_oracle_medflow/sprint_2_em_andamento/dados/bronze/origem/referencias/*.html
+02_oracle_medflow/sprint_2_em_andamento/dados/bronze/origem/referencias/geografia/
 
 # Ambiente
 .venv/

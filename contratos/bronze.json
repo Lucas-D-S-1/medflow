@@ -1,0 +1,1119 @@
+{
+  "camada": "bronze",
+  "versao_contrato": "0.2.0",
+  "gerado_em_utc": "2026-07-29T23:19:04.877755+00:00",
+  "principios": [
+    "Arquivos de origem são imutáveis e preservados no formato recebido.",
+    "DBF é cache técnico intermediário; Parquet é serialização fiel e reproduzível.",
+    "Não há filtro analítico, imputação, de/para ou regra de negócio."
+  ],
+  "tabelas": [
+    {
+      "nome": "sih_rd_sp_2024_2026",
+      "caminho": "dados/bronze/parquet/sih_rd_sp_2024_2026.parquet",
+      "descricao": "Registros SIH/RD preservados com linhagem técnica.",
+      "grao": "uma linha conforme o registro original da fonte mensal",
+      "chave_primaria_logica": [],
+      "linhas": 7034961,
+      "colunas": [
+        {
+          "nome": "UF_ZI",
+          "tipo": "string",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `UF_ZI` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "ANO_CMPT",
+          "tipo": "string",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `ANO_CMPT` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "MES_CMPT",
+          "tipo": "string",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `MES_CMPT` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "ESPEC",
+          "tipo": "string",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `ESPEC` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "CGC_HOSP",
+          "tipo": "string",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `CGC_HOSP` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "N_AIH",
+          "tipo": "string",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `N_AIH` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "IDENT",
+          "tipo": "string",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `IDENT` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "CEP",
+          "tipo": "string",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `CEP` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "MUNIC_RES",
+          "tipo": "string",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `MUNIC_RES` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "NASC",
+          "tipo": "string",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `NASC` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "SEXO",
+          "tipo": "string",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `SEXO` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "UTI_MES_IN",
+          "tipo": "int64",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `UTI_MES_IN` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "UTI_MES_AN",
+          "tipo": "int64",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `UTI_MES_AN` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "UTI_MES_AL",
+          "tipo": "int64",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `UTI_MES_AL` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "UTI_MES_TO",
+          "tipo": "int64",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `UTI_MES_TO` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "MARCA_UTI",
+          "tipo": "string",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `MARCA_UTI` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "UTI_INT_IN",
+          "tipo": "int64",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `UTI_INT_IN` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "UTI_INT_AN",
+          "tipo": "int64",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `UTI_INT_AN` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "UTI_INT_AL",
+          "tipo": "int64",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `UTI_INT_AL` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "UTI_INT_TO",
+          "tipo": "int64",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `UTI_INT_TO` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "DIAR_ACOM",
+          "tipo": "int64",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `DIAR_ACOM` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "QT_DIARIAS",
+          "tipo": "int64",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `QT_DIARIAS` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "PROC_SOLIC",
+          "tipo": "string",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `PROC_SOLIC` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "PROC_REA",
+          "tipo": "string",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `PROC_REA` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "VAL_SH",
+          "tipo": "double",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `VAL_SH` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "VAL_SP",
+          "tipo": "double",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `VAL_SP` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "VAL_SADT",
+          "tipo": "double",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `VAL_SADT` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "VAL_RN",
+          "tipo": "double",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `VAL_RN` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "VAL_ACOMP",
+          "tipo": "double",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `VAL_ACOMP` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "VAL_ORTP",
+          "tipo": "double",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `VAL_ORTP` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "VAL_SANGUE",
+          "tipo": "double",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `VAL_SANGUE` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "VAL_SADTSR",
+          "tipo": "double",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `VAL_SADTSR` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "VAL_TRANSP",
+          "tipo": "double",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `VAL_TRANSP` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "VAL_OBSANG",
+          "tipo": "double",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `VAL_OBSANG` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "VAL_PED1AC",
+          "tipo": "double",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `VAL_PED1AC` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "VAL_TOT",
+          "tipo": "double",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `VAL_TOT` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "VAL_UTI",
+          "tipo": "double",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `VAL_UTI` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "US_TOT",
+          "tipo": "double",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `US_TOT` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "DT_INTER",
+          "tipo": "string",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `DT_INTER` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "DT_SAIDA",
+          "tipo": "string",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `DT_SAIDA` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "DIAG_PRINC",
+          "tipo": "string",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `DIAG_PRINC` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "DIAG_SECUN",
+          "tipo": "string",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `DIAG_SECUN` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "COBRANCA",
+          "tipo": "string",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `COBRANCA` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "NATUREZA",
+          "tipo": "string",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `NATUREZA` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "NAT_JUR",
+          "tipo": "string",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `NAT_JUR` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "GESTAO",
+          "tipo": "string",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `GESTAO` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "RUBRICA",
+          "tipo": "int64",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `RUBRICA` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "IND_VDRL",
+          "tipo": "string",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `IND_VDRL` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "MUNIC_MOV",
+          "tipo": "string",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `MUNIC_MOV` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "COD_IDADE",
+          "tipo": "string",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `COD_IDADE` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "IDADE",
+          "tipo": "int64",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `IDADE` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "DIAS_PERM",
+          "tipo": "int64",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `DIAS_PERM` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "MORTE",
+          "tipo": "int64",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `MORTE` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "NACIONAL",
+          "tipo": "string",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `NACIONAL` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "NUM_PROC",
+          "tipo": "string",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `NUM_PROC` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "CAR_INT",
+          "tipo": "string",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `CAR_INT` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "TOT_PT_SP",
+          "tipo": "int64",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `TOT_PT_SP` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "CPF_AUT",
+          "tipo": "string",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `CPF_AUT` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "HOMONIMO",
+          "tipo": "string",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `HOMONIMO` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "NUM_FILHOS",
+          "tipo": "int64",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `NUM_FILHOS` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "INSTRU",
+          "tipo": "string",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `INSTRU` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "CID_NOTIF",
+          "tipo": "string",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `CID_NOTIF` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "CONTRACEP1",
+          "tipo": "string",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `CONTRACEP1` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "CONTRACEP2",
+          "tipo": "string",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `CONTRACEP2` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "GESTRISCO",
+          "tipo": "string",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `GESTRISCO` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "INSC_PN",
+          "tipo": "string",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `INSC_PN` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "SEQ_AIH5",
+          "tipo": "string",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `SEQ_AIH5` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "CBOR",
+          "tipo": "string",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `CBOR` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "CNAER",
+          "tipo": "string",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `CNAER` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "VINCPREV",
+          "tipo": "string",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `VINCPREV` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "GESTOR_COD",
+          "tipo": "string",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `GESTOR_COD` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "GESTOR_TP",
+          "tipo": "string",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `GESTOR_TP` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "GESTOR_CPF",
+          "tipo": "string",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `GESTOR_CPF` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "GESTOR_DT",
+          "tipo": "string",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `GESTOR_DT` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "CNES",
+          "tipo": "string",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `CNES` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "CNPJ_MANT",
+          "tipo": "string",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `CNPJ_MANT` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "INFEHOSP",
+          "tipo": "string",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `INFEHOSP` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "CID_ASSO",
+          "tipo": "string",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `CID_ASSO` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "CID_MORTE",
+          "tipo": "string",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `CID_MORTE` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "COMPLEX",
+          "tipo": "string",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `COMPLEX` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "FINANC",
+          "tipo": "string",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `FINANC` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "FAEC_TP",
+          "tipo": "string",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `FAEC_TP` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "REGCT",
+          "tipo": "string",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `REGCT` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "RACA_COR",
+          "tipo": "string",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `RACA_COR` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "ETNIA",
+          "tipo": "string",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `ETNIA` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "SEQUENCIA",
+          "tipo": "int64",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `SEQUENCIA` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "REMESSA",
+          "tipo": "string",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `REMESSA` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "AUD_JUST",
+          "tipo": "string",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `AUD_JUST` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "SIS_JUST",
+          "tipo": "string",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `SIS_JUST` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "VAL_SH_FED",
+          "tipo": "double",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `VAL_SH_FED` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "VAL_SP_FED",
+          "tipo": "double",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `VAL_SP_FED` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "VAL_SH_GES",
+          "tipo": "double",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `VAL_SH_GES` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "VAL_SP_GES",
+          "tipo": "double",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `VAL_SP_GES` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "VAL_UCI",
+          "tipo": "double",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `VAL_UCI` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "MARCA_UCI",
+          "tipo": "string",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `MARCA_UCI` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "DIAGSEC1",
+          "tipo": "string",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `DIAGSEC1` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "DIAGSEC2",
+          "tipo": "string",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `DIAGSEC2` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "DIAGSEC3",
+          "tipo": "string",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `DIAGSEC3` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "DIAGSEC4",
+          "tipo": "string",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `DIAGSEC4` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "DIAGSEC5",
+          "tipo": "string",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `DIAGSEC5` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "DIAGSEC6",
+          "tipo": "string",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `DIAGSEC6` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "DIAGSEC7",
+          "tipo": "string",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `DIAGSEC7` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "DIAGSEC8",
+          "tipo": "string",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `DIAGSEC8` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "DIAGSEC9",
+          "tipo": "string",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `DIAGSEC9` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "TPDISEC1",
+          "tipo": "string",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `TPDISEC1` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "TPDISEC2",
+          "tipo": "string",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `TPDISEC2` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "TPDISEC3",
+          "tipo": "string",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `TPDISEC3` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "TPDISEC4",
+          "tipo": "string",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `TPDISEC4` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "TPDISEC5",
+          "tipo": "string",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `TPDISEC5` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "TPDISEC6",
+          "tipo": "string",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `TPDISEC6` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "TPDISEC7",
+          "tipo": "string",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `TPDISEC7` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "TPDISEC8",
+          "tipo": "string",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `TPDISEC8` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "TPDISEC9",
+          "tipo": "string",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `TPDISEC9` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "_arquivo_fonte",
+          "tipo": "string",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `_arquivo_fonte` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "_ano_arquivo",
+          "tipo": "int64",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `_ano_arquivo` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "_mes_arquivo",
+          "tipo": "int64",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `_mes_arquivo` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "FONTE_ORC",
+          "tipo": "string",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `FONTE_ORC` preservado conforme o leiaute original da fonte."
+        }
+      ]
+    },
+    {
+      "nome": "cnes_lt_sp_2024_2026",
+      "caminho": "dados/bronze/parquet/cnes_lt_sp_2024_2026.parquet",
+      "descricao": "Registros CNES/LT preservados com linhagem técnica.",
+      "grao": "uma linha conforme o registro original da fonte mensal",
+      "chave_primaria_logica": [],
+      "linhas": 243085,
+      "colunas": [
+        {
+          "nome": "CNES",
+          "tipo": "string",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `CNES` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "CODUFMUN",
+          "tipo": "string",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `CODUFMUN` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "REGSAUDE",
+          "tipo": "string",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `REGSAUDE` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "MICR_REG",
+          "tipo": "string",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `MICR_REG` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "DISTRSAN",
+          "tipo": "string",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `DISTRSAN` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "DISTRADM",
+          "tipo": "string",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `DISTRADM` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "TPGESTAO",
+          "tipo": "string",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `TPGESTAO` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "PF_PJ",
+          "tipo": "string",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `PF_PJ` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "CPF_CNPJ",
+          "tipo": "string",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `CPF_CNPJ` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "NIV_DEP",
+          "tipo": "string",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `NIV_DEP` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "CNPJ_MAN",
+          "tipo": "string",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `CNPJ_MAN` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "ESFERA_A",
+          "tipo": "string",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `ESFERA_A` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "ATIVIDAD",
+          "tipo": "string",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `ATIVIDAD` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "RETENCAO",
+          "tipo": "string",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `RETENCAO` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "NATUREZA",
+          "tipo": "string",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `NATUREZA` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "CLIENTEL",
+          "tipo": "string",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `CLIENTEL` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "TP_UNID",
+          "tipo": "string",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `TP_UNID` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "TURNO_AT",
+          "tipo": "string",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `TURNO_AT` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "NIV_HIER",
+          "tipo": "string",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `NIV_HIER` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "TERCEIRO",
+          "tipo": "string",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `TERCEIRO` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "TP_LEITO",
+          "tipo": "string",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `TP_LEITO` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "CODLEITO",
+          "tipo": "string",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `CODLEITO` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "QT_EXIST",
+          "tipo": "int64",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `QT_EXIST` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "QT_CONTR",
+          "tipo": "int64",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `QT_CONTR` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "QT_SUS",
+          "tipo": "int64",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `QT_SUS` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "QT_NSUS",
+          "tipo": "int64",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `QT_NSUS` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "COMPETEN",
+          "tipo": "string",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `COMPETEN` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "NAT_JUR",
+          "tipo": "string",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `NAT_JUR` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "_arquivo_fonte",
+          "tipo": "string",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `_arquivo_fonte` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "_ano_arquivo",
+          "tipo": "int64",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `_ano_arquivo` preservado conforme o leiaute original da fonte."
+        },
+        {
+          "nome": "_mes_arquivo",
+          "tipo": "int64",
+          "aceita_nulo": true,
+          "nulos": null,
+          "descricao": "Campo `_mes_arquivo` preservado conforme o leiaute original da fonte."
+        }
+      ]
+    }
+  ],
+  "ativos": [
+    {
+      "nome": "ibge",
+      "caminho": "dados/bronze/origem/referencias/ibge_municipios_sp_raw.json",
+      "descricao": "Resposta original da API de municípios do IBGE.",
+      "fonte": "https://servicodados.ibge.gov.br/api/v1/localidades/estados/35/municipios",
+      "formato": "json"
+    },
+    {
+      "nome": "regioes_saude_ms",
+      "caminho": "dados/bronze/origem/referencias/ms_regioes_saude_sp_raw.json",
+      "descricao": "Resposta original da API de regiões e macrorregiões de saúde.",
+      "fonte": "https://apidadosabertos.saude.gov.br/macrorregiao-e-regiao-de-saude/municipio?sigla_uf=SP&limit=860&offset=0",
+      "formato": "json"
+    },
+    {
+      "nome": "regioes_saude_ms_csv",
+      "caminho": "dados/bronze/origem/referencias/macrorregiao_de_saude_csv.zip",
+      "descricao": "Pacote CSV oficial de regiões de saúde, população IBGE 2022 e municípios.",
+      "fonte": "https://s3.sa-east-1.amazonaws.com/ckan.saude.gov.br/dbgeral/macroregiao_de_saude_csv.zip",
+      "formato": "zip"
+    },
+    {
+      "nome": "malha_municipal_ibge_2024",
+      "caminho": "dados/bronze/origem/referencias/geografia/SP_Municipios_2024.zip",
+      "descricao": "Malha municipal oficial de São Paulo usada para formar as regiões do BI.",
+      "fonte": "https://geoftp.ibge.gov.br/organizacao_do_territorio/malhas_territoriais/malhas_municipais/municipio_2024/UFs/SP/SP_Municipios_2024.zip",
+      "formato": "zip"
+    },
+    {
+      "nome": "cid10_datasus",
+      "caminho": "dados/bronze/origem/referencias/datasus_cid10_2008.zip",
+      "descricao": "Pacote original das tabelas CID-10 do DATASUS.",
+      "fonte": "http://www2.datasus.gov.br/cid10/V2008/downloads/CID10CSV.zip",
+      "formato": "zip"
+    },
+    {
+      "nome": "natureza_juridica_concla",
+      "caminho": "dados/bronze/origem/referencias/ibge_concla_natureza_juridica_2021.html",
+      "descricao": "Página oficial da CONCLA usada para natureza jurídica.",
+      "fonte": "https://concla.ibge.gov.br/documentacao/3051-concla/estrutura/natureza-juridica-2021.html",
+      "formato": "html"
+    },
+    {
+      "nome": "cnes_estabelecimentos_atuais",
+      "caminho": "dados/bronze/origem/referencias/ms_cnes_estabelecimentos_atuais_raw.json",
+      "descricao": "Respostas atuais da API CNES para os hospitais observados.",
+      "fonte": "https://apidadosabertos.saude.gov.br/cnes/estabelecimentos/{cnes}",
+      "formato": "json"
+    }
+  ]
+}
