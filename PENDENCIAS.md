@@ -1,6 +1,6 @@
 # PENDÊNCIAS — Challenge Oracle: MedFlow
 
-Atualizado em 29/07/2026 após a validação técnica do recorte 2024–2026.
+Atualizado em 29/07/2026 após a publicação da `v0.2.0`.
 Entrega da Sprint 2: **01/09/2026**.
 
 ## Concluído nesta revisão
@@ -25,9 +25,10 @@ Entrega da Sprint 2: **01/09/2026**.
 - duas execuções Silver consecutivas com as mesmas reconciliações, sem
   arquivos `.parcial` residuais.
 - versão pública [`v0.1.0`](https://github.com/Lucas-D-S-1/medflow/releases/tag/v0.1.0)
-  publicada após revisão e integração do PR #1.
-- contrato local `v0.2.0` com Silver canônica, Gold e geografia validado; falta
-  decidir a publicação.
+  publicada como primeiro marco do pipeline Bronze/Silver;
+- versão pública [`v0.2.0`](https://github.com/Lucas-D-S-1/fiap-1tscoa/releases/tag/v0.2.0)
+  publicada com Silver canônica, Gold, geografia, contratos e validação
+  integrada.
 
 ## Pendências em ordem lógica
 
@@ -107,7 +108,8 @@ deve ser gerada pelo notebook 02 e vinculada à tabela Gold correspondente.
 
 Prioridades:
 
-- distribuição e série temporal do IPH somente após a decisão metodológica;
+- distribuição e série temporal do IPH estimado, preservando capacidade zero,
+  valores nulos e flags de pressão acima da capacidade declarada;
 - IPR por hospital/CID com volume mínimo;
 - IS, TMH e CMI recalculados usando internações novas quando aplicável;
 - revisão de todos os números do pitch.
@@ -119,8 +121,9 @@ Depois dos dados e métricas validados:
 - escolher a ferramenta do dashboard e a forma de link público;
 - modelar e carregar as tabelas aprovadas no Oracle Autonomous DB;
 - escolher e testar três perguntas do Select AI;
-- decidir e publicar a versão `v0.2.0`;
 - produzir PPT, vídeo e roteiro da apresentação técnica.
+
+Próximo marco sugerido: **`v0.3.0` — Oracle e dashboard MVP**.
 
 ## Entregáveis da Sprint 2
 
@@ -131,7 +134,7 @@ Depois dos dados e métricas validados:
 | Dashboard navegável | — | não iniciado |
 | Link público | 10% | não iniciado |
 | Oracle Select AI | — | não iniciado |
-| GitHub | 20% | `v0.1.0` publicada |
+| GitHub | 20% | `v0.2.0` publicada |
 | PPT / pitch | 10% | não iniciado |
 | Vídeo YouTube | 10% | não iniciado |
 | Apresentação técnica | 50% | não iniciado |

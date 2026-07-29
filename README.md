@@ -5,9 +5,10 @@
 Recorte solicitado: Estado de São Paulo, competências de 2024 a 2026.
 Recorte disponível e validado: **2024-01 a 2026-05 (29 meses)**.
 Versão pública estável:
-[`v0.1.0`](https://github.com/Lucas-D-S-1/medflow/releases/tag/v0.1.0).
-O contrato local `v0.2.0`, ainda não publicado, adiciona a Silver canônica,
-a Gold e os ativos geográficos.
+[`v0.2.0`](https://github.com/Lucas-D-S-1/fiap-1tscoa/releases/tag/v0.2.0),
+com Silver canônica, Gold, contratos de dados e ativos geográficos.
+A [`v0.1.0`](https://github.com/Lucas-D-S-1/medflow/releases/tag/v0.1.0)
+permanece como o primeiro marco público do pipeline Bronze/Silver.
 
 Proposta metodológica e revisão dos requisitos:
 [`REVISAO_REQUISITOS_E_PROPOSTA_GOLD.md`](REVISAO_REQUISITOS_E_PROPOSTA_GOLD.md).
