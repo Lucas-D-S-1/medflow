@@ -3,6 +3,9 @@
 *.dbc
 *.parquet
 dados/raw/
+02_oracle_medflow/sprint_2_em_andamento/dados/bronze/*_raw.json
+02_oracle_medflow/sprint_2_em_andamento/dados/bronze/*.zip
+02_oracle_medflow/sprint_2_em_andamento/dados/bronze/*.html
 
 # Ambiente
 .venv/

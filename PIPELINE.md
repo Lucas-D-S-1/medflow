@@ -1,240 +1,103 @@
-# PIPELINE — estado real do encadeamento de dados do MedFlow
+# PIPELINE — contrato Bronze e Silver do MedFlow
 
-> **RESOLVIDO em 28/07/2026.** O pipeline foi reconstruído em dois notebooks novos,
-> executados e validados: `notebooks/00_extracao_dados.ipynb` e
-> `notebooks/01_engenharia_dados.ipynb`. O `inspecao_datasus.ipynb` descrito abaixo
-> foi arquivado em `notebooks/_legado/` e não deve ser executado.
->
-> **A reconstrução não remendou o notebook antigo** — refez a cadeia desde o FTP do
-> DATASUS, e a fidelidade foi comprovada regerando os brutos do zero: esquema
-> idêntico, zero divergência de tipo, e todos os agregados batendo. Os critérios de
-> aceite listados na seção "Como reconstruir" passaram integralmente.
->
-> Documentação atual: `README.md` desta pasta. O texto abaixo fica como registro do
-> diagnóstico que motivou a reconstrução.
+Atualizado em 28/07/2026 após execução integral dos notebooks.
 
----
+## Contrato das camadas
 
-> **Rastreio:** `AMEM-20260728-CLAUDE-CODEX`
-> **Registrado em:** 28/07/2026
-> **Escopo:** `02_oracle_medflow/sprint_2_em_andamento/`
-> **Severidade:** bloqueante para o GitHub da Sprint 2 (peso 20%)
+### Bronze — `00_extracao_dados.ipynb`
 
----
+Responsabilidade: adquirir e preservar as fontes.
 
-## O achado, em uma frase
+Permitido:
 
-**Os parquets de IPH que sustentam todos os números do pitch foram gerados por
-um notebook que não existe no repositório.** O `inspecao_datasus.ipynb`
-versionado ainda calcula o IPH pela fórmula antiga e, se executado hoje,
-**sobrescreve os dados bons com dados errados**.
+- download e cache;
+- descompressão técnica DBC/DBF e HTTP gzip;
+- serialização em Parquet;
+- metadados de linhagem;
+- manifesto, hashes, esquema e volumetria.
 
----
+Proibido:
 
-## Os dois lados da divergência
+- filtro analítico;
+- preenchimento de ausência;
+- de/para;
+- normalização de código de negócio;
+- dimensão, fato ou indicador.
 
-### Lado A — o notebook versionado (errado)
+### Silver — `01_engenharia_dados.ipynb`
 
-`notebooks/inspecao_datasus.ipynb`, célula 25, comentário original incluído:
+Responsabilidade: tornar os dados consistentes e auditáveis para análise.
 
-```python
-# 5a) IPH por hospital (CNES) × mês
-# Numerador: contagem de AIH por CNES × competência      ← a fórmula antiga, assumida
-...
-intern = (sih_full.groupby([col_cnes_sih, "_ano", "_mes"])
-                  .size()                                 ← COUNT(AIH)
-                  .reset_index(name="internacoes"))
-...
-iph_hosp["dias"] = iph_hosp.apply(lambda r: dias_no_mes(r["_ano"], r["_mes"]), axis=1)
-iph_hosp["denominador"] = iph_hosp["leitos_sus"] * iph_hosp["dias"]
-iph_hosp["iph"] = np.where(iph_hosp["denominador"] > 0,
-                           iph_hosp["internacoes"] / iph_hosp["denominador"],   ← errado
-                           np.nan)
+Inclui:
+
+- tipagem;
+- todos os de/paras;
+- dimensões e fatos;
+- classificação de qualidade e origem;
+- agregações com `dropna=False`;
+- reconciliações antes da promoção;
+- documentação automática de esquema, domínios e qualidade.
+
+### Gold/análise — futuro `02_analise_dados.ipynb`
+
+Responsabilidade: fórmulas finais, benchmarks, faixas, visualizações e narrativa.
+Nenhum índice é declarado validado apenas porque a Silver contém seus insumos.
+
+## Oito controles implementados
+
+1. **Inventário de domínios:** cobertura medida por campo; lacunas explícitas.
+2. **De/paras:** todos os códigos observados de especialidade, natureza
+   jurídica, CID e UTI estão cobertos e têm proveniência.
+3. **Identificadores preservados:** `N_AIH`, `IDENT` e `COD_IDADE` estão no fato.
+4. **Unidade de contagem:** 5.210.357 AIHs aprovadas, 5.097.456 internações
+   novas e 112.901 continuações.
+5. **Permanência:** `DIAS_PERM` alimenta permanência; `QT_DIARIAS` permanece
+   nomeado como faturamento.
+6. **Região:** região analítica vem da referência oficial municipal do MS;
+   a declaração histórica do CNES/LT e seus quatro conflitos são preservados
+   para auditoria.
+7. **Nulos em agrupamento:** `dropna=False` e reconciliação impedem perdas
+   silenciosas; a base CID cresceu de 361.273 para 377.708 linhas.
+8. **Índices:** TMH e IPR têm insumos validados; CMI exige decisão da unidade;
+   IPH real está bloqueado.
+
+## Reconciliações bloqueantes
+
+A Silver só grava se:
+
+- fato SIH = 5.210.357 linhas;
+- AIH normal + continuação = total do fato;
+- todos os códigos `ESPEC` observados tiverem de/para;
+- todos os CIDs tiverem capítulo e descrição;
+- todos os hospitais SIH existirem na dimensão hospital;
+- todos os hospitais tiverem região, natureza jurídica, nome e esfera atuais;
+- agregados hospital/mês e hospital/especialidade/mês somarem o fato;
+- agregado hospital/CID somar todas as internações novas;
+- internações com região nula continuarem presentes após o `groupby`.
+
+Nome e esfera atuais não são usados para reescrever o cadastro histórico. A
+dimensão hospital os identifica com sufixo `_atual` e
+`fl_cadastro_atual_nao_historico=1`. Se o produto exigir o atributo vigente em
+cada competência de 2022–2023, será necessária uma fonte cadastral histórica.
+
+## Observação sobre o IPH histórico
+
+O proxy:
+
+```text
+SUM(QT_DIARIAS) / (leitos_SUS × dias_do_mês)
 ```
 
-A célula 31 do mesmo notebook grava os quatro parquets em
-`dados/processados/`. **É um pipeline destrutivo:** rodar o notebook como está
-substitui os parquets corretos.
+reproduz a média histórica `0,440272`, mas isso não comprova ocupação real.
+`QT_DIARIAS` é faturamento, a competência pode divergir da saída e 16,2554% das
+internações cruzam mês. Para medir ocupação física seria necessário distribuir
+intervalos de internação no calendário e validar as regras de leito/transferência.
 
-### Lado B — os parquets em disco (corretos)
+Até essa investigação, o campo chama-se `proxy_iph_diarias_faturadas` e recebe
+o status `experimental_nao_validado_como_ocupacao_real`.
 
-`dados/processados/iph_por_hospital_mensal.parquet` — 14.821 linhas:
+## Artefatos legados
 
-| Verificação | Resultado |
-|---|---|
-| `iph == patient_days / denominador` | **100,0%** das linhas |
-| `iph == internacoes / denominador` | 1,3% das linhas (coincidência aritmética onde permanência ≈ 1 dia) |
-| IPH médio | **0,4403** — bate com o `CONTEXTO.md` |
-| Hospital-meses `> 0,85` | **7,8%** — bate com o achado-chave do pitch |
-| Distribuição de `classe` | Normal 12.098 · Atenção 1.562 · Crítico 1.160 · Sem dados 1 |
-
----
-
-## Quatro evidências independentes de que o código se perdeu
-
-**1. Coluna que o notebook nunca cria.** Os parquets têm `patient_days`.
-Nenhuma célula do `inspecao_datasus.ipynb` computa esse campo.
-
-**2. Nomes de coluna incompatíveis.** O notebook cria `dias`; os parquets têm
-`dias_mes`. O parquet de hospital ainda tem `munic`, que o notebook não produz
-nessa etapa. São nomes de outra versão do código.
-
-**3. Esquema de agregação diferente nas granularidades superiores.** Não é só o
-numerador que mudou — a metodologia mudou:
-
-| | `inspecao_datasus.ipynb` (versionado) | Parquet em disco |
-|---|---|---|
-| `iph_por_municipio_mensal` | `['municipio','_ano','_mes','iph_medio']` — média do IPH dos hospitais **ponderada por leitos** | `['municipio','_ano','_mes','patient_days','leitos_sus','internacoes','dias_mes','denominador','iph','classe']` — **IPH recalculado do zero** somando paciente-dia e leitos do município |
-| `iph_por_regiao_mensal` | `['REGSAUDE','_ano','_mes','iph_medio']` — idem | mesma estrutura completa, recalculada |
-
-A versão perdida abandonou a média ponderada e passou a **recalcular o índice
-nativamente em cada granularidade**. É metodologicamente mais correto (uma taxa
-de ocupação agregada é a razão das somas, não a média das razões) e é o que está
-nos números apresentados.
-
-**4. O notebook de patches declara a dependência por escrito.**
-`notebooks/medflow_patches_v2.ipynb`, célula 10, primeira linha:
-
-```python
-# Usar iph_por_hospital_mensal.parquet que já foi recalculado com patient-days
-```
-
-O `medflow_patches_v2.ipynb` **não recalcula o IPH** — ele apenas consome os
-parquets (célula 2: quatro `pd.read_parquet`). O cabeçalho lista como patch 3
-*"Série histórica IPH com fórmula correta (patient-days)"*, mas o que ele
-corrige é a **figura**, não o dado. A correção do dado aconteceu antes, fora
-deste arquivo.
-
-**Âncora temporal:** `dados/processados/relatorio_qualidade.txt` é gravado na
-célula 32, na mesma execução que grava os parquets. Ele diz
-`Gerado em: 2026-06-07 18:13`. Essa é a data da execução perdida — nove dias
-antes da entrega da Sprint 1 (16/06/2026).
-
----
-
-## Encadeamento atual
-
-```
-DATASUS (FTP/API)
-      │
-      ▼
-  dados/raw/  ── 96 .dbf/.dbc, git-ignored  ─────────────┐
-      │                                                  │
-      ▼                                                  │
-[ inspecao_datasus.ipynb ]  ← VERSIONADO, FÓRMULA ERRADA │  não reproduz
-      │                                                  │
-      ╳ NÃO é o que gerou os parquets                    │
-                                                         │
-[ notebook perdido, exec. 2026-06-07 18:13 ] ────────────┘
-      │
-      ▼
-  dados/processados/*.parquet  ← CORRETOS (patient-days)
-      │
-      ├──► [ medflow_patches_v2.ipynb ] ──► figuras P1–P5  (oficiais)
-      │
-      └──► [ notebook perdido nº 2 ] ──► figuras 08d, 09, 10, 12, 13
-                                          + CSVs de TMH/CMI/IS
-```
-
-São **dois** notebooks ausentes. O segundo produziu as figuras `08d` a `13` e os
-CSVs `tmh_por_especialidade.csv`, `cmi_por_especialidade.csv`,
-`indice_sazonalidade_2023.csv` e `detalhe_regsaude_105.csv` — nenhum arquivo do
-repositório contém esse código. Detalhado na pendência 3 de
-`../PENDENCIAS.md`.
-
----
-
-## Risco imediato
-
-Enquanto isso não for corrigido:
-
-1. **Risco de destruição de dados.** Qualquer pessoa que abra o
-   `inspecao_datasus.ipynb` e execute "Run All" perde os parquets corretos.
-   Não há backup versionado — os parquets estão no `.gitignore`.
-2. **Risco de avaliação.** O GitHub vale 20% e a avaliação técnica do pitch 50%.
-   Um avaliador que rode o notebook publicado obtém IPH médio ≈ 0,14 e conclui
-   que os números do pitch não se sustentam.
-3. **Risco de narrativa.** A correção paciente-dia é o argumento técnico mais
-   forte do projeto. Publicar o código com a fórmula que a decisão rejeitou
-   inverte a mensagem.
-
-**Mitigação enquanto não se reconstrói:** fazer cópia dos quatro parquets fora
-de `dados/processados/` antes de qualquer execução.
-
----
-
-## Como reconstruir
-
-### Alteração 1 — numerador paciente-dia
-
-Na célula 25, o agregado por `CNES × _ano × _mes` deve produzir as duas colunas:
-
-```python
-intern = (sih_full
-          .assign(_qtd=pd.to_numeric(sih_full["QT_DIARIAS"], errors="coerce"))
-          .groupby([col_cnes_sih, "_ano", "_mes"])
-          .agg(patient_days=("_qtd", "sum"),
-               internacoes=("_qtd", "size"))
-          .reset_index()
-          .rename(columns={col_cnes_sih: "CNES"}))
-
-iph_hosp["dias_mes"]    = iph_hosp.apply(lambda r: dias_no_mes(r["_ano"], r["_mes"]), axis=1)
-iph_hosp["denominador"] = iph_hosp["leitos_sus"] * iph_hosp["dias_mes"]
-iph_hosp["iph"]         = np.where(iph_hosp["denominador"] > 0,
-                                   iph_hosp["patient_days"] / iph_hosp["denominador"],
-                                   np.nan)
-```
-
-`internacoes` **continua sendo gravada** — os parquets a têm, e o
-`medflow_patches_v2.ipynb` a consome na célula 14 (`internacoes = ('internacoes', 'sum')`).
-Renomear `dias` → `dias_mes`.
-
-### Alteração 2 — recalcular por granularidade, não fazer média
-
-Para município e região, substituir a média ponderada (células 26 e 27) por
-soma dos numeradores e denominadores dentro do grupo, gerando o mesmo esquema
-de 10 colunas do parquet atual, incluindo `classe`.
-
-### Alteração 3 — segurança
-
-Fazer as células de escrita não sobrescreverem silenciosamente: gravar em
-diretório temporário e promover só após os critérios de aceite passarem.
-
-### Critérios de aceite
-
-A execução corrigida deve reproduzir, sobre SP 2022–2023:
-
-| Verificação | Valor esperado |
-|---|---|
-| Linhas em `iph_por_hospital_mensal` | 14.821 |
-| Linhas em `iph_por_municipio_mensal` | 7.817 |
-| Linhas em `iph_por_regiao_mensal` | 1.397 |
-| IPH médio (hospital-mês) | 0,4403 |
-| Hospital-meses `> 0,85` | 7,8% |
-| Hospital-meses em Atenção | 10,5% |
-| REGSAUDE mais pressionada | 105 → IPH 0,880 |
-| CNES 2097648, IPH médio | 1,01 |
-| Linhas SIH carregadas | 5.210.357 |
-
-Se os três `shape` e o IPH médio baterem, a reconstrução é fiel. Se não
-baterem, **não promover** — os parquets atuais são a referência, não o código.
-
----
-
-## Nota de método
-
-A conclusão acima não veio da leitura dos comentários do notebook — veio de
-confrontar o código versionado com o conteúdo binário dos parquets. Os
-comentários, aliás, apontam para a direção errada: a célula 25 ainda diz
-*"Numerador: contagem de AIH"*, e `referencias/medflow_data_map.jsx` documenta
-`internações_mês ÷ (QT_SUS × dias_do_mês)` como fórmula oficial do IPH
-(pendência 2 de `../PENDENCIAS.md`). **A documentação do projeto descreve a
-fórmula rejeitada; só os dados estão certos.**
-
----
-
-## Referências cruzadas
-
-- `../DECISOES.md` § 3 — a decisão da correção paciente-dia e seu impacto medido
-- `../PENDENCIAS.md` § 1, 2 e 3 — as ações derivadas deste achado
-- Memória do projeto: `decisions/medflow-organizacao-material`
+`dados/processados/`, `dados/curados/`, `medflow_patches_v2.ipynb` e
+`notebooks/_legado/` não fazem parte do contrato atual. Permanecem somente para
+rastreabilidade histórica e não devem alimentar novos resultados.
