@@ -1,6 +1,7 @@
 # PIPELINE — contrato Bronze e Silver do MedFlow
 
-Atualizado em 28/07/2026 após execução integral dos notebooks.
+Atualizado em 29/07/2026 após duas execuções integrais e idempotentes da
+Silver para o recorte disponível de 2024-01 a 2026-05.
 
 ## Contrato das camadas
 
@@ -11,6 +12,7 @@ Responsabilidade: adquirir e preservar as fontes.
 Permitido:
 
 - download e cache;
+- descoberta da última competência comum de SIH/RD e CNES/LT;
 - descompressão técnica DBC/DBF e HTTP gzip;
 - serialização em Parquet;
 - metadados de linhagem;
@@ -49,15 +51,15 @@ Nenhum índice é declarado validado apenas porque a Silver contém seus insumos
 2. **De/paras:** todos os códigos observados de especialidade, natureza
    jurídica, CID e UTI estão cobertos e têm proveniência.
 3. **Identificadores preservados:** `N_AIH`, `IDENT` e `COD_IDADE` estão no fato.
-4. **Unidade de contagem:** 5.210.357 AIHs aprovadas, 5.097.456 internações
-   novas e 112.901 continuações.
+4. **Unidade de contagem:** 7.034.961 AIHs aprovadas, 6.905.441 internações
+   novas e 129.520 continuações.
 5. **Permanência:** `DIAS_PERM` alimenta permanência; `QT_DIARIAS` permanece
    nomeado como faturamento.
 6. **Região:** região analítica vem da referência oficial municipal do MS;
    a declaração histórica do CNES/LT e seus quatro conflitos são preservados
    para auditoria.
 7. **Nulos em agrupamento:** `dropna=False` e reconciliação impedem perdas
-   silenciosas; a base CID cresceu de 361.273 para 377.708 linhas.
+   silenciosas; a base CID tem 447.334 combinações hospital/CID.
 8. **Índices:** TMH e IPR têm insumos validados; CMI exige decisão da unidade;
    IPH real está bloqueado.
 
@@ -65,7 +67,7 @@ Nenhum índice é declarado validado apenas porque a Silver contém seus insumos
 
 A Silver só grava se:
 
-- fato SIH = 5.210.357 linhas;
+- fato SIH = 7.034.961 linhas;
 - AIH normal + continuação = total do fato;
 - todos os códigos `ESPEC` observados tiverem de/para;
 - todos os CIDs tiverem capítulo e descrição;
@@ -78,7 +80,7 @@ A Silver só grava se:
 Nome e esfera atuais não são usados para reescrever o cadastro histórico. A
 dimensão hospital os identifica com sufixo `_atual` e
 `fl_cadastro_atual_nao_historico=1`. Se o produto exigir o atributo vigente em
-cada competência de 2022–2023, será necessária uma fonte cadastral histórica.
+cada competência de 2024–2026, será necessária uma fonte cadastral histórica.
 
 ## Observação sobre o IPH histórico
 
@@ -88,8 +90,8 @@ O proxy:
 SUM(QT_DIARIAS) / (leitos_SUS × dias_do_mês)
 ```
 
-reproduz a média histórica `0,440272`, mas isso não comprova ocupação real.
-`QT_DIARIAS` é faturamento, a competência pode divergir da saída e 16,2554% das
+reproduz a média `0,472168`, mas isso não comprova ocupação real.
+`QT_DIARIAS` é faturamento, a competência pode divergir da saída e 15,0798% das
 internações cruzam mês. Para medir ocupação física seria necessário distribuir
 intervalos de internação no calendário e validar as regras de leito/transferência.
 
