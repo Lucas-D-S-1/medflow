@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.2.0 — preparado em 29/07/2026
+## 0.2.0 — publicado em 29/07/2026
 
 ### Adicionado
 

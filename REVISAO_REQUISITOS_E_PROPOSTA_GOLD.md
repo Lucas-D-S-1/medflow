@@ -1,8 +1,9 @@
 # Revisão dos requisitos e proposta para a camada Gold
 
 Atualizado em 29/07/2026. Este documento separa requisitos oficiais, evidências
-da mentoria, inconsistências da apresentação da Sprint 1 e propostas que ainda
-dependem de aceite da equipe.
+da mentoria, inconsistências da apresentação da Sprint 1, decisões aprovadas e
+definições que ainda pertencem à camada de entrega. A Gold descrita aqui foi
+implementada, validada e publicada na `v0.2.0`.
 
 ## 1. Materiais revisados
 
@@ -83,17 +84,17 @@ apresentação final sem correção.
 | Slide | Problema encontrado | Tratamento para a Sprint 2 |
 |---:|---|---|
 | 3 | recorte 2022–2023, 5,21 milhões, 669 hospitais e “ocupação real” | substituir pelo recorte 2024-01 a 2026-05 e retirar a afirmação de ocupação real |
-| 4 | Franco da Rocha a 93,9% por dois anos é achado legado do IPH | remover até o novo IPH passar pela validação calendário-dia |
+| 4 | Franco da Rocha a 93,9% por dois anos é achado legado do IPH | substituir por achado gerado pelo IPH estimado validado na Gold |
 | 5 | persona correta, mas recorte e quantidade de hospitais estão antigos | manter a persona; atualizar números e período |
-| 6 | 24 meses e benchmarking já entregue | atualizar para 29 meses; separar o que está implementado do que ainda será Gold |
+| 6 | 24 meses e benchmarking já entregue | atualizar para 29 meses; mostrar Gold concluída e Oracle/dashboard em construção |
 | 7 | exemplo usa IPH de 101% como ocupação real | substituir por mockup sem número ou por indicador Gold validado |
 | 8 | os cinco índices aparecem como calculados; o IPR de 1,4× não tem pipeline reproduzível atual | apresentar fórmulas aprovadas e novos resultados gerados pelo notebook 02 |
 | 9 | 93,9%, 7,8% críticos e 12/23 meses são resultados legados | remover; nenhum desses valores deve aparecer no pitch atual |
-| 10 | arquitetura diz `pysus`, CNES API para leitos e população CSV implementados | mostrar FTP DATASUS, CNES/LT, API CNES atual e marcar CSV/Oracle como pendentes até serem construídos |
+| 10 | arquitetura diz `pysus`, CNES API para leitos e população CSV implementados | mostrar FTP DATASUS, CNES/LT, API CNES atual e CSV oficial como implementados; Oracle continua pendente |
 | 11 | cita `scikit-learn`, Oracle, Power BI e cinco índices como implementados | separar tecnologias usadas, em construção e opcionais |
 | 12 | protótipo pode ser reaproveitado como referência visual | atualizar dados, filtros, nomes dos indicadores e estados metodológicos |
 | 13 | notas dizem que os cinco índices estão concluídos | atualizar Kanban com Gold, Oracle, dashboard, pitch e Select AI |
-| 14 | encerramento repete 5,21 milhões | atualizar somente depois de congelar os números Gold |
+| 14 | encerramento repete 5,21 milhões | substituir pela volumetria congelada e validada da Gold `v0.2.0` |
 
 Conclusão: o arquivo da Sprint 1 é insumo de narrativa e identidade, não fonte
 dos números da apresentação final. Todas as figuras e métricas de 2022–2023

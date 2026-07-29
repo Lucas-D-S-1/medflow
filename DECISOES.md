@@ -192,8 +192,14 @@ Ordem de trabalho restante:
 4. regenerar achados e figuras;
 5. atualizar pitch e vídeo.
 
-A versão pública `v0.1.0` do pipeline Bronze/Silver foi publicada em
-29/07/2026.
+A versão pública
+[`v0.2.0`](https://github.com/Lucas-D-S-1/fiap-1tscoa/releases/tag/v0.2.0)
+foi publicada em 29/07/2026 com Silver canônica, Gold, geografia, contratos e
+validação integrada. A `v0.1.0` permanece como marco histórico do pipeline
+Bronze/Silver.
 
-A base metodológica e a estrutura de dados estão fechadas. Ferramenta de
-dashboard, carga no Oracle e perguntas finais do Select AI continuam em aberto.
+A base metodológica e a estrutura de dados estão fechadas. Power BI é a
+recomendação para o MVP, mas a ferramenta e a forma do link público ainda
+precisam de confirmação operacional. A carga no Oracle e as perguntas finais
+do Select AI continuam em aberto. O próximo marco sugerido é
+**`v0.3.0` — Oracle e dashboard MVP**.
