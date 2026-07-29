@@ -1,11 +1,16 @@
 # DECISÕES — Challenge Oracle: MedFlow
 
-Atualizado em 28/07/2026. As decisões abaixo substituem interpretações
+Atualizado em 29/07/2026. As decisões abaixo substituem interpretações
 anteriores quando houver conflito.
 
 ## 1. Escopo
 
-- São Paulo, competências 2022–2023, com 24 meses completos.
+- São Paulo, competências solicitadas de 2024 a 2026.
+- A execução usa todas as competências comuns já publicadas para SIH/RD e
+  CNES/LT. Na validação de 29/07/2026, o recorte efetivo foi
+  **2024-01 a 2026-05 (29 meses)**; 2026 é um período parcial.
+- A descoberta remota e o cache incremental permitem que o mesmo batch mensal
+  incorpore novas competências até 2026-12 sem alterar o código.
 - Fontes públicas: SIH/RD, CNES/LT, API de Dados Abertos do Ministério da
   Saúde, tabelas CID-10 do DATASUS e referências do IBGE/CONCLA.
 - Análise histórica; ML e predição permanecem fora do escopo.
@@ -13,8 +18,8 @@ anteriores quando houver conflito.
 
 Volumetria Bronze validada:
 
-- SIH/RD: 5.210.357 linhas;
-- CNES/LT: 200.075 linhas;
+- SIH/RD: 7.034.961 linhas e 117 colunas;
+- CNES/LT: 243.085 linhas e 31 colunas;
 - IBGE: 645 municípios.
 
 ## 2. Arquitetura de dados
@@ -53,10 +58,10 @@ uma nova internação.
 
 No recorte:
 
-- 5.210.357 AIHs aprovadas;
-- 5.102.190 números de AIH distintos;
-- 5.097.456 internações novas;
-- 112.901 registros de continuação.
+- 7.034.961 AIHs aprovadas;
+- 6.909.807 números de AIH distintos;
+- 6.905.441 internações novas;
+- 129.520 registros de continuação.
 
 Decisão: preservar `N_AIH` e `IDENT` no fato e expor contagens separadas. TMH e
 permanência usam internações novas. CMI e IS ainda precisam declarar qual
@@ -69,7 +74,7 @@ unidade adotam.
 - `QT_DIARIAS`: diárias faturadas;
 - `DIAS_PERM`: permanência registrada.
 
-Somente 71,9762% das linhas têm valores iguais; 131.869 registros têm
+Somente 70,0547% das linhas têm valores iguais; 181.584 registros têm
 `QT_DIARIAS=0` e `DIAS_PERM>0`.
 
 Decisões:
@@ -98,11 +103,11 @@ SUM(QT_DIARIAS) / (leitos_SUS × dias_do_mês)
 ```
 
 é preservado somente como `proxy_iph_diarias_faturadas`. Ele reproduz a média
-`0,440272`, mas não prova ocupação física porque:
+`0,472168`, mas não prova ocupação física porque:
 
 - `QT_DIARIAS` é faturamento;
-- 23,5890% das competências divergem do mês da saída;
-- 16,2554% das internações cruzam mês;
+- 18,7633% das competências divergem do mês da saída;
+- 15,0798% das internações cruzam mês;
 - a soma na competência não distribui a ocupação no calendário.
 
 Decisão vinculante: não chamar esse proxy de “ocupação real” nem usar as faixas
@@ -113,7 +118,7 @@ metodológica.
 
 ### Especialidade
 
-Os 16 códigos `ESPEC` observados têm cobertura de de/para de 100%. `ESPEC` não
+Os 15 códigos `ESPEC` observados têm cobertura de de/para de 100%. `ESPEC` não
 é fonte para recorte de UTI; usar `MARCA_UTI` e `UTI_MES_TO`, com as ressalvas
 documentadas.
 
@@ -136,11 +141,13 @@ analítica. A cobertura do fato passou a 100%, sem imputação arbitrária.
 
 ### Demais referências
 
-- `NAT_JUR`: CONCLA/IBGE 2021, 22/22 códigos observados;
+- `NAT_JUR`: CONCLA/IBGE 2021, 21/21 códigos observados; o código `1228`,
+  surgido no perfil mais recente de um hospital, foi incorporado como
+  “Consórcio Público de Direito Privado”;
 - `DIAG_PRINC`: DATASUS CID-10 2008 e complementos oficiais do MS,
-  9.212/9.212 códigos observados;
-- `MARCA_UTI`: MS/DATASUS e CEM, 16/16 códigos observados;
-- nome e esfera atuais: API oficial CNES, 669/669 hospitais.
+  9.494/9.494 códigos observados;
+- `MARCA_UTI`: MS/DATASUS e CEM, 14/14 códigos observados;
+- nome e esfera atuais: API oficial CNES, 653/653 hospitais.
 
 Nome e esfera são fotografia atual, explicitamente marcados como não
 históricos. O `ESFERA_A` bruto do CNES/LT permanece vazio e não é preenchido
@@ -162,9 +169,12 @@ Qualquer indicador aprovado deve ser apresentado em quatro camadas:
 
 ## 8. Segurança e reprodutibilidade
 
-- FTP direto é a fonte operacional, pois o catálogo testado do `pysus` não
-  reproduziu as 24 competências.
-- Saídas não são sobrescritas sem `SOBRESCREVER=True`.
+- FTP direto é a fonte operacional. O notebook descobre a interseção de
+  competências SIH/RD e CNES/LT dentro de 2024–2026.
+- Downloads e cadastros usam cache incremental; uma nova competência promove
+  automaticamente um novo recorte consolidado.
+- Reexecuções do mesmo recorte preservam os Parquets, salvo
+  `SOBRESCREVER=True`.
 - Arquivos em construção usam sufixo `.parcial`.
 - A Silver só promove dados após reconciliar totais e domínios.
 - `dados/processados/` e `dados/curados/` são legados e não alimentam o novo
@@ -176,13 +186,13 @@ Entrega prevista: 01/09/2026.
 
 Ordem de trabalho:
 
-1. revisar documentação e artefatos Silver;
+1. publicar a versão `v0.1.0` do pipeline Bronze/Silver;
 2. decidir e sustentar as fórmulas finais;
 3. implementar o notebook analítico;
 4. regenerar achados e figuras;
 5. carregar o Oracle;
 6. construir dashboard e Select AI;
-7. atualizar GitHub, pitch e vídeo.
+7. atualizar pitch e vídeo.
 
 Ferramenta de dashboard, carga no Oracle e perguntas do Select AI permanecem em
 aberto até a base metodológica ser fechada.
