@@ -57,24 +57,26 @@ Se forem exigidos atributos historicamente vigentes, será necessário localizar
 ou solicitar uma fonte CNES histórica adicional. Isso não bloqueia os fatos,
 regiões, CIDs, natureza jurídica ou os demais de/paras.
 
-### 3. Decidir e validar a metodologia de cada índice — adiado
+### 3. Decidir e validar a metodologia de cada índice — proposta pronta
 
-Por decisão do projeto, a sustentação metodológica será tratada ao final da
-validação cadastral/documental e antes de implementar a Gold.
+Os requisitos oficiais, a apresentação da Sprint 1 e a transcrição da mentoria
+foram revisados. A proposta completa está em
+`sprint_2_em_andamento/REVISAO_REQUISITOS_E_PROPOSTA_GOLD.md`.
 
-Esta etapa vem antes de qualquer gráfico ou dashboard.
+As fórmulas abaixo ainda precisam de aceite antes da implementação da Gold:
 
 | Índice | Estado | Próxima decisão |
 |---|---|---|
-| TMH | insumos validados | confirmar `óbitos de IDENT=1 / internações IDENT=1` |
-| IPR | insumos validados | confirmar benchmark regional e mínimo de casos por CID |
-| IS | insumos disponíveis | escolher AIH aprovada ou internação nova |
-| CMI | fórmula pendente | definir tratamento dos custos de continuação de longa permanência |
-| IPH | bloqueado como ocupação real | decidir entre proxy faturado ou reconstrução calendário-dia |
+| TMH | proposta pronta | internações novas; mínimo de 30 para classificação |
+| IPR | proposta pronta | benchmark regional sem o próprio hospital; cortes 20/50/3 hospitais |
+| IS | proposta pronta | internações novas de 2026 / média do mesmo mês em 2024–2025 |
+| CMI | proposta pronta | valor aprovado por internação nova; continuação separada |
+| IPH | proposta pronta | reconstrução calendário-dia; capacidade CNES declarada; sem “ocupação real” |
 
-Para o IPH, não usar o nome “ocupação real” enquanto a alocação de permanência
-por dia/mês e as regras de leito não forem validadas. O valor histórico
-`0,472168` é apenas uma reprodução do proxy faturado.
+Para o IPH, não usar o nome “ocupação real”. A proposta reconstrói
+pacientes-dia, mas o denominador continua sendo capacidade mensal declarada no
+CNES, não censo diário de leitos operacionais. O valor histórico `0,472168`
+permanece apenas como reprodução do proxy faturado.
 
 ### 4. Implementar `02_analise_dados.ipynb`
 

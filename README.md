@@ -7,6 +7,9 @@ Recorte disponível e validado: **2024-01 a 2026-05 (29 meses)**.
 Versão pública:
 [`v0.1.0`](https://github.com/Lucas-D-S-1/medflow/releases/tag/v0.1.0).
 
+Proposta metodológica e revisão dos requisitos:
+[`REVISAO_REQUISITOS_E_PROPOSTA_GOLD.md`](REVISAO_REQUISITOS_E_PROPOSTA_GOLD.md).
+
 ## Estado validado em 29/07/2026
 
 O pipeline foi separado em duas camadas com responsabilidades explícitas:
