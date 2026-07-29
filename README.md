@@ -2,9 +2,12 @@
 
 **Enterprise Challenge FIAP × Oracle · Sprint 2 · Equipe Ômega Urban Tech**
 
-Recorte atual: Estado de São Paulo, competências de 2022 e 2023.
+Recorte solicitado: Estado de São Paulo, competências de 2024 a 2026.
+Recorte disponível e validado: **2024-01 a 2026-05 (29 meses)**.
+Versão pública:
+[`v0.1.0`](https://github.com/Lucas-D-S-1/medflow/releases/tag/v0.1.0).
 
-## Estado validado em 28/07/2026
+## Estado validado em 29/07/2026
 
 O pipeline foi separado em duas camadas com responsabilidades explícitas:
 
@@ -29,6 +32,8 @@ GOLD/ANÁLISE: índices, comparações e visualizações — ainda não implemen
 O notebook `00_extracao_dados.ipynb`:
 
 - baixa e mantém os arquivos DBC/DBF em `dados/raw/`;
+- descobre as competências comuns de SIH/RD e CNES/LT dentro de 2024–2026;
+- baixa somente arquivos ainda ausentes no cache a cada batch mensal;
 - serializa o conteúdo DBF em Parquet sem filtro, imputação ou de/para;
 - acrescenta apenas linhagem técnica de arquivo e competência;
 - preserva as respostas e arquivos oficiais de município, região de saúde,
@@ -39,11 +44,11 @@ Saídas validadas:
 
 | Artefato | Linhas | Colunas |
 |---|---:|---:|
-| `sih_rd_sp_2022_2023.parquet` | 5.210.357 | 116 |
-| `cnes_lt_sp_2022_2023.parquet` | 200.075 | 31 |
+| `sih_rd_sp_2024_2026.parquet` | 7.034.961 | 117 |
+| `cnes_lt_sp_2024_2026.parquet` | 243.085 | 31 |
 | `ibge_municipios_sp_raw.json` | 645 municípios | — |
 | `ms_regioes_saude_sp_raw.json` | 645 municípios | — |
-| `ms_cnes_estabelecimentos_atuais_raw.json` | 669 hospitais | — |
+| `ms_cnes_estabelecimentos_atuais_raw.json` | 653 hospitais | — |
 | `datasus_cid10_2008.zip` | 6 tabelas | — |
 | `ibge_concla_natureza_juridica_2021.html` | página oficial | — |
 
@@ -69,11 +74,11 @@ Saídas em `dados/silver/`:
 
 | Base | Linhas | Papel |
 |---|---:|---|
-| `fato_internacao` | 5.210.357 | fato no grão mensal da AIH |
-| `fato_leitos_mensal` | 15.533 | capacidade CNES por hospital e mês |
-| `base_hospital_mes` | 14.821 | insumos de IPH, IS, TMH e CMI |
-| `base_hospital_espec_mes` | 43.407 | insumos por especialidade |
-| `base_hospital_cid` | 377.708 | insumos do IPR, incluindo região nula |
+| `fato_internacao` | 7.034.961 | fato no grão mensal da AIH |
+| `fato_leitos_mensal` | 18.690 | capacidade CNES por hospital e mês |
+| `base_hospital_mes` | 17.856 | insumos de IPH, IS, TMH e CMI |
+| `base_hospital_espec_mes` | 52.796 | insumos por especialidade |
+| `base_hospital_cid` | 447.334 | insumos do IPR, incluindo região nula |
 | 6 dimensões | — | tempo, hospital, município, especialidade, CID e domínios |
 
 O notebook também gera:
@@ -81,16 +86,17 @@ O notebook também gera:
 - `DICIONARIO.md`;
 - `DOMINIOS.md`;
 - `RELATORIO_QUALIDADE.md`.
+- `METADADOS.json`, com recorte, hash Bronze e métricas bloqueantes.
 
 ## O que a validação encontrou
 
 | Controle | Resultado |
 |---|---:|
-| AIHs aprovadas | 5.210.357 |
-| AIHs distintas (`N_AIH`) | 5.102.190 |
-| Internações novas (`IDENT=1`) | 5.097.456 |
-| Continuações de longa permanência (`IDENT=5`) | 112.901 |
-| Cobertura dos 16 códigos `ESPEC` observados | 100% |
+| AIHs aprovadas | 7.034.961 |
+| AIHs distintas (`N_AIH`) | 6.909.807 |
+| Internações novas (`IDENT=1`) | 6.905.441 |
+| Continuações de longa permanência (`IDENT=5`) | 129.520 |
+| Cobertura dos 15 códigos `ESPEC` observados | 100% |
 | Cobertura de capítulo CID | 100% |
 | Hospitais SIH sem correspondência no CNES/LT | 0 |
 | Hospitais com região conflitante | 4 |
@@ -98,10 +104,10 @@ O notebook também gera:
 | CIDs sem descrição | 0 |
 | Hospitais sem nome/esfera atuais | 0 |
 | Hospitais sem natureza jurídica | 0 |
-| `QT_DIARIAS == DIAS_PERM` | 71,9762% |
-| `QT_DIARIAS=0` e `DIAS_PERM>0` | 131.869 |
-| Internações que cruzam mês | 16,2554% |
-| Competência diferente do mês da saída | 23,5890% |
+| `QT_DIARIAS == DIAS_PERM` | 70,0547% |
+| `QT_DIARIAS=0` e `DIAS_PERM>0` | 181.584 |
+| Internações que cruzam mês | 15,0798% |
+| Competência diferente do mês da saída | 18,7633% |
 
 ## Situação metodológica dos índices
 
@@ -115,7 +121,7 @@ O notebook também gera:
 
 `QT_DIARIAS` representa diárias faturadas. Somá-lo na competência de
 processamento não reconstrói os dias efetivamente ocupados em cada mês. Por
-isso, o valor histórico médio de `0,440272` foi reproduzido para auditoria, mas
+isso, o valor médio de `0,472168` foi reproduzido para auditoria, mas
 não é mais critério de correção nem evidência de ocupação física.
 
 ## Cobertura dos domínios
@@ -131,7 +137,7 @@ Todos os códigos observados estão cobertos:
 O recorte CNES/LT traz `ESFERA_A` vazio. Esse campo bruto continua vazio:
 nome e esfera atuais foram adicionados em colunas próprias, com flag temporal,
 para impedir que uma fotografia atual seja apresentada como cadastro de
-2022–2023.
+2024–2026.
 
 ## Como executar
 
@@ -141,9 +147,10 @@ Na raiz do repositório:
 .venv/bin/jupyter lab
 ```
 
-Execute `00_extracao_dados.ipynb` e depois
-`01_engenharia_dados.ipynb`. Ambos abortam quando encontram divergência e não
-substituem saídas existentes sem `SOBRESCREVER=True`.
+Execute `00_extracao_dados.ipynb` e depois `01_engenharia_dados.ipynb`.
+O primeiro incorpora automaticamente novas competências comuns até 2026-12;
+o segundo promove a Silver apenas após todas as reconciliações. Reexecutar o
+mesmo recorte não duplica registros nem substitui Parquets sem necessidade.
 
 Os arquivos em `dados/processados/` e `dados/curados/` são artefatos legados.
 O contrato atual usa exclusivamente `dados/bronze/` e `dados/silver/`.
