@@ -1,273 +1,233 @@
 # Dicionário da camada Silver — MedFlow
 
-Gerado por `01_engenharia_dados.ipynb`.
+Contrato de esquema `0.2.0`, gerado automaticamente em `2026-07-29T23:20:21.760878+00:00`.
+
+## Responsabilidade da camada
+
+- Dados tipados, conformados, reconciliados e prontos para reuso.
+- Somente dimensões e fatos; indicadores e benchmarks pertencem à Gold.
+- Nomes em snake_case, no singular e com prefixos semânticos.
 
 ## `dim_tempo`
 
-29 linhas × 6 colunas
+Calendário mensal do recorte analítico.
 
-| coluna | tipo | nulos |
-|---|---|---:|
-| `_ano` | int64 | 0 |
-| `_mes` | int64 | 0 |
-| `dias_no_mes` | int64 | 0 |
-| `competencia` | object | 0 |
-| `data_ref` | datetime64[ns] | 0 |
-| `trimestre` | int32 | 0 |
+- Caminho: `dados/silver/dimensoes/dim_tempo.parquet`
+- Grão: uma linha por competência
+- Linhas: 29
+- Chave lógica: `cd_competencia`
+
+| coluna | tipo | nulos | significado |
+|---|---|---:|---|
+| `nr_ano_competencia` | `int64` | 0 | Ano da competência de processamento. |
+| `nr_mes_competencia` | `int64` | 0 | Número do mês da competência de processamento. |
+| `qt_dia_mes` | `int64` | 0 | Quantidade de dias civis da competência. |
+| `cd_competencia` | `object` | 0 | Competência no formato AAAAMM. |
+| `dt_competencia` | `datetime64[ns]` | 0 | Primeiro dia do mês de competência. |
+| `nr_trimestre` | `int32` | 0 | Número do trimestre civil da competência. |
 
 ## `dim_hospital`
 
-653 linhas × 24 colunas
+Cadastro conformado dos hospitais presentes no SIH.
 
-| coluna | tipo | nulos |
-|---|---|---:|
-| `CNES` | string | 0 |
-| `municipio_cod6` | string | 0 |
-| `tipo_unidade_cod` | string | 0 |
-| `esfera_cod_cnes_lt` | string | 0 |
-| `natureza_jur_cod` | string | 0 |
-| `gestao_cod` | string | 0 |
-| `regiao_saude_cnes_lt` | string | 80 |
-| `qtd_regioes_declaradas_cnes_lt` | float64 | 80 |
-| `regiao_saude` | string | 0 |
-| `regiao_saude_nome` | object | 0 |
-| `macrorregiao_saude_codigo` | string | 0 |
-| `macrorregiao_saude_nome` | object | 0 |
-| `hospital_nome_atual` | object | 0 |
-| `hospital_razao_social_atual` | object | 0 |
-| `esfera_administrativa_atual` | object | 0 |
-| `cadastro_cnes_atualizado_em` | object | 0 |
-| `origem_regiao` | object | 0 |
-| `fl_regiao_conflitante` | int8 | 0 |
-| `fl_regiao_nao_confiavel` | int8 | 0 |
-| `tipo_unidade` | object | 0 |
-| `gestao` | object | 0 |
-| `natureza_juridica` | object | 0 |
-| `fl_esfera_ausente_cnes_lt` | int8 | 0 |
-| `fl_cadastro_atual_nao_historico` | int8 | 0 |
+- Caminho: `dados/silver/dimensoes/dim_hospital.parquet`
+- Grão: uma linha por CNES
+- Linhas: 653
+- Chave lógica: `cd_cnes`
+
+| coluna | tipo | nulos | significado |
+|---|---|---:|---|
+| `cd_cnes` | `string` | 0 | Código de sete dígitos do estabelecimento no CNES. |
+| `cd_municipio_ibge_6` | `string` | 0 | Código municipal de seis dígitos usado nas bases do DATASUS. |
+| `cd_tipo_unidade` | `string` | 0 | Código CNES do tipo de unidade. |
+| `cd_esfera_administrativa_cnes_lt` | `string` | 0 | Código bruto da esfera administrativa no CNES/LT. |
+| `cd_natureza_juridica` | `string` | 0 | Código CONCLA da natureza jurídica. |
+| `cd_tipo_gestao` | `string` | 0 | Código do tipo de gestão do estabelecimento. |
+| `cd_regiao_saude_cnes_lt` | `string` | 80 | Código de região declarado historicamente no arquivo CNES/LT. |
+| `qt_regiao_saude_declarada_cnes_lt` | `float64` | 80 | Quantidade de códigos regionais distintos observados no histórico CNES/LT. |
+| `cd_regiao_saude` | `string` | 0 | Código oficial de cinco dígitos da região de saúde. |
+| `nm_regiao_saude` | `object` | 0 | Nome oficial da região de saúde. |
+| `cd_macrorregiao_saude` | `string` | 0 | Código oficial da macrorregião de saúde. |
+| `nm_macrorregiao_saude` | `object` | 0 | Nome oficial da macrorregião de saúde. |
+| `nm_hospital_atual` | `object` | 0 | Nome fantasia atual do estabelecimento; não representa histórico mensal. |
+| `nm_razao_social_hospital_atual` | `object` | 0 | Razão social atual do estabelecimento. |
+| `nm_esfera_administrativa_atual` | `object` | 0 | Descrição atual da esfera administrativa obtida na API do CNES. |
+| `dt_atualizacao_cadastro_cnes` | `object` | 0 | Data de atualização informada pela fotografia atual do CNES. |
+| `ds_origem_regiao` | `object` | 0 | Fonte usada para atribuir a região analítica. |
+| `fl_regiao_conflitante` | `int8` | 0 | Indica hospital com mais de uma região declarada no histórico CNES/LT. |
+| `fl_regiao_nao_confiavel` | `int8` | 0 | Indica ausência de região oficial confiável. |
+| `nm_tipo_unidade` | `object` | 0 | Descrição do tipo de unidade. |
+| `nm_tipo_gestao` | `object` | 0 | Descrição do tipo de gestão do estabelecimento. |
+| `nm_natureza_juridica` | `object` | 0 | Descrição CONCLA da natureza jurídica. |
+| `fl_esfera_ausente_cnes_lt` | `int8` | 0 | Indica ausência da esfera administrativa no CNES/LT. |
+| `fl_cadastro_atual_nao_historico` | `int8` | 0 | Indica atributo cadastral atual, sem vigência histórica garantida. |
 
 ## `dim_municipio`
 
-645 linhas × 10 colunas
+Municípios paulistas e sua hierarquia regional.
 
-| coluna | tipo | nulos |
-|---|---|---:|
-| `municipio_cod7` | object | 0 |
-| `municipio_cod6` | object | 0 |
-| `municipio_nome` | object | 0 |
-| `uf` | object | 0 |
-| `microrregiao` | object | 0 |
-| `mesorregiao` | object | 0 |
-| `regiao_saude` | string | 0 |
-| `regiao_saude_nome` | object | 0 |
-| `macrorregiao_saude_codigo` | string | 0 |
-| `macrorregiao_saude_nome` | object | 0 |
+- Caminho: `dados/silver/dimensoes/dim_municipio.parquet`
+- Grão: uma linha por município
+- Linhas: 645
+- Chave lógica: `cd_municipio_ibge_7`
+
+| coluna | tipo | nulos | significado |
+|---|---|---:|---|
+| `cd_municipio_ibge_7` | `object` | 0 | Código oficial de sete dígitos do município no IBGE. |
+| `cd_municipio_ibge_6` | `object` | 0 | Código municipal de seis dígitos usado nas bases do DATASUS. |
+| `nm_municipio` | `object` | 0 | Nome oficial do município. |
+| `sg_uf` | `object` | 0 | Sigla da unidade da Federação. |
+| `nm_microrregiao` | `object` | 0 | Nome da microrregião geográfica do IBGE. |
+| `nm_mesorregiao` | `object` | 0 | Nome da mesorregião geográfica do IBGE. |
+| `cd_regiao_saude` | `string` | 0 | Código oficial de cinco dígitos da região de saúde. |
+| `nm_regiao_saude` | `object` | 0 | Nome oficial da região de saúde. |
+| `cd_macrorregiao_saude` | `string` | 0 | Código oficial da macrorregião de saúde. |
+| `nm_macrorregiao_saude` | `object` | 0 | Nome oficial da macrorregião de saúde. |
+| `qt_populacao_ibge_2022` | `int64` | 0 | População municipal do Censo IBGE 2022 distribuída no CSV oficial do Ministério da Saúde. |
+| `ds_fonte_populacao` | `object` | 0 | Fonte e ano de referência da população municipal. |
 
 ## `dim_especialidade`
 
-15 linhas × 4 colunas
+Domínio observado de especialidades do SIH.
 
-| coluna | tipo | nulos |
-|---|---|---:|
-| `ESPEC` | string | 0 |
-| `aih_aprovadas` | Int64 | 0 |
-| `especialidade` | object | 0 |
-| `mapeada` | int8 | 0 |
+- Caminho: `dados/silver/dimensoes/dim_especialidade.parquet`
+- Grão: uma linha por especialidade
+- Linhas: 15
+- Chave lógica: `cd_especialidade_sih`
+
+| coluna | tipo | nulos | significado |
+|---|---|---:|---|
+| `cd_especialidade_sih` | `string` | 0 | Código de especialidade da internação no SIH. |
+| `qt_aih_aprovada` | `Int64` | 0 | Quantidade de AIHs aprovadas associadas ao registro dimensional. |
+| `nm_especialidade` | `object` | 0 | Descrição da especialidade do SIH. |
+| `fl_especialidade_mapeada` | `int8` | 0 | Indica se o código de especialidade possui de/para validado. |
 
 ## `dim_cid`
 
-9,494 linhas × 9 colunas
+Diagnósticos CID-10 observados no recorte.
 
-| coluna | tipo | nulos |
-|---|---|---:|
-| `cid_principal` | object | 0 |
-| `aih_aprovadas` | Int64 | 0 |
-| `cid_descricao` | object | 0 |
-| `cid_descricao_abreviada` | object | 0 |
-| `fonte_descricao` | object | 0 |
-| `categoria` | object | 0 |
-| `categoria_descricao` | object | 4 |
-| `capitulo` | object | 0 |
-| `capitulo_desc` | object | 0 |
+- Caminho: `dados/silver/dimensoes/dim_cid.parquet`
+- Grão: uma linha por CID principal
+- Linhas: 9,494
+- Chave lógica: `cd_cid_principal`
+
+| coluna | tipo | nulos | significado |
+|---|---|---:|---|
+| `cd_cid_principal` | `object` | 0 | Código CID-10 do diagnóstico principal. |
+| `qt_aih_aprovada` | `Int64` | 0 | Quantidade de AIHs aprovadas associadas ao registro dimensional. |
+| `ds_cid` | `object` | 0 | Descrição completa do diagnóstico CID-10. |
+| `ds_cid_abreviada` | `object` | 0 | Descrição abreviada do diagnóstico CID-10. |
+| `ds_fonte_descricao` | `object` | 0 | Fonte usada para descrever ou mapear o código. |
+| `cd_categoria_cid` | `object` | 0 | Categoria de três caracteres da CID-10. |
+| `ds_categoria_cid` | `object` | 4 | Descrição da categoria CID-10. |
+| `cd_capitulo_cid` | `object` | 0 | Código do capítulo da CID-10. |
+| `ds_capitulo_cid` | `object` | 0 | Descrição do capítulo da CID-10. |
 
 ## `dim_dominio`
 
-84 linhas × 5 colunas
+De/paras auditáveis dos códigos utilizados na Silver.
 
-| coluna | tipo | nulos |
-|---|---|---:|
-| `campo` | object | 0 |
-| `codigo` | object | 0 |
-| `descricao` | object | 0 |
-| `fonte` | object | 0 |
-| `status` | object | 0 |
+- Caminho: `dados/silver/dimensoes/dim_dominio.parquet`
+- Grão: uma linha por campo e código
+- Linhas: 84
+- Chave lógica: `nm_campo_origem`, `cd_dominio`
+
+| coluna | tipo | nulos | significado |
+|---|---|---:|---|
+| `nm_campo_origem` | `object` | 0 | Nome do campo de origem ao qual o domínio se aplica. |
+| `cd_dominio` | `object` | 0 | Código do domínio. |
+| `ds_dominio` | `object` | 0 | Descrição do código do domínio. |
+| `ds_fonte_dominio` | `object` | 0 | Fonte usada no de/para do domínio. |
+| `st_mapeamento` | `object` | 0 | Estado de cobertura e validação do mapeamento. |
 
 ## `fato_internacao`
 
-7,034,961 linhas × 59 colunas
+AIHs aprovadas enriquecidas e tipadas para análise.
 
-| coluna | tipo | nulos |
-|---|---|---:|
-| `N_AIH` | string | 0 |
-| `IDENT` | string | 0 |
-| `ident_descricao` | object | 0 |
-| `CNES` | string | 0 |
-| `municipio_cod6` | string | 0 |
-| `municipio_res_cod6` | string | 0 |
-| `regiao_saude` | string | 0 |
-| `regiao_saude_nome` | object | 0 |
-| `macrorregiao_saude_codigo` | string | 0 |
-| `macrorregiao_saude_nome` | object | 0 |
-| `origem_regiao` | object | 0 |
-| `fl_regiao_conflitante` | int8 | 0 |
-| `fl_regiao_nao_confiavel` | int8 | 0 |
-| `_ano` | int16 | 0 |
-| `_mes` | int8 | 0 |
-| `dt_internacao` | datetime64[ns] | 0 |
-| `dt_saida` | datetime64[ns] | 0 |
-| `fl_cruza_mes` | int8 | 0 |
-| `fl_competencia_diverge_saida` | int8 | 0 |
-| `ESPEC` | string | 0 |
-| `especialidade` | object | 0 |
-| `cid_principal` | object | 0 |
-| `cid_descricao` | object | 0 |
-| `categoria_descricao` | object | 17 |
-| `capitulo` | object | 0 |
-| `capitulo_desc` | object | 0 |
-| `fonte_descricao` | object | 0 |
-| `QT_DIARIAS` | int32 | 0 |
-| `DIAS_PERM` | int32 | 0 |
-| `MORTE` | int32 | 0 |
-| `VAL_TOT` | float64 | 0 |
-| `UTI_MES_TO` | int32 | 0 |
-| `MARCA_UTI` | string | 0 |
-| `marca_uti_descricao` | object | 0 |
-| `IDADE` | int32 | 0 |
-| `COD_IDADE` | string | 0 |
-| `unidade_idade` | object | 0 |
-| `idade_anos_aprox` | float64 | 1 |
-| `SEXO` | string | 0 |
-| `sexo_descricao` | object | 0 |
-| `CAR_INT` | string | 0 |
-| `carater_internacao` | object | 0 |
-| `COMPLEX` | string | 0 |
-| `complexidade` | object | 0 |
-| `fl_aih_aprovada` | int8 | 0 |
-| `fl_internacao_nova` | int8 | 0 |
-| `fl_continuacao_longa_permanencia` | int8 | 0 |
-| `dias_perm_internacao_nova` | int32 | 0 |
-| `qt_diarias_internacao_nova` | int32 | 0 |
-| `valor_internacao_nova` | float64 | 0 |
-| `valor_continuacao` | float64 | 0 |
-| `fl_sem_diaria_faturada` | int8 | 0 |
-| `fl_permanencia_zero` | int8 | 0 |
-| `fl_sem_valor` | int8 | 0 |
-| `fl_obito` | int8 | 0 |
-| `fl_obito_internacao_nova` | int8 | 0 |
-| `fl_aih_com_valor` | int8 | 0 |
-| `fl_uti` | int8 | 0 |
-| `_arquivo_fonte` | object | 0 |
+- Caminho: `dados/silver/fatos/fato_internacao.parquet`
+- Grão: uma linha por registro mensal de AIH
+- Linhas: 7,034,961
+- Chave lógica: sem unicidade assumida; usar o identificador da fonte e a competência
 
-## `fato_leitos_mensal`
+| coluna | tipo | nulos | significado |
+|---|---|---:|---|
+| `id_aih` | `string` | 0 | Identificador da Autorização de Internação Hospitalar informado no SIH. |
+| `cd_tipo_aih` | `string` | 0 | Código que distingue internação nova de continuação de longa permanência. |
+| `ds_tipo_aih` | `object` | 0 | Descrição do tipo de AIH. |
+| `cd_cnes` | `string` | 0 | Código de sete dígitos do estabelecimento no CNES. |
+| `cd_municipio_ibge_6` | `string` | 0 | Código municipal de seis dígitos usado nas bases do DATASUS. |
+| `cd_municipio_residencia_ibge_6` | `string` | 0 | Código DATASUS do município de residência do paciente. |
+| `cd_regiao_saude` | `string` | 0 | Código oficial de cinco dígitos da região de saúde. |
+| `nm_regiao_saude` | `object` | 0 | Nome oficial da região de saúde. |
+| `cd_macrorregiao_saude` | `string` | 0 | Código oficial da macrorregião de saúde. |
+| `nm_macrorregiao_saude` | `object` | 0 | Nome oficial da macrorregião de saúde. |
+| `ds_origem_regiao` | `object` | 0 | Fonte usada para atribuir a região analítica. |
+| `fl_regiao_conflitante` | `int8` | 0 | Indica hospital com mais de uma região declarada no histórico CNES/LT. |
+| `fl_regiao_nao_confiavel` | `int8` | 0 | Indica ausência de região oficial confiável. |
+| `nr_ano_competencia` | `int16` | 0 | Ano da competência de processamento. |
+| `nr_mes_competencia` | `int8` | 0 | Número do mês da competência de processamento. |
+| `cd_competencia` | `string` | 0 | Competência no formato AAAAMM. |
+| `dt_internacao` | `datetime64[ns]` | 0 | Data de entrada da internação. |
+| `dt_saida` | `datetime64[ns]` | 0 | Data de saída da internação. |
+| `fl_cruza_mes` | `int8` | 0 | Indica internação cuja entrada e saída estão em meses diferentes. |
+| `fl_competencia_diverge_saida` | `int8` | 0 | Indica que a competência de processamento diverge do mês da saída. |
+| `cd_especialidade_sih` | `string` | 0 | Código de especialidade da internação no SIH. |
+| `nm_especialidade` | `object` | 0 | Descrição da especialidade do SIH. |
+| `cd_cid_principal` | `object` | 0 | Código CID-10 do diagnóstico principal. |
+| `ds_cid` | `object` | 0 | Descrição completa do diagnóstico CID-10. |
+| `ds_categoria_cid` | `object` | 17 | Descrição da categoria CID-10. |
+| `cd_capitulo_cid` | `object` | 0 | Código do capítulo da CID-10. |
+| `ds_capitulo_cid` | `object` | 0 | Descrição do capítulo da CID-10. |
+| `ds_fonte_descricao` | `object` | 0 | Fonte usada para descrever ou mapear o código. |
+| `qt_diaria_faturada` | `int32` | 0 | Quantidade de diárias faturadas na AIH; não equivale automaticamente a permanência. |
+| `qt_dia_permanencia` | `int32` | 0 | Quantidade de dias de permanência registrada na AIH. |
+| `vl_total_aprovado_sus` | `float64` | 0 | Valor nominal total aprovado pelo SUS para a AIH. |
+| `qt_diaria_uti_faturada` | `int32` | 0 | Quantidade total de diárias de UTI faturadas na AIH. |
+| `cd_tipo_uti` | `string` | 0 | Código da marca ou tipo de UTI informado no SIH. |
+| `ds_tipo_uti` | `object` | 0 | Descrição do código de UTI. |
+| `nr_idade_informada` | `int32` | 0 | Valor de idade informado, interpretado junto de cd_unidade_idade. |
+| `cd_unidade_idade` | `string` | 0 | Código da unidade usada para registrar a idade. |
+| `ds_unidade_idade` | `object` | 0 | Descrição da unidade usada para registrar a idade. |
+| `nr_idade_ano_aproximada` | `float64` | 1 | Idade aproximada em anos calculada a partir do valor e da unidade informados. |
+| `cd_sexo` | `string` | 0 | Código de sexo informado no SIH. |
+| `ds_sexo` | `object` | 0 | Descrição do código de sexo. |
+| `cd_carater_internacao` | `string` | 0 | Código do caráter da internação. |
+| `ds_carater_internacao` | `object` | 0 | Descrição do caráter da internação. |
+| `cd_complexidade` | `string` | 0 | Código do nível de complexidade do procedimento. |
+| `ds_complexidade` | `object` | 0 | Descrição do nível de complexidade. |
+| `fl_aih_aprovada` | `int8` | 0 | Indicador unitário de AIH aprovada. |
+| `fl_internacao_nova` | `int8` | 0 | Indica AIH normal, considerada uma nova internação. |
+| `fl_continuacao_longa_permanencia` | `int8` | 0 | Indica AIH de continuação de longa permanência. |
+| `qt_dia_permanencia_internacao_nova` | `int32` | 0 | Dias de permanência somente quando a linha representa internação nova. |
+| `qt_diaria_faturada_internacao_nova` | `int32` | 0 | Diárias faturadas somente quando a linha representa internação nova. |
+| `vl_aprovado_internacao_nova` | `float64` | 0 | Valor aprovado somente para internações novas. |
+| `vl_aprovado_continuacao` | `float64` | 0 | Valor aprovado somente para continuações de longa permanência. |
+| `fl_sem_diaria_faturada` | `int8` | 0 | Indica AIH sem diária faturada. |
+| `fl_permanencia_zero` | `int8` | 0 | Indica permanência registrada igual a zero. |
+| `fl_sem_valor` | `int8` | 0 | Indica valor total aprovado igual a zero. |
+| `fl_obito` | `int8` | 0 | Indica óbito registrado na AIH. |
+| `fl_obito_internacao_nova` | `int8` | 0 | Indica óbito em uma internação nova. |
+| `fl_aih_com_valor` | `int8` | 0 | Indica AIH com valor total aprovado maior que zero. |
+| `fl_uti` | `int8` | 0 | Indica presença de marca de UTI ou diária de UTI faturada. |
+| `nm_arquivo_origem` | `object` | 0 | Nome do arquivo DBF de origem da linha. |
 
-18,690 linhas × 8 colunas
+## `fato_leito_mensal`
 
-| coluna | tipo | nulos |
-|---|---|---:|
-| `CNES` | string | 0 |
-| `_ano` | int16 | 0 |
-| `_mes` | int8 | 0 |
-| `leitos_sus` | int32 | 0 |
-| `leitos_totais` | int32 | 0 |
-| `tipos_de_leito` | int64 | 0 |
-| `dias_no_mes` | int64 | 0 |
-| `capacidade_teorica_leito_dia` | int64 | 0 |
+Capacidade de leitos declarada no CNES.
 
-## `base_hospital_mes`
+- Caminho: `dados/silver/fatos/fato_leito_mensal.parquet`
+- Grão: uma linha por hospital e competência
+- Linhas: 18,690
+- Chave lógica: `cd_cnes`, `cd_competencia`
 
-17,856 linhas × 32 colunas
-
-| coluna | tipo | nulos |
-|---|---|---:|
-| `CNES` | string | 0 |
-| `_ano` | int16 | 0 |
-| `_mes` | int8 | 0 |
-| `aih_aprovadas` | int64 | 0 |
-| `aih_distintas` | int64 | 0 |
-| `internacoes_novas` | int64 | 0 |
-| `continuacoes_longa_permanencia` | int64 | 0 |
-| `qt_diarias_soma` | int32 | 0 |
-| `qt_diarias_internacoes_novas_soma` | int32 | 0 |
-| `dias_perm_soma` | int32 | 0 |
-| `dias_perm_internacoes_novas_soma` | int32 | 0 |
-| `obitos_aih` | int64 | 0 |
-| `obitos_internacoes_novas` | int64 | 0 |
-| `valor_total` | float64 | 0 |
-| `valor_internacoes_novas` | float64 | 0 |
-| `valor_continuacoes` | float64 | 0 |
-| `aih_com_valor` | int64 | 0 |
-| `registros_uti` | int64 | 0 |
-| `leitos_sus` | int32 | 0 |
-| `dias_no_mes` | int64 | 0 |
-| `capacidade_teorica_leito_dia` | int64 | 0 |
-| `municipio_cod6` | string | 0 |
-| `hospital_nome_atual` | object | 0 |
-| `regiao_saude` | string | 0 |
-| `regiao_saude_nome` | object | 0 |
-| `macrorregiao_saude_codigo` | string | 0 |
-| `macrorregiao_saude_nome` | object | 0 |
-| `origem_regiao` | object | 0 |
-| `fl_regiao_nao_confiavel` | int8 | 0 |
-| `permanencia_media_internacoes_novas` | float64 | 164 |
-| `proxy_iph_diarias_faturadas` | float64 | 0 |
-| `status_proxy_iph` | object | 0 |
-
-## `base_hospital_espec_mes`
-
-52,796 linhas × 25 colunas
-
-| coluna | tipo | nulos |
-|---|---|---:|
-| `CNES` | string | 0 |
-| `ESPEC` | string | 0 |
-| `especialidade` | object | 0 |
-| `_ano` | int16 | 0 |
-| `_mes` | int8 | 0 |
-| `aih_aprovadas` | int64 | 0 |
-| `aih_distintas` | int64 | 0 |
-| `internacoes_novas` | int64 | 0 |
-| `continuacoes_longa_permanencia` | int64 | 0 |
-| `qt_diarias_soma` | int32 | 0 |
-| `qt_diarias_internacoes_novas_soma` | int32 | 0 |
-| `dias_perm_soma` | int32 | 0 |
-| `dias_perm_internacoes_novas_soma` | int32 | 0 |
-| `obitos_aih` | int64 | 0 |
-| `obitos_internacoes_novas` | int64 | 0 |
-| `valor_total` | float64 | 0 |
-| `valor_internacoes_novas` | float64 | 0 |
-| `valor_continuacoes` | float64 | 0 |
-| `aih_com_valor` | int64 | 0 |
-| `registros_uti` | int64 | 0 |
-| `municipio_cod6` | string | 0 |
-| `hospital_nome_atual` | object | 0 |
-| `regiao_saude` | string | 0 |
-| `regiao_saude_nome` | object | 0 |
-| `origem_regiao` | object | 0 |
-
-## `base_hospital_cid`
-
-447,334 linhas × 11 colunas
-
-| coluna | tipo | nulos |
-|---|---|---:|
-| `CNES` | string | 0 |
-| `regiao_saude` | string | 0 |
-| `origem_regiao` | object | 0 |
-| `cid_principal` | object | 0 |
-| `capitulo` | object | 0 |
-| `internacoes_novas` | int64 | 0 |
-| `dias_perm_soma` | int32 | 0 |
-| `qt_diarias_soma` | int32 | 0 |
-| `obitos` | int64 | 0 |
-| `valor_total` | float64 | 0 |
-| `permanencia_media` | float64 | 0 |
+| coluna | tipo | nulos | significado |
+|---|---|---:|---|
+| `cd_cnes` | `string` | 0 | Código de sete dígitos do estabelecimento no CNES. |
+| `nr_ano_competencia` | `int16` | 0 | Ano da competência de processamento. |
+| `nr_mes_competencia` | `int8` | 0 | Número do mês da competência de processamento. |
+| `cd_competencia` | `string` | 0 | Competência no formato AAAAMM. |
+| `qt_leito_sus` | `int32` | 0 | Quantidade mensal de leitos disponíveis ao SUS declarada no CNES. |
+| `qt_leito_total` | `int32` | 0 | Quantidade mensal total de leitos declarada no CNES. |
+| `qt_tipo_leito` | `int64` | 0 | Quantidade de tipos de leito distintos observados no mês. |
+| `qt_dia_mes` | `int64` | 0 | Quantidade de dias civis da competência. |
+| `qt_capacidade_teorica_leito_dia` | `int64` | 0 | Leitos SUS multiplicados pelos dias civis do mês. |

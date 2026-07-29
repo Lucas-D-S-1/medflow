@@ -27,7 +27,7 @@ Volumetria Bronze validada:
 ```text
 00_extracao_dados.ipynb       → Bronze
 01_engenharia_dados.ipynb     → Silver
-02_analise_dados.ipynb        → Gold/análise, ainda pendente
+02_analise_dados.ipynb        → Gold, implementada e validada
 Oracle Autonomous DB          → armazenamento/serving
 Dashboard + Select AI         → consumo
 ```
@@ -41,12 +41,12 @@ Pode descomprimir, serializar e acrescentar linhagem técnica. O
 ### Silver
 
 Contém toda tipagem analítica, de/para, dimensão, fato, flag de qualidade e
-reconciliação. Os agregados mantêm chaves nulas com `dropna=False`.
+reconciliação. Publica somente dimensões e fatos com nomes canônicos.
 
 ### Gold/análise
 
-Contém as fórmulas finais, benchmarks, classificações, achados e figuras.
-Insumo disponível na Silver não significa indicador metodologicamente aprovado.
+Contém as fórmulas finais, benchmarks, estados de amostra, marts e geografia.
+Os cinco contratos foram aprovados em 29/07/2026.
 
 ## 3. Unidade de contagem do SIH
 
@@ -63,9 +63,9 @@ No recorte:
 - 6.905.441 internações novas;
 - 129.520 registros de continuação.
 
-Decisão: preservar `N_AIH` e `IDENT` no fato e expor contagens separadas. TMH e
-permanência usam internações novas. CMI e IS ainda precisam declarar qual
-unidade adotam.
+Decisão: preservar `N_AIH` e `IDENT` no fato e expor contagens separadas. Os
+cinco indicadores principais usam internações novas; continuações aparecem
+separadamente no CMI.
 
 ## 4. Permanência e diárias
 
@@ -86,13 +86,13 @@ Decisões:
 
 ## 5. Situação dos cinco índices
 
-| Índice | Definição em avaliação | Situação |
+| Índice | Definição aprovada | Situação |
 |---|---|---|
-| TMH | óbitos em internações novas / internações novas | insumos validados |
-| IPR | permanência média do hospital / regional, mesmo CID | insumos validados |
-| IS | volume do período / referência histórica comparável | unidade pendente |
-| CMI | custo / unidade de atendimento declarada | fórmula pendente |
-| IPH | pressão/ocupação hospitalar | bloqueado como ocupação real |
+| TMH | óbitos / internações novas | Gold validada; mínimo 30 |
+| IPR | permanência hospital/CID / benchmark regional sem o hospital | Gold validada; cortes 20/50/3 |
+| IS | 2026 / média do mesmo mês em 2024–2025 | Gold validada para jan–mai/2026 |
+| CMI | valor aprovado nominal / internações novas | Gold validada; continuações separadas |
+| IPH | pacientes-dia reconstruídos / leitos-dia declarados | Gold validada como pressão estimada |
 
 ### IPH
 
@@ -110,9 +110,9 @@ SUM(QT_DIARIAS) / (leitos_SUS × dias_do_mês)
 - 15,0798% das internações cruzam mês;
 - a soma na competência não distribui a ocupação no calendário.
 
-Decisão vinculante: não chamar esse proxy de “ocupação real” nem usar as faixas
-históricas Normal/Atenção/Crítico como fato validado antes da revisão
-metodológica.
+Decisão vinculante: não chamar o proxy histórico nem o IPH Gold de “ocupação
+real”. O contrato atual não usa faixas históricas Normal/Atenção/Crítico;
+denominador zero recebe IPH nulo.
 
 ## 6. Domínios
 
@@ -177,24 +177,23 @@ Qualquer indicador aprovado deve ser apresentado em quatro camadas:
   `SOBRESCREVER=True`.
 - Arquivos em construção usam sufixo `.parcial`.
 - A Silver só promove dados após reconciliar totais e domínios.
-- `dados/processados/` e `dados/curados/` são legados e não alimentam o novo
-  pipeline.
+- todo material anterior foi isolado em `dados/legado/` e não alimenta o
+  pipeline `0.2.0`.
 
 ## 9. Sprint 2
 
 Entrega prevista: 01/09/2026.
 
-Ordem de trabalho:
+Ordem de trabalho restante:
 
-1. decidir e sustentar as fórmulas finais;
-2. implementar o notebook analítico;
-3. regenerar achados e figuras;
-4. carregar o Oracle;
-5. construir dashboard e Select AI;
-6. atualizar pitch e vídeo.
+1. modelar e carregar as tabelas aprovadas no Oracle;
+2. construir dashboard usando os marts e o TopoJSON;
+3. validar as consultas SQL e três perguntas do Select AI;
+4. regenerar achados e figuras;
+5. atualizar pitch e vídeo.
 
 A versão pública `v0.1.0` do pipeline Bronze/Silver foi publicada em
 29/07/2026.
 
-Ferramenta de dashboard, carga no Oracle e perguntas do Select AI permanecem em
-aberto até a base metodológica ser fechada.
+A base metodológica e a estrutura de dados estão fechadas. Ferramenta de
+dashboard, carga no Oracle e perguntas finais do Select AI continuam em aberto.

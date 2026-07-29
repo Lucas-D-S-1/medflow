@@ -4,15 +4,26 @@
 
 Recorte solicitado: Estado de São Paulo, competências de 2024 a 2026.
 Recorte disponível e validado: **2024-01 a 2026-05 (29 meses)**.
-Versão pública:
+Versão pública estável:
 [`v0.1.0`](https://github.com/Lucas-D-S-1/medflow/releases/tag/v0.1.0).
+O contrato local `v0.2.0`, ainda não publicado, adiciona a Silver canônica,
+a Gold e os ativos geográficos.
 
 Proposta metodológica e revisão dos requisitos:
 [`REVISAO_REQUISITOS_E_PROPOSTA_GOLD.md`](REVISAO_REQUISITOS_E_PROPOSTA_GOLD.md).
 
+Arquitetura detalhada:
+[`ARQUITETURA_CAMADAS.md`](ARQUITETURA_CAMADAS.md).
+Nomenclatura:
+[`CONTRATO_NOMENCLATURA.md`](CONTRATO_NOMENCLATURA.md).
+Último gate:
+[`VALIDACAO_TECNICA.md`](VALIDACAO_TECNICA.md).
+Mudanças incompatíveis:
+[`CHANGELOG.md`](CHANGELOG.md).
+
 ## Estado validado em 29/07/2026
 
-O pipeline foi separado em duas camadas com responsabilidades explícitas:
+O pipeline possui três camadas com responsabilidades explícitas:
 
 ```text
 SIH/RD + CNES/LT + referências oficiais MS/DATASUS/IBGE
@@ -27,21 +38,24 @@ SILVER: tipos analíticos, de/paras, dimensões, fatos e qualidade
                   │
                   ▼
 02_analise_dados.ipynb
-GOLD/ANÁLISE: índices, comparações e visualizações — ainda não implementado
+GOLD: cinco índices, comparações regionais e geografia para o BI
 ```
 
 ### Bronze — não contém regra de negócio
 
 O notebook `00_extracao_dados.ipynb`:
 
-- baixa e mantém os arquivos DBC/DBF em `dados/raw/`;
+- preserva DBC em `dados/bronze/origem/datasus/`;
+- mantém DBF apenas como cache em `dados/bronze/intermediario/dbf/`;
 - descobre as competências comuns de SIH/RD e CNES/LT dentro de 2024–2026;
 - baixa somente arquivos ainda ausentes no cache a cada batch mensal;
 - serializa o conteúdo DBF em Parquet sem filtro, imputação ou de/para;
 - acrescenta apenas linhagem técnica de arquivo e competência;
 - preserva as respostas e arquivos oficiais de município, região de saúde,
   CID-10, natureza jurídica e cadastro atual dos estabelecimentos;
-- grava `dados/bronze/MANIFESTO.json` com fonte, volumetria e SHA-256.
+- grava Parquets fiéis em `dados/bronze/parquet/`;
+- grava `dados/bronze/MANIFESTO.json` com fonte, volumetria e SHA-256;
+- preserva também o CSV oficial de regiões/população e a malha IBGE 2024.
 
 Saídas validadas:
 
@@ -57,7 +71,7 @@ Saídas validadas:
 
 As colunas adicionais em relação à fonte são somente de linhagem.
 
-### Silver — todos os tratamentos ficam aqui
+### Silver — dimensões e fatos conformados
 
 O notebook `01_engenharia_dados.ipynb`:
 
@@ -71,25 +85,44 @@ O notebook `01_engenharia_dados.ipynb`:
 - enriquece hospitais com nome e esfera **atuais**, sem tratá-los como
   atributos historicamente vigentes;
 - usa `dropna=False` nos agregados e reconcilia os totais;
-- prepara os insumos dos índices sem antecipar a camada analítica.
+- padroniza colunas em `snake_case` com prefixos semânticos;
+- publica somente dimensões e fatos, sem antecipar regra da Gold.
 
-Saídas em `dados/silver/`:
+Saídas canônicas:
 
 | Base | Linhas | Papel |
 |---|---:|---|
-| `fato_internacao` | 7.034.961 | fato no grão mensal da AIH |
-| `fato_leitos_mensal` | 18.690 | capacidade CNES por hospital e mês |
-| `base_hospital_mes` | 17.856 | insumos de IPH, IS, TMH e CMI |
-| `base_hospital_espec_mes` | 52.796 | insumos por especialidade |
-| `base_hospital_cid` | 447.334 | insumos do IPR, incluindo região nula |
-| 6 dimensões | — | tempo, hospital, município, especialidade, CID e domínios |
+| `silver/fatos/fato_internacao` | 7.034.961 | AIH aprovada, tipada e enriquecida |
+| `silver/fatos/fato_leito_mensal` | 18.690 | capacidade CNES por hospital e mês |
+| `silver/dimensoes/dim_municipio` | 645 | município, região e população IBGE 2022 |
+| 5 outras dimensões | — | tempo, hospital, especialidade, CID e domínios |
 
 O notebook também gera:
 
 - `DICIONARIO.md`;
-- `DOMINIOS.md`;
-- `RELATORIO_QUALIDADE.md`.
-- `METADADOS.json`, com recorte, hash Bronze e métricas bloqueantes.
+- `qualidade/DOMINIOS.md`;
+- `qualidade/RELATORIO_QUALIDADE.md`;
+- `qualidade/METADADOS.json`;
+- `contratos/MAPEAMENTO_COLUNAS_ORIGEM_SILVER.csv`.
+
+### Gold — índices e consumo
+
+O notebook `02_analise_dados.ipynb` publica:
+
+| Mart | Linhas | Indicadores |
+|---|---:|---|
+| `mart_indicador_hospital_mensal` | 18.690 | IPH estimado, TMH e CMI |
+| `mart_indicador_hospital_especialidade_mensal` | 52.525 | TMH e CMI com amostra |
+| `mart_indicador_hospital_cid_periodo` | 447.334 | IPR e benchmark regional |
+| `mart_indicador_regiao_mensal` | 1.798 | IS, IPH, TMH, CMI e taxa populacional |
+| `mart_indicador_regiao_periodo` | 62 | distribuição regional do IPR |
+
+Também são gerados:
+
+- `dim_geografia_municipio.csv`;
+- `dim_geografia_regiao.csv`;
+- `mapa_regiao_saude_sp.geojson`;
+- `mapa_regiao_saude_sp.topojson`.
 
 ## O que a validação encontrou
 
@@ -114,18 +147,17 @@ O notebook também gera:
 
 ## Situação metodológica dos índices
 
-| Índice | Situação após a Silver |
+| Índice | Contrato Gold |
 |---|---|
-| TMH | insumos validados; denominador deve ser `internacoes_novas` |
-| IPR | insumos validados com `DIAS_PERM`, sem excluir permanência zero |
-| CMI | insumos validados; a fórmula final ainda deve declarar AIH versus internação |
-| IS | contagens de AIH e de internações novas disponíveis; definição final fica na análise |
-| IPH | **bloqueado como ocupação real**; o cálculo com `QT_DIARIAS` fica somente como proxy faturado experimental |
+| TMH | óbitos / internações novas; mínimo de 30 para classificação |
+| IPR | permanência hospital/CID / benchmark regional sem o hospital; cortes 20/50/3 |
+| CMI | valor aprovado nominal / internações novas; continuações separadas |
+| IS | 2026 / média do mesmo mês em 2024 e 2025 |
+| IPH | pacientes-dia reconstruídos / leitos-dia mensais declarados |
 
-`QT_DIARIAS` representa diárias faturadas. Somá-lo na competência de
-processamento não reconstrói os dias efetivamente ocupados em cada mês. Por
-isso, o valor médio de `0,472168` foi reproduzido para auditoria, mas
-não é mais critério de correção nem evidência de ocupação física.
+O IPH atual não usa `QT_DIARIAS`: os pacientes-dia são distribuídos pelos
+meses civis entre entrada e saída. O denominador ainda é capacidade mensal
+declarada no CNES, portanto o resultado é pressão estimada e não ocupação real.
 
 ## Cobertura dos domínios
 
@@ -150,13 +182,15 @@ Na raiz do repositório:
 .venv/bin/jupyter lab
 ```
 
-Execute `00_extracao_dados.ipynb` e depois `01_engenharia_dados.ipynb`.
+Execute `00_extracao_dados.ipynb`, `01_engenharia_dados.ipynb` e
+`02_analise_dados.ipynb`, nessa ordem.
 O primeiro incorpora automaticamente novas competências comuns até 2026-12;
 o segundo promove a Silver apenas após todas as reconciliações. Reexecutar o
 mesmo recorte não duplica registros nem substitui Parquets sem necessidade.
 
-Os arquivos em `dados/processados/` e `dados/curados/` são artefatos legados.
-O contrato atual usa exclusivamente `dados/bronze/` e `dados/silver/`.
+Os artefatos anteriores ficam em `dados/legado/`, `figuras/legado/`,
+`notebooks/_legado/` e `referencias/legado_sprint_1/`. Eles não alimentam o
+contrato `0.2.0`.
 
 ## Fontes
 

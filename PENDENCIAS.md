@@ -26,6 +26,8 @@ Entrega da Sprint 2: **01/09/2026**.
   arquivos `.parcial` residuais.
 - versão pública [`v0.1.0`](https://github.com/Lucas-D-S-1/medflow/releases/tag/v0.1.0)
   publicada após revisão e integração do PR #1.
+- contrato local `v0.2.0` com Silver canônica, Gold e geografia validado; falta
+  decidir a publicação.
 
 ## Pendências em ordem lógica
 
@@ -57,38 +59,48 @@ Se forem exigidos atributos historicamente vigentes, será necessário localizar
 ou solicitar uma fonte CNES histórica adicional. Isso não bloqueia os fatos,
 regiões, CIDs, natureza jurídica ou os demais de/paras.
 
-### 3. Decidir e validar a metodologia de cada índice — proposta pronta
+### 3. Decidir e validar a metodologia de cada índice — concluído
 
 Os requisitos oficiais, a apresentação da Sprint 1 e a transcrição da mentoria
 foram revisados. A proposta completa está em
 `sprint_2_em_andamento/REVISAO_REQUISITOS_E_PROPOSTA_GOLD.md`.
 
-As fórmulas abaixo ainda precisam de aceite antes da implementação da Gold:
+As fórmulas foram aceitas em 29/07/2026 e implementadas na Gold:
 
-| Índice | Estado | Próxima decisão |
+| Índice | Estado | Contrato |
 |---|---|---|
-| TMH | proposta pronta | internações novas; mínimo de 30 para classificação |
-| IPR | proposta pronta | benchmark regional sem o próprio hospital; cortes 20/50/3 hospitais |
-| IS | proposta pronta | internações novas de 2026 / média do mesmo mês em 2024–2025 |
-| CMI | proposta pronta | valor aprovado por internação nova; continuação separada |
-| IPH | proposta pronta | reconstrução calendário-dia; capacidade CNES declarada; sem “ocupação real” |
+| TMH | validado | internações novas; mínimo de 30 para classificação |
+| IPR | validado | benchmark regional sem o próprio hospital; cortes 20/50/3 hospitais |
+| IS | validado | internações novas de 2026 / média do mesmo mês em 2024–2025 |
+| CMI | validado | valor aprovado por internação nova; continuação separada |
+| IPH | validado com limitação | reconstrução calendário-dia; capacidade CNES declarada |
 
 Para o IPH, não usar o nome “ocupação real”. A proposta reconstrói
 pacientes-dia, mas o denominador continua sendo capacidade mensal declarada no
 CNES, não censo diário de leitos operacionais. O valor histórico `0,472168`
 permanece apenas como reprodução do proxy faturado.
 
-### 4. Implementar `02_analise_dados.ipynb`
+### 4. Implementar `02_analise_dados.ipynb` — concluído
 
-Somente após a decisão metodológica:
+O notebook gera cinco marts e reconciliou:
 
-1. calcular os cinco índices com fórmula e unidade documentadas;
-2. incluir reconciliação entre Silver e resultados;
-3. aplicar regras de amostra mínima e tratamento de denominador zero;
-4. gerar tabelas Gold independentes das visualizações;
-5. registrar quais achados históricos permanecem ou foram invalidados.
+- 6.905.441 internações novas;
+- 32.425.897 pacientes-dia estimados;
+- 310 linhas de IS calculáveis;
+- 30.550 combinações hospital/CID elegíveis para IPR;
+- 142 hospital/mês com capacidade SUS zero preservados e IPH nulo.
 
-### 5. Regenerar figuras e achados
+### 5. Estrutura e geografia — concluído
+
+- Bronze separada entre origem, intermediário e Parquet;
+- Silver restrita a seis dimensões e dois fatos;
+- nomes canônicos documentados no contrato `0.2.0`;
+- CSV oficial do Ministério da Saúde incorporado;
+- população IBGE 2022 agregada por município e região;
+- GeoJSON e TopoJSON com 62 regiões válidas;
+- legado isolado sem exclusão.
+
+### 6. Regenerar figuras e achados
 
 As figuras herdadas são referência visual, não evidência atual. Cada figura
 deve ser gerada pelo notebook 02 e vinculada à tabela Gold correspondente.
@@ -100,14 +112,14 @@ Prioridades:
 - IS, TMH e CMI recalculados usando internações novas quando aplicável;
 - revisão de todos os números do pitch.
 
-### 6. Definir a arquitetura de entrega
+### 7. Definir a arquitetura de entrega
 
 Depois dos dados e métricas validados:
 
 - escolher a ferramenta do dashboard e a forma de link público;
 - modelar e carregar as tabelas aprovadas no Oracle Autonomous DB;
 - escolher e testar três perguntas do Select AI;
-- evoluir a publicação `v0.1.0` com a futura camada Gold;
+- decidir e publicar a versão `v0.2.0`;
 - produzir PPT, vídeo e roteiro da apresentação técnica.
 
 ## Entregáveis da Sprint 2
@@ -115,7 +127,7 @@ Depois dos dados e métricas validados:
 | Entregável | Peso | Status |
 |---|---:|---|
 | Pipeline Bronze/Silver reproduzível | — | validado para 2024-01 a 2026-05 |
-| Cinco índices validados | — | parcial; ver item 3 |
+| Cinco índices validados | — | concluído |
 | Dashboard navegável | — | não iniciado |
 | Link público | 10% | não iniciado |
 | Oracle Select AI | — | não iniciado |
@@ -128,15 +140,14 @@ Depois dos dados e métricas validados:
 
 ```text
 sprint_2_em_andamento/
-├── notebooks/
-│   ├── 00_extracao_dados.ipynb
-│   ├── 01_engenharia_dados.ipynb
-│   └── _legado/
+├── notebooks/         fontes 00, 01 e 02; executados e legado separados
+├── pipeline/          publicação, contratos, Gold, geografia e inventário
+├── contratos/         JSON, mapeamento de colunas e inventário SHA-256
 ├── dados/
-│   ├── raw/          cache DBC/DBF
-│   ├── bronze/       fontes preservadas + manifesto
-│   ├── silver/       fatos, dimensões, agregados e documentação
-│   ├── processados/  legado
-│   └── curados/      legado
-└── figuras/          referências históricas; ainda não regeneradas
+│   ├── bronze/        origem, intermediário, Parquet e manifesto
+│   ├── silver/        dimensões, fatos e qualidade
+│   ├── gold/          marts, geografia e qualidade
+│   └── legado/        contratos e recortes anteriores
+├── figuras/           Gold e legado separados
+└── referencias/       protótipos da Sprint 1 isolados
 ```
