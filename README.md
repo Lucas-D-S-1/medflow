@@ -1,162 +1,164 @@
-# MedFlow — Painel Inteligente de Acesso Hospitalar
+# MedFlow — pipeline de dados
 
-**Enterprise Challenge FIAP × Oracle · Sprint 2 · Equipe Ômega Urban Tech · Turma 1TSCOA**
+**Enterprise Challenge FIAP × Oracle · Sprint 2 · Equipe Ômega Urban Tech**
 
-O MedFlow não cria dados novos. Ele torna visível o que já existe no DATASUS, em
-linguagem de gestão, para quem precisa decidir onde alocar leitos e recursos.
+Recorte atual: Estado de São Paulo, competências de 2022 e 2023.
 
-Recorte: **Estado de São Paulo, 2022–2023** — 5.210.357 internações SUS,
-669 hospitais, 331 municípios. 100% de dados públicos e abertos.
+## Estado validado em 28/07/2026
 
----
+O pipeline foi separado em duas camadas com responsabilidades explícitas:
 
-## Os 5 índices
-
-| Sigla | Nome | Fórmula | Grão |
-|---|---|---|---|
-| **IPH** | Índice de Pressão Hospitalar | `SUM(QT_DIARIAS) ÷ (leitos_SUS × dias_do_mês)` | Hospital → Município → Região |
-| **IPR** | Índice de Permanência Relativa | permanência média do hospital ÷ média regional, mesmo CID | Hospital × CID-10 |
-| **IS** | Índice de Sazonalidade | internações do mês ÷ média histórica do mesmo mês | Hospital ou Município × Mês |
-| **TMH** | Taxa de Mortalidade Hospitalar | `SUM(MORTE) ÷ COUNT(AIH) × 100` | Hospital × Especialidade |
-| **CMI** | Custo Médio por Internação | `SUM(VAL_TOT) ÷ internações com valor` | Hospital × Especialidade × Mês |
-
-Faixas do IPH: **Normal** `< 0,70` · **Atenção** `0,70–0,85` · **Crítico** `> 0,85`.
-
-### A decisão técnica que sustenta o projeto
-
-O IPH mede **ocupação**, não fluxo. O numerador é **paciente-dia** (`SUM(QT_DIARIAS)`),
-não contagem de AIH. Uma internação de 30 dias e uma de 1 dia ocupam o leito de forma
-radicalmente diferente — contá-las igual subestima a pressão sobre a rede.
-
-| | `COUNT(AIH)` | Paciente-dia |
-|---|---|---|
-| IPH médio SP | ~0,14 | **0,4403** |
-| Top municípios | 0,20–0,29 | acima de 0,85 |
-
-Com a fórmula errada, **nenhum hospital jamais apareceria como crítico** e o produto
-perderia o sentido.
-
----
-
-## Pipeline
-
-```
-FTP DATASUS + API IBGE
-        │
-        ▼
-  00_extracao_dados.ipynb ──► dados/raw/*.dbc,*.dbf
-        │                     dados/processados/*_raw.parquet
-        ▼                     dados/referencias/municipios_ibge.csv
-  01_engenharia_dados.ipynb ─► dados/curados/  (5 dimensões + 1 fato + 3 bases)
-        │
-        ▼
-  02_analise_dados.ipynb ────► os 5 índices, figuras e achados
+```text
+SIH/RD + CNES/LT + referências oficiais MS/DATASUS/IBGE
+                  │
+                  ▼
+00_extracao_dados.ipynb
+BRONZE: ingestão fiel, linhagem, manifesto e hashes
+                  │
+                  ▼
+01_engenharia_dados.ipynb
+SILVER: tipos analíticos, de/paras, dimensões, fatos e qualidade
+                  │
+                  ▼
+02_analise_dados.ipynb
+GOLD/ANÁLISE: índices, comparações e visualizações — ainda não implementado
 ```
 
-Os notebooks rodam **em ordem** e cada um valida o próprio resultado antes de gravar.
+### Bronze — não contém regra de negócio
 
-### As bases curadas
+O notebook `00_extracao_dados.ipynb`:
 
-Cada base existe porque um índice precisa dela num grão específico. Elas guardam os
-**ingredientes** (paciente-dia, leitos, óbitos, custo), não os índices prontos — a
-divisão final acontece na análise, onde é fácil auditar.
+- baixa e mantém os arquivos DBC/DBF em `dados/raw/`;
+- serializa o conteúdo DBF em Parquet sem filtro, imputação ou de/para;
+- acrescenta apenas linhagem técnica de arquivo e competência;
+- preserva as respostas e arquivos oficiais de município, região de saúde,
+  CID-10, natureza jurídica e cadastro atual dos estabelecimentos;
+- grava `dados/bronze/MANIFESTO.json` com fonte, volumetria e SHA-256.
 
-| Base | Linhas | Alimenta |
+Saídas validadas:
+
+| Artefato | Linhas | Colunas |
+|---|---:|---:|
+| `sih_rd_sp_2022_2023.parquet` | 5.210.357 | 116 |
+| `cnes_lt_sp_2022_2023.parquet` | 200.075 | 31 |
+| `ibge_municipios_sp_raw.json` | 645 municípios | — |
+| `ms_regioes_saude_sp_raw.json` | 645 municípios | — |
+| `ms_cnes_estabelecimentos_atuais_raw.json` | 669 hospitais | — |
+| `datasus_cid10_2008.zip` | 6 tabelas | — |
+| `ibge_concla_natureza_juridica_2021.html` | página oficial | — |
+
+As colunas adicionais em relação à fonte são somente de linhagem.
+
+### Silver — todos os tratamentos ficam aqui
+
+O notebook `01_engenharia_dados.ipynb`:
+
+- tipa os campos usados analiticamente;
+- documenta e aplica os de/paras;
+- preserva `N_AIH`, `IDENT` e `COD_IDADE`;
+- separa AIH aprovada, internação nova e continuação de longa permanência;
+- distingue `QT_DIARIAS` de `DIAS_PERM`;
+- associa região e macrorregião oficiais pela referência municipal do MS;
+- preserva a região histórica do CNES/LT para auditoria de conflitos;
+- enriquece hospitais com nome e esfera **atuais**, sem tratá-los como
+  atributos historicamente vigentes;
+- usa `dropna=False` nos agregados e reconcilia os totais;
+- prepara os insumos dos índices sem antecipar a camada analítica.
+
+Saídas em `dados/silver/`:
+
+| Base | Linhas | Papel |
 |---|---:|---|
-| `base_hospital_mes` | 14.821 | IPH, IS |
-| `base_hospital_espec_mes` | 43.407 | TMH, CMI |
-| `base_hospital_cid` | 361.273 | IPR |
-| `fato_internacao` | 5.210.357 | tabela-verdade, uma linha por AIH |
+| `fato_internacao` | 5.210.357 | fato no grão mensal da AIH |
+| `fato_leitos_mensal` | 15.533 | capacidade CNES por hospital e mês |
+| `base_hospital_mes` | 14.821 | insumos de IPH, IS, TMH e CMI |
+| `base_hospital_espec_mes` | 43.407 | insumos por especialidade |
+| `base_hospital_cid` | 377.708 | insumos do IPR, incluindo região nula |
+| 6 dimensões | — | tempo, hospital, município, especialidade, CID e domínios |
 
-Dimensões: `dim_hospital`, `dim_municipio`, `dim_especialidade`, `dim_cid`, `dim_tempo`.
-O dicionário completo de colunas é gerado em `dados/curados/DICIONARIO.md`.
+O notebook também gera:
 
----
+- `DICIONARIO.md`;
+- `DOMINIOS.md`;
+- `RELATORIO_QUALIDADE.md`.
 
-## Como reproduzir
+## O que a validação encontrou
 
-Os dados **não estão no repositório** — são 4 GB de arquivos brutos. Tudo é
-reconstruído a partir das fontes públicas.
+| Controle | Resultado |
+|---|---:|
+| AIHs aprovadas | 5.210.357 |
+| AIHs distintas (`N_AIH`) | 5.102.190 |
+| Internações novas (`IDENT=1`) | 5.097.456 |
+| Continuações de longa permanência (`IDENT=5`) | 112.901 |
+| Cobertura dos 16 códigos `ESPEC` observados | 100% |
+| Cobertura de capítulo CID | 100% |
+| Hospitais SIH sem correspondência no CNES/LT | 0 |
+| Hospitais com região conflitante | 4 |
+| Registros sem região de saúde | 0 |
+| CIDs sem descrição | 0 |
+| Hospitais sem nome/esfera atuais | 0 |
+| Hospitais sem natureza jurídica | 0 |
+| `QT_DIARIAS == DIAS_PERM` | 71,9762% |
+| `QT_DIARIAS=0` e `DIAS_PERM>0` | 131.869 |
+| Internações que cruzam mês | 16,2554% |
+| Competência diferente do mês da saída | 23,5890% |
+
+## Situação metodológica dos índices
+
+| Índice | Situação após a Silver |
+|---|---|
+| TMH | insumos validados; denominador deve ser `internacoes_novas` |
+| IPR | insumos validados com `DIAS_PERM`, sem excluir permanência zero |
+| CMI | insumos validados; a fórmula final ainda deve declarar AIH versus internação |
+| IS | contagens de AIH e de internações novas disponíveis; definição final fica na análise |
+| IPH | **bloqueado como ocupação real**; o cálculo com `QT_DIARIAS` fica somente como proxy faturado experimental |
+
+`QT_DIARIAS` representa diárias faturadas. Somá-lo na competência de
+processamento não reconstrói os dias efetivamente ocupados em cada mês. Por
+isso, o valor histórico médio de `0,440272` foi reproduzido para auditoria, mas
+não é mais critério de correção nem evidência de ocupação física.
+
+## Cobertura dos domínios
+
+Todos os códigos observados estão cobertos:
+
+- `NAT_JUR`: CONCLA/IBGE 2021;
+- `REGSAUDE`: referência oficial DEMAS/MS por município;
+- `DIAG_PRINC`: DATASUS CID-10 2008 e complementos oficiais do MS;
+- `MARCA_UTI`: MS/DATASUS e Centro de Estudos da Metrópole;
+- nome e esfera administrativa: API oficial atual do CNES.
+
+O recorte CNES/LT traz `ESFERA_A` vazio. Esse campo bruto continua vazio:
+nome e esfera atuais foram adicionados em colunas próprias, com flag temporal,
+para impedir que uma fotografia atual seja apresentada como cadastro de
+2022–2023.
+
+## Como executar
+
+Na raiz do repositório:
 
 ```bash
-uv venv .venv
-uv pip install --python .venv/bin/python \
-    pandas pyarrow matplotlib seaborn jupyter datasus-dbc dbfread
-
-.venv/bin/jupyter lab      # execute 00 → 01 → 02
+.venv/bin/jupyter lab
 ```
 
-A primeira execução do notebook 00 baixa ~400 MB de `.dbc` do FTP do DATASUS e expande
-para ~3,9 GB de `.dbf`. As seguintes usam o cache em `dados/raw/`. A etapa mais longa é
-a leitura dos 24 arquivos do SIH — cerca de 9 minutos.
+Execute `00_extracao_dados.ipynb` e depois
+`01_engenharia_dados.ipynb`. Ambos abortam quando encontram divergência e não
+substituem saídas existentes sem `SOBRESCREVER=True`.
 
-### Critérios de aceite
-
-A execução é considerada fiel se reproduzir:
-
-| Verificação | Valor |
-|---|---|
-| Linhas SIH/RD | 5.210.357 |
-| Linhas CNES/LT | 200.075 |
-| Linhas em `base_hospital_mes` | 14.821 |
-| Hospitais · municípios | 669 · 331 |
-| IPH médio (hospital-mês) | 0,4403 |
-| Hospital-meses Crítico · Atenção | 7,8% · 10,5% |
-
-Os notebooks 00 e 01 checam isso sozinhos e **abortam a gravação** se algo divergir.
-
----
-
-## Decisões de engenharia
-
-**Flag em vez de descarte.** As ~401 mil AIH com `QT_DIARIAS = 0` ficam nas bases,
-marcadas. Entram no IPH (ocupação zero é ocupação real) e saem só do IPR, onde
-distorceriam a permanência média. O filtro fica visível na análise, não escondido no ETL.
-
-**`REGSAUDE` normalizado sem inventar código.** O campo bruto mistura números de 1 a 4
-dígitos, 11 rótulos de texto livre (`DRS1`, `GSP`, `XVI`…) e 23% de vazios. Os numéricos
-são padronizados em 4 dígitos, fundindo `105` com `0105`. Os textuais viram **nulo** —
-preencher `GSP` com zeros fabricaria uma região inexistente. Falta de região é herdada
-do município, e `origem_regiao` registra a procedência: 579 declarada, 74 inferida,
-16 sem região.
-
-**`ESPEC` pela tabela oficial do SIH/SUS.** O material da Sprint 1 usou rótulos de
-apresentação (`04 = UTI`). A tabela oficial lê `04` como *Crônicos* e `09` como
-*Hospital-dia*. Consequência: **`ESPEC` não é fonte para recortes de UTI** — para isso
-existem `MARCA_UTI` e `UTI_MES_TO`, consolidados na flag `fl_uti`.
-
-**Código de município nas duas formas.** O SIH usa 6 dígitos, o IBGE usa 7. O dígito
-verificador não é derivável — vem da tabela de referência. Sem isso, cruzamentos com
-população, PIB ou malha geográfica quebram em silêncio.
-
----
-
-## Estrutura
-
-```
-sprint_2_em_andamento/
-├── notebooks/
-│   ├── 00_extracao_dados.ipynb        DATASUS + IBGE  →  brutos
-│   ├── 01_engenharia_dados.ipynb      brutos          →  bases curadas
-│   ├── 02_analise_dados.ipynb         bases           →  índices e figuras
-│   └── _legado/                       material histórico, não executar
-├── dados/                             fora do Git — reconstruído pelo notebook 00
-│   ├── raw/  processados/  curados/  referencias/
-├── figuras/
-│   ├── oficiais/                      9 figuras aprovadas
-│   └── descartadas/                   8 figuras superadas, com motivo registrado
-└── referencias/                       material de apoio da apresentação
-```
+Os arquivos em `dados/processados/` e `dados/curados/` são artefatos legados.
+O contrato atual usa exclusivamente `dados/bronze/` e `dados/silver/`.
 
 ## Fontes
 
-- **SIH/SUS — AIH reduzida (RD):** `ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados`
-- **CNES — Leitos (LT):** `ftp.datasus.gov.br/dissemin/publicos/CNES/200508_/Dados/LT`
-- **IBGE — Localidades:** `servicodados.ibge.gov.br/api/v1/localidades/estados/35/municipios`
-
-O DATASUS publica com 2 a 3 meses de defasagem. Isso é tratado como **decisão de
-design** — o MedFlow é um produto de análise retrospectiva — e não como limitação.
-
-## Equipe
-
-Carol Oliveira · Leandro Lopes · Leandro Scutari · Lucas Lima · Pedro Padovan
+- SIH/SUS — AIH reduzida (RD):
+  `ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados`
+- CNES — Leitos (LT):
+  `ftp.datasus.gov.br/dissemin/publicos/CNES/200508_/Dados/LT`
+- IBGE — Localidades:
+  `servicodados.ibge.gov.br/api/v1/localidades/estados/35/municipios`
+- Ministério da Saúde — API de Dados Abertos:
+  `apidadosabertos.saude.gov.br`
+- DATASUS — tabelas CID-10:
+  `www2.datasus.gov.br/cid10/V2008/download.htm`
+- CONCLA/IBGE — Natureza Jurídica 2021:
+  `concla.ibge.gov.br/documentacao/3051-concla/estrutura/natureza-juridica-2021.html`
