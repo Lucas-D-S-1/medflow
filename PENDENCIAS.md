@@ -1,24 +1,31 @@
 # PENDÊNCIAS — Challenge Oracle: MedFlow
 
-Atualizado em 28/07/2026 após a reorganização e validação das camadas Bronze e
-Silver. Entrega da Sprint 2: **01/09/2026**.
+Atualizado em 29/07/2026 após a validação técnica do recorte 2024–2026.
+Entrega da Sprint 2: **01/09/2026**.
 
 ## Concluído nesta revisão
 
 - Bronze limitada à ingestão, preservação e linhagem.
 - Silver concentrando todos os tratamentos e de/paras.
-- 5.210.357 registros SIH e 200.075 registros CNES reconciliados.
-- 100% dos 16 códigos de especialidade observados mapeados.
+- Batch mensal com descoberta remota e cache incremental, limitado a
+  2024–2026 e executado até a última competência comum disponível (2026-05).
+- 7.034.961 registros SIH e 243.085 registros CNES reconciliados.
+- 100% dos 15 códigos de especialidade observados mapeados.
 - `N_AIH`, `IDENT` e `COD_IDADE` reincorporados.
 - AIH aprovada separada de internação nova e continuação.
 - `QT_DIARIAS` separado semanticamente de `DIAS_PERM`.
 - região oficial obtida por município para os 645 municípios de São Paulo.
-- nomes e esfera atuais obtidos para os 669 hospitais na API oficial do CNES.
-- natureza jurídica coberta para os 22 códigos observados pela CONCLA/IBGE.
-- descrição coberta para os 9.212 códigos CID observados.
+- nomes e esfera atuais obtidos para os 653 hospitais na API oficial do CNES.
+- natureza jurídica coberta para os 21 códigos observados pela CONCLA/IBGE,
+  incluindo `1228`, encontrado na atualização.
+- descrição coberta para os 9.494 códigos CID observados.
 - `MARCA_UTI` coberta por fontes MS/DATASUS e CEM.
 - todos os agregados com `dropna=False` e reconciliação.
-- documentação automática em `dados/silver/`.
+- documentação e metadados automáticos em `dados/silver/`.
+- duas execuções Silver consecutivas com as mesmas reconciliações, sem
+  arquivos `.parcial` residuais.
+- versão pública [`v0.1.0`](https://github.com/Lucas-D-S-1/medflow/releases/tag/v0.1.0)
+  publicada após revisão e integração do PR #1.
 
 ## Pendências em ordem lógica
 
@@ -26,27 +33,25 @@ Silver. Entrega da Sprint 2: **01/09/2026**.
 
 Os campos que estavam sem domínio foram pesquisados novamente e incorporados:
 
-- `NAT_JUR`: 22/22 códigos observados, CONCLA/IBGE 2021;
+- `NAT_JUR`: 21/21 códigos observados, CONCLA/IBGE 2021;
 - `REGSAUDE`: 645/645 municípios, API oficial DEMAS/MS;
-- `DIAG_PRINC`: 9.212/9.212 códigos observados, DATASUS CID-10 2008 e
+- `DIAG_PRINC`: 9.494/9.494 códigos observados, DATASUS CID-10 2008 e
   complementos oficiais do Ministério da Saúde;
-- `MARCA_UTI`: 16/16 códigos observados; os códigos legados 01 e 99 têm
+- `MARCA_UTI`: 14/14 códigos observados; os códigos legados 01 e 99 têm
   proveniência explícita;
-- nome e esfera administrativa atuais: 669/669 hospitais, API oficial CNES.
+- nome e esfera administrativa atuais: 653/653 hospitais, API oficial CNES.
 
 Não resta lacuna de de/para nos códigos observados. A única ressalva cadastral
 é temporal: nome e esfera vêm da fotografia **atual** do CNES, não de uma
-fotografia histórica de 2022–2023. Esses campos usam sufixo `_atual` e a flag
+fotografia histórica de 2024–2026. Esses campos usam sufixo `_atual` e a flag
 `fl_cadastro_atual_nao_historico`; o `ESFERA_A` original permanece vazio e não
 foi retroativamente preenchido.
 
-### 2. Rever a documentação e os artefatos Silver
+### 2. Rever a documentação e os artefatos Silver — concluído
 
-Antes das decisões metodológicas:
-
-1. revisar `DICIONARIO.md`, `DOMINIOS.md` e `RELATORIO_QUALIDADE.md`;
-2. confirmar que a distinção entre cadastro atual e dado histórico está clara;
-3. escolher se nome/esfera históricos são realmente necessários para o produto.
+`DICIONARIO.md`, `DOMINIOS.md`, `RELATORIO_QUALIDADE.md` e `METADADOS.json`
+foram regenerados para 2024-01 a 2026-05. A distinção entre cadastro atual e
+dado histórico permanece explícita.
 
 Se forem exigidos atributos historicamente vigentes, será necessário localizar
 ou solicitar uma fonte CNES histórica adicional. Isso não bloqueia os fatos,
@@ -69,7 +74,7 @@ Esta etapa vem antes de qualquer gráfico ou dashboard.
 
 Para o IPH, não usar o nome “ocupação real” enquanto a alocação de permanência
 por dia/mês e as regras de leito não forem validadas. O valor histórico
-`0,440272` é apenas uma reprodução do proxy faturado.
+`0,472168` é apenas uma reprodução do proxy faturado.
 
 ### 4. Implementar `02_analise_dados.ipynb`
 
@@ -100,20 +105,19 @@ Depois dos dados e métricas validados:
 - escolher a ferramenta do dashboard e a forma de link público;
 - modelar e carregar as tabelas aprovadas no Oracle Autonomous DB;
 - escolher e testar três perguntas do Select AI;
-- publicar uma nova versão do GitHub com Bronze, Silver e documentação
-  atualizadas;
+- evoluir a publicação `v0.1.0` com a futura camada Gold;
 - produzir PPT, vídeo e roteiro da apresentação técnica.
 
 ## Entregáveis da Sprint 2
 
 | Entregável | Peso | Status |
 |---|---:|---|
-| Pipeline Bronze/Silver reproduzível | — | concluído localmente; falta republicar |
-| Cinco índices validados | — | parcial; ver item 2 |
+| Pipeline Bronze/Silver reproduzível | — | validado para 2024-01 a 2026-05 |
+| Cinco índices validados | — | parcial; ver item 3 |
 | Dashboard navegável | — | não iniciado |
 | Link público | 10% | não iniciado |
 | Oracle Select AI | — | não iniciado |
-| GitHub | 20% | v0 publicada; atualização pendente |
+| GitHub | 20% | `v0.1.0` publicada |
 | PPT / pitch | 10% | não iniciado |
 | Vídeo YouTube | 10% | não iniciado |
 | Apresentação técnica | 50% | não iniciado |

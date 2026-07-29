@@ -4,7 +4,7 @@ Gerado por `01_engenharia_dados.ipynb`.
 
 ## `dim_tempo`
 
-24 linhas × 6 colunas
+29 linhas × 6 colunas
 
 | coluna | tipo | nulos |
 |---|---|---:|
@@ -17,7 +17,7 @@ Gerado por `01_engenharia_dados.ipynb`.
 
 ## `dim_hospital`
 
-669 linhas × 24 colunas
+653 linhas × 24 colunas
 
 | coluna | tipo | nulos |
 |---|---|---:|
@@ -27,8 +27,8 @@ Gerado por `01_engenharia_dados.ipynb`.
 | `esfera_cod_cnes_lt` | string | 0 |
 | `natureza_jur_cod` | string | 0 |
 | `gestao_cod` | string | 0 |
-| `regiao_saude_cnes_lt` | string | 90 |
-| `qtd_regioes_declaradas_cnes_lt` | float64 | 90 |
+| `regiao_saude_cnes_lt` | string | 80 |
+| `qtd_regioes_declaradas_cnes_lt` | float64 | 80 |
 | `regiao_saude` | string | 0 |
 | `regiao_saude_nome` | object | 0 |
 | `macrorregiao_saude_codigo` | string | 0 |
@@ -65,7 +65,7 @@ Gerado por `01_engenharia_dados.ipynb`.
 
 ## `dim_especialidade`
 
-16 linhas × 4 colunas
+15 linhas × 4 colunas
 
 | coluna | tipo | nulos |
 |---|---|---:|
@@ -76,7 +76,7 @@ Gerado por `01_engenharia_dados.ipynb`.
 
 ## `dim_cid`
 
-9,212 linhas × 9 colunas
+9,494 linhas × 9 colunas
 
 | coluna | tipo | nulos |
 |---|---|---:|
@@ -86,13 +86,13 @@ Gerado por `01_engenharia_dados.ipynb`.
 | `cid_descricao_abreviada` | object | 0 |
 | `fonte_descricao` | object | 0 |
 | `categoria` | object | 0 |
-| `categoria_descricao` | object | 3 |
+| `categoria_descricao` | object | 4 |
 | `capitulo` | object | 0 |
 | `capitulo_desc` | object | 0 |
 
 ## `dim_dominio`
 
-83 linhas × 5 colunas
+84 linhas × 5 colunas
 
 | coluna | tipo | nulos |
 |---|---|---:|
@@ -104,7 +104,7 @@ Gerado por `01_engenharia_dados.ipynb`.
 
 ## `fato_internacao`
 
-5,210,357 linhas × 59 colunas
+7,034,961 linhas × 59 colunas
 
 | coluna | tipo | nulos |
 |---|---|---:|
@@ -131,7 +131,7 @@ Gerado por `01_engenharia_dados.ipynb`.
 | `especialidade` | object | 0 |
 | `cid_principal` | object | 0 |
 | `cid_descricao` | object | 0 |
-| `categoria_descricao` | object | 15 |
+| `categoria_descricao` | object | 17 |
 | `capitulo` | object | 0 |
 | `capitulo_desc` | object | 0 |
 | `fonte_descricao` | object | 0 |
@@ -145,7 +145,7 @@ Gerado por `01_engenharia_dados.ipynb`.
 | `IDADE` | int32 | 0 |
 | `COD_IDADE` | string | 0 |
 | `unidade_idade` | object | 0 |
-| `idade_anos_aprox` | float64 | 0 |
+| `idade_anos_aprox` | float64 | 1 |
 | `SEXO` | string | 0 |
 | `sexo_descricao` | object | 0 |
 | `CAR_INT` | string | 0 |
@@ -170,7 +170,7 @@ Gerado por `01_engenharia_dados.ipynb`.
 
 ## `fato_leitos_mensal`
 
-15,533 linhas × 8 colunas
+18,690 linhas × 8 colunas
 
 | coluna | tipo | nulos |
 |---|---|---:|
@@ -185,7 +185,7 @@ Gerado por `01_engenharia_dados.ipynb`.
 
 ## `base_hospital_mes`
 
-14,821 linhas × 32 colunas
+17,856 linhas × 32 colunas
 
 | coluna | tipo | nulos |
 |---|---|---:|
@@ -218,13 +218,13 @@ Gerado por `01_engenharia_dados.ipynb`.
 | `macrorregiao_saude_nome` | object | 0 |
 | `origem_regiao` | object | 0 |
 | `fl_regiao_nao_confiavel` | int8 | 0 |
-| `permanencia_media_internacoes_novas` | float64 | 155 |
-| `proxy_iph_diarias_faturadas` | float64 | 1 |
+| `permanencia_media_internacoes_novas` | float64 | 164 |
+| `proxy_iph_diarias_faturadas` | float64 | 0 |
 | `status_proxy_iph` | object | 0 |
 
 ## `base_hospital_espec_mes`
 
-43,407 linhas × 25 colunas
+52,796 linhas × 25 colunas
 
 | coluna | tipo | nulos |
 |---|---|---:|
@@ -256,7 +256,7 @@ Gerado por `01_engenharia_dados.ipynb`.
 
 ## `base_hospital_cid`
 
-377,708 linhas × 11 colunas
+447,334 linhas × 11 colunas
 
 | coluna | tipo | nulos |
 |---|---|---:|
