@@ -1,6 +1,6 @@
 # DECISÕES — Challenge Oracle: MedFlow
 
-Atualizado em 29/07/2026. As decisões abaixo substituem interpretações
+Atualizado em 30/07/2026. As decisões abaixo substituem interpretações
 anteriores quando houver conflito.
 
 ## 1. Escopo
@@ -180,7 +180,87 @@ Qualquer indicador aprovado deve ser apresentado em quatro camadas:
 - todo material anterior foi isolado em `dados/legado/` e não alimenta o
   pipeline `0.2.0`.
 
-## 9. Sprint 2
+## 9. Infraestrutura Oracle
+
+Decidido em 30/07/2026, ao provisionar o banco.
+
+### 9.1 Tenancy — institucional, confirmada
+
+A pendência de localizar o acesso OCI do challenge está **encerrada**. O
+console autentica `rm572207@fiap.com.br` na tenancy `rm572207`, região home
+GRU, sem tenant de origem. É o acesso institucional FIAP/Oracle, não uma conta
+pessoal. Nenhuma conta Always Free particular foi criada, como manda a decisão
+tomada após a mentoria de 07/06/2026.
+
+### 9.2 Workload — Lakehouse
+
+O banco `MEDFLOW` usa o workload **Lakehouse**, e isso não é um desvio do
+Autonomous Data Warehouse: no 26ai serverless, os workloads disponíveis são
+Lakehouse, Transaction Processing, JSON Database e APEX Service. "Data
+Warehouse" não existe mais como opção, e a
+[documentação oficial](https://docs.oracle.com/en-us/iaas/autonomous-database-serverless/doc/about-autonomous-database-workloads.html)
+descreve o Lakehouse como "an evolution of Oracle's Autonomous Data Warehouse
+that adds support for open-source technologies like Apache Iceberg".
+
+É o workload adequado ao MedFlow porque o projeto tem carga em lote, 7.034.961
+registros de AIH, transformações Bronze/Silver/Gold, consultas analíticas e
+agregações, modelo dimensional com fatos e dimensões, indicadores e dashboards,
+e a possibilidade futura de consultar Parquet/Iceberg direto no Object Storage
+sem carga intermediária.
+
+Consequência prática: os aliases do `tnsnames.ora` seguem o padrão analítico —
+`medflow_tpurgent`, `medflow_tp`, `medflow_high`, `medflow_medium` e
+`medflow_low`. O `_low` serve o teste de conexão e o BI; o `_medium`, que roda
+consultas em paralelo, serve a carga em lote.
+
+### 9.3 Instância
+
+| Item | Valor |
+|---|---|
+| Versão | 26ai |
+| Tipo | Always Free |
+| Região | Brazil East, `sa-saopaulo-1` |
+| Autenticação | mTLS obrigatório |
+| Acesso | seguro de qualquer lugar |
+| Backup | retenção de 60 dias |
+
+Always Free é suficiente: a Gold ocupa cerca de 10 MB contra os 20 GB da cota.
+O risco não é espaço, é hibernação por inatividade — instância Always Free é
+parada após dias consecutivos sem conexão. Conectar ao menos uma vez por semana
+até a entrega, e confirmar o estado `Disponível` na véspera da apresentação.
+
+### 9.4 Esquema separado do ADMIN
+
+A Gold é carregada no esquema `MEDFLOW`, com `DWROLE`, quota e privilégios
+mínimos. O `ADMIN` é usado apenas no setup. Motivo: manter a modelagem
+explícita, não acumular objeto de aplicação na conta administrativa e poder
+habilitar o esquema no Database Actions sem expor o `ADMIN` numa demonstração
+ao vivo.
+
+### 9.5 Comentários de tabela e coluna são parte do produto
+
+As 118 colunas do modelo recebem `COMMENT ON`. Não é documentação decorativa:
+o Select AI envia comentário de tabela e coluna ao modelo como contexto,
+via atributo `"comments": "true"` do profile. Quando o Select AI gerar SQL
+errado, a correção é melhorar o comentário da coluna, não reescrever a
+pergunta até funcionar.
+
+O comentário de `nr_iph_estimado` afirma explicitamente que o índice é pressão
+estimada sobre capacidade declarada e não ocupação real de leito. A decisão de
+nomenclatura da seção 5 vale também para o que o LLM narra.
+
+### 9.6 Select AI é a dependência a testar primeiro
+
+O Select AI depende de um provedor de LLM alcançável pelo banco. Em tenancy
+Always Free o OCI Generative AI pode não estar liberado, e a região precisa
+hospedar o serviço. Por isso a habilitação foi antecipada para logo depois da
+carga, com caminho alternativo por provedor externo já escrito. Validar em
+agosto, não na semana da banca.
+
+Ordem mantida: nenhuma pergunta vai ao Select AI antes de a resposta estar
+validada em SQL convencional.
+
+## 10. Sprint 2
 
 Entrega prevista: 01/09/2026.
 

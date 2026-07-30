@@ -1,6 +1,6 @@
 # PENDÊNCIAS — Challenge Oracle: MedFlow
 
-Atualizado em 29/07/2026 após a publicação da `v0.2.0`.
+Atualizado em 30/07/2026, ao provisionar o Autonomous AI Database.
 Entrega da Sprint 2: **01/09/2026**.
 
 ## Concluído nesta revisão
@@ -114,13 +114,45 @@ Prioridades:
 - IS, TMH e CMI recalculados usando internações novas quando aplicável;
 - revisão de todos os números do pitch.
 
-### 7. Definir a arquitetura de entrega
+### 7. Infraestrutura Oracle — em andamento
 
-Depois dos dados e métricas validados:
+**Tenancy resolvida em 30/07/2026.** O acesso OCI do challenge é institucional:
+`rm572207@fiap.com.br` na tenancy `rm572207`, região home GRU. Não foi criada
+conta Always Free pessoal. A pendência de localizar convite/tenancy está
+encerrada; ver `DECISOES.md`, seção 9.
+
+Banco `MEDFLOW` provisionado em 30/07/2026: Autonomous AI Database 26ai,
+workload **Lakehouse** (a evolução do Autonomous Data Warehouse no 26ai),
+Always Free, `sa-saopaulo-1`, mTLS obrigatório.
+
+Artefatos de setup versionados em `sprint_2_em_andamento/oracle/`:
+
+| Passo | Artefato | Estado |
+|---|---|---|
+| Criar esquema `MEDFLOW` separado do `ADMIN` | `sql/01_criar_usuario_medflow.sql` | escrito, não executado |
+| Testar conexão mTLS | `testar_conexao.py` | escrito, não executado |
+| Modelo dimensional, 2 dimensões e 5 marts, 118 colunas comentadas | `sql/02_criar_tabelas_gold.sql` | escrito, não executado |
+| Carga idempotente de 520.409 linhas | `carregar_gold.py` | escrito, não executado |
+| Reconciliação de 25 métricas contra o contrato `0.2.0` | `sql/03_validar_carga.sql` | escrito, não executado |
+| Select AI com as três perguntas e SQL de referência | `sql/04_select_ai.sql` | escrito, não executado |
+
+Falta executar, em ordem: baixar o wallet de instância, confirmar os aliases
+reais no `tnsnames.ora`, preencher o `.env` e rodar os seis passos.
+
+Riscos conhecidos, registrados para não virarem surpresa:
+
+- **Select AI depende de provedor de LLM alcançável pelo banco.** Em tenancy
+  Always Free o OCI Generative AI pode não estar liberado. Testar em agosto,
+  com o caminho alternativo por provedor externo já escrito.
+- **Always Free hiberna por inatividade.** Conectar ao menos uma vez por semana
+  e confirmar o estado `Disponível` na véspera da apresentação.
+
+### 8. Definir a arquitetura de entrega
+
+Depois da carga validada no Oracle:
 
 - escolher a ferramenta do dashboard e a forma de link público;
-- modelar e carregar as tabelas aprovadas no Oracle Autonomous DB;
-- escolher e testar três perguntas do Select AI;
+- validar as três perguntas em SQL convencional antes do Select AI;
 - produzir PPT, vídeo e roteiro da apresentação técnica.
 
 Próximo marco sugerido: **`v0.3.0` — Oracle e dashboard MVP**.
@@ -131,9 +163,10 @@ Próximo marco sugerido: **`v0.3.0` — Oracle e dashboard MVP**.
 |---|---:|---|
 | Pipeline Bronze/Silver reproduzível | — | validado para 2024-01 a 2026-05 |
 | Cinco índices validados | — | concluído |
+| Autonomous AI Database provisionado | — | 30/07/2026, scripts de carga escritos |
 | Dashboard navegável | — | não iniciado |
 | Link público | 10% | não iniciado |
-| Oracle Select AI | — | não iniciado |
+| Oracle Select AI | — | roteiro escrito, viabilidade a testar |
 | GitHub | 20% | `v0.2.0` publicada |
 | PPT / pitch | 10% | não iniciado |
 | Vídeo YouTube | 10% | não iniciado |

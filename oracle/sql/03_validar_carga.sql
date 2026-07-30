@@ -1,0 +1,152 @@
+-- =====================================================================
+-- MedFlow — reconciliação da Gold carregada no Autonomous AI Lakehouse
+-- Conecte como MEDFLOW, depois de rodar carregar_gold.py.
+--
+-- Os valores esperados vêm de dados/gold/qualidade/METADADOS.json, contrato
+-- 0.2.0, gerado em 29/07/2026. Toda linha deve sair como "ok". Qualquer
+-- DIVERGENTE significa que a carga não reproduz o gate técnico aprovado e o
+-- dashboard não deve ser construído sobre essa base.
+-- =====================================================================
+
+set pagesize 200
+set linesize 140
+column metrica       format a56
+column esperado      format 999g999g999
+column obtido        format 999g999g999
+column estado        format a12
+
+with conferencia (ordem, metrica, esperado, obtido) as (
+
+  -- Contagem de linhas por tabela
+  select 1, 'linhas dim_geografia_regiao', 62,
+         (select count(*) from dim_geografia_regiao) from dual
+  union all
+  select 2, 'linhas dim_geografia_municipio', 645,
+         (select count(*) from dim_geografia_municipio) from dual
+  union all
+  select 3, 'linhas mart_indicador_hospital_mensal', 18690,
+         (select count(*) from mart_indicador_hospital_mensal) from dual
+  union all
+  select 4, 'linhas mart_indicador_hospital_especialidade_mensal', 52525,
+         (select count(*) from mart_indicador_hospital_especialidade_mensal) from dual
+  union all
+  select 5, 'linhas mart_indicador_hospital_cid_periodo', 447334,
+         (select count(*) from mart_indicador_hospital_cid_periodo) from dual
+  union all
+  select 6, 'linhas mart_indicador_regiao_mensal', 1798,
+         (select count(*) from mart_indicador_regiao_mensal) from dual
+  union all
+  select 7, 'linhas mart_indicador_regiao_periodo', 62,
+         (select count(*) from mart_indicador_regiao_periodo) from dual
+
+  -- Reconciliação do total de internações novas: os quatro marts partem do
+  -- mesmo fato e têm de fechar no mesmo número.
+  union all
+  select 8, 'internacoes novas em hospital_mensal', 6905441,
+         (select sum(qt_internacao_nova) from mart_indicador_hospital_mensal) from dual
+  union all
+  select 9, 'internacoes novas em especialidade_mensal', 6905441,
+         (select sum(qt_internacao_nova) from mart_indicador_hospital_especialidade_mensal) from dual
+  union all
+  select 10, 'internacoes novas em hospital_cid_periodo', 6905441,
+         (select sum(qt_internacao_nova) from mart_indicador_hospital_cid_periodo) from dual
+  union all
+  select 11, 'internacoes novas em regiao_mensal', 6905441,
+         (select sum(qt_internacao_nova) from mart_indicador_regiao_mensal) from dual
+  union all
+  select 12, 'internacoes novas em regiao_periodo', 6905441,
+         (select sum(qt_internacao_nova) from mart_indicador_regiao_periodo) from dual
+
+  -- Métricas do gate técnico
+  union all
+  select 13, 'pacientes-dia estimados', 32425897,
+         (select sum(qt_paciente_dia_estimado) from mart_indicador_hospital_mensal) from dual
+  union all
+  select 14, 'hospitais-mes acima da capacidade declarada', 493,
+         (select sum(fl_acima_capacidade_declarada) from mart_indicador_hospital_mensal) from dual
+  union all
+  select 15, 'hospitais-mes sem leito SUS declarado', 142,
+         (select count(*) from mart_indicador_hospital_mensal
+          where st_capacidade = 'sem_leito_sus_declarado') from dual
+  union all
+  select 16, 'IPH nulo por ausencia de leito SUS declarado', 142,
+         (select count(*) from mart_indicador_hospital_mensal
+          where nr_iph_estimado is null) from dual
+  union all
+  select 17, 'combinacoes IPR elegiveis', 30550,
+         (select count(*) from mart_indicador_hospital_cid_periodo
+          where nr_ipr is not null) from dual
+  union all
+  select 18, 'combinacoes IPR com amostra suficiente', 30550,
+         (select count(*) from mart_indicador_hospital_cid_periodo
+          where st_amostra = 'suficiente') from dual
+  union all
+  select 19, 'linhas TMH/CMI com amostra suficiente', 36006,
+         (select count(*) from mart_indicador_hospital_especialidade_mensal
+          where st_amostra = 'suficiente') from dual
+  union all
+  select 20, 'linhas de IS calculadas', 310,
+         (select count(*) from mart_indicador_regiao_mensal
+          where nr_indice_sazonalidade is not null) from dual
+  union all
+  select 21, 'linhas de IS com estado calculado', 310,
+         (select count(*) from mart_indicador_regiao_mensal
+          where st_indice_sazonalidade = 'calculado') from dual
+
+  -- Cardinalidades do recorte
+  union all
+  select 22, 'competencias distintas', 29,
+         (select count(distinct cd_competencia) from mart_indicador_hospital_mensal) from dual
+  union all
+  select 23, 'hospitais distintos', 653,
+         (select count(distinct cd_cnes) from mart_indicador_hospital_mensal) from dual
+  union all
+  select 24, 'regioes de saude distintas', 62,
+         (select count(distinct cd_regiao_saude) from mart_indicador_regiao_mensal) from dual
+  union all
+  select 25, 'municipios na dimensao de geografia', 645,
+         (select count(distinct cd_municipio_ibge_7) from dim_geografia_municipio) from dual
+)
+select metrica,
+       esperado,
+       obtido,
+       case when obtido = esperado then 'ok' else 'DIVERGENTE' end as estado
+from   conferencia
+order  by ordem;
+
+prompt
+prompt Integridade referencial: as consultas abaixo devem retornar zero linhas.
+prompt
+
+-- Nenhum mart pode referenciar região inexistente na dimensão.
+select 'hospital_mensal sem regiao' as verificacao, count(*) as linhas
+from   mart_indicador_hospital_mensal m
+where  not exists (select 1 from dim_geografia_regiao d
+                   where d.cd_regiao_saude = m.cd_regiao_saude)
+having count(*) > 0
+union all
+select 'hospital_cid_periodo sem regiao', count(*)
+from   mart_indicador_hospital_cid_periodo m
+where  not exists (select 1 from dim_geografia_regiao d
+                   where d.cd_regiao_saude = m.cd_regiao_saude)
+having count(*) > 0;
+
+-- O IPH só pode ser nulo quando o hospital não declarou leito SUS. Qualquer
+-- outra combinação indica perda de dado na carga, não decisão de contrato.
+select 'IPH nulo com capacidade disponivel' as verificacao, count(*) as linhas
+from   mart_indicador_hospital_mensal
+where  nr_iph_estimado is null
+and    st_capacidade <> 'sem_leito_sus_declarado'
+having count(*) > 0;
+
+-- A flag de pressão acima da capacidade exige IPH maior que 1.
+select 'flag acima da capacidade inconsistente' as verificacao, count(*) as linhas
+from   mart_indicador_hospital_mensal
+where  fl_acima_capacidade_declarada = 1
+and    (nr_iph_estimado is null or nr_iph_estimado <= 1)
+having count(*) > 0;
+
+prompt
+prompt Validacao concluida. Toda linha do quadro acima deve estar "ok" e as
+prompt verificacoes de integridade devem vir vazias.
+prompt
