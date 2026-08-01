@@ -1,6 +1,6 @@
 # DECISÕES — Challenge Oracle: MedFlow
 
-Atualizado em 30/07/2026. As decisões abaixo substituem interpretações
+Atualizado em 01/08/2026. As decisões abaixo substituem interpretações
 anteriores quando houver conflito.
 
 ## 1. Escopo
@@ -241,24 +241,28 @@ ao vivo.
 
 As 118 colunas do modelo recebem `COMMENT ON`. Não é documentação decorativa:
 o Select AI envia comentário de tabela e coluna ao modelo como contexto,
-via atributo `"comments": "true"` do profile. Quando o Select AI gerar SQL
-errado, a correção é melhorar o comentário da coluna, não reescrever a
-pergunta até funcionar.
+via atributo `"comments": "true"` do profile. Quando o Select AI errar a
+semântica de uma coluna, a correção é melhorar o comentário. Cortes de negócio
+que não aparecem na pergunta devem ser declarados explicitamente uma vez, não
+descobertos por tentativa e erro.
 
 O comentário de `nr_iph_estimado` afirma explicitamente que o índice é pressão
 estimada sobre capacidade declarada e não ocupação real de leito. A decisão de
 nomenclatura da seção 5 vale também para o que o LLM narra.
 
-### 9.6 Select AI é a dependência a testar primeiro
+### 9.6 Select AI validado com OCI Generative AI
 
-O Select AI depende de um provedor de LLM alcançável pelo banco. Em tenancy
-Always Free o OCI Generative AI pode não estar liberado, e a região precisa
-hospedar o serviço. Por isso a habilitação foi antecipada para logo depois da
-carga, com caminho alternativo por provedor externo já escrito. Validar em
-agosto, não na semana da banca.
+Validado em 01/08/2026 com OCI Generative AI em `sa-saopaulo-1`. A instância
+usa Resource Principal, Dynamic Group `MedFlowADBGenAI` e policy
+`use generative-ai-family`, sem chave de API externa. O profile
+`MEDFLOW_GENAI` cobre as duas dimensões e os cinco marts, com comentários e
+restrições enviados ao modelo.
 
-Ordem mantida: nenhuma pergunta vai ao Select AI antes de a resposta estar
-validada em SQL convencional.
+As três perguntas foram validadas primeiro em SQL convencional. Depois, os
+três `showsql` reproduziram filtros, agregações e cortes, e os três `narrate`
+devolveram os rankings esperados. O IPH foi narrado como pressão sobre a
+capacidade, não ocupação real. Ordem vinculante para demonstrações futuras:
+SQL convencional, `showsql`, conferência e somente então `narrate`.
 
 ## 10. Sprint 2
 
@@ -266,11 +270,10 @@ Entrega prevista: 01/09/2026.
 
 Ordem de trabalho restante:
 
-1. modelar e carregar as tabelas aprovadas no Oracle;
-2. construir dashboard usando os marts e o TopoJSON;
-3. validar as consultas SQL e três perguntas do Select AI;
-4. regenerar achados e figuras;
-5. atualizar pitch e vídeo.
+1. construir dashboard usando os marts e o TopoJSON;
+2. regenerar achados e figuras;
+3. atualizar pitch e vídeo;
+4. testar link público e roteiro da apresentação.
 
 A versão pública
 [`v0.2.0`](https://github.com/Lucas-D-S-1/fiap-1tscoa/releases/tag/v0.2.0)
@@ -278,8 +281,7 @@ foi publicada em 29/07/2026 com Silver canônica, Gold, geografia, contratos e
 validação integrada. A `v0.1.0` permanece como marco histórico do pipeline
 Bronze/Silver.
 
-A base metodológica e a estrutura de dados estão fechadas. Power BI é a
-recomendação para o MVP, mas a ferramenta e a forma do link público ainda
-precisam de confirmação operacional. A carga no Oracle e as perguntas finais
-do Select AI continuam em aberto. O próximo marco sugerido é
+A base metodológica, a estrutura de dados, a carga Oracle e o Select AI estão
+fechados. Power BI é a recomendação para o MVP, mas a ferramenta e a forma do
+link público ainda precisam de confirmação operacional. O próximo marco é
 **`v0.3.0` — Oracle e dashboard MVP**.

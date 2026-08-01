@@ -1,0 +1,121 @@
+# Validação Oracle e Select AI — MedFlow
+
+Executada em **01/08/2026** no Autonomous AI Database `MEDFLOW`, versão 26ai,
+workload Lakehouse, região `sa-saopaulo-1`.
+
+## Conexão e modelo
+
+- conexão mTLS validada no banco `GF68E03B2A30D55_MEDFLOW`;
+- esquema de aplicação: `MEDFLOW`;
+- 7 tabelas: 2 dimensões e 5 marts;
+- 118 colunas, todas comentadas;
+- 7 índices secundários, além dos índices das chaves primárias;
+- aliases usados: `medflow_low` para conexão e `medflow_medium` para carga.
+
+Wallet, `.env` e senhas permanecem locais e ignorados pelo Git.
+
+## Carga e reconciliação
+
+| Tabela | Linhas Oracle | Linhas no arquivo | Estado |
+|---|---:|---:|---|
+| `dim_geografia_regiao` | 62 | 62 | ok |
+| `dim_geografia_municipio` | 645 | 645 | ok |
+| `mart_indicador_hospital_mensal` | 18.690 | 18.690 | ok |
+| `mart_indicador_hospital_especialidade_mensal` | 52.525 | 52.525 | ok |
+| `mart_indicador_hospital_cid_periodo` | 447.334 | 447.334 | ok |
+| `mart_indicador_regiao_mensal` | 1.798 | 1.798 | ok |
+| `mart_indicador_regiao_periodo` | 62 | 62 | ok |
+| **Total** | **521.116** | **521.116** | **ok** |
+
+O total se divide em 520.409 linhas nos cinco marts e 707 linhas nas duas
+dimensões.
+
+O roteiro `sql/03_validar_carga.sql` retornou **25 de 25 métricas como `ok`**.
+As três consultas adicionais retornaram zero ocorrências para:
+
+- fatos sem região correspondente;
+- IPH nulo apesar de capacidade disponível;
+- flag de pressão acima da capacidade com IPH incompatível.
+
+## SQL convencional de referência
+
+As três perguntas foram respondidas primeiro em SQL convencional.
+
+### 1. Regiões com maior IPH médio em 2026
+
+| Posição | Região | IPH médio | Internações novas |
+|---:|---|---:|---:|
+| 1 | Limeira | 77,1% | 6.820 |
+| 2 | Franco da Rocha | 75,7% | 14.241 |
+| 3 | Jundiaí | 75,1% | 24.475 |
+| 4 | São José do Rio Preto | 70,4% | 41.754 |
+| 5 | Alta Sorocabana | 68,6% | 21.991 |
+
+### 2. TMH média por especialidade
+
+Filtro: somente `st_amostra = 'suficiente'` e pelo menos 100 linhas
+hospital-mês por especialidade.
+
+| Posição | Especialidade | TMH média | Hospital-mês |
+|---:|---|---:|---:|
+| 1 | Crônicos | 31,58% | 112 |
+| 2 | Clínica médica | 10,92% | 12.255 |
+| 3 | Cirurgia | 1,64% | 9.481 |
+| 4 | Pediatria | 1,51% | 4.739 |
+| 5 | Intercorrência pós-transplante — hospital-dia | 0,56% | 134 |
+| 6 | Saúde mental — clínico | 0,22% | 137 |
+| 7 | Hospital-dia (cirúrgico) | 0,10% | 2.322 |
+| 8 | Psiquiatria | 0,08% | 1.223 |
+| 9 | Obstetrícia | 0,03% | 5.462 |
+
+Há nove especialidades elegíveis, embora a consulta permita até dez.
+
+### 3. Diagnósticos com maior IPR médio
+
+Filtro: somente combinações hospital-CID com amostra suficiente e pelo menos
+10 combinações por diagnóstico.
+
+| Posição | Diagnóstico | Combinações | IPR médio |
+|---:|---|---:|---:|
+| 1 | Cisto epidérmico | 24 | 5,57 |
+| 2 | Hemorróidas internas com outras complicações | 10 | 5,00 |
+| 3 | Mononeuropatia não especificada | 14 | 4,15 |
+| 4 | Descolamento da retina com defeito retiniano | 11 | 3,55 |
+| 5 | Síndrome do túnel do carpo | 123 | 3,36 |
+| 6 | Hipertrofia das amígdalas com hipertrofia das adenóides | 76 | 3,15 |
+| 7 | Amigdalite crônica | 36 | 2,71 |
+| 8 | Hipertrofia das adenóides | 38 | 2,69 |
+| 9 | Outras afecções especificadas da pele e do tecido subcutâneo | 74 | 2,60 |
+| 10 | Afecções da pele e do tecido subcutâneo, não especificados | 166 | 2,29 |
+
+## Select AI
+
+Configuração validada:
+
+- Dynamic Group: `MedFlowADBGenAI`;
+- IAM: `use generative-ai-family`;
+- autenticação: `OCI$RESOURCE_PRINCIPAL`, sem chave externa;
+- profile: `MEDFLOW_GENAI`, estado `ENABLED`;
+- provedor: OCI Generative AI em `sa-saopaulo-1`;
+- metadados enviados: comentários e restrições das sete tabelas.
+
+O primeiro teste mostrou que critérios ocultos no SQL não eram inferidos de
+forma confiável. Os comentários de negócio foram aprimorados e os cortes de
+100 hospital-mês e 10 combinações hospital-CID passaram a aparecer
+explicitamente nas perguntas. Isso eliminou tentativa e erro e tornou o
+contrato auditável.
+
+Na validação final:
+
+- os três `showsql` aplicaram os mesmos filtros, agregações, cortes e limites
+  das consultas de referência;
+- os três `narrate` reproduziram os rankings corretos;
+- a narrativa do IPH usou “pressão sobre a capacidade” e não “ocupação real”.
+
+## Verificação antes da apresentação
+
+1. confirmar que o banco está `Disponível`;
+2. testar a conexão mTLS;
+3. confirmar que `MEDFLOW_GENAI` está `ENABLED`;
+4. executar o SQL convencional, depois `showsql` e por último `narrate`;
+5. interromper a demonstração se o SQL gerado divergir da referência.

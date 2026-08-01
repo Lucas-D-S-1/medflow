@@ -125,6 +125,22 @@ Também são gerados:
 - `mapa_regiao_saude_sp.geojson`;
 - `mapa_regiao_saude_sp.topojson`.
 
+### Oracle e Select AI — validados em 01/08/2026
+
+A Gold está carregada no Autonomous AI Database 26ai `MEDFLOW`, workload
+Lakehouse, região São Paulo:
+
+- esquema de aplicação separado do `ADMIN`;
+- 2 dimensões, 5 marts, 118 colunas comentadas e 7 índices secundários;
+- 521.116 linhas carregadas e conferidas;
+- 25/25 métricas Oracle com estado `ok`;
+- profile `MEDFLOW_GENAI` usando OCI Generative AI por Resource Principal;
+- três perguntas validadas em SQL convencional, `showsql` e `narrate`.
+
+Runbook e evidências:
+[`oracle/README.md`](oracle/README.md) e
+[`oracle/VALIDACAO_ORACLE_SELECT_AI.md`](oracle/VALIDACAO_ORACLE_SELECT_AI.md).
+
 ## O que a validação encontrou
 
 | Controle | Resultado |

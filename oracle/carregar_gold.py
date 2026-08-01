@@ -7,7 +7,7 @@ dados, em ordem inversa das chaves estrangeiras.
 Uso, a partir de `sprint_2_em_andamento/`:
 
     set -a; source oracle/.env; set +a
-    ../../../.venv/bin/python oracle/carregar_gold.py
+    ../../.venv/bin/python oracle/carregar_gold.py
 
 Opções:
     --somente TABELA   carrega apenas uma tabela (repetível)

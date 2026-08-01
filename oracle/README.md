@@ -15,7 +15,21 @@ arquivos de conexão são ignorados pelo Git.
 | Região | Brazil East, `sa-saopaulo-1` |
 | Tenancy | `rm572207` (institucional FIAP/Oracle, usuário `rm572207@fiap.com.br`) |
 | Autenticação | mTLS obrigatório, acesso seguro de qualquer lugar |
-| Criado em | 30/07/2026 |
+| Criado em | 31/07/2026 |
+
+## Estado validado em 01/08/2026
+
+- conexão mTLS validada como `MEDFLOW`;
+- 2 dimensões, 5 marts, 118 colunas comentadas e 7 índices secundários;
+- **521.116 linhas** carregadas: 520.409 nos marts e 707 nas dimensões;
+- 25/25 métricas de reconciliação com estado `ok`;
+- três verificações adicionais de integridade com zero ocorrências;
+- Resource Principal OCI habilitado para o esquema;
+- profile `MEDFLOW_GENAI` ativo com OCI Generative AI em `sa-saopaulo-1`;
+- três perguntas validadas em SQL convencional, `showsql` e `narrate`.
+
+As evidências e os rankings obtidos estão em
+[`VALIDACAO_ORACLE_SELECT_AI.md`](VALIDACAO_ORACLE_SELECT_AI.md).
 
 ## Instalação
 
@@ -65,7 +79,8 @@ SQLcl.
 Na raiz de `sprint_2_em_andamento/`:
 
 ```bash
-set -a; source oracle/.env; set +a; ../../../.venv/bin/python oracle/testar_conexao.py
+../../.venv/bin/python -m dotenv -f oracle/.env run -- \
+  ../../.venv/bin/python oracle/testar_conexao.py
 ```
 
 O teste consulta apenas o nome do banco, o esquema conectado e o horário do
@@ -74,15 +89,17 @@ servidor. Nenhuma credencial é exibida.
 ### Passo 4 — carga
 
 ```bash
-set -a; source oracle/.env; set +a; ../../../.venv/bin/python oracle/carregar_gold.py
+../../.venv/bin/python -m dotenv -f oracle/.env run -- \
+  ../../.venv/bin/python oracle/carregar_gold.py
 ```
 
 A carga é idempotente: esvazia cada tabela antes de inserir, na ordem inversa
-das chaves estrangeiras. São 520.409 linhas em 7 tabelas. Para conferir sem
-carregar:
+das chaves estrangeiras. São 521.116 linhas em 7 tabelas: 520.409 linhas nos
+cinco marts e 707 nas duas dimensões. Para conferir sem carregar:
 
 ```bash
-../../../.venv/bin/python oracle/carregar_gold.py --conferir
+../../.venv/bin/python -m dotenv -f oracle/.env run -- \
+  ../../.venv/bin/python oracle/carregar_gold.py --conferir
 ```
 
 ### Passo 5 — reconciliação
@@ -93,14 +110,19 @@ sair como `ok`.** Os quatro marts partem do mesmo fato e precisam fechar em
 6.905.441 internações novas; se um divergir, a carga perdeu dado e o dashboard
 não deve ser construído sobre essa base.
 
+### Passo 6 — Select AI
+
+`sql/04_select_ai.sql` registra o Dynamic Group, a policy IAM, a habilitação
+do Resource Principal, o profile e as três perguntas. A configuração validada
+usa OCI Generative AI na própria região de São Paulo, sem chave de API externa.
+O `showsql` deve ser conferido contra o SQL de referência antes do `narrate`.
+
 ## Dois avisos que valem nota
 
-**Select AI é a dependência mais frágil do MVP — teste no passo 6, não no
-fim.** Ele exige um provedor de LLM alcançável pelo banco. Em tenancy Always
-Free o OCI Generative AI pode não estar liberado, e a região precisa hospedar
-o serviço. `sql/04_select_ai.sql` já traz o caminho OCI e o alternativo com
-provedor externo. Se o primeiro falhar, troque de caminho em vez de insistir —
-mas descubra isso em agosto, não na semana de 14–18/09.
+**Select AI foi validado em 01/08/2026, mas continua sendo uma dependência
+externa do MVP.** Preserve o Dynamic Group `MedFlowADBGenAI`, a policy
+`use generative-ai-family` e o Resource Principal. Antes da apresentação,
+execute novamente o teste de fumaça e as três perguntas.
 
 **Always Free hiberna por inatividade.** Uma instância Always Free é parada
 automaticamente após alguns dias consecutivos sem conexão e pode ser
@@ -121,10 +143,10 @@ demonstração ao vivo.
 
 O Select AI usa comentário de tabela e de coluna como contexto ao traduzir
 pergunta em SQL — é o que o atributo `"comments": "true"` do profile envia
-junto do prompt. Por isso `sql/02_criar_tabelas_gold.sql` comenta as 110
-colunas, e não apenas as chaves. Quando o modelo gerar SQL errado, a correção
-é melhorar o comentário da coluna envolvida, não reescrever a pergunta até
-funcionar.
+junto do prompt. Por isso `sql/02_criar_tabelas_gold.sql` comenta as 118
+colunas, e não apenas as chaves. Erros de semântica devem ser corrigidos no
+comentário da coluna. Cortes de negócio ausentes da pergunta devem ser
+declarados explicitamente, sem ajustes por tentativa e erro.
 
 Caso concreto: o comentário de `nr_iph_estimado` diz explicitamente que o
 índice é pressão estimada sobre capacidade declarada, e **não** ocupação real
