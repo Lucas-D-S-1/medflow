@@ -1,6 +1,6 @@
 {
   "camada": "bronze",
-  "gerado_em_utc": "2026-07-29T23:19:04.708365+00:00",
+  "gerado_em_utc": "2026-08-01T21:12:04.556802+00:00",
   "recorte": {
     "uf": "SP",
     "periodo_solicitado": [
@@ -146,7 +146,8 @@
     "IBGE_malha_municipal_2024": "https://geoftp.ibge.gov.br/organizacao_do_territorio/malhas_territoriais/malhas_municipais/municipio_2024/UFs/SP/SP_Municipios_2024.zip",
     "MS_DEMAS_cnes_atual": "https://apidadosabertos.saude.gov.br/cnes/estabelecimentos/{cnes}",
     "DATASUS_CID10": "http://www2.datasus.gov.br/cid10/V2008/downloads/CID10CSV.zip",
-    "IBGE_CONCLA_natureza_juridica": "https://concla.ibge.gov.br/documentacao/3051-concla/estrutura/natureza-juridica-2021.html"
+    "IBGE_CONCLA_natureza_juridica": "https://concla.ibge.gov.br/documentacao/3051-concla/estrutura/natureza-juridica-2021.html",
+    "IBGE_IPCA_tabela_1737_variavel_2266": "https://apisidra.ibge.gov.br/values/t/1737/n1/all/v/2266/p/202401-202605?formato=json"
   },
   "checks": {
     "arquivos_rd_cache": 29,
@@ -202,6 +203,11 @@
       "caminho": "ibge_concla_natureza_juridica_2021.html",
       "bytes": 45803,
       "sha256": "6f79451f5c5a6d393e2b57008f80712f3b4075005d54f3463764de205fff1094"
+    },
+    "ipca_ibge": {
+      "caminho": "ibge_ipca_numero_indice_raw.json",
+      "bytes": 6594,
+      "sha256": "07499b0acc629ff2134cf41e57e3e29946ac4393752afbc4b5977fd6249a12bb"
     },
     "cnes_estabelecimentos_atuais": {
       "caminho": "ms_cnes_estabelecimentos_atuais_raw.json",

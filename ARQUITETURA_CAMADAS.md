@@ -1,6 +1,6 @@
 # Arquitetura de dados do MedFlow
 
-Contrato `0.2.0`, atualizado em 29/07/2026.
+Contrato `0.3.0`, atualizado em 01/08/2026.
 
 ## Referência acadêmica
 
@@ -18,7 +18,7 @@ Nuvem e Híbrido_RevFinal.pdf`:
 ## Fluxo
 
 ```text
-SIH/RD + CNES/LT + APIs MS/IBGE + CSV MS + malha IBGE
+SIH/RD + CNES/LT + APIs MS/IBGE + CSV MS + IPCA + malha IBGE
                               │
                               ▼
 00_extracao_dados.ipynb ── Bronze
@@ -34,8 +34,8 @@ SIH/RD + CNES/LT + APIs MS/IBGE + CSV MS + malha IBGE
                               │
                               ▼
 02_analise_dados.ipynb ── Gold
-  marts/       TMH, IPR, IS, CMI e IPH estimado
-  geografia/   CSV, GeoJSON e TopoJSON para o BI
+  marts/       indicadores hospitalares, residência, fluxo e ICSAP
+  geografia/   CSV, GeoJSON e TopoJSON para o produto
   qualidade/   cobertura, amostras, hashes e limitações
 ```
 
@@ -53,6 +53,8 @@ sprint_2_em_andamento/
 │   ├── contratos.py
 │   ├── geografia.py
 │   ├── gold.py
+│   ├── icsap.py
+│   ├── ipca.py
 │   └── inventario.py
 ├── contratos/
 ├── dados/
@@ -85,10 +87,13 @@ sprint_2_em_andamento/
 
 ### Gold
 
-- contém os cinco contratos metodológicos aprovados;
+- contém contratos hospitalares e territoriais aprovados;
 - registra amostras e denominadores insuficientes sem descartá-los;
 - oferece chaves regionais consistentes em todos os marts;
 - mantém explícito que o IPH é pressão estimada, não ocupação real.
+- separa região de residência da região do hospital;
+- preserva CMI nominal e publica CMI real com referência IPCA explícita;
+- classifica ICSAP pela Portaria SAS/MS 221/2008.
 
 ## Contratos e documentação
 

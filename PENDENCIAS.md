@@ -24,8 +24,9 @@ Entrega da Sprint 2: **01/09/2026**.
 - documentação e metadados automáticos em `dados/silver/`.
 - duas execuções Silver consecutivas com as mesmas reconciliações, sem
   arquivos `.parcial` residuais.
-- versão pública [`v0.1.0`](https://github.com/Lucas-D-S-1/medflow/releases/tag/v0.1.0)
-  publicada como primeiro marco do pipeline Bronze/Silver;
+- versão pública [`v0.1.0`](https://github.com/Lucas-D-S-1/fiap-1tscoa/releases/tag/v0.1.0)
+  espelhada neste repositório como primeiro marco do pipeline Bronze/Silver,
+  preservando o repositório original como proveniência histórica;
 - versão pública [`v0.2.0`](https://github.com/Lucas-D-S-1/fiap-1tscoa/releases/tag/v0.2.0)
   publicada com Silver canônica, Gold, geografia, contratos e validação
   integrada.
@@ -73,7 +74,7 @@ As fórmulas foram aceitas em 29/07/2026 e implementadas na Gold:
 | TMH | validado | internações novas; mínimo de 30 para classificação |
 | IPR | validado | benchmark regional sem o próprio hospital; cortes 20/50/3 hospitais |
 | IS | validado | internações novas de 2026 / média do mesmo mês em 2024–2025 |
-| CMI | validado | valor aprovado por internação nova; continuação separada |
+| CMI | validado | nominal preservado e real corrigido por IPCA; continuação separada |
 | IPH | validado com limitação | reconstrução calendário-dia; capacidade CNES declarada |
 
 Para o IPH, não usar o nome “ocupação real”. A proposta reconstrói
@@ -83,36 +84,41 @@ permanece apenas como reprodução do proxy faturado.
 
 ### 4. Implementar `02_analise_dados.ipynb` — concluído
 
-O notebook gera cinco marts e reconciliou:
+O notebook gera sete marts e reconciliou:
 
 - 6.905.441 internações novas;
 - 32.425.897 pacientes-dia estimados;
 - 310 linhas de IS calculáveis;
 - 30.550 combinações hospital/CID elegíveis para IPR;
 - 142 hospital/mês com capacidade SUS zero preservados e IPH nulo.
+- 6.846.665 internações de residentes paulistas observadas em SP;
+- 906.060 deslocamentos inter-regionais com saída igual à entrada;
+- 953.656 ICSAP distribuídas nos 19 grupos oficiais.
 
 ### 5. Estrutura e geografia — concluído
 
 - Bronze separada entre origem, intermediário e Parquet;
 - Silver restrita a seis dimensões e dois fatos;
-- nomes canônicos documentados no contrato `0.2.0`;
+- nomes canônicos documentados no contrato `0.3.0`;
 - CSV oficial do Ministério da Saúde incorporado;
 - população IBGE 2022 agregada por município e região;
 - GeoJSON e TopoJSON com 62 regiões válidas;
 - legado isolado sem exclusão.
 
-### 6. Regenerar figuras e achados
+### 6. Fechar o produto no webapp — etapa atual
 
-As figuras herdadas são referência visual, não evidência atual. Cada figura
-deve ser gerada pelo notebook 02 e vinculada à tabela Gold correspondente.
+Construir o produto MVP em quatro visões:
 
-Prioridades:
+1. **Visão executiva:** oferta, demanda residente, sazonalidade e pressão;
+2. **Fluxos e APS:** origem–destino, atração/evasão observada e ICSAP;
+3. **Hospital e pares:** IPR, TMH, CMI nominal/real, permanência e amostras;
+4. **Metodologia e qualidade:** fórmulas, cobertura, competência mais recente,
+   limitações e flags.
 
-- distribuição e série temporal do IPH estimado, preservando capacidade zero,
-  valores nulos e flags de pressão acima da capacidade declarada;
-- IPR por hospital/CID com volume mínimo;
-- IS, TMH e CMI recalculados usando internações novas quando aplicável;
-- revisão de todos os números do pitch.
+Também é necessário confirmar a forma operacional de publicação e testar o
+link público nas condições atuais da conta. O produto não está aceito apenas
+por abrir: filtros, totais, rankings, períodos, amostras e interpretações devem
+ser conferidos contra a Gold e, quando aplicável, contra o Oracle.
 
 ### 7. Infraestrutura Oracle — concluída
 
@@ -131,10 +137,10 @@ Artefatos de setup versionados em `sprint_2_em_andamento/oracle/`:
 |---|---|---|
 | Criar esquema `MEDFLOW` separado do `ADMIN` | `sql/01_criar_usuario_medflow.sql` | executado em 01/08/2026 |
 | Testar conexão mTLS | `testar_conexao.py` | validado como `MEDFLOW` |
-| Modelo dimensional, 2 dimensões e 5 marts, 118 colunas comentadas | `sql/02_criar_tabelas_gold.sql` | executado; 7 índices secundários |
-| Carga idempotente de 521.116 linhas | `carregar_gold.py` | executada e conferida |
-| Reconciliação de 25 métricas contra o contrato `0.2.0` | `sql/03_validar_carga.sql` | 25/25 `ok`; integridade sem ocorrências |
-| Select AI com as três perguntas e SQL de referência | `sql/04_select_ai.sql` | OCI GenAI validado em GRU |
+| Modelo dimensional, 2 dimensões e 7 marts, 175 colunas comentadas | `sql/02_criar_tabelas_gold.sql` | executado; 10 índices secundários |
+| Carga idempotente de 585.296 linhas | `carregar_gold.py` | executada e conferida |
+| Reconciliação de 36 métricas contra o contrato `0.3.0` | `sql/03_validar_carga.sql` | 36/36 `ok`; seis gates vazios |
+| Select AI com cinco perguntas e SQL de referência | `sql/04_select_ai.sql` | bateria original validada; duas novas perguntas aguardam revalidação |
 
 O Resource Principal usa o Dynamic Group `MedFlowADBGenAI` e a policy
 `use generative-ai-family`. O profile `MEDFLOW_GENAI` está habilitado sem chave
@@ -150,29 +156,40 @@ Riscos conhecidos, registrados para não virarem surpresa:
 - **Always Free hiberna por inatividade.** Conectar ao menos uma vez por semana
   e confirmar o estado `Disponível` na véspera da apresentação.
 
-### 8. Definir a arquitetura de entrega
+### 8. Revalidar o Select AI depois do produto
 
-Com a carga e o Select AI validados no Oracle:
+O Select AI já passou pela validação técnica inicial. Depois que o webapp e
+seus dados forem aprovados, repetir as cinco perguntas em SQL convencional,
+`showsql` e `narrate`, confirmando que os resultados continuam coerentes com o
+produto final.
 
-- escolher a ferramenta do dashboard e a forma de link público;
-- produzir PPT, vídeo e roteiro da apresentação técnica.
+### 9. Produzir a apresentação por último
 
-Próximo marco sugerido: **`v0.3.0` — Oracle e dashboard MVP**.
+As figuras herdadas são referência visual, não evidência atual. Depois da
+aprovação do webapp e da revalidação do Select AI:
+
+- regenerar as figuras a partir do notebook 02 e das tabelas Gold;
+- revisar todos os números e textos do pitch;
+- produzir PPT, vídeo e roteiro da demonstração;
+- ensaiar a defesa dos indicadores hospitalares/territoriais e limitações.
+
+Próximo marco sugerido: **`v0.3.0` — Oracle e webapp MVP**.
 
 ## Entregáveis da Sprint 2
 
 | Entregável | Peso | Status |
 |---|---:|---|
 | Pipeline Bronze/Silver reproduzível | — | validado para 2024-01 a 2026-05 |
-| Cinco índices validados | — | concluído |
+| Indicadores hospitalares e territoriais validados | — | concluído |
 | Autonomous AI Database provisionado | — | carregado e reconciliado em 01/08/2026 |
-| Dashboard navegável | — | não iniciado |
-| Link público | 10% | não iniciado |
-| Oracle Select AI | — | OCI GenAI e três perguntas validados |
+| Webapp navegável | — | etapa atual |
+| Link público | 10% | publicação a confirmar e testar |
+| Validação dos dados no produto | — | após montagem do webapp |
+| Oracle Select AI | — | validado tecnicamente; revalidar após o produto |
 | GitHub | 20% | `v0.2.0` publicada |
-| PPT / pitch | 10% | não iniciado |
-| Vídeo YouTube | 10% | não iniciado |
-| Apresentação técnica | 50% | não iniciado |
+| PPT / pitch | 10% | aguarda produto validado |
+| Vídeo YouTube | 10% | aguarda produto validado |
+| Apresentação técnica | 50% | aguarda produto e Select AI revalidados |
 
 ## Organização vigente
 

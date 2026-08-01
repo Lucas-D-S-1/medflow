@@ -73,6 +73,9 @@ def validar(base: Path) -> dict[str, int | str]:
     assert metadados_gold["metricas"]["regioes_saude"] == 62
     assert metadados_gold["metricas"]["competencias"] == 29
     assert metadados_gold["metricas"]["linhas_is_calculadas"] == 310
+    assert metadados_gold["metricas"]["internacoes_residentes_sp_observadas"] == 6_846_665
+    assert metadados_gold["metricas"]["internacoes_residentes_fora_sp_atendidas"] == 58_776
+    assert metadados_gold["metricas"]["internacoes_icsap_residentes_sp_observadas"] == 953_656
 
     dir_marts = base / "dados" / "gold" / "marts"
     hospital_mensal = pd.read_parquet(
@@ -86,6 +89,12 @@ def validar(base: Path) -> dict[str, int | str]:
     )
     regiao_mensal = pd.read_parquet(
         dir_marts / "mart_indicador_regiao_mensal.parquet"
+    )
+    fluxo_mensal = pd.read_parquet(
+        dir_marts / "mart_fluxo_assistencial_regiao_mensal.parquet"
+    )
+    icsap_mensal = pd.read_parquet(
+        dir_marts / "mart_icsap_regiao_mensal.parquet"
     )
     tmh_global_gold = (
         hospital_especialidade.qt_obito.sum()
@@ -126,10 +135,39 @@ def validar(base: Path) -> dict[str, int | str]:
         ),
     )
     assert np.allclose(
-        regiao_mensal.qt_internacao_por_100_mil_habitante,
-        regiao_mensal.qt_internacao_nova
+        regiao_mensal.tx_internacao_residente_observada_por_100_mil,
+        regiao_mensal.qt_internacao_residente_observada
         / regiao_mensal.qt_populacao_ibge_2022
         * 100_000,
+    )
+    assert fluxo_mensal.qt_internacao_nova.sum() == 6_905_441
+    assert regiao_mensal.qt_internacao_residente_observada.sum() == 6_846_665
+    assert (
+        regiao_mensal.qt_internacao_residente_na_propria_regiao.sum()
+        + regiao_mensal.qt_evasao_intrastadual_observada.sum()
+        == 6_846_665
+    )
+    assert (
+        regiao_mensal.qt_evasao_intrastadual_observada.sum()
+        == regiao_mensal.qt_internacao_recebida_outra_regiao_sp.sum()
+        == 906_060
+    )
+    assert (
+        icsap_mensal.qt_internacao_icsap.sum()
+        == regiao_mensal.qt_internacao_icsap_residente_observada.sum()
+        == 953_656
+    )
+    assert icsap_mensal.cd_grupo_icsap.nunique() == 19
+    assert np.allclose(
+        hospital_mensal.vl_aprovado_internacao_nova_real_soma,
+        hospital_mensal.vl_aprovado_internacao_nova_soma
+        * hospital_mensal.nr_fator_correcao_ipca,
+    )
+    com_internacao = hospital_mensal.qt_internacao_nova.gt(0)
+    assert np.allclose(
+        hospital_mensal.loc[com_internacao, "nr_permanencia_media"],
+        hospital_mensal.loc[com_internacao, "qt_dia_permanencia_soma"]
+        / hospital_mensal.loc[com_internacao, "qt_internacao_nova"],
     )
 
     topo = json.loads(
@@ -155,6 +193,7 @@ def validar(base: Path) -> dict[str, int | str]:
             item["caminho"].startswith("dados/")
             or item["caminho"].startswith("figuras/")
         )
+        and not item["caminho"].startswith("dados/gold/")
         and item["caminho"] != "dados/bronze/MANIFESTO.json"
     ]
     ausentes = [item["caminho"] for item in preservados if item["sha256"] not in hashes_atuais]
@@ -177,7 +216,7 @@ def validar(base: Path) -> dict[str, int | str]:
         "competencias": 29,
     }
     linhas = [
-        "# Validação técnica integrada — MedFlow 0.2.0",
+        "# Validação técnica integrada — MedFlow 0.3.0",
         "",
         f"Executada em `{resultado['validado_em_utc']}`.",
         "",
@@ -189,7 +228,9 @@ def validar(base: Path) -> dict[str, int | str]:
         "- Nenhum arquivo `.parcial` residual.",
         f"- {len(preservados)} artefatos de dados/figuras pré-migração preservados por SHA-256.",
         "- 7.034.961 AIHs e 6.905.441 internações novas reconciliadas.",
-        "- Fórmulas TMH, IPR, IS, IPH e taxa populacional recalculadas a partir dos numeradores e denominadores persistidos.",
+        "- Fórmulas TMH, IPR, IS, IPH, permanência média, IPCA e taxa populacional por residência recalculadas.",
+        "- Fluxos origem-destino reconciliados; 906.060 saídas inter-regionais fecham com as entradas correspondentes.",
+        "- 953.656 ICSAP reconciliadas entre resumo regional e 19 grupos da Portaria SAS/MS 221/2008.",
         "- 645 municípios, 62 regiões, 19 macrorregiões e 29 competências.",
         "- TopoJSON com 62 geometrias regionais.",
         "",

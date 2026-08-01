@@ -19,8 +19,8 @@ independentes, a convenção deve ser revista antes da primeira tag dele.
 
 A versão da release identifica a entrega pública completa. A
 `versao_contrato` dos arquivos em `contratos/` identifica somente o esquema das
-camadas de dados. Elas evoluem de forma independente: por exemplo, a release
-`v0.3.0` pode continuar consumindo o contrato de dados `0.2.0`.
+camadas de dados. Elas evoluem de forma independente: por exemplo, uma futura
+release `v0.4.0` pode continuar consumindo o contrato de dados `0.3.0`.
 
 O estado de uma release é registrado em três lugares:
 
@@ -47,11 +47,13 @@ posteriores usam uma nova versão; tags públicas existentes não são movidas.
 | Marco | Situação | Observação |
 |---|---|---|
 | `medflow-v0` | legado | Primeira baseline; mantida apenas por rastreabilidade |
-| `v0.1.0` | histórico | Publicada no repositório original `medflow` |
+| `v0.1.0` | histórico | Espelhada neste repositório; a publicação original permanece como proveniência histórica |
 | `v0.2.0` | estável | Gold, geografia, contratos e validação integrada |
-| `v0.3.0` | em andamento | Oracle concluído; dashboard MVP ainda pendente |
+| `v0.3.0` | em andamento | contrato 0.3.0 e Oracle concluídos; webapp MVP pendente |
 
 A tag legada `medflow-v0` não deve ser apagada nem reutilizada. A `v0.1.0`
-não é recriada neste repositório sem uma decisão explícita, pois sua publicação
-canônica permanece no repositório original. A próxima publicação será a
-`v0.3.0` somente após a conclusão e validação do dashboard MVP.
+foi espelhada neste repositório em 01/08/2026, preservando o commit histórico
+da entrega e sem apagar a referência ao
+[repositório original `medflow`](https://github.com/Lucas-D-S-1/medflow).
+A próxima publicação será a `v0.3.0` somente após a conclusão e validação do
+webapp MVP.

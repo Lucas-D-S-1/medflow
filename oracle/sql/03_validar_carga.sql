@@ -3,7 +3,7 @@
 -- Conecte como MEDFLOW, depois de rodar carregar_gold.py.
 --
 -- Os valores esperados vêm de dados/gold/qualidade/METADADOS.json, contrato
--- 0.2.0, gerado em 29/07/2026. Toda linha deve sair como "ok". Qualquer
+-- 0.3.0, gerado em 01/08/2026. Toda linha deve sair como "ok". Qualquer
 -- DIVERGENTE significa que a carga não reproduz o gate técnico aprovado e o
 -- dashboard não deve ser construído sobre essa base.
 -- =====================================================================
@@ -106,6 +106,41 @@ with conferencia (ordem, metrica, esperado, obtido) as (
   union all
   select 25, 'municipios na dimensao de geografia', 645,
          (select count(distinct cd_municipio_ibge_7) from dim_geografia_municipio) from dual
+
+  -- Novos produtos territoriais do contrato 0.3.0
+  union all
+  select 26, 'linhas mart_fluxo_assistencial_regiao_mensal', 30018,
+         (select count(*) from mart_fluxo_assistencial_regiao_mensal) from dual
+  union all
+  select 27, 'linhas mart_icsap_regiao_mensal', 34162,
+         (select count(*) from mart_icsap_regiao_mensal) from dual
+  union all
+  select 28, 'internacoes novas no fluxo origem-destino', 6905441,
+         (select sum(qt_internacao_nova) from mart_fluxo_assistencial_regiao_mensal) from dual
+  union all
+  select 29, 'internacoes de residentes SP observadas', 6846665,
+         (select sum(qt_internacao_residente_observada) from mart_indicador_regiao_mensal) from dual
+  union all
+  select 30, 'residentes fora de SP atendidos', 58776,
+         (select sum(qt_internacao_recebida_fora_sp) from mart_indicador_regiao_mensal) from dual
+  union all
+  select 31, 'ICSAP no resumo regional', 953656,
+         (select sum(qt_internacao_icsap_residente_observada) from mart_indicador_regiao_mensal) from dual
+  union all
+  select 32, 'ICSAP no detalhamento por grupo', 953656,
+         (select sum(qt_internacao_icsap) from mart_icsap_regiao_mensal) from dual
+  union all
+  select 33, 'evasao intrastadual observada', 906060,
+         (select sum(qt_evasao_intrastadual_observada) from mart_indicador_regiao_mensal) from dual
+  union all
+  select 34, 'atracao entre regioes de SP', 906060,
+         (select sum(qt_internacao_recebida_outra_regiao_sp) from mart_indicador_regiao_mensal) from dual
+  union all
+  select 35, 'competencia do preco de referencia IPCA', 202605,
+         (select to_number(max(cd_competencia_preco_referencia)) from mart_indicador_regiao_mensal) from dual
+  union all
+  select 36, 'grupos ICSAP distintos', 19,
+         (select count(distinct cd_grupo_icsap) from mart_icsap_regiao_mensal) from dual
 )
 select metrica,
        esperado,
@@ -129,6 +164,38 @@ select 'hospital_cid_periodo sem regiao', count(*)
 from   mart_indicador_hospital_cid_periodo m
 where  not exists (select 1 from dim_geografia_regiao d
                    where d.cd_regiao_saude = m.cd_regiao_saude)
+having count(*) > 0;
+
+select 'fluxo sem regiao de atendimento' as verificacao, count(*) as linhas
+from   mart_fluxo_assistencial_regiao_mensal m
+where  not exists (select 1 from dim_geografia_regiao d
+                   where d.cd_regiao_saude = m.cd_regiao_saude_atendimento)
+having count(*) > 0
+union all
+select 'ICSAP sem regiao de residencia', count(*)
+from   mart_icsap_regiao_mensal m
+where  not exists (select 1 from dim_geografia_regiao d
+                   where d.cd_regiao_saude = m.cd_regiao_saude)
+having count(*) > 0;
+
+-- A decomposicao por grupo deve fechar o total regional e 100% em cada mes.
+select 'soma de grupos ICSAP divergente' as verificacao, count(*) as linhas
+from (
+  select cd_regiao_saude, cd_competencia
+  from   mart_icsap_regiao_mensal
+  group  by cd_regiao_saude, cd_competencia, qt_internacao_icsap_total_regiao
+  having sum(qt_internacao_icsap) <> qt_internacao_icsap_total_regiao
+     or abs(sum(pc_grupo_no_total_icsap) - 100) > 0.01
+)
+having count(*) > 0;
+
+-- As saidas entre regioes paulistas devem ser iguais as entradas correspondentes.
+select 'fluxo interregional assimetrico' as verificacao, count(*) as linhas
+from dual
+where (select sum(qt_evasao_intrastadual_observada)
+       from mart_indicador_regiao_mensal)
+   <> (select sum(qt_internacao_recebida_outra_regiao_sp)
+       from mart_indicador_regiao_mensal)
 having count(*) > 0;
 
 -- O IPH só pode ser nulo quando o hospital não declarou leito SUS. Qualquer

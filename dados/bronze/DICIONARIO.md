@@ -1,6 +1,6 @@
 # Dicionário da camada Bronze — MedFlow
 
-Contrato de esquema `0.2.0`, gerado automaticamente em `2026-07-29T23:19:04.877755+00:00`.
+Contrato de esquema `0.3.0`, gerado automaticamente em `2026-08-01T21:12:04.735973+00:00`.
 
 ## Responsabilidade da camada
 

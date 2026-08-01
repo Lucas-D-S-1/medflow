@@ -1,6 +1,6 @@
 -- =====================================================================
 -- MedFlow — modelo dimensional da Gold no Autonomous AI Lakehouse
--- Conecte como MEDFLOW. Contrato de esquema 0.2.0.
+-- Conecte como MEDFLOW. Contrato de esquema 0.3.0.
 --
 -- Tipos e larguras derivados dos valores reais observados nos Parquets em
 -- 30/07/2026, com folga. Colunas VARCHAR2 usam semântica CHAR porque o
@@ -10,6 +10,28 @@
 -- e coluna como contexto ao traduzir pergunta em SQL. Comentário ruim é
 -- resposta ruim.
 -- =====================================================================
+
+-- Reexecução idempotente restrita aos nove objetos do produto MedFlow.
+begin
+  for t in (
+    select table_name
+    from   user_tables
+    where  table_name in (
+      'MART_ICSAP_REGIAO_MENSAL',
+      'MART_FLUXO_ASSISTENCIAL_REGIAO_MENSAL',
+      'MART_INDICADOR_REGIAO_PERIODO',
+      'MART_INDICADOR_REGIAO_MENSAL',
+      'MART_INDICADOR_HOSPITAL_CID_PERIODO',
+      'MART_INDICADOR_HOSPITAL_ESPECIALIDADE_MENSAL',
+      'MART_INDICADOR_HOSPITAL_MENSAL',
+      'DIM_GEOGRAFIA_MUNICIPIO',
+      'DIM_GEOGRAFIA_REGIAO'
+    )
+  ) loop
+    execute immediate 'drop table ' || t.table_name || ' cascade constraints purge';
+  end loop;
+end;
+/
 
 -- ---------------------------------------------------------------------
 -- Dimensões de geografia (carregar antes dos marts: são o lado pai das FKs)
@@ -97,7 +119,13 @@ create table mart_indicador_hospital_mensal (
   fl_acima_capacidade_declarada    number(1)          not null,
   pc_tmh                           number(9,6),
   vl_cmi                           number(18,4),
+  nr_permanencia_media             number(12,6),
   st_amostra                       varchar2(40 char)  not null,
+  nr_indice_ipca                   number(14,4)       not null,
+  nr_fator_correcao_ipca           number(12,8)       not null,
+  cd_competencia_preco_referencia  varchar2(6 char)   not null,
+  vl_aprovado_internacao_nova_real_soma number(18,2) not null,
+  vl_cmi_real                      number(18,4),
   constraint pk_mart_hosp_mensal primary key (cd_cnes, cd_competencia),
   constraint ck_mart_hosp_mensal_flag check (fl_acima_capacidade_declarada in (0, 1)),
   constraint fk_mart_hosp_mensal_regiao foreign key (cd_regiao_saude)
@@ -136,6 +164,12 @@ comment on column mart_indicador_hospital_mensal.st_capacidade is 'Estado da cap
 comment on column mart_indicador_hospital_mensal.fl_acima_capacidade_declarada is 'Vale 1 quando o IPH estimado supera a capacidade declarada. Sinaliza necessidade de investigacao, nao ocupacao comprovada.';
 comment on column mart_indicador_hospital_mensal.pc_tmh is 'TMH: obitos em internacoes novas divididos pelas internacoes novas, em percentual. Nulo quando a amostra e insuficiente, ou seja menos de 30 internacoes novas no mes.';
 comment on column mart_indicador_hospital_mensal.vl_cmi is 'CMI: valor nominal aprovado nas internacoes novas dividido pela quantidade de internacoes novas, em reais. Nulo quando a amostra e insuficiente.';
+comment on column mart_indicador_hospital_mensal.nr_permanencia_media is 'Tempo medio de permanencia em dias: soma dos dias dividida pelas internacoes novas. Nulo quando nao houve internacao no mes.';
+comment on column mart_indicador_hospital_mensal.nr_indice_ipca is 'Numero-indice mensal do IPCA, tabela SIDRA 1737 e variavel 2266 do IBGE.';
+comment on column mart_indicador_hospital_mensal.nr_fator_correcao_ipca is 'Fator multiplicativo que atualiza o valor nominal para cd_competencia_preco_referencia.';
+comment on column mart_indicador_hospital_mensal.cd_competencia_preco_referencia is 'Competencia AAAAMM do preco de referencia usado nos valores reais.';
+comment on column mart_indicador_hospital_mensal.vl_aprovado_internacao_nova_real_soma is 'Valor aprovado das internacoes novas corrigido pelo IPCA para a competencia de referencia.';
+comment on column mart_indicador_hospital_mensal.vl_cmi_real is 'CMI corrigido pelo IPCA para a competencia de referencia. Nao representa custo economico integral.';
 comment on column mart_indicador_hospital_mensal.st_amostra is 'Estado da amostra para TMH e CMI: suficiente ou amostra_insuficiente, pelo minimo de 30 internacoes novas definido no contrato.';
 
 -- ---------------------------------------------------------------------
@@ -160,7 +194,13 @@ create table mart_indicador_hospital_especialidade_mensal (
   vl_aprovado_continuacao_soma     number(18,2)      not null,
   pc_tmh                           number(9,6)       not null,
   vl_cmi                           number(18,4)      not null,
+  nr_permanencia_media             number(12,6)      not null,
   st_amostra                       varchar2(40 char) not null,
+  nr_indice_ipca                   number(14,4)      not null,
+  nr_fator_correcao_ipca           number(12,8)      not null,
+  cd_competencia_preco_referencia  varchar2(6 char)  not null,
+  vl_aprovado_internacao_nova_real_soma number(18,2) not null,
+  vl_cmi_real                      number(18,4)      not null,
   constraint pk_mart_hosp_esp_mensal primary key (cd_cnes, cd_especialidade_sih, cd_competencia),
   constraint fk_mart_hosp_esp_regiao foreign key (cd_regiao_saude)
     references dim_geografia_regiao (cd_regiao_saude)
@@ -185,6 +225,12 @@ comment on column mart_indicador_hospital_especialidade_mensal.vl_aprovado_inter
 comment on column mart_indicador_hospital_especialidade_mensal.vl_aprovado_continuacao_soma is 'Soma nominal em reais dos valores aprovados para continuacoes de longa permanencia. Separado do valor de internacao nova de proposito, para nao inflar o CMI.';
 comment on column mart_indicador_hospital_especialidade_mensal.pc_tmh is 'TMH: obitos em internacoes novas divididos pelas internacoes novas, em percentual. Em rankings por especialidade, usar AVG(pc_tmh) somente nas linhas com st_amostra suficiente.';
 comment on column mart_indicador_hospital_especialidade_mensal.vl_cmi is 'CMI: valor nominal aprovado nas internacoes novas dividido pela quantidade de internacoes novas, em reais.';
+comment on column mart_indicador_hospital_especialidade_mensal.nr_permanencia_media is 'Tempo medio de permanencia em dias na combinacao hospital, especialidade e mes.';
+comment on column mart_indicador_hospital_especialidade_mensal.nr_indice_ipca is 'Numero-indice mensal do IPCA, tabela SIDRA 1737 e variavel 2266 do IBGE.';
+comment on column mart_indicador_hospital_especialidade_mensal.nr_fator_correcao_ipca is 'Fator que atualiza o valor nominal para a competencia de preco de referencia.';
+comment on column mart_indicador_hospital_especialidade_mensal.cd_competencia_preco_referencia is 'Competencia AAAAMM do preco de referencia usado nos valores reais.';
+comment on column mart_indicador_hospital_especialidade_mensal.vl_aprovado_internacao_nova_real_soma is 'Valor aprovado das internacoes novas corrigido pelo IPCA para a competencia de referencia.';
+comment on column mart_indicador_hospital_especialidade_mensal.vl_cmi_real is 'CMI corrigido pelo IPCA para a competencia de referencia.';
 comment on column mart_indicador_hospital_especialidade_mensal.st_amostra is 'Estado da amostra: suficiente ou amostra_insuficiente, pelo minimo definido no contrato do indicador. Comparacoes agregadas entre especialidades devem filtrar suficiente e exigir COUNT(*) de pelo menos 100 linhas hospital-mes por especialidade.';
 
 -- ---------------------------------------------------------------------
@@ -257,9 +303,20 @@ create table mart_indicador_regiao_mensal (
   qt_leito_sus                        number(10)        not null,
   qt_capacidade_teorica_leito_dia     number(12)        not null,
   qt_populacao_ibge_2022              number(12)        not null,
-  qt_internacao_por_100_mil_habitante number(12,4)      not null,
+  qt_internacao_residente_observada   number(10)        not null,
+  qt_internacao_residente_na_propria_regiao number(10)  not null,
+  qt_evasao_intrastadual_observada    number(10)        not null,
+  qt_internacao_icsap_residente_observada number(10)    not null,
+  qt_internacao_recebida_outra_regiao_sp number(10)     not null,
+  qt_internacao_recebida_fora_sp      number(10)        not null,
+  tx_internacao_residente_observada_por_100_mil number(14,6) not null,
+  pc_evasao_intrastadual_observada    number(12,6)      not null,
+  pc_atracao_assistencial             number(12,6)      not null,
+  pc_icsap_no_total_internacao_residente_observada number(12,6) not null,
+  tx_icsap_residente_observada_por_10_mil number(14,6)  not null,
   pc_tmh                              number(9,6)       not null,
   vl_cmi                              number(18,4)      not null,
+  nr_permanencia_media                number(12,6)      not null,
   nr_iph_estimado                     number(12,6)      not null,
   pc_iph_estimado                     number(12,4)      not null,
   qt_internacao_media_historica       number(14,2)      not null,
@@ -267,13 +324,18 @@ create table mart_indicador_regiao_mensal (
   nr_indice_sazonalidade              number(12,6),
   pc_variacao_sazonal                 number(12,4),
   st_indice_sazonalidade              varchar2(40 char) not null,
+  nr_indice_ipca                      number(14,4)       not null,
+  nr_fator_correcao_ipca              number(12,8)      not null,
+  cd_competencia_preco_referencia     varchar2(6 char)  not null,
+  vl_aprovado_internacao_nova_real_soma number(18,2)   not null,
+  vl_cmi_real                         number(18,4)      not null,
   constraint pk_mart_regiao_mensal primary key (cd_regiao_saude, cd_competencia),
   constraint fk_mart_regiao_mensal_regiao foreign key (cd_regiao_saude)
     references dim_geografia_regiao (cd_regiao_saude)
 );
 
 comment on table mart_indicador_regiao_mensal is
-  'Fato mensal por regiao de saude: os cinco indices consolidados na visao do secretario de saude, incluindo o indice de sazonalidade (IS). Base do mapa e da visao executiva. Uma linha por regiao e competencia, 62 regioes por 29 competencias.';
+  'Visao executiva mensal por regiao. Medidas de oferta usam o hospital; medidas populacionais usam residencia. O recorte observa hospitais de SP e nao enxerga residentes paulistas internados fora do estado.';
 comment on column mart_indicador_regiao_mensal.cd_regiao_saude is 'Codigo oficial de cinco digitos da regiao de saude.';
 comment on column mart_indicador_regiao_mensal.nm_regiao_saude is 'Nome oficial da regiao de saude.';
 comment on column mart_indicador_regiao_mensal.cd_macrorregiao_saude is 'Codigo oficial da macrorregiao de saude.';
@@ -281,7 +343,7 @@ comment on column mart_indicador_regiao_mensal.nm_macrorregiao_saude is 'Nome of
 comment on column mart_indicador_regiao_mensal.nr_ano_competencia is 'Ano da competencia de processamento.';
 comment on column mart_indicador_regiao_mensal.nr_mes_competencia is 'Numero do mes da competencia de processamento.';
 comment on column mart_indicador_regiao_mensal.cd_competencia is 'Competencia no formato AAAAMM.';
-comment on column mart_indicador_regiao_mensal.qt_internacao_nova is 'Quantidade de internacoes novas na regiao.';
+comment on column mart_indicador_regiao_mensal.qt_internacao_nova is 'Quantidade de internacoes novas realizadas pelos hospitais da regiao de atendimento.';
 comment on column mart_indicador_regiao_mensal.qt_obito is 'Quantidade de obitos em internacoes novas na regiao.';
 comment on column mart_indicador_regiao_mensal.qt_dia_permanencia_soma is 'Soma dos dias de permanencia das internacoes novas na regiao.';
 comment on column mart_indicador_regiao_mensal.vl_aprovado_internacao_nova_soma is 'Soma nominal em reais dos valores aprovados para internacoes novas na regiao.';
@@ -290,9 +352,20 @@ comment on column mart_indicador_regiao_mensal.qt_paciente_dia_estimado is 'Paci
 comment on column mart_indicador_regiao_mensal.qt_leito_sus is 'Soma dos leitos disponiveis ao SUS declarados no CNES pelos hospitais da regiao.';
 comment on column mart_indicador_regiao_mensal.qt_capacidade_teorica_leito_dia is 'Leitos SUS multiplicados pelos dias civis do mes.';
 comment on column mart_indicador_regiao_mensal.qt_populacao_ibge_2022 is 'Populacao da regiao no Censo IBGE 2022.';
-comment on column mart_indicador_regiao_mensal.qt_internacao_por_100_mil_habitante is 'Internacoes novas por 100 mil habitantes, usando populacao do Censo IBGE 2022. Permite comparar regioes de tamanhos diferentes.';
+comment on column mart_indicador_regiao_mensal.qt_internacao_residente_observada is 'Internacoes de residentes da regiao atendidos em hospitais de SP. Nao inclui atendimentos fora do estado.';
+comment on column mart_indicador_regiao_mensal.qt_internacao_residente_na_propria_regiao is 'Internacoes de residentes atendidos em hospital da propria regiao.';
+comment on column mart_indicador_regiao_mensal.qt_evasao_intrastadual_observada is 'Internacoes de residentes atendidos em outra regiao paulista. Evasao observada dentro de SP, nao evasao total.';
+comment on column mart_indicador_regiao_mensal.qt_internacao_icsap_residente_observada is 'Internacoes de residentes classificadas na Lista Brasileira de ICSAP da Portaria SAS/MS 221/2008 e atendidas em SP.';
+comment on column mart_indicador_regiao_mensal.qt_internacao_recebida_outra_regiao_sp is 'Internacoes realizadas na regiao para residentes de outra regiao paulista.';
+comment on column mart_indicador_regiao_mensal.qt_internacao_recebida_fora_sp is 'Internacoes realizadas na regiao para residentes de outra unidade da Federacao.';
+comment on column mart_indicador_regiao_mensal.tx_internacao_residente_observada_por_100_mil is 'Internacoes observadas de residentes por 100 mil habitantes do Censo 2022. Territorialmente coerente, mas nao observa saidas de SP.';
+comment on column mart_indicador_regiao_mensal.pc_evasao_intrastadual_observada is 'Evasao para outra regiao paulista dividida pelas internacoes de residentes observadas em hospitais de SP.';
+comment on column mart_indicador_regiao_mensal.pc_atracao_assistencial is 'Atendimentos a residentes de fora da regiao divididos pelo total realizado na regiao.';
+comment on column mart_indicador_regiao_mensal.pc_icsap_no_total_internacao_residente_observada is 'ICSAP divididas por todas as internacoes novas observadas de residentes. Nao usa o denominador clinico oficial e nao deve ser rotulada como a proporcao oficial de ICSAP.';
+comment on column mart_indicador_regiao_mensal.tx_icsap_residente_observada_por_10_mil is 'ICSAP observadas de residentes por 10 mil habitantes do Censo IBGE 2022.';
 comment on column mart_indicador_regiao_mensal.pc_tmh is 'TMH da regiao em percentual.';
 comment on column mart_indicador_regiao_mensal.vl_cmi is 'CMI da regiao em reais.';
+comment on column mart_indicador_regiao_mensal.nr_permanencia_media is 'Tempo medio de permanencia em dias nas internacoes realizadas na regiao.';
 comment on column mart_indicador_regiao_mensal.nr_iph_estimado is 'IPH da regiao em razao decimal: pacientes-dia estimados divididos por leitos-dia SUS declarados. Pressao estimada, nao ocupacao real. Para rankings apresentados em percentual, preferir pc_iph_estimado.';
 comment on column mart_indicador_regiao_mensal.pc_iph_estimado is 'IPH da regiao em percentual. Para ranquear regioes em um ano, filtrar nr_ano_competencia, agrupar por nm_regiao_saude e ordenar AVG(pc_iph_estimado) da maior para a menor.';
 comment on column mart_indicador_regiao_mensal.qt_internacao_media_historica is 'Media de internacoes novas no mesmo mes em 2024 e 2025. Denominador do IS.';
@@ -300,6 +373,11 @@ comment on column mart_indicador_regiao_mensal.qt_ano_historico is 'Quantidade d
 comment on column mart_indicador_regiao_mensal.nr_indice_sazonalidade is 'IS: internacoes novas de 2026 divididas pela media do mesmo mes em 2024 e 2025. Preenchido apenas nas competencias de 2026, por isso 310 das 1798 linhas. Acima de 1 indica volume acima do padrao sazonal.';
 comment on column mart_indicador_regiao_mensal.pc_variacao_sazonal is 'Variacao percentual correspondente ao indice de sazonalidade. Negativo indica volume abaixo do padrao historico.';
 comment on column mart_indicador_regiao_mensal.st_indice_sazonalidade is 'Estado de calculabilidade do IS: calculado ou fora_periodo_alvo. Fora do periodo alvo significa competencia de 2024 ou 2025, que servem de base historica e nao recebem indice.';
+comment on column mart_indicador_regiao_mensal.nr_indice_ipca is 'Numero-indice mensal do IPCA, tabela SIDRA 1737 e variavel 2266 do IBGE.';
+comment on column mart_indicador_regiao_mensal.nr_fator_correcao_ipca is 'Fator que atualiza os valores nominais para a competencia de preco de referencia.';
+comment on column mart_indicador_regiao_mensal.cd_competencia_preco_referencia is 'Competencia AAAAMM do preco de referencia usado no CMI real.';
+comment on column mart_indicador_regiao_mensal.vl_aprovado_internacao_nova_real_soma is 'Valor aprovado das internacoes realizadas corrigido pelo IPCA.';
+comment on column mart_indicador_regiao_mensal.vl_cmi_real is 'CMI corrigido pelo IPCA para a competencia de referencia. Nao representa custo economico integral.';
 
 -- ---------------------------------------------------------------------
 -- Fato: distribuicao do IPR elegivel por regiao no periodo
@@ -337,6 +415,92 @@ comment on column mart_indicador_regiao_periodo.qt_combinacao_ipr_acima_referenc
 comment on column mart_indicador_regiao_periodo.pc_combinacao_ipr_acima_referencia is 'Percentual de combinacoes elegiveis com IPR acima da referencia.';
 
 -- ---------------------------------------------------------------------
+-- Fato: fluxos de residencia para atendimento
+-- ---------------------------------------------------------------------
+
+create table mart_fluxo_assistencial_regiao_mensal (
+  cd_origem_residencia                 varchar2(7 char)  not null,
+  cd_regiao_saude_atendimento          varchar2(5 char)  not null,
+  nr_ano_competencia                   number(4)         not null,
+  nr_mes_competencia                   number(2)         not null,
+  cd_competencia                       varchar2(6 char)  not null,
+  st_fluxo_assistencial                varchar2(24 char) not null,
+  qt_internacao_nova                   number(10)        not null,
+  nm_origem_residencia                 varchar2(60 char) not null,
+  cd_macrorregiao_origem               varchar2(4 char),
+  nm_macrorregiao_origem               varchar2(20 char),
+  nm_regiao_saude_atendimento          varchar2(60 char) not null,
+  cd_macrorregiao_atendimento          varchar2(4 char)  not null,
+  nm_macrorregiao_atendimento          varchar2(20 char) not null,
+  pc_origem_no_atendimento             number(12,6)      not null,
+  pc_destino_na_origem_observada       number(12,6)      not null,
+  constraint pk_mart_fluxo_regiao_mensal primary key
+    (cd_origem_residencia, cd_regiao_saude_atendimento, cd_competencia),
+  constraint fk_mart_fluxo_regiao_atendimento foreign key
+    (cd_regiao_saude_atendimento) references dim_geografia_regiao (cd_regiao_saude)
+);
+
+comment on table mart_fluxo_assistencial_regiao_mensal is
+  'Fluxo mensal entre regiao de residencia e regiao do hospital. FORA_SP representa residentes de outra UF atendidos em SP. O recorte nao observa residentes paulistas atendidos fora do estado.';
+comment on column mart_fluxo_assistencial_regiao_mensal.cd_origem_residencia is 'Codigo da regiao de saude de residencia ou FORA_SP para residentes de outra UF.';
+comment on column mart_fluxo_assistencial_regiao_mensal.cd_regiao_saude_atendimento is 'Regiao de saude do hospital que realizou a internacao.';
+comment on column mart_fluxo_assistencial_regiao_mensal.nr_ano_competencia is 'Ano da competencia de processamento.';
+comment on column mart_fluxo_assistencial_regiao_mensal.nr_mes_competencia is 'Numero do mes da competencia de processamento.';
+comment on column mart_fluxo_assistencial_regiao_mensal.cd_competencia is 'Competencia de processamento no formato AAAAMM.';
+comment on column mart_fluxo_assistencial_regiao_mensal.st_fluxo_assistencial is 'Classificacao: intrarregional, interregional_sp ou entrada_outro_estado.';
+comment on column mart_fluxo_assistencial_regiao_mensal.qt_internacao_nova is 'Quantidade de internacoes novas no par origem e destino.';
+comment on column mart_fluxo_assistencial_regiao_mensal.nm_origem_residencia is 'Nome da regiao de residencia ou Fora do estado de Sao Paulo.';
+comment on column mart_fluxo_assistencial_regiao_mensal.cd_macrorregiao_origem is 'Macrorregiao da residencia; nula para FORA_SP.';
+comment on column mart_fluxo_assistencial_regiao_mensal.nm_macrorregiao_origem is 'Nome da macrorregiao da residencia; nulo para FORA_SP.';
+comment on column mart_fluxo_assistencial_regiao_mensal.nm_regiao_saude_atendimento is 'Nome da regiao de saude do hospital.';
+comment on column mart_fluxo_assistencial_regiao_mensal.cd_macrorregiao_atendimento is 'Codigo da macrorregiao do hospital.';
+comment on column mart_fluxo_assistencial_regiao_mensal.nm_macrorregiao_atendimento is 'Nome da macrorregiao do hospital.';
+comment on column mart_fluxo_assistencial_regiao_mensal.pc_origem_no_atendimento is 'Participacao da origem no total realizado pelo destino no mes.';
+comment on column mart_fluxo_assistencial_regiao_mensal.pc_destino_na_origem_observada is 'Participacao do destino no total da origem observado em hospitais de SP.';
+
+-- ---------------------------------------------------------------------
+-- Fato: ICSAP por residencia, grupo oficial e competencia
+-- ---------------------------------------------------------------------
+
+create table mart_icsap_regiao_mensal (
+  cd_regiao_saude                    varchar2(5 char)  not null,
+  nm_regiao_saude                    varchar2(60 char) not null,
+  cd_macrorregiao_saude              varchar2(4 char)  not null,
+  nm_macrorregiao_saude              varchar2(20 char) not null,
+  qt_populacao_ibge_2022             number(12)        not null,
+  nr_ano_competencia                 number(4)         not null,
+  nr_mes_competencia                 number(2)         not null,
+  cd_competencia                     varchar2(6 char)  not null,
+  cd_grupo_icsap                     varchar2(2 char)   not null,
+  nm_grupo_icsap                     varchar2(80 char)  not null,
+  qt_internacao_icsap                number(10)        not null,
+  qt_internacao_icsap_total_regiao   number(10)        not null,
+  pc_grupo_no_total_icsap            number(12,6)      not null,
+  tx_icsap_grupo_por_10_mil_habitantes number(14,6)    not null,
+  constraint pk_mart_icsap_regiao_mensal primary key
+    (cd_regiao_saude, cd_competencia, cd_grupo_icsap),
+  constraint fk_mart_icsap_regiao foreign key (cd_regiao_saude)
+    references dim_geografia_regiao (cd_regiao_saude)
+);
+
+comment on table mart_icsap_regiao_mensal is
+  'Detalhamento mensal das internacoes de residentes por grupo da Lista Brasileira de ICSAP da Portaria SAS/MS 221/2008. Inclui zeros para todas as 62 regioes, 29 competencias e 19 grupos.';
+comment on column mart_icsap_regiao_mensal.cd_regiao_saude is 'Regiao de saude de residencia, nao a regiao do hospital.';
+comment on column mart_icsap_regiao_mensal.nm_regiao_saude is 'Nome oficial da regiao de saude de residencia.';
+comment on column mart_icsap_regiao_mensal.cd_macrorregiao_saude is 'Codigo oficial da macrorregiao de saude da residencia.';
+comment on column mart_icsap_regiao_mensal.nm_macrorregiao_saude is 'Nome oficial da macrorregiao de saude da residencia.';
+comment on column mart_icsap_regiao_mensal.qt_populacao_ibge_2022 is 'Populacao residente da regiao no Censo IBGE 2022, denominador das taxas.';
+comment on column mart_icsap_regiao_mensal.nr_ano_competencia is 'Ano da competencia de processamento.';
+comment on column mart_icsap_regiao_mensal.nr_mes_competencia is 'Numero do mes da competencia de processamento.';
+comment on column mart_icsap_regiao_mensal.cd_competencia is 'Competencia de processamento no formato AAAAMM.';
+comment on column mart_icsap_regiao_mensal.cd_grupo_icsap is 'Codigo ordinal de dois digitos do grupo oficial ICSAP.';
+comment on column mart_icsap_regiao_mensal.nm_grupo_icsap is 'Nome do grupo oficial da Lista Brasileira de ICSAP.';
+comment on column mart_icsap_regiao_mensal.qt_internacao_icsap is 'Internacoes novas de residentes no grupo, observadas em hospitais de SP.';
+comment on column mart_icsap_regiao_mensal.qt_internacao_icsap_total_regiao is 'Total de ICSAP observadas entre residentes da regiao no mes.';
+comment on column mart_icsap_regiao_mensal.pc_grupo_no_total_icsap is 'Participacao do grupo no total de ICSAP da regiao no mes.';
+comment on column mart_icsap_regiao_mensal.tx_icsap_grupo_por_10_mil_habitantes is 'Internacoes do grupo por 10 mil habitantes da regiao, com populacao do Censo 2022.';
+
+-- ---------------------------------------------------------------------
 -- Indices para os padroes de consulta do BI e do Select AI
 -- ---------------------------------------------------------------------
 
@@ -347,7 +511,10 @@ create index ix_hosp_esp_regiao         on mart_indicador_hospital_especialidade
 create index ix_hosp_cid_regiao         on mart_indicador_hospital_cid_periodo (cd_regiao_saude);
 create index ix_hosp_cid_cid            on mart_indicador_hospital_cid_periodo (cd_cid_principal);
 create index ix_regiao_mensal_comp      on mart_indicador_regiao_mensal (cd_competencia);
+create index ix_fluxo_destino_comp       on mart_fluxo_assistencial_regiao_mensal (cd_regiao_saude_atendimento, cd_competencia);
+create index ix_fluxo_origem_comp        on mart_fluxo_assistencial_regiao_mensal (cd_origem_residencia, cd_competencia);
+create index ix_icsap_comp_grupo         on mart_icsap_regiao_mensal (cd_competencia, cd_grupo_icsap);
 
 prompt
-prompt Modelo criado: 2 dimensoes e 5 marts. Rode carregar_gold.py e depois 03_validar_carga.sql.
+prompt Modelo criado: 2 dimensoes e 7 marts. Rode carregar_gold.py e depois 03_validar_carga.sql.
 prompt

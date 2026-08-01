@@ -47,6 +47,8 @@ TABELAS: tuple[tuple[str, Path], ...] = (
     ("mart_indicador_hospital_cid_periodo", GOLD / "marts" / "mart_indicador_hospital_cid_periodo.parquet"),
     ("mart_indicador_regiao_mensal", GOLD / "marts" / "mart_indicador_regiao_mensal.parquet"),
     ("mart_indicador_regiao_periodo", GOLD / "marts" / "mart_indicador_regiao_periodo.parquet"),
+    ("mart_fluxo_assistencial_regiao_mensal", GOLD / "marts" / "mart_fluxo_assistencial_regiao_mensal.parquet"),
+    ("mart_icsap_regiao_mensal", GOLD / "marts" / "mart_icsap_regiao_mensal.parquet"),
 )
 
 # Colunas numéricas das dimensões, que vêm de CSV e chegam como texto.

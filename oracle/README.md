@@ -20,13 +20,14 @@ arquivos de conexão são ignorados pelo Git.
 ## Estado validado em 01/08/2026
 
 - conexão mTLS validada como `MEDFLOW`;
-- 2 dimensões, 5 marts, 118 colunas comentadas e 7 índices secundários;
-- **521.116 linhas** carregadas: 520.409 nos marts e 707 nas dimensões;
-- 25/25 métricas de reconciliação com estado `ok`;
-- três verificações adicionais de integridade com zero ocorrências;
+- 2 dimensões, 7 marts, 175 colunas comentadas e 10 índices secundários;
+- **585.296 linhas** carregadas: 584.589 nos marts e 707 nas dimensões;
+- 36/36 métricas de reconciliação com estado `ok`;
+- seis verificações adicionais de integridade com zero ocorrências;
 - Resource Principal OCI habilitado para o esquema;
 - profile `MEDFLOW_GENAI` ativo com OCI Generative AI em `sa-saopaulo-1`;
-- três perguntas validadas em SQL convencional, `showsql` e `narrate`.
+- três perguntas originais validadas em SQL, `showsql` e `narrate`; as duas
+  novas perguntas territoriais aguardam a revalidação planejada do Select AI.
 
 As evidências e os rankings obtidos estão em
 [`VALIDACAO_ORACLE_SELECT_AI.md`](VALIDACAO_ORACLE_SELECT_AI.md).
@@ -69,9 +70,9 @@ SQLcl.
 |---|---|---|---|
 | 1 | Criar o esquema de aplicação | `sql/01_criar_usuario_medflow.sql` | `ADMIN` |
 | 2 | Testar a conexão | `python oracle/testar_conexao.py` | `MEDFLOW` |
-| 3 | Criar o modelo dimensional | `sql/02_criar_tabelas_gold.sql` | `MEDFLOW` |
+| 3 | Criar o modelo dimensional | `python oracle/executar_sql.py sql/02_criar_tabelas_gold.sql` | `MEDFLOW` |
 | 4 | Carregar a Gold | `python oracle/carregar_gold.py` | `MEDFLOW` |
-| 5 | Reconciliar a carga | `sql/03_validar_carga.sql` | `MEDFLOW` |
+| 5 | Reconciliar a carga | `python oracle/executar_sql.py sql/03_validar_carga.sql` | `MEDFLOW` |
 | 6 | Habilitar e demonstrar o Select AI | `sql/04_select_ai.sql` | `ADMIN` + `MEDFLOW` |
 
 ### Passo 2 — teste de conexão
@@ -94,8 +95,8 @@ servidor. Nenhuma credencial é exibida.
 ```
 
 A carga é idempotente: esvazia cada tabela antes de inserir, na ordem inversa
-das chaves estrangeiras. São 521.116 linhas em 7 tabelas: 520.409 linhas nos
-cinco marts e 707 nas duas dimensões. Para conferir sem carregar:
+das chaves estrangeiras. São 585.296 linhas em 9 tabelas: 584.589 linhas nos
+sete marts e 707 nas duas dimensões. Para conferir sem carregar:
 
 ```bash
 ../../.venv/bin/python -m dotenv -f oracle/.env run -- \
@@ -104,16 +105,16 @@ cinco marts e 707 nas duas dimensões. Para conferir sem carregar:
 
 ### Passo 5 — reconciliação
 
-`sql/03_validar_carga.sql` compara 25 métricas contra
-`dados/gold/qualidade/METADADOS.json`, contrato `0.2.0`. **Toda linha tem de
-sair como `ok`.** Os quatro marts partem do mesmo fato e precisam fechar em
+`sql/03_validar_carga.sql` compara 36 métricas contra
+`dados/gold/qualidade/METADADOS.json`, contrato `0.3.0`. **Toda linha tem de
+sair como `ok`.** Os marts partem do mesmo fato e precisam fechar em
 6.905.441 internações novas; se um divergir, a carga perdeu dado e o dashboard
 não deve ser construído sobre essa base.
 
 ### Passo 6 — Select AI
 
 `sql/04_select_ai.sql` registra o Dynamic Group, a policy IAM, a habilitação
-do Resource Principal, o profile e as três perguntas. A configuração validada
+do Resource Principal, o profile e as cinco perguntas. A configuração validada
 usa OCI Generative AI na própria região de São Paulo, sem chave de API externa.
 O `showsql` deve ser conferido contra o SQL de referência antes do `narrate`.
 
@@ -122,7 +123,7 @@ O `showsql` deve ser conferido contra o SQL de referência antes do `narrate`.
 **Select AI foi validado em 01/08/2026, mas continua sendo uma dependência
 externa do MVP.** Preserve o Dynamic Group `MedFlowADBGenAI`, a policy
 `use generative-ai-family` e o Resource Principal. Antes da apresentação,
-execute novamente o teste de fumaça e as três perguntas.
+execute novamente o teste de fumaça e as cinco perguntas.
 
 **Always Free hiberna por inatividade.** Uma instância Always Free é parada
 automaticamente após alguns dias consecutivos sem conexão e pode ser
@@ -143,7 +144,7 @@ demonstração ao vivo.
 
 O Select AI usa comentário de tabela e de coluna como contexto ao traduzir
 pergunta em SQL — é o que o atributo `"comments": "true"` do profile envia
-junto do prompt. Por isso `sql/02_criar_tabelas_gold.sql` comenta as 118
+junto do prompt. Por isso `sql/02_criar_tabelas_gold.sql` comenta as 175
 colunas, e não apenas as chaves. Erros de semântica devem ser corrigidos no
 comentário da coluna. Cortes de negócio ausentes da pergunta devem ser
 declarados explicitamente, sem ajustes por tentativa e erro.

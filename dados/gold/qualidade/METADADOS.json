@@ -1,12 +1,16 @@
 {
   "camada": "gold",
-  "versao_contrato": "0.2.0",
-  "gerado_em_utc": "2026-07-29T23:17:46.692980+00:00",
+  "versao_contrato": "0.3.0",
+  "gerado_em_utc": "2026-08-01T21:12:53.587180+00:00",
   "metricas": {
     "internacoes_novas_reconciliadas": 6905441,
     "pacientes_dia_estimados": 32425897,
     "regioes_saude": 62,
     "competencias": 29,
+    "internacoes_residentes_sp_observadas": 6846665,
+    "internacoes_residentes_fora_sp_atendidas": 58776,
+    "internacoes_icsap_residentes_sp_observadas": 953656,
+    "fluxos_origem_destino_mensais": 30018,
     "linhas_is_calculadas": 310,
     "combinacoes_ipr_elegiveis": 30550,
     "cobertura_internacoes_ipr_pct": 57.1383,
@@ -18,14 +22,14 @@
     "mart_indicador_hospital_mensal": {
       "caminho": "dados/gold/marts/mart_indicador_hospital_mensal.parquet",
       "linhas": 18690,
-      "colunas": 29,
-      "sha256": "5f37e1f779693784eb2040f35d1a36f6d1587165d12c61048dd8322970cc32d9"
+      "colunas": 35,
+      "sha256": "5989e56eb93355e36b557737a690cea55c7fd50a787776208454769e8bf4a5ad"
     },
     "mart_indicador_hospital_especialidade_mensal": {
       "caminho": "dados/gold/marts/mart_indicador_hospital_especialidade_mensal.parquet",
       "linhas": 52525,
-      "colunas": 18,
-      "sha256": "df36af7cf1fb80cbebbd2dc94d4e365f87c2fe4d4ec9dffbbe5b3c4210bdcf66"
+      "colunas": 24,
+      "sha256": "d7338a9ebdff85faccc2581e2513fb167d9b876dd50406412eb3bc5fa958924f"
     },
     "mart_indicador_hospital_cid_periodo": {
       "caminho": "dados/gold/marts/mart_indicador_hospital_cid_periodo.parquet",
@@ -36,14 +40,26 @@
     "mart_indicador_regiao_mensal": {
       "caminho": "dados/gold/marts/mart_indicador_regiao_mensal.parquet",
       "linhas": 1798,
-      "colunas": 26,
-      "sha256": "eb9ae497c956d32c6b752854f4b492ffdd2828df561dd7e922b98e5f2cd399d3"
+      "colunas": 42,
+      "sha256": "7066f2091d2be628cd5c3d2a1253b3798aaa2a9bbc49f3c8a44385368e513d98"
     },
     "mart_indicador_regiao_periodo": {
       "caminho": "dados/gold/marts/mart_indicador_regiao_periodo.parquet",
       "linhas": 62,
       "colunas": 11,
       "sha256": "71862d989a1dfab368b20080589796b52e33631d3d338404480ea17a6ce365aa"
+    },
+    "mart_fluxo_assistencial_regiao_mensal": {
+      "caminho": "dados/gold/marts/mart_fluxo_assistencial_regiao_mensal.parquet",
+      "linhas": 30018,
+      "colunas": 15,
+      "sha256": "f85e04e50bda9e43a5d1ee709038d57f93f62beeeeb93c67aa72d06f6167ad9b"
+    },
+    "mart_icsap_regiao_mensal": {
+      "caminho": "dados/gold/marts/mart_icsap_regiao_mensal.parquet",
+      "linhas": 34162,
+      "colunas": 14,
+      "sha256": "e7c716aaa232d0eaa373b313cdba982a9ce8b985186ac8fb29115fa43ef44a94"
     }
   }
 }
