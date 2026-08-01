@@ -2,13 +2,13 @@ import { useCallback, useEffect, useState } from 'react'
 import {
   fetchStatus,
   getStatusSnapshot,
-  type StatusResponse,
+  type PublishedStatusResponse,
 } from './api/status'
 
 type SourceState =
   | { kind: 'loading' }
-  | { kind: 'live'; data: StatusResponse }
-  | { kind: 'fallback'; data: StatusResponse }
+  | { kind: 'live'; data: PublishedStatusResponse }
+  | { kind: 'fallback'; data: PublishedStatusResponse }
   | { kind: 'empty' }
   | { kind: 'error' }
 
@@ -194,4 +194,3 @@ export default function App() {
     </div>
   )
 }
-

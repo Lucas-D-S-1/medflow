@@ -39,3 +39,29 @@ test('usa somente o snapshot quando o Oracle falha', async ({ page }) => {
   await expect(page.getByTestId('contract-version')).toHaveText('v0.3.0')
   await expect(page.getByTestId('fallback-note')).toContainText('nenhuma fonte foi misturada')
 })
+
+test('distingue ausência legítima de indisponibilidade do Oracle', async ({ page }) => {
+  await page.route('**/api/dev/v1/status', async (route) => {
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        status: 'ok',
+        source: 'oracle-live',
+        database_time: '2026-08-01T12:00:00-03:00',
+        data_through: null,
+        contract_version: '0.3.0',
+      }),
+    })
+  })
+
+  await page.goto('/')
+
+  await expect(page.getByTestId('empty-state')).toContainText(
+    'Nenhuma competência publicada',
+  )
+  await expect(page.getByTestId('empty-state')).toContainText(
+    'A fonte respondeu normalmente',
+  )
+  await expect(page.getByTestId('source-badge')).toHaveCount(0)
+  await expect(page.getByTestId('fallback-note')).toHaveCount(0)
+})
