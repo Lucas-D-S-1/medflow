@@ -167,7 +167,7 @@ create table mart_indicador_hospital_especialidade_mensal (
 );
 
 comment on table mart_indicador_hospital_especialidade_mensal is
-  'Fato mensal por hospital e especialidade do SIH: TMH e CMI. Uma linha por CNES, especialidade e competencia. Responde onde a mortalidade e o custo se concentram dentro de um mesmo hospital. Use st_amostra igual a suficiente para comparacoes.';
+  'Fato mensal por hospital e especialidade do SIH: TMH e CMI. Uma linha por CNES, especialidade e competencia. Para ranquear especialidades por mortalidade, filtre st_amostra igual a suficiente, agrupe por nm_especialidade, exija pelo menos 100 linhas hospital-mes por especialidade, calcule a media de pc_tmh e ordene da maior para a menor.';
 comment on column mart_indicador_hospital_especialidade_mensal.cd_cnes is 'Codigo de sete digitos do estabelecimento no CNES.';
 comment on column mart_indicador_hospital_especialidade_mensal.cd_especialidade_sih is 'Codigo de especialidade da internacao no SIH.';
 comment on column mart_indicador_hospital_especialidade_mensal.nm_especialidade is 'Descricao da especialidade do SIH, por exemplo clinica cirurgica, clinica medica ou UTI.';
@@ -183,9 +183,9 @@ comment on column mart_indicador_hospital_especialidade_mensal.qt_obito is 'Quan
 comment on column mart_indicador_hospital_especialidade_mensal.qt_dia_permanencia_soma is 'Soma dos dias de permanencia das internacoes novas.';
 comment on column mart_indicador_hospital_especialidade_mensal.vl_aprovado_internacao_nova_soma is 'Soma nominal em reais dos valores aprovados para internacoes novas.';
 comment on column mart_indicador_hospital_especialidade_mensal.vl_aprovado_continuacao_soma is 'Soma nominal em reais dos valores aprovados para continuacoes de longa permanencia. Separado do valor de internacao nova de proposito, para nao inflar o CMI.';
-comment on column mart_indicador_hospital_especialidade_mensal.pc_tmh is 'TMH: obitos em internacoes novas divididos pelas internacoes novas, em percentual.';
+comment on column mart_indicador_hospital_especialidade_mensal.pc_tmh is 'TMH: obitos em internacoes novas divididos pelas internacoes novas, em percentual. Em rankings por especialidade, usar AVG(pc_tmh) somente nas linhas com st_amostra suficiente.';
 comment on column mart_indicador_hospital_especialidade_mensal.vl_cmi is 'CMI: valor nominal aprovado nas internacoes novas dividido pela quantidade de internacoes novas, em reais.';
-comment on column mart_indicador_hospital_especialidade_mensal.st_amostra is 'Estado da amostra: suficiente ou amostra_insuficiente, pelo minimo definido no contrato do indicador.';
+comment on column mart_indicador_hospital_especialidade_mensal.st_amostra is 'Estado da amostra: suficiente ou amostra_insuficiente, pelo minimo definido no contrato do indicador. Comparacoes agregadas entre especialidades devem filtrar suficiente e exigir COUNT(*) de pelo menos 100 linhas hospital-mes por especialidade.';
 
 -- ---------------------------------------------------------------------
 -- Fato: IPR por hospital e CID no periodo completo
@@ -216,14 +216,14 @@ create table mart_indicador_hospital_cid_periodo (
 );
 
 comment on table mart_indicador_hospital_cid_periodo is
-  'Fato do periodo completo por hospital e diagnostico principal: IPR, o indice de permanencia relativa. Compara a permanencia media do hospital para um CID contra o benchmark da propria regiao de saude, sempre excluindo o hospital avaliado do benchmark. Uma linha por CNES e CID.';
+  'Fato do periodo completo por hospital e diagnostico principal: IPR, o indice de permanencia relativa. Uma linha por CNES e CID. Para ranquear diagnosticos acima do benchmark regional, filtre st_amostra igual a suficiente, agrupe por ds_cid, exija pelo menos 10 combinacoes hospital-CID por diagnostico, calcule a media de nr_ipr e ordene da maior para a menor.';
 comment on column mart_indicador_hospital_cid_periodo.cd_cnes is 'Codigo de sete digitos do estabelecimento no CNES.';
 comment on column mart_indicador_hospital_cid_periodo.cd_regiao_saude is 'Codigo oficial de cinco digitos da regiao de saude do hospital.';
 comment on column mart_indicador_hospital_cid_periodo.nm_regiao_saude is 'Nome oficial da regiao de saude do hospital.';
 comment on column mart_indicador_hospital_cid_periodo.cd_macrorregiao_saude is 'Codigo oficial da macrorregiao de saude.';
 comment on column mart_indicador_hospital_cid_periodo.nm_macrorregiao_saude is 'Nome oficial da macrorregiao de saude.';
 comment on column mart_indicador_hospital_cid_periodo.cd_cid_principal is 'Codigo CID-10 do diagnostico principal da internacao.';
-comment on column mart_indicador_hospital_cid_periodo.ds_cid is 'Descricao completa do diagnostico CID-10.';
+comment on column mart_indicador_hospital_cid_periodo.ds_cid is 'Descricao completa do diagnostico CID-10. E a dimensao de agrupamento para comparar diagnosticos por IPR.';
 comment on column mart_indicador_hospital_cid_periodo.cd_capitulo_cid is 'Codigo do capitulo da CID-10.';
 comment on column mart_indicador_hospital_cid_periodo.ds_capitulo_cid is 'Descricao do capitulo da CID-10, util para agrupar diagnosticos por grande grupo.';
 comment on column mart_indicador_hospital_cid_periodo.qt_internacao_nova is 'Quantidade de internacoes novas do hospital para esse CID no periodo.';
@@ -233,8 +233,8 @@ comment on column mart_indicador_hospital_cid_periodo.qt_dia_permanencia_benchma
 comment on column mart_indicador_hospital_cid_periodo.qt_hospital_benchmark is 'Quantidade de outros hospitais que compoem o benchmark regional desse CID.';
 comment on column mart_indicador_hospital_cid_periodo.nr_permanencia_media_hospital is 'Permanencia media em dias do hospital para esse CID.';
 comment on column mart_indicador_hospital_cid_periodo.nr_permanencia_media_benchmark is 'Permanencia media em dias do benchmark regional. Nula quando nao existe outro hospital com o mesmo CID na regiao.';
-comment on column mart_indicador_hospital_cid_periodo.nr_ipr is 'IPR: permanencia media do hospital dividida pela do benchmark regional. Acima de 1 indica internacao mais longa que os pares. Nulo quando a amostra e insuficiente ou o benchmark e zero. Preenchido em 30550 das 447334 linhas, por decisao de corte: minimo de 20 internacoes no hospital, 50 no benchmark e 3 hospitais no benchmark.';
-comment on column mart_indicador_hospital_cid_periodo.st_amostra is 'Estado da amostra: suficiente, amostra_insuficiente ou benchmark_zero. Use suficiente para qualquer ranking ou comparacao.';
+comment on column mart_indicador_hospital_cid_periodo.nr_ipr is 'IPR: permanencia media do hospital dividida pela do benchmark regional. Acima de 1 indica internacao mais longa que os pares. Nulo quando a amostra e insuficiente ou o benchmark e zero. Para ranking por diagnostico, usar AVG(nr_ipr) agrupado por ds_cid, nao ordenar linhas individuais.';
+comment on column mart_indicador_hospital_cid_periodo.st_amostra is 'Estado da amostra: suficiente, amostra_insuficiente ou benchmark_zero. Rankings por diagnostico devem filtrar suficiente, agrupar por ds_cid e exigir COUNT(*) de pelo menos 10 combinacoes hospital-CID por diagnostico.';
 
 -- ---------------------------------------------------------------------
 -- Fato: visao executiva regional mensal, base do mapa
@@ -293,8 +293,8 @@ comment on column mart_indicador_regiao_mensal.qt_populacao_ibge_2022 is 'Popula
 comment on column mart_indicador_regiao_mensal.qt_internacao_por_100_mil_habitante is 'Internacoes novas por 100 mil habitantes, usando populacao do Censo IBGE 2022. Permite comparar regioes de tamanhos diferentes.';
 comment on column mart_indicador_regiao_mensal.pc_tmh is 'TMH da regiao em percentual.';
 comment on column mart_indicador_regiao_mensal.vl_cmi is 'CMI da regiao em reais.';
-comment on column mart_indicador_regiao_mensal.nr_iph_estimado is 'IPH da regiao: pacientes-dia estimados divididos por leitos-dia SUS declarados. Pressao estimada, nao ocupacao real.';
-comment on column mart_indicador_regiao_mensal.pc_iph_estimado is 'IPH da regiao em percentual.';
+comment on column mart_indicador_regiao_mensal.nr_iph_estimado is 'IPH da regiao em razao decimal: pacientes-dia estimados divididos por leitos-dia SUS declarados. Pressao estimada, nao ocupacao real. Para rankings apresentados em percentual, preferir pc_iph_estimado.';
+comment on column mart_indicador_regiao_mensal.pc_iph_estimado is 'IPH da regiao em percentual. Para ranquear regioes em um ano, filtrar nr_ano_competencia, agrupar por nm_regiao_saude e ordenar AVG(pc_iph_estimado) da maior para a menor.';
 comment on column mart_indicador_regiao_mensal.qt_internacao_media_historica is 'Media de internacoes novas no mesmo mes em 2024 e 2025. Denominador do IS.';
 comment on column mart_indicador_regiao_mensal.qt_ano_historico is 'Quantidade de anos historicos usados na referencia sazonal.';
 comment on column mart_indicador_regiao_mensal.nr_indice_sazonalidade is 'IS: internacoes novas de 2026 divididas pela media do mesmo mes em 2024 e 2025. Preenchido apenas nas competencias de 2026, por isso 310 das 1798 linhas. Acima de 1 indica volume acima do padrao sazonal.';

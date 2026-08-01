@@ -16,102 +16,72 @@
 -- =====================================================================
 
 -- ---------------------------------------------------------------------
--- 1. Como ADMIN: liberar rede e conceder o pacote
+-- 1. OCI + ADMIN: habilitar Resource Principal
 -- ---------------------------------------------------------------------
--- Só é necessário para provedor externo (OpenAI, Anthropic, Cohere).
--- Para provider "oci" a chamada ao serviço não sai para a internet pública.
--- Ajuste o host conforme o provedor escolhido.
-
--- begin
---   dbms_network_acl_admin.append_host_ace(
---     host => 'api.openai.com',
---     ace  => xs$ace_type(privilege_list => xs$name_list('http'),
---                         principal_name => 'MEDFLOW',
---                         principal_type => xs_acl.ptype_db)
---   );
--- end;
--- /
-
--- grant execute on dbms_cloud_ai to medflow;   -- já feito em 01_criar_usuario_medflow.sql
-
--- ---------------------------------------------------------------------
--- 2. Como MEDFLOW: credencial do provedor
--- ---------------------------------------------------------------------
--- Credenciais são por esquema. Nenhum segredo é versionado: o valor entra
--- por prompt HIDE e o script usa undefine no fim.
-
-set define on
-
--- --- Opção A: OCI Generative AI (preferida — não depende de chave externa)
--- Requer que o serviço Generative AI exista na região e esteja liberado para
--- a tenancy. Em tenancy Always Free isso pode não estar disponível: se a
--- criação do profile ou a primeira pergunta falhar por limite de serviço,
--- vá para a Opção B em vez de insistir.
-
-accept ocid_compartimento char prompt 'OCID do compartimento (raiz da tenancy): '
-accept regiao_genai       char prompt 'Regiao do Generative AI (ex.: sa-saopaulo-1): '
+-- Etapa unica no console OCI, antes do SQL:
+--
+-- Dynamic Group: MedFlowADBGenAI
+-- Regra:
+--   resource.id = 'ocid1.autonomousdatabase.oc1.sa-saopaulo-1.antxeljrrzar6hya26jlu7ktdd4kopieepsu7tn2x54ficuz4ddcrcn37fba'
+-- Policy na raiz da tenancy:
+--   Allow dynamic-group MedFlowADBGenAI to use generative-ai-family in tenancy
+--
+-- Depois, conectado como ADMIN, execute uma vez:
 
 begin
-  dbms_cloud_ai.create_profile(
-    profile_name => 'MEDFLOW_GENAI',
-    attributes   => '{"provider": "oci",
-                      "credential_name": "OCI$RESOURCE_PRINCIPAL",
-                      "oci_compartment_id": "&ocid_compartimento",
-                      "region": "&regiao_genai",
-                      "comments": "true",
-                      "conversation": "true",
-                      "object_list": [
-                        {"owner": "MEDFLOW", "name": "mart_indicador_hospital_mensal"},
-                        {"owner": "MEDFLOW", "name": "mart_indicador_hospital_especialidade_mensal"},
-                        {"owner": "MEDFLOW", "name": "mart_indicador_hospital_cid_periodo"},
-                        {"owner": "MEDFLOW", "name": "mart_indicador_regiao_mensal"},
-                        {"owner": "MEDFLOW", "name": "mart_indicador_regiao_periodo"},
-                        {"owner": "MEDFLOW", "name": "dim_geografia_regiao"},
-                        {"owner": "MEDFLOW", "name": "dim_geografia_municipio"}
-                      ]}'
-  );
+  dbms_cloud_admin.enable_principal_auth(provider => 'OCI');
 end;
 /
 
--- O principal de recurso precisa estar habilitado na instância para que
--- OCI$RESOURCE_PRINCIPAL exista. Como ADMIN, uma vez:
---   exec dbms_cloud_admin.enable_resource_principal();
--- e no console: política dando ao dynamic group da instância o uso de
--- generative-ai-family no compartimento.
+begin
+  dbms_cloud_admin.enable_resource_principal(username => 'MEDFLOW');
+end;
+/
 
--- --- Opção B: provedor externo, caso a Opção A não esteja disponível
--- accept token_llm char prompt 'API token do provedor: ' hide
--- begin
---   dbms_cloud.create_credential(
---     credential_name => 'MEDFLOW_LLM_CRED',
---     username        => 'OPENAI',
---     password        => '&token_llm'
---   );
--- end;
--- /
--- begin
---   dbms_cloud_ai.create_profile(
---     profile_name => 'MEDFLOW_GENAI',
---     attributes   => '{"provider": "openai",
---                       "credential_name": "MEDFLOW_LLM_CRED",
---                       "comments": "true",
---                       "conversation": "true",
---                       "object_list": [
---                         {"owner": "MEDFLOW", "name": "mart_indicador_hospital_mensal"},
---                         {"owner": "MEDFLOW", "name": "mart_indicador_hospital_especialidade_mensal"},
---                         {"owner": "MEDFLOW", "name": "mart_indicador_hospital_cid_periodo"},
---                         {"owner": "MEDFLOW", "name": "mart_indicador_regiao_mensal"},
---                         {"owner": "MEDFLOW", "name": "mart_indicador_regiao_periodo"},
---                         {"owner": "MEDFLOW", "name": "dim_geografia_regiao"},
---                         {"owner": "MEDFLOW", "name": "dim_geografia_municipio"}
---                       ]}'
---   );
--- end;
--- /
--- undefine token_llm
+-- grant execute on dbms_cloud_ai to medflow; -- ja feito em 01_criar_usuario_medflow.sql
 
-undefine ocid_compartimento
-undefine regiao_genai
+-- ---------------------------------------------------------------------
+-- 2. Como MEDFLOW: criar o profile OCI
+-- ---------------------------------------------------------------------
+-- Nao ha chave de API: OCI$RESOURCE_PRINCIPAL autentica a propria instancia.
+-- O bloco e seguro para reexecucao: preserva o profile se ele ja existir.
+
+set serveroutput on
+
+declare
+  qt_profile number;
+begin
+  select count(*)
+  into   qt_profile
+  from   user_cloud_ai_profiles
+  where  profile_name = 'MEDFLOW_GENAI';
+
+  if qt_profile = 0 then
+    dbms_cloud_ai.create_profile(
+      profile_name => 'MEDFLOW_GENAI',
+      description  => 'Select AI sobre os sete objetos Gold do MedFlow',
+      attributes   => '{"provider": "oci",
+                        "credential_name": "OCI$RESOURCE_PRINCIPAL",
+                        "region": "sa-saopaulo-1",
+                        "comments": true,
+                        "constraints": true,
+                        "conversation": true,
+                        "object_list": [
+                          {"owner": "MEDFLOW", "name": "mart_indicador_hospital_mensal"},
+                          {"owner": "MEDFLOW", "name": "mart_indicador_hospital_especialidade_mensal"},
+                          {"owner": "MEDFLOW", "name": "mart_indicador_hospital_cid_periodo"},
+                          {"owner": "MEDFLOW", "name": "mart_indicador_regiao_mensal"},
+                          {"owner": "MEDFLOW", "name": "mart_indicador_regiao_periodo"},
+                          {"owner": "MEDFLOW", "name": "dim_geografia_regiao"},
+                          {"owner": "MEDFLOW", "name": "dim_geografia_municipio"}
+                        ]}'
+    );
+    dbms_output.put_line('Profile MEDFLOW_GENAI criado.');
+  else
+    dbms_output.put_line('Profile MEDFLOW_GENAI ja existe; preservado.');
+  end if;
+end;
+/
 
 -- ---------------------------------------------------------------------
 -- 3. Ativar o profile na sessão
@@ -158,8 +128,8 @@ having count(*) >= 100
 order  by pc_tmh_medio desc
 fetch  first 10 rows only;
 
-select ai showsql quais especialidades tem a maior taxa de mortalidade hospitalar media considerando somente linhas com amostra suficiente;
-select ai narrate quais especialidades tem a maior taxa de mortalidade hospitalar media considerando somente linhas com amostra suficiente;
+select ai showsql quais sao as dez especialidades com maior taxa de mortalidade hospitalar media? Primeiro filtre st_amostra igual a suficiente, depois agrupe por especialidade e mantenha somente grupos com pelo menos 100 linhas hospital-mes;
+select ai narrate quais sao as dez especialidades com maior taxa de mortalidade hospitalar media? Primeiro filtre st_amostra igual a suficiente, depois agrupe por especialidade e mantenha somente grupos com pelo menos 100 linhas hospital-mes;
 
 -- --- Pergunta 3: quais diagnósticos internam mais tempo que os pares?
 
@@ -174,16 +144,17 @@ having count(*) >= 10
 order  by nr_ipr_medio desc
 fetch  first 10 rows only;
 
-select ai showsql quais diagnosticos tem permanencia media mais acima do benchmark regional entre as combinacoes com amostra suficiente;
-select ai narrate quais diagnosticos tem permanencia media mais acima do benchmark regional entre as combinacoes com amostra suficiente;
+select ai showsql quais sao os dez diagnosticos com maior IPR medio, considerando somente combinacoes hospital-CID com amostra suficiente e pelo menos 10 combinacoes por diagnostico;
+select ai narrate quais sao os dez diagnosticos com maior IPR medio, considerando somente combinacoes hospital-CID com amostra suficiente e pelo menos 10 combinacoes por diagnostico;
 
 -- ---------------------------------------------------------------------
 -- 5. Registro da demonstração
 -- ---------------------------------------------------------------------
--- Guarde o SQL gerado por cada showsql. Se o modelo divergir do SQL de
--- referência, a correção é melhorar o COMMENT ON da coluna envolvida, não
--- reescrever a pergunta até ela funcionar. Comentário é o contrato que o
--- modelo lê.
+-- Guarde o SQL gerado por cada showsql. Se o modelo errar a semantica de uma
+-- coluna, melhore o COMMENT ON correspondente. Se a pergunta omitir um corte
+-- de negocio presente no SQL de referencia, torne esse corte explicito uma
+-- unica vez; nao ajuste a frase por tentativa e erro. Comentarios e criterios
+-- declarados formam o contrato que o modelo le.
 --
 -- Cuidado conhecido: o IPH nunca deve ser narrado como "ocupação de leito".
 -- Se o modelo usar esse termo, ajuste o comentário de nr_iph_estimado e

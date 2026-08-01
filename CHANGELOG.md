@@ -10,20 +10,33 @@
   do `ADMIN`, com `DWROLE`, quota e acesso ao Database Actions;
 - `sql/02_criar_tabelas_gold.sql`: modelo dimensional com 2 dimensões e 5
   marts, chaves primárias, estrangeiras, índices e as 118 colunas comentadas;
-- `carregar_gold.py`: carga idempotente de 520.409 linhas em ordem de
+- `carregar_gold.py`: carga idempotente de 521.116 linhas em ordem de
   dependência, com `--conferir` e `--somente`;
 - `sql/03_validar_carga.sql`: reconciliação de 25 métricas contra o contrato
   `0.2.0`, mais três verificações de integridade;
-- `sql/04_select_ai.sql`: profile, três perguntas da demonstração e o SQL de
-  referência de cada uma, com caminho alternativo de provedor de LLM.
+- `sql/04_select_ai.sql`: Resource Principal OCI, profile, três perguntas da
+  demonstração e o SQL de referência de cada uma;
+- `oracle/VALIDACAO_ORACLE_SELECT_AI.md`: evidências da conexão, carga,
+  reconciliação, rankings e respostas do Select AI.
 
 ### Alterado
 
 - `.env.example` passa a apontar para o usuário `MEDFLOW`, não `ADMIN`, e
   documenta os aliases do workload Lakehouse;
-- `requirements.txt` inclui `pandas` e `pyarrow`, necessários à carga;
+- `requirements.txt` inclui `pandas`, `pyarrow` e `python-dotenv`, necessários
+  à carga e ao uso seguro do `.env`;
 - `README.md` do `oracle/` virou runbook de seis passos com os riscos de
-  Always Free e de disponibilidade do Select AI.
+  Always Free e de disponibilidade do Select AI;
+- comentários de negócio e perguntas do Select AI explicitam os cortes de
+  100 hospital-mês e 10 combinações hospital-CID.
+
+### Validado em 01/08/2026
+
+- conexão mTLS como `MEDFLOW`;
+- 7 tabelas, 118 colunas comentadas e 7 índices secundários;
+- 521.116 linhas carregadas e conferidas;
+- 25/25 métricas `ok` e verificações de integridade vazias;
+- OCI Generative AI ativo em GRU com três `showsql` e `narrate` validados.
 
 ## 0.2.0 — publicado em 29/07/2026
 
