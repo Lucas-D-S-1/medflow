@@ -18,6 +18,21 @@ ignore_paths = [
   "**/secrets/**",
   "credentials*",
   "**/credentials*",
+
+  # Wallet Oracle do MEDFLOW. O cwallet.sso e auto-login: quem tem o arquivo
+  # entra no banco sem senha, e o sanitizador de 18 regex nao reconhece blob
+  # binario de wallet. O .gitignore protege o repositorio; estas linhas
+  # protegem a memoria.
+  "wallets/**",
+  "**/wallets/**",
+  "*.sso",
+  "**/*.sso",
+  "*.p12",
+  "**/*.p12",
+  "*.jks",
+  "**/*.jks",
+  "tnsnames.ora",
+  "**/tnsnames.ora",
   "Motor_Forecast*",
   "**/Motor_Forecast*",
   "*x29*",
