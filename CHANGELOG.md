@@ -1,5 +1,8 @@
 # Changelog
 
+As releases seguem a política de [`VERSIONAMENTO.md`](../../VERSIONAMENTO.md).
+A versão da release e a versão dos contratos de dados evoluem separadamente.
+
 ## 0.3.0 — em andamento
 
 ### Adicionado
