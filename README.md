@@ -21,6 +21,8 @@ Nomenclatura:
 [`VALIDACAO_TECNICA.md`](VALIDACAO_TECNICA.md).
 Mudanças incompatíveis:
 [`CHANGELOG.md`](CHANGELOG.md).
+Política de tags e releases:
+[`VERSIONAMENTO.md`](../../VERSIONAMENTO.md).
 
 ## Estado validado em 29/07/2026
 
