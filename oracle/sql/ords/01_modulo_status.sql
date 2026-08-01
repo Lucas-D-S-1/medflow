@@ -7,6 +7,11 @@ begin
     p_comments       => 'Contrato de leitura MedFlow v1 para desenvolvimento.'
   );
 
+  ords.set_module_origins_allowed(
+    p_module_name     => 'medflow_dev',
+    p_origins_allowed => 'http://localhost:5173'
+  );
+
   ords.define_template(
     p_module_name => 'medflow_dev',
     p_pattern     => 'status',
@@ -33,7 +38,6 @@ begin
                || substr(cd_competencia_maxima, 5, 2) as "data_through",
              '0.3.0' as "contract_version"
         from vw_api_status
-       where cd_competencia_maxima is not null
        fetch first 1 row only
     ~'
   );
@@ -41,4 +45,3 @@ begin
   commit;
 end;
 /
-
