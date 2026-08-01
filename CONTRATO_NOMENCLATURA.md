@@ -1,6 +1,6 @@
 # Contrato de nomenclatura dos dados
 
-Versão `0.2.0`. Este contrato se aplica às camadas Silver e Gold. A Bronze
+Versão `0.3.0`. Este contrato se aplica às camadas Silver e Gold. A Bronze
 preserva os nomes originais para garantir fidelidade e rastreabilidade.
 
 ## Regras
@@ -27,6 +27,7 @@ preserva os nomes originais para garantir fidelidade e rastreabilidade.
 | `qt_` | quantidade aditiva | `qt_leito_sus` |
 | `vl_` | valor monetário | `vl_total_aprovado_sus` |
 | `pc_` | percentual ou taxa expressa em percentual | `pc_tmh` |
+| `tx_` | taxa com base populacional ou unidade explícita no nome | `tx_icsap_residente_observada_por_10_mil` |
 | `fl_` | indicador binário | `fl_obito` |
 | `sg_` | sigla | `sg_uf` |
 | `st_` | estado de processamento ou classificação | `st_amostra` |

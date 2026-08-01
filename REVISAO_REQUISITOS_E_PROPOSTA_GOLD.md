@@ -1,9 +1,9 @@
 # Revisão dos requisitos e proposta para a camada Gold
 
-Atualizado em 29/07/2026. Este documento separa requisitos oficiais, evidências
+Atualizado em 01/08/2026. Este documento separa requisitos oficiais, evidências
 da mentoria, inconsistências da apresentação da Sprint 1, decisões aprovadas e
 definições que ainda pertencem à camada de entrega. A Gold descrita aqui foi
-implementada, validada e publicada na `v0.2.0`.
+implementada, validada e publicada no contrato de dados `0.3.0`.
 
 ## 1. Materiais revisados
 
@@ -94,7 +94,7 @@ apresentação final sem correção.
 | 11 | cita `scikit-learn`, Oracle, Power BI e cinco índices como implementados | separar tecnologias usadas, em construção e opcionais |
 | 12 | protótipo pode ser reaproveitado como referência visual | atualizar dados, filtros, nomes dos indicadores e estados metodológicos |
 | 13 | notas dizem que os cinco índices estão concluídos | atualizar Kanban com Gold, Oracle, dashboard, pitch e Select AI |
-| 14 | encerramento repete 5,21 milhões | substituir pela volumetria congelada e validada da Gold `v0.2.0` |
+| 14 | encerramento repete 5,21 milhões | substituir pela volumetria congelada e validada do contrato Gold `0.3.0` |
 
 Conclusão: o arquivo da Sprint 1 é insumo de narrativa e identidade, não fonte
 dos números da apresentação final. Todas as figuras e métricas de 2022–2023
@@ -102,25 +102,30 @@ devem ser regeneradas para 2024–2026.
 
 ## 5. Definições aprovadas e decisões ainda abertas
 
-Em 29/07/2026, a equipe aprovou:
+Em 01/08/2026, a equipe aprovou:
 
-1. os cinco contratos de indicador descritos neste documento;
+1. os cinco contratos hospitalares e os contratos territoriais descritos neste documento;
 2. as regras de amostra mínima e denominador zero;
 3. o IPH como pressão estimada, sem faixas fixas de ocupação;
 4. o IS de 2026 contra a média de 2024–2025;
-5. o CMI nominal por internação nova, com continuações separadas;
+5. a preservação do CMI nominal e uma série real corrigida pelo IPCA/IBGE;
 6. o CSV oficial de regiões/população do Ministério da Saúde;
-7. a malha municipal IBGE 2024 para formar o mapa regional.
+7. a malha municipal IBGE 2024 para formar o mapa regional;
+8. a separação entre região de atendimento e região de residência;
+9. taxa populacional calculada somente com internações de residentes;
+10. fluxos intrarregionais, inter-regionais de SP e entradas de outras UFs;
+11. ICSAP por residência e pelos 19 grupos da Portaria SAS/MS 221/2008;
+12. permanência média explícita nas visões mensais.
 
-Continuam abertas somente decisões da camada de entrega:
+Continuam abertas somente decisões da camada de produto e entrega:
 
-1. ferramenta e forma de publicação do dashboard;
-2. tabelas e estratégia de carga no Oracle;
-3. perguntas demonstradas no Select AI;
+1. construção e publicação do webapp público sem licença de BI;
+2. aceite funcional dos dados, filtros e interpretações do webapp;
+3. revalidação operacional das perguntas do Select AI após o produto;
 4. uso futuro de clustering após o MVP;
 5. critérios finais do pitch e da apresentação técnica.
 
-## 6. Proposta metodológica dos cinco índices
+## 6. Contratos metodológicos
 
 ### 6.1 TMH — Taxa de Mortalidade Hospitalar
 
@@ -213,8 +218,19 @@ CMI = soma de VAL_TOT das internações novas / internações novas
 - se o IPCA ainda não estiver incorporado, rotular valores como nominais e não
   comparar anos como se fossem diretamente equivalentes.
 
-Evolução futura: custo completo por episódio, vinculando continuações. Isso
-não é necessário para o MVP.
+O contrato `0.3.0` preserva essa série nominal e acrescenta:
+
+```text
+fator IPCA do mês = número-índice IPCA de 2026-05
+                     / número-índice IPCA do mês
+
+CMI real = valor aprovado nominal × fator IPCA / internações novas
+```
+
+A fonte é a tabela SIDRA 1737, variável 2266, do IBGE. A competência de preço
+de referência fica armazenada em cada linha; portanto, o consumidor não precisa
+inferi-la. Evolução futura: custo completo por episódio, vinculando
+continuações. Isso não é necessário para o MVP.
 
 ### 6.5 IPH — Índice de Pressão Hospitalar
 
@@ -247,7 +263,7 @@ não há intervalo negativo e a diferença entre saída e entrada coincide com
 precisam da regra explícita de um paciente-dia.
 
 O campo atual `proxy_iph_diarias_faturadas` deve permanecer apenas para
-auditoria e não deve alimentar o dashboard principal.
+auditoria e não deve alimentar o produto principal.
 
 Referências metodológicas:
 
@@ -256,6 +272,76 @@ Referências metodológicas:
 - Ministério da Saúde, Portaria SAS nº 356/2002, definições de
   paciente-dia e leito-dia:
   https://bvsms.saude.gov.br/bvs/saudelegis/gm/2002/prt0356_20_02_2002.html
+
+### 6.6 Territorialidade e fluxo assistencial
+
+O contrato anterior calculava internações realizadas na região por 100 mil
+residentes. Isso misturava um numerador de oferta com um denominador
+populacional e foi removido no `0.3.0`.
+
+O novo contrato separa:
+
+```text
+taxa de internação residente observada =
+  internações de residentes da região atendidos em SP
+  / população residente da região × 100.000
+
+evasão intrastadual observada =
+  residentes atendidos em outra região paulista
+  / residentes da região atendidos em SP × 100
+
+atração assistencial =
+  atendimentos a residentes de fora da região
+  / internações realizadas na região × 100
+```
+
+O SIH/RD-SP contém internações realizadas em hospitais paulistas. Ele não
+observa residentes de SP atendidos em outras UFs; por isso, o produto nunca
+chama a medida de “evasão total”. No recorte validado, há 6.846.665 internações
+de residentes paulistas atendidos em SP, 58.776 de residentes de outras UFs e
+906.060 deslocamentos entre regiões paulistas. As saídas e entradas
+inter-regionais fecham exatamente.
+
+A regionalização é parte estrutural do SUS: nem todo município oferta todos os
+serviços, e fluxos de referência são necessários para planejar capacidade e
+acesso. Fontes: [Regionalização do Ministério da Saúde](https://www.gov.br/saude/pt-br/composicao/se/dgip/regionalizacao)
+e [PNAES, Portaria GM/MS 1.604/2023](https://bvsms.saude.gov.br/bvs/saudelegis/gm/2023/prt1604_20_10_2023.html).
+
+### 6.7 ICSAP — condições sensíveis à atenção primária
+
+O diagnóstico principal é classificado nos 19 grupos da Lista Brasileira de
+ICSAP da [Portaria SAS/MS 221/2008](https://bvsms.saude.gov.br/bvs/saudelegis/sas/2008/prt0221_17_04_2008.html).
+O grão é região de residência × competência × grupo.
+
+```text
+taxa ICSAP observada =
+  internações ICSAP de residentes atendidos em SP
+  / população residente × 10.000
+```
+
+A Gold também expõe a participação das ICSAP em todas as internações novas
+observadas de residentes, com esse denominador escrito no nome da coluna. Ela
+não é rotulada como a proporção oficial de ICSAP: o denominador oficial de
+internações clínicas de média complexidade depende do procedimento realizado,
+campo que não foi preservado na Silver atual. Uma ICSAP é um indicador indireto
+populacional para planejamento; não prova que uma internação individual era
+evitável nem atribui causalidade à atenção primária.
+
+Foram reconciliadas 953.656 ICSAP tanto no resumo regional quanto no detalhe
+por grupo.
+
+### 6.8 Permanência média
+
+Além do IPR hospital/CID, o produto persiste diretamente a permanência média
+mensal por hospital, especialidade e região:
+
+```text
+permanência média = soma dos dias de permanência / internações novas
+```
+
+Isso evita que cada consumidor recalcule uma razão de forma inconsistente e
+permite explicar o IPR a partir de uma medida familiar antes de apresentar o
+índice relativo.
 
 ## 7. Pares, padrões e agrupamentos
 
@@ -286,21 +372,26 @@ Proposta de contrato:
 | CSV / External Table | regiões de saúde e população IBGE 2022, Ministério da Saúde | taxas populacionais e integração Oracle |
 
 O CSV oficial foi incorporado, reconciliado com a API e preservado na Bronze.
-O CMI permanece nominal; IPCA continua como evolução opcional.
+O CMI nominal é preservado e o CMI real usa a série IPCA/IBGE armazenada na
+Bronze. A lista ICSAP permanece versionada em código com sua fonte normativa.
 
-## 9. MVP e dashboard
+## 9. MVP e webapp
 
-Recomendação: usar Power BI para o MVP público, porque a mentoria autorizou a
-ferramenta e ela reduz o esforço de interface. O Oracle Autonomous Database
-continua como armazenamento e serving.
+Decisão atual: usar um webapp estático para o MVP público, evitando licença de
+BI. O Oracle Autonomous Database continua como armazenamento e serving via
+ORDS; um snapshot público versionado é o fallback quando o Always Free estiver
+indisponível.
 
-Três páginas são suficientes:
+Quatro visões são suficientes:
 
-1. **Visão executiva:** volume, comparação sazonal, pressão estimada e ranking
-   de regiões;
-2. **Hospital e pares:** IPR, TMH, CMI, série temporal e amostras;
-3. **Metodologia e qualidade:** fórmulas, cobertura, competência mais recente,
-   limitações e flags.
+1. **Visão executiva territorial:** demanda residente, produção realizada,
+   sazonalidade, pressão estimada, atração e evasão observada;
+2. **Fluxos e atenção primária:** origem–destino, autonomia regional, taxa
+   ICSAP e composição pelos 19 grupos;
+3. **Hospital e pares:** permanência média, IPR, TMH, CMI nominal/real, série
+   temporal e amostras;
+4. **Metodologia e qualidade:** fórmulas, cobertura, competência mais recente,
+   limitações, fontes e flags.
 
 Cada cartão deve mostrar valor, comparação, amostra e interpretação. Nenhum
 status deve esconder amostra insuficiente ou dado parcial de 2026.
@@ -308,7 +399,7 @@ status deve esconder amostra insuficiente ou dado parcial de 2026.
 ## 10. Oracle e Select AI
 
 Carregar somente dimensões e tabelas Gold necessárias ao consumo. Views com
-nomes e comentários de negócio melhoram tanto o dashboard quanto o Select AI.
+nomes e comentários de negócio melhoram tanto o webapp quanto o Select AI.
 
 Perguntas candidatas:
 
@@ -323,11 +414,14 @@ O Select AI entra após essas respostas estarem validadas em SQL convencional.
 
 ## 11. Ordem recomendada
 
-1. carregar Oracle e validar SQL;
-2. construir as três páginas do dashboard;
-3. testar as perguntas do Select AI;
-4. regenerar figuras e atualizar a apresentação usando somente a Gold;
-5. ensaiar o pitch e uma bateria de perguntas técnicas.
+1. ~~fortalecer contratos de negócio, regenerar Gold e validar Oracle~~ —
+   concluído em 01/08/2026;
+2. construir as quatro visões do webapp;
+3. validar os dados, filtros, totais e interpretações do produto contra a Gold
+   e o Oracle;
+4. revalidar as perguntas do Select AI em SQL, `showsql` e `narrate`;
+5. regenerar figuras e atualizar a apresentação usando somente dados aprovados;
+6. ensaiar o pitch e uma bateria de perguntas técnicas.
 
 ## 12. Critérios de aceite da Gold
 
@@ -338,6 +432,6 @@ O Select AI entra após essas respostas estarem validadas em SQL convencional.
 - 2026 aparece explicitamente como parcial;
 - nenhum texto usa “ocupação real” para o IPH estimado;
 - toda figura nasce do notebook 02 e de uma tabela Gold persistida;
-- os números do dashboard, PPT, vídeo e Select AI são os mesmos;
-- cada integrante consegue explicar fonte, fórmula, limitação e decisão de
-  negócio dos cinco índices.
+- os números do webapp, PPT, vídeo e Select AI são os mesmos;
+- cada integrante consegue explicar fonte, fórmula, territorialidade,
+  limitação e decisão de negócio de cada indicador.

@@ -12,7 +12,7 @@ anteriores quando houver conflito.
 - A descoberta remota e o cache incremental permitem que o mesmo batch mensal
   incorpore novas competências até 2026-12 sem alterar o código.
 - Fontes públicas: SIH/RD, CNES/LT, API de Dados Abertos do Ministério da
-  Saúde, tabelas CID-10 do DATASUS e referências do IBGE/CONCLA.
+  Saúde, tabelas CID-10 do DATASUS, IPCA/SIDRA e referências do IBGE/CONCLA.
 - Análise histórica; ML e predição permanecem fora do escopo.
 - O atraso de publicação do DATASUS é característica do produto retrospectivo.
 
@@ -28,8 +28,8 @@ Volumetria Bronze validada:
 00_extracao_dados.ipynb       → Bronze
 01_engenharia_dados.ipynb     → Silver
 02_analise_dados.ipynb        → Gold, implementada e validada
-Oracle Autonomous DB          → armazenamento/serving
-Dashboard + Select AI         → consumo
+Oracle Autonomous DB + ORDS   → armazenamento/serving
+Webapp público + Select AI    → consumo
 ```
 
 ### Bronze
@@ -45,8 +45,9 @@ reconciliação. Publica somente dimensões e fatos com nomes canônicos.
 
 ### Gold/análise
 
-Contém as fórmulas finais, benchmarks, estados de amostra, marts e geografia.
-Os cinco contratos foram aprovados em 29/07/2026.
+Contém fórmulas, benchmarks, estados de amostra, marts e geografia. O contrato
+`0.3.0` mantém o núcleo hospitalar e acrescenta residência, fluxo assistencial,
+ICSAP, permanência média e CMI real corrigido pelo IPCA.
 
 ## 3. Unidade de contagem do SIH
 
@@ -64,8 +65,9 @@ No recorte:
 - 129.520 registros de continuação.
 
 Decisão: preservar `N_AIH` e `IDENT` no fato e expor contagens separadas. Os
-cinco indicadores principais usam internações novas; continuações aparecem
-separadamente no CMI.
+indicadores usam internações novas; continuações aparecem separadamente no
+CMI. Medidas populacionais usam região de residência, enquanto medidas de
+oferta usam a região do hospital.
 
 ## 4. Permanência e diárias
 
@@ -91,8 +93,21 @@ Decisões:
 | TMH | óbitos / internações novas | Gold validada; mínimo 30 |
 | IPR | permanência hospital/CID / benchmark regional sem o hospital | Gold validada; cortes 20/50/3 |
 | IS | 2026 / média do mesmo mês em 2024–2025 | Gold validada para jan–mai/2026 |
-| CMI | valor aprovado nominal / internações novas | Gold validada; continuações separadas |
+| CMI | valor aprovado / internações novas | nominal preservado e real por IPCA; continuações separadas |
 | IPH | pacientes-dia reconstruídos / leitos-dia declarados | Gold validada como pressão estimada |
+
+### Contratos territoriais do 0.3.0
+
+- taxa populacional usa internações de residentes da região atendidos em SP;
+- produção hospitalar continua agrupada pela região do estabelecimento;
+- evasão significa somente deslocamento para outra região paulista observado
+  no RD-SP; saídas para outras UFs não são observáveis nesse recorte;
+- atração separa residentes de outra região de SP e residentes de outra UF;
+- ICSAP segue os 19 grupos da Portaria SAS/MS 221/2008 e é calculada por
+  residência;
+- a taxa ICSAP usa população residente; a participação no total observado não
+  é rotulada como a proporção clínica oficial;
+- permanência média é persistida diretamente antes da interpretação do IPR.
 
 ### IPH
 
@@ -178,7 +193,7 @@ Qualquer indicador aprovado deve ser apresentado em quatro camadas:
 - Arquivos em construção usam sufixo `.parcial`.
 - A Silver só promove dados após reconciliar totais e domínios.
 - todo material anterior foi isolado em `dados/legado/` e não alimenta o
-  pipeline `0.2.0`.
+  pipeline `0.3.0`.
 
 ## 9. Infraestrutura Oracle
 
@@ -239,7 +254,7 @@ ao vivo.
 
 ### 9.5 Comentários de tabela e coluna são parte do produto
 
-As 118 colunas do modelo recebem `COMMENT ON`. Não é documentação decorativa:
+As 175 colunas do modelo recebem `COMMENT ON`. Não é documentação decorativa:
 o Select AI envia comentário de tabela e coluna ao modelo como contexto,
 via atributo `"comments": "true"` do profile. Quando o Select AI errar a
 semântica de uma coluna, a correção é melhorar o comentário. Cortes de negócio
@@ -255,7 +270,7 @@ nomenclatura da seção 5 vale também para o que o LLM narra.
 Validado em 01/08/2026 com OCI Generative AI em `sa-saopaulo-1`. A instância
 usa Resource Principal, Dynamic Group `MedFlowADBGenAI` e policy
 `use generative-ai-family`, sem chave de API externa. O profile
-`MEDFLOW_GENAI` cobre as duas dimensões e os cinco marts, com comentários e
+`MEDFLOW_GENAI` cobre as duas dimensões e os sete marts, com comentários e
 restrições enviados ao modelo.
 
 As três perguntas foram validadas primeiro em SQL convencional. Depois, os
@@ -270,10 +285,11 @@ Entrega prevista: 01/09/2026.
 
 Ordem de trabalho restante:
 
-1. construir dashboard usando os marts e o TopoJSON;
-2. regenerar achados e figuras;
-3. atualizar pitch e vídeo;
-4. testar link público e roteiro da apresentação.
+1. construir as quatro visões do webapp usando ORDS e snapshot de contingência;
+2. validar filtros, totais, territorialidade e interpretações contra a Gold;
+3. revalidar as cinco perguntas do Select AI — três originais e duas novas;
+4. regenerar achados e figuras;
+5. atualizar pitch, vídeo, link público e roteiro da apresentação.
 
 A versão pública
 [`v0.2.0`](https://github.com/Lucas-D-S-1/fiap-1tscoa/releases/tag/v0.2.0)
@@ -281,7 +297,8 @@ foi publicada em 29/07/2026 com Silver canônica, Gold, geografia, contratos e
 validação integrada. A `v0.1.0` permanece como marco histórico do pipeline
 Bronze/Silver.
 
-A base metodológica, a estrutura de dados, a carga Oracle e o Select AI estão
-fechados. Power BI é a recomendação para o MVP, mas a ferramenta e a forma do
-link público ainda precisam de confirmação operacional. O próximo marco é
-**`v0.3.0` — Oracle e dashboard MVP**.
+A base metodológica, a estrutura de dados e a carga Oracle estão fechadas. O
+produto final será um webapp público sem licença de BI, servido por ORDS com
+snapshot estático de contingência. O profile Select AI já cobre os nove objetos;
+as duas perguntas territoriais serão validadas depois do produto. O próximo
+marco é **`v0.3.0` — Oracle e webapp MVP**.

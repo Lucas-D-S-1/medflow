@@ -1,12 +1,15 @@
 {
   "camada": "gold",
-  "versao_contrato": "0.2.0",
-  "gerado_em_utc": "2026-07-29T23:17:49.038842+00:00",
+  "versao_contrato": "0.3.0",
+  "gerado_em_utc": "2026-08-01T21:12:55.970726+00:00",
   "principios": [
     "Marts orientados às perguntas de gestão e ao consumo no BI.",
     "Toda métrica expõe amostra, numerador, denominador ou estado de calculabilidade.",
     "IPH é pressão estimada contra capacidade declarada, não ocupação real.",
-    "Valores financeiros são nominais enquanto o IPCA não for incorporado."
+    "Valores financeiros nominais são preservados e os valores reais usam IPCA/IBGE com competência de referência explícita.",
+    "Indicadores populacionais usam residência; indicadores de oferta usam a região do hospital.",
+    "Fluxos para fora de SP não são observáveis no recorte SIH/RD-SP e nunca são tratados como evasão total.",
+    "ICSAP classificada pela Portaria SAS/MS 221/2008; a participação publicada usa o total observado, não o denominador clínico oficial."
   ],
   "tabelas": [
     {
@@ -217,11 +220,53 @@
           "descricao": "Valor nominal aprovado nas internações novas dividido pela quantidade de internações novas."
         },
         {
+          "nome": "nr_permanencia_media",
+          "tipo": "float64",
+          "aceita_nulo": true,
+          "nulos": 998,
+          "descricao": "Soma dos dias de permanência dividida pela quantidade de internações novas."
+        },
+        {
           "nome": "st_amostra",
           "tipo": "object",
           "aceita_nulo": false,
           "nulos": 0,
           "descricao": "Estado da amostra segundo os mínimos definidos no contrato do indicador."
+        },
+        {
+          "nome": "nr_indice_ipca",
+          "tipo": "Float64",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Número-índice mensal do IPCA/IBGE, tabela SIDRA 1737, variável 2266."
+        },
+        {
+          "nome": "nr_fator_correcao_ipca",
+          "tipo": "Float64",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Fator que atualiza o valor nominal da competência para o preço de referência explícito."
+        },
+        {
+          "nome": "cd_competencia_preco_referencia",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Competência AAAAMM para a qual os valores reais foram corrigidos pelo IPCA."
+        },
+        {
+          "nome": "vl_aprovado_internacao_nova_real_soma",
+          "tipo": "Float64",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Soma dos valores aprovados para internações novas corrigida pelo IPCA para o preço de referência."
+        },
+        {
+          "nome": "vl_cmi_real",
+          "tipo": "float64",
+          "aceita_nulo": true,
+          "nulos": 998,
+          "descricao": "Valor aprovado médio corrigido pelo IPCA para a competência indicada em cd_competencia_preco_referencia."
         }
       ]
     },
@@ -357,11 +402,53 @@
           "descricao": "Valor nominal aprovado nas internações novas dividido pela quantidade de internações novas."
         },
         {
+          "nome": "nr_permanencia_media",
+          "tipo": "float64",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Soma dos dias de permanência dividida pela quantidade de internações novas."
+        },
+        {
           "nome": "st_amostra",
           "tipo": "object",
           "aceita_nulo": false,
           "nulos": 0,
           "descricao": "Estado da amostra segundo os mínimos definidos no contrato do indicador."
+        },
+        {
+          "nome": "nr_indice_ipca",
+          "tipo": "Float64",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Número-índice mensal do IPCA/IBGE, tabela SIDRA 1737, variável 2266."
+        },
+        {
+          "nome": "nr_fator_correcao_ipca",
+          "tipo": "Float64",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Fator que atualiza o valor nominal da competência para o preço de referência explícito."
+        },
+        {
+          "nome": "cd_competencia_preco_referencia",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Competência AAAAMM para a qual os valores reais foram corrigidos pelo IPCA."
+        },
+        {
+          "nome": "vl_aprovado_internacao_nova_real_soma",
+          "tipo": "Float64",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Soma dos valores aprovados para internações novas corrigida pelo IPCA para o preço de referência."
+        },
+        {
+          "nome": "vl_cmi_real",
+          "tipo": "float64",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Valor aprovado médio corrigido pelo IPCA para a competência indicada em cd_competencia_preco_referencia."
         }
       ]
     },
@@ -628,11 +715,81 @@
           "descricao": "População municipal do Censo IBGE 2022 distribuída no CSV oficial do Ministério da Saúde."
         },
         {
-          "nome": "qt_internacao_por_100_mil_habitante",
+          "nome": "qt_internacao_residente_observada",
+          "tipo": "int64",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Internações novas de residentes da região observadas nos hospitais de São Paulo."
+        },
+        {
+          "nome": "qt_internacao_residente_na_propria_regiao",
+          "tipo": "int64",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Internações de residentes atendidos em hospital da própria região de saúde."
+        },
+        {
+          "nome": "qt_evasao_intrastadual_observada",
+          "tipo": "int64",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Internações de residentes atendidos em outra região de saúde de SP; não inclui saídas para outras UFs."
+        },
+        {
+          "nome": "qt_internacao_icsap_residente_observada",
+          "tipo": "int64",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Internações novas de residentes classificadas na Lista Brasileira de ICSAP e atendidas em SP."
+        },
+        {
+          "nome": "qt_internacao_recebida_outra_regiao_sp",
+          "tipo": "int64",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Internações realizadas na região para residentes de outra região de saúde paulista."
+        },
+        {
+          "nome": "qt_internacao_recebida_fora_sp",
+          "tipo": "int64",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Internações realizadas na região para residentes de outra unidade da Federação."
+        },
+        {
+          "nome": "tx_internacao_residente_observada_por_100_mil",
           "tipo": "float64",
           "aceita_nulo": false,
           "nulos": 0,
-          "descricao": "Internações novas por 100 mil habitantes usando população do Censo IBGE 2022."
+          "descricao": "Internações de residentes da região atendidos em SP por 100 mil habitantes; não observa atendimentos fora do estado."
+        },
+        {
+          "nome": "pc_evasao_intrastadual_observada",
+          "tipo": "float64",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Evasão intrastadual observada dividida pelas internações de residentes atendidos em SP."
+        },
+        {
+          "nome": "pc_atracao_assistencial",
+          "tipo": "float64",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Internações recebidas de fora da região divididas pelo total de internações realizadas na região."
+        },
+        {
+          "nome": "pc_icsap_no_total_internacao_residente_observada",
+          "tipo": "float64",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "ICSAP divididas por todas as internações novas observadas de residentes; não é o denominador clínico oficial."
+        },
+        {
+          "nome": "tx_icsap_residente_observada_por_10_mil",
+          "tipo": "float64",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "ICSAP observadas de residentes por 10 mil habitantes do Censo IBGE 2022."
         },
         {
           "nome": "pc_tmh",
@@ -647,6 +804,13 @@
           "aceita_nulo": false,
           "nulos": 0,
           "descricao": "Valor nominal aprovado nas internações novas dividido pela quantidade de internações novas."
+        },
+        {
+          "nome": "nr_permanencia_media",
+          "tipo": "float64",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Soma dos dias de permanência dividida pela quantidade de internações novas."
         },
         {
           "nome": "nr_iph_estimado",
@@ -696,6 +860,41 @@
           "aceita_nulo": false,
           "nulos": 0,
           "descricao": "Estado de calculabilidade do índice sazonal."
+        },
+        {
+          "nome": "nr_indice_ipca",
+          "tipo": "Float64",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Número-índice mensal do IPCA/IBGE, tabela SIDRA 1737, variável 2266."
+        },
+        {
+          "nome": "nr_fator_correcao_ipca",
+          "tipo": "Float64",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Fator que atualiza o valor nominal da competência para o preço de referência explícito."
+        },
+        {
+          "nome": "cd_competencia_preco_referencia",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Competência AAAAMM para a qual os valores reais foram corrigidos pelo IPCA."
+        },
+        {
+          "nome": "vl_aprovado_internacao_nova_real_soma",
+          "tipo": "Float64",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Soma dos valores aprovados para internações novas corrigida pelo IPCA para o preço de referência."
+        },
+        {
+          "nome": "vl_cmi_real",
+          "tipo": "float64",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Valor aprovado médio corrigido pelo IPCA para a competência indicada em cd_competencia_preco_referencia."
         }
       ]
     },
@@ -785,6 +984,229 @@
           "aceita_nulo": true,
           "nulos": 9,
           "descricao": "Percentual referente a combinacao ipr acima referencia."
+        }
+      ]
+    },
+    {
+      "nome": "mart_fluxo_assistencial_regiao_mensal",
+      "caminho": "dados/gold/marts/mart_fluxo_assistencial_regiao_mensal.parquet",
+      "descricao": "Tabela analítica mart_fluxo_assistencial_regiao_mensal.",
+      "grao": "granularidade documentada pelo pipeline produtor",
+      "chave_primaria_logica": [],
+      "linhas": 30018,
+      "colunas": [
+        {
+          "nome": "cd_origem_residencia",
+          "tipo": "string",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Região de saúde de residência ou FORA_SP para residentes de outra UF."
+        },
+        {
+          "nome": "cd_regiao_saude_atendimento",
+          "tipo": "string",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Região de saúde do hospital que realizou o atendimento."
+        },
+        {
+          "nome": "nr_ano_competencia",
+          "tipo": "int16",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Ano da competência de processamento."
+        },
+        {
+          "nome": "nr_mes_competencia",
+          "tipo": "int8",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Número do mês da competência de processamento."
+        },
+        {
+          "nome": "cd_competencia",
+          "tipo": "string",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Competência no formato AAAAMM."
+        },
+        {
+          "nome": "st_fluxo_assistencial",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Classificação do fluxo: intrarregional, interregional_sp ou entrada_outro_estado."
+        },
+        {
+          "nome": "qt_internacao_nova",
+          "tipo": "int64",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Quantidade de internações novas, identificadas por AIH normal."
+        },
+        {
+          "nome": "nm_origem_residencia",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Nome da região de residência ou indicação de residência fora de São Paulo."
+        },
+        {
+          "nome": "cd_macrorregiao_origem",
+          "tipo": "string",
+          "aceita_nulo": true,
+          "nulos": 1526,
+          "descricao": "Macrorregião de saúde da residência; nula para residentes fora de SP."
+        },
+        {
+          "nome": "nm_macrorregiao_origem",
+          "tipo": "object",
+          "aceita_nulo": true,
+          "nulos": 1526,
+          "descricao": "Nome da macrorregião de residência; nulo para residentes fora de SP."
+        },
+        {
+          "nome": "nm_regiao_saude_atendimento",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Nome da região de saúde do hospital que realizou o atendimento."
+        },
+        {
+          "nome": "cd_macrorregiao_atendimento",
+          "tipo": "string",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Macrorregião de saúde do hospital que realizou o atendimento."
+        },
+        {
+          "nome": "nm_macrorregiao_atendimento",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Nome da macrorregião de saúde do hospital que realizou o atendimento."
+        },
+        {
+          "nome": "pc_origem_no_atendimento",
+          "tipo": "float64",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Participação da origem no total de internações realizadas na região de atendimento e competência."
+        },
+        {
+          "nome": "pc_destino_na_origem_observada",
+          "tipo": "float64",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Participação do destino nas internações da origem observadas em hospitais de SP."
+        }
+      ]
+    },
+    {
+      "nome": "mart_icsap_regiao_mensal",
+      "caminho": "dados/gold/marts/mart_icsap_regiao_mensal.parquet",
+      "descricao": "Tabela analítica mart_icsap_regiao_mensal.",
+      "grao": "granularidade documentada pelo pipeline produtor",
+      "chave_primaria_logica": [],
+      "linhas": 34162,
+      "colunas": [
+        {
+          "nome": "cd_regiao_saude",
+          "tipo": "string",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Código oficial de cinco dígitos da região de saúde."
+        },
+        {
+          "nome": "nm_regiao_saude",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Nome oficial da região de saúde."
+        },
+        {
+          "nome": "cd_macrorregiao_saude",
+          "tipo": "string",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Código oficial da macrorregião de saúde."
+        },
+        {
+          "nome": "nm_macrorregiao_saude",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Nome oficial da macrorregião de saúde."
+        },
+        {
+          "nome": "qt_populacao_ibge_2022",
+          "tipo": "int64",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "População municipal do Censo IBGE 2022 distribuída no CSV oficial do Ministério da Saúde."
+        },
+        {
+          "nome": "nr_ano_competencia",
+          "tipo": "int16",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Ano da competência de processamento."
+        },
+        {
+          "nome": "nr_mes_competencia",
+          "tipo": "int8",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Número do mês da competência de processamento."
+        },
+        {
+          "nome": "cd_competencia",
+          "tipo": "string",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Competência no formato AAAAMM."
+        },
+        {
+          "nome": "cd_grupo_icsap",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Código ordinal de dois dígitos do grupo da Lista Brasileira de ICSAP."
+        },
+        {
+          "nome": "nm_grupo_icsap",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Nome do grupo da Lista Brasileira de ICSAP da Portaria SAS/MS 221/2008."
+        },
+        {
+          "nome": "qt_internacao_icsap",
+          "tipo": "int64",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Quantidade de internações novas classificadas no grupo ICSAP."
+        },
+        {
+          "nome": "qt_internacao_icsap_total_regiao",
+          "tipo": "int64",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Total de internações ICSAP observadas entre residentes da região e competência."
+        },
+        {
+          "nome": "pc_grupo_no_total_icsap",
+          "tipo": "float64",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Participação do grupo no total de ICSAP da região e competência."
+        },
+        {
+          "nome": "tx_icsap_grupo_por_10_mil_habitantes",
+          "tipo": "float64",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Internações do grupo ICSAP por 10 mil residentes da região."
         }
       ]
     },

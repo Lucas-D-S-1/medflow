@@ -54,8 +54,8 @@ Proibido:
 
 ### Gold — `02_analise_dados.ipynb`
 
-Responsabilidade: aplicar os cinco contratos aprovados e publicar marts para
-Oracle e BI.
+Responsabilidade: aplicar os contratos hospitalares e territoriais e publicar
+marts para Oracle e produto.
 
 Inclui:
 
@@ -63,6 +63,10 @@ Inclui:
 - IPR por hospital/CID com benchmark regional que exclui o hospital;
 - IS regional de 2026 contra 2024–2025;
 - IPH por mês civil usando pacientes-dia reconstruídos;
+- permanência média e CMI real corrigido pelo IPCA;
+- demanda por região de residência e taxa populacional territorialmente coerente;
+- fluxos origem–destino e evasão intrastadual observada;
+- ICSAP por residência e pelos 19 grupos oficiais;
 - CSV, GeoJSON e TopoJSON regionais.
 
 ## Oito controles implementados
@@ -80,8 +84,8 @@ Inclui:
    para auditoria.
 7. **Nulos em agrupamento:** `dropna=False` e reconciliação impedem perdas
    silenciosas.
-8. **Índices:** os cinco contratos são calculados na Gold, com amostra,
-   denominador e limitação explícitos.
+8. **Indicadores:** contratos hospitalares e territoriais são calculados na
+   Gold, com amostra, denominador, residência/atendimento e limitações explícitos.
 
 ## Reconciliações bloqueantes
 

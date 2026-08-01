@@ -1,6 +1,6 @@
-# Validação técnica integrada — MedFlow 0.2.0
+# Validação técnica integrada — MedFlow 0.3.0
 
-Executada em `2026-07-29T23:34:20.268547+00:00`.
+Executada em `2026-08-01T21:13:14.889949+00:00`.
 
 ## Resultado
 
@@ -10,7 +10,9 @@ Executada em `2026-07-29T23:34:20.268547+00:00`.
 - Nenhum arquivo `.parcial` residual.
 - 282 artefatos de dados/figuras pré-migração preservados por SHA-256.
 - 7.034.961 AIHs e 6.905.441 internações novas reconciliadas.
-- Fórmulas TMH, IPR, IS, IPH e taxa populacional recalculadas a partir dos numeradores e denominadores persistidos.
+- Fórmulas TMH, IPR, IS, IPH, permanência média, IPCA e taxa populacional por residência recalculadas.
+- Fluxos origem-destino reconciliados; 906.060 saídas inter-regionais fecham com as entradas correspondentes.
+- 953.656 ICSAP reconciliadas entre resumo regional e 19 grupos da Portaria SAS/MS 221/2008.
 - 645 municípios, 62 regiões, 19 macrorregiões e 29 competências.
 - TopoJSON com 62 geometrias regionais.
 
@@ -18,4 +20,4 @@ Executada em `2026-07-29T23:34:20.268547+00:00`.
 
 - Bronze: 2 tabelas, 148 colunas.
 - Silver: 8 tabelas, 128 colunas.
-- Gold: 7 tabelas, 118 colunas.
+- Gold: 9 tabelas, 175 colunas.

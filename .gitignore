@@ -72,3 +72,6 @@ Thumbs.db
 
 # Repositorio independente, com remote proprio
 01_pbl_cidade_alfa/pbl-cidade-alfa-transporte/
+
+# arquivos de bloqueio do Office (Word/PowerPoint/Excel)
+~$*

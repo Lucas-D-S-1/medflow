@@ -7,9 +7,9 @@ workload Lakehouse, região `sa-saopaulo-1`.
 
 - conexão mTLS validada no banco `GF68E03B2A30D55_MEDFLOW`;
 - esquema de aplicação: `MEDFLOW`;
-- 7 tabelas: 2 dimensões e 5 marts;
-- 118 colunas, todas comentadas;
-- 7 índices secundários, além dos índices das chaves primárias;
+- 9 tabelas: 2 dimensões e 7 marts;
+- 175 colunas, todas comentadas;
+- 10 índices secundários, além dos índices das chaves primárias;
 - aliases usados: `medflow_low` para conexão e `medflow_medium` para carga.
 
 Wallet, `.env` e senhas permanecem locais e ignorados pelo Git.
@@ -25,17 +25,26 @@ Wallet, `.env` e senhas permanecem locais e ignorados pelo Git.
 | `mart_indicador_hospital_cid_periodo` | 447.334 | 447.334 | ok |
 | `mart_indicador_regiao_mensal` | 1.798 | 1.798 | ok |
 | `mart_indicador_regiao_periodo` | 62 | 62 | ok |
-| **Total** | **521.116** | **521.116** | **ok** |
+| `mart_fluxo_assistencial_regiao_mensal` | 30.018 | 30.018 | ok |
+| `mart_icsap_regiao_mensal` | 34.162 | 34.162 | ok |
+| **Total** | **585.296** | **585.296** | **ok** |
 
-O total se divide em 520.409 linhas nos cinco marts e 707 linhas nas duas
+O total se divide em 584.589 linhas nos sete marts e 707 linhas nas duas
 dimensões.
 
-O roteiro `sql/03_validar_carga.sql` retornou **25 de 25 métricas como `ok`**.
-As três consultas adicionais retornaram zero ocorrências para:
+O roteiro `sql/03_validar_carga.sql` retornou **36 de 36 métricas como `ok`**.
+As seis consultas adicionais retornaram zero ocorrências para:
 
 - fatos sem região correspondente;
 - IPH nulo apesar de capacidade disponível;
 - flag de pressão acima da capacidade com IPH incompatível.
+- fluxo ou ICSAP sem região correspondente;
+- decomposição dos grupos ICSAP divergente do resumo regional;
+- assimetria entre saída e entrada inter-regional.
+
+As reconciliações novas confirmaram 6.846.665 internações de residentes
+paulistas observadas em SP, 58.776 atendimentos de residentes de outras UFs,
+906.060 fluxos inter-regionais e 953.656 ICSAP.
 
 ## SQL convencional de referência
 
@@ -97,7 +106,7 @@ Configuração validada:
 - autenticação: `OCI$RESOURCE_PRINCIPAL`, sem chave externa;
 - profile: `MEDFLOW_GENAI`, estado `ENABLED`;
 - provedor: OCI Generative AI em `sa-saopaulo-1`;
-- metadados enviados: comentários e restrições das sete tabelas.
+- metadados do contrato anterior: comentários e restrições das sete tabelas.
 
 O primeiro teste mostrou que critérios ocultos no SQL não eram inferidos de
 forma confiável. Os comentários de negócio foram aprimorados e os cortes de
@@ -111,6 +120,13 @@ Na validação final:
   das consultas de referência;
 - os três `narrate` reproduziram os rankings corretos;
 - a narrativa do IPH usou “pressão sobre a capacidade” e não “ocupação real”.
+
+Esses resultados comprovam a configuração e as três perguntas originais. O
+contrato `0.3.0` ampliou o profile para nove objetos e acrescentou perguntas de
+fluxo e ICSAP no roteiro `sql/04_select_ai.sql`; essa bateria ampliada será
+revalidada depois do webapp, conforme a ordem de entrega aprovada. O profile já
+foi sincronizado com os nove objetos e confirmado no estado `ENABLED`; apenas a
+execução comparativa das duas perguntas novas permanece pendente.
 
 ## Verificação antes da apresentação
 

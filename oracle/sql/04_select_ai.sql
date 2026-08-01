@@ -44,7 +44,8 @@ end;
 -- 2. Como MEDFLOW: criar o profile OCI
 -- ---------------------------------------------------------------------
 -- Nao ha chave de API: OCI$RESOURCE_PRINCIPAL autentica a propria instancia.
--- O bloco e seguro para reexecucao: preserva o profile se ele ja existir.
+-- O bloco e seguro para reexecucao: recria o profile para sincronizar a lista
+-- de objetos com o contrato Gold vigente.
 
 set serveroutput on
 
@@ -56,10 +57,12 @@ begin
   from   user_cloud_ai_profiles
   where  profile_name = 'MEDFLOW_GENAI';
 
-  if qt_profile = 0 then
-    dbms_cloud_ai.create_profile(
+  if qt_profile > 0 then
+    dbms_cloud_ai.drop_profile(profile_name => 'MEDFLOW_GENAI');
+  end if;
+  dbms_cloud_ai.create_profile(
       profile_name => 'MEDFLOW_GENAI',
-      description  => 'Select AI sobre os sete objetos Gold do MedFlow',
+      description  => 'Select AI sobre os nove objetos Gold do MedFlow',
       attributes   => '{"provider": "oci",
                         "credential_name": "OCI$RESOURCE_PRINCIPAL",
                         "region": "sa-saopaulo-1",
@@ -72,14 +75,13 @@ begin
                           {"owner": "MEDFLOW", "name": "mart_indicador_hospital_cid_periodo"},
                           {"owner": "MEDFLOW", "name": "mart_indicador_regiao_mensal"},
                           {"owner": "MEDFLOW", "name": "mart_indicador_regiao_periodo"},
+                          {"owner": "MEDFLOW", "name": "mart_fluxo_assistencial_regiao_mensal"},
+                          {"owner": "MEDFLOW", "name": "mart_icsap_regiao_mensal"},
                           {"owner": "MEDFLOW", "name": "dim_geografia_regiao"},
                           {"owner": "MEDFLOW", "name": "dim_geografia_municipio"}
                         ]}'
     );
-    dbms_output.put_line('Profile MEDFLOW_GENAI criado.');
-  else
-    dbms_output.put_line('Profile MEDFLOW_GENAI ja existe; preservado.');
-  end if;
+  dbms_output.put_line('Profile MEDFLOW_GENAI sincronizado com o contrato 0.3.0.');
 end;
 /
 
@@ -95,7 +97,7 @@ select dbms_cloud_ai.get_profile() as profile_ativo from dual;
 select ai chat em uma frase, o que e o indice de pressao hospitalar;
 
 -- ---------------------------------------------------------------------
--- 4. As três perguntas da demonstração
+-- 4. As cinco perguntas da demonstração
 -- ---------------------------------------------------------------------
 -- Para cada uma: o SQL de referência validado primeiro, depois o showsql
 -- para comparar o que o modelo gerou, depois a resposta narrada.
@@ -146,6 +148,33 @@ fetch  first 10 rows only;
 
 select ai showsql quais sao os dez diagnosticos com maior IPR medio, considerando somente combinacoes hospital-CID com amostra suficiente e pelo menos 10 combinacoes por diagnostico;
 select ai narrate quais sao os dez diagnosticos com maior IPR medio, considerando somente combinacoes hospital-CID com amostra suficiente e pelo menos 10 combinacoes por diagnostico;
+
+-- --- Pergunta 4: quais regiões mais dependem de atendimento fora do território?
+
+select nm_regiao_saude,
+       round(avg(pc_evasao_intrastadual_observada), 2) as pc_evasao_observada,
+       sum(qt_evasao_intrastadual_observada)            as qt_evasao_observada
+from   mart_indicador_regiao_mensal
+where  nr_ano_competencia = 2026
+group  by nm_regiao_saude
+order  by pc_evasao_observada desc
+fetch  first 10 rows only;
+
+select ai showsql quais regioes tiveram maior percentual medio de evasao intrastadual observada em 2026? Nao interprete como evasao para fora de Sao Paulo;
+select ai narrate quais regioes tiveram maior percentual medio de evasao intrastadual observada em 2026? Nao interprete como evasao para fora de Sao Paulo;
+
+-- --- Pergunta 5: quais grupos ICSAP mais pressionam internações de residentes?
+
+select nm_grupo_icsap,
+       sum(qt_internacao_icsap) as qt_internacao_icsap
+from   mart_icsap_regiao_mensal
+where  nr_ano_competencia = 2026
+group  by nm_grupo_icsap
+order  by qt_internacao_icsap desc
+fetch  first 10 rows only;
+
+select ai showsql quais foram os dez grupos ICSAP com mais internacoes de residentes em 2026;
+select ai narrate quais foram os dez grupos ICSAP com mais internacoes de residentes em 2026;
 
 -- ---------------------------------------------------------------------
 -- 5. Registro da demonstração
