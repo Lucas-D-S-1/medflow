@@ -5,13 +5,22 @@ import {
   StatusContractError,
   type PublishedStatusResponse,
 } from './api/status'
+import {
+  fetchMethodology,
+  getMethodologySnapshot,
+  MethodologyContractError,
+  type MethodologyResponse,
+} from './api/metodologia'
 
 type SourceState =
   | { kind: 'loading' }
-  | { kind: 'live'; data: PublishedStatusResponse }
+  | {
+      kind: 'live'
+      data: { status: PublishedStatusResponse; methodology: MethodologyResponse }
+    }
   | {
       kind: 'fallback'
-      data: PublishedStatusResponse
+      data: { status: PublishedStatusResponse; methodology: MethodologyResponse }
       reason: 'oracle-unavailable' | 'invalid-contract'
     }
   | { kind: 'empty' }
@@ -38,22 +47,40 @@ function formatDatabaseTime(value: string) {
   }).format(parsed)
 }
 
+const integerFormatter = new Intl.NumberFormat('pt-BR')
+
+function formatInteger(value: number) {
+  return integerFormatter.format(value)
+}
+
 export default function App() {
   const [sourceState, setSourceState] = useState<SourceState>({ kind: 'loading' })
 
-  const loadStatus = useCallback(async () => {
+  const loadSourceData = useCallback(async () => {
     setSourceState({ kind: 'loading' })
 
     try {
       const liveStatus = await fetchStatus()
-      setSourceState(liveStatus ? { kind: 'live', data: liveStatus } : { kind: 'empty' })
+      if (!liveStatus) {
+        setSourceState({ kind: 'empty' })
+        return
+      }
+
+      const liveMethodology = await fetchMethodology()
+      setSourceState({
+        kind: 'live',
+        data: { status: liveStatus, methodology: liveMethodology },
+      })
     } catch (error) {
       try {
         setSourceState({
           kind: 'fallback',
-          data: getStatusSnapshot(),
+          data: {
+            status: getStatusSnapshot(),
+            methodology: getMethodologySnapshot(),
+          },
           reason:
-            error instanceof StatusContractError
+            error instanceof StatusContractError || error instanceof MethodologyContractError
               ? 'invalid-contract'
               : 'oracle-unavailable',
         })
@@ -64,12 +91,16 @@ export default function App() {
   }, [])
 
   useEffect(() => {
-    void loadStatus()
-  }, [loadStatus])
+    void loadSourceData()
+  }, [loadSourceData])
 
   const statusData =
     sourceState.kind === 'live' || sourceState.kind === 'fallback'
-      ? sourceState.data
+      ? sourceState.data.status
+      : null
+  const methodologyData =
+    sourceState.kind === 'live' || sourceState.kind === 'fallback'
+      ? sourceState.data.methodology
       : null
 
   return (
@@ -121,15 +152,15 @@ export default function App() {
           )}
 
           {sourceState.kind === 'error' && (
-            <div className="state-message" data-testid="error-state">
-              <span className="state-icon error" aria-hidden="true">!</span>
-              <div>
-                <strong>Fonte e contingência indisponíveis</strong>
-                <p>Não foi possível carregar o Oracle nem o snapshot local.</p>
-                <button type="button" onClick={() => void loadStatus()}>Tentar novamente</button>
+              <div className="state-message" data-testid="error-state">
+                <span className="state-icon error" aria-hidden="true">!</span>
+                <div>
+                  <strong>Fonte e contingência indisponíveis</strong>
+                  <p>Não foi possível carregar o Oracle nem o snapshot local.</p>
+                <button type="button" onClick={() => void loadSourceData()}>Tentar novamente</button>
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
           {statusData && (
             <>
@@ -161,8 +192,19 @@ export default function App() {
                   <small>caminho versionado /v1</small>
                 </article>
                 <article>
+                  <span className="metric-label">Gold atualizada em</span>
+                  <strong className="date-value" data-testid="gold-updated-at">
+                    {methodologyData
+                      ? formatDatabaseTime(methodologyData.gold_updated_at)
+                      : 'data indisponível'}
+                  </strong>
+                  <small>manifesto da Gold publicada</small>
+                </article>
+                <article>
                   <span className="metric-label">Última verificação</span>
-                  <strong className="date-value">{formatDatabaseTime(statusData.database_time)}</strong>
+                  <strong className="date-value" data-testid="last-checked-at">
+                    {formatDatabaseTime(statusData.database_time)}
+                  </strong>
                   <small>{sourceState.kind === 'live' ? 'relógio do banco' : 'geração do snapshot'}</small>
                 </article>
               </div>
@@ -176,7 +218,7 @@ export default function App() {
                       : 'A consulta ao Oracle falhou ou excedeu o tempo limite. '}
                     Esta sessão usa somente o snapshot local;
                     nenhuma fonte foi misturada. Você pode{' '}
-                    <button type="button" onClick={() => void loadStatus()}>tentar novamente</button>.
+                    <button type="button" onClick={() => void loadSourceData()}>tentar novamente</button>.
                   </p>
                 </div>
               )}
@@ -187,17 +229,191 @@ export default function App() {
         <section className="methodology" id="metodologia" aria-labelledby="method-title">
           <div>
             <p className="section-kicker">NOTA METODOLÓGICA</p>
-            <h2 id="method-title">O que este selo afirma</h2>
+            <h2 id="method-title">Como ler cada número</h2>
+            {methodologyData && (
+              <p className="methodology-through" data-testid="methodology-data-through">
+                Gold publicada até {formatPeriod(methodologyData.data_through)} · atualizada em{' '}
+                {formatDatabaseTime(methodologyData.gold_updated_at)}
+              </p>
+            )}
           </div>
-          <div className="method-copy">
-            <p>
-              A competência exibida é lida diretamente da coluna persistida na Gold.
-              Este endpoint não calcula IPH, IPR, TMH, CMI ou permanência.
-            </p>
-            <p>
-              O estado da fonte indica disponibilidade técnica e versão do contrato;
-              não é uma avaliação da qualidade clínica dos hospitais.
-            </p>
+          <div className="methodology-content">
+            {sourceState.kind === 'loading' && (
+              <p className="methodology-state" data-testid="methodology-loading">
+                Carregando cobertura, fórmulas e limites do contrato…
+              </p>
+            )}
+
+            {sourceState.kind === 'empty' && (
+              <p className="methodology-state" data-testid="methodology-empty">
+                A fonte respondeu, mas não há uma competência Gold publicada para documentar.
+              </p>
+            )}
+
+            {sourceState.kind === 'error' && (
+              <p className="methodology-state" data-testid="methodology-error">
+                A nota metodológica não está disponível nesta tentativa.
+              </p>
+            )}
+
+            {methodologyData && (
+              <>
+                <div className="coverage-grid" aria-label="Cobertura publicada">
+                  <article>
+                    <span>Regiões de saúde</span>
+                    <strong data-testid="coverage-regions">
+                      {formatInteger(methodologyData.coverage.regions)}
+                    </strong>
+                  </article>
+                  <article>
+                    <span>Competências</span>
+                    <strong data-testid="coverage-competencies">
+                      {formatInteger(methodologyData.coverage.competencies)}
+                    </strong>
+                  </article>
+                  <article>
+                    <span>Internações novas</span>
+                    <strong data-testid="coverage-admissions">
+                      {formatInteger(methodologyData.coverage.new_admissions)}
+                    </strong>
+                  </article>
+                  <article>
+                    <span>Pacientes-dia estimados</span>
+                    <strong data-testid="coverage-patient-days">
+                      {formatInteger(methodologyData.coverage.estimated_patient_days)}
+                    </strong>
+                  </article>
+                  <article>
+                    <span>Dias de permanência</span>
+                    <strong data-testid="coverage-stay-days">
+                      {formatInteger(methodologyData.coverage.stay_days)}
+                    </strong>
+                  </article>
+                  <article>
+                    <span>Meses sem leito SUS</span>
+                    <strong data-testid="coverage-no-sus-bed">
+                      {formatInteger(methodologyData.coverage.hospital_months_without_declared_sus_bed)}
+                    </strong>
+                  </article>
+                  <article>
+                    <span>Benchmark zerado</span>
+                    <strong data-testid="coverage-benchmark-zero">
+                      {formatInteger(methodologyData.coverage.benchmark_zero_rows)}
+                    </strong>
+                  </article>
+                </div>
+
+                <div className="methodology-block">
+                  <h3>Fórmulas publicadas na Gold</h3>
+                  <div className="formula-list">
+                    {methodologyData.formulas.map((formula) => (
+                      <article key={formula.id} data-testid={`formula-${formula.id}`}>
+                        <strong>{formula.label}</strong>
+                        <code>{formula.expression}</code>
+                        {formula.reference_competence && (
+                          <small className="formula-reference">
+                            Competência de referência do CMI real: {formatPeriod(formula.reference_competence)}
+                          </small>
+                        )}
+                        <p>{formula.interpretation}</p>
+                      </article>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="methodology-block">
+                  <h3>Cortes que preservam a amostra</h3>
+                  <div className="cut-list">
+                    {methodologyData.cuts.map((cut) => (
+                      <article key={cut.id} data-testid={`cut-${cut.id}`}>
+                        <strong>{cut.label}</strong>
+                        <p>{cut.description}</p>
+                      </article>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="methodology-block">
+                  <h3>Reconciliações publicadas</h3>
+                  <div className="reconciliation-list">
+                    {methodologyData.reconciliations.map((reconciliation) => (
+                      <article
+                        key={reconciliation.id}
+                        data-testid={`reconciliation-${reconciliation.id}`}
+                      >
+                        <div className="reconciliation-heading">
+                          <strong>{reconciliation.label}</strong>
+                          <span className="reconciliation-status">{reconciliation.status}</span>
+                        </div>
+                        <div className="reconciliation-values">
+                          <span>{reconciliation.left_label}: <b>{formatInteger(reconciliation.left_value)}</b></span>
+                          <span>{reconciliation.right_label}: <b>{formatInteger(reconciliation.right_value)}</b></span>
+                          <span>diferença: <b>{formatInteger(reconciliation.difference)}</b></span>
+                        </div>
+                        <p>{reconciliation.note}</p>
+                      </article>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="methodology-block">
+                  <h3>Unidades que não são intercambiáveis</h3>
+                  <div className="definition-list">
+                    {methodologyData.definitions.map((definition) => (
+                      <article key={definition.id} data-testid={`definition-${definition.id}`}>
+                        <div className="definition-heading">
+                          <strong>{definition.label}</strong>
+                          {definition.published_value !== undefined ? (
+                            <span>{formatInteger(definition.published_value)}</span>
+                          ) : (
+                            <span>Não publicado nesta Gold</span>
+                          )}
+                        </div>
+                        <p>{definition.definition}</p>
+                        <small>Campo: {definition.gold_field}</small>
+                        <small>{definition.value_note}</small>
+                      </article>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="methodology-block">
+                  <h3>Estados sem imputação</h3>
+                  <div className="state-list">
+                    {methodologyData.states.map((state) => (
+                      <article key={state.id} data-testid={`state-${state.id}`}>
+                        <div className="state-heading">
+                          <strong>{state.label}</strong>
+                          <span>{formatInteger(state.count)} {state.count_label}</span>
+                        </div>
+                        <p>{state.description}</p>
+                      </article>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="methodology-block source-limit-grid">
+                  <div>
+                    <h3>Fontes</h3>
+                    <ul>
+                      {methodologyData.sources.map((source) => (
+                        <li key={source.id}>
+                          <strong>{source.label}</strong> — {source.scope}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div>
+                    <h3>Limitações</h3>
+                    <ul>
+                      {methodologyData.limitations.map((limitation) => (
+                        <li key={limitation}>{limitation}</li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         </section>
       </main>
