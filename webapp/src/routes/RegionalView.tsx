@@ -1,8 +1,14 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import {
+  fetchRegiaoSerie,
+  getRegiaoSerieSnapshot,
+  type RegionalSeriesResponse,
+} from '../api/regioesSerie'
 import MethodNote from '../components/MethodNote'
 import MetricCard from '../components/MetricCard'
 import RegionalMap from '../components/RegionalMap'
+import RegionalSeries from '../components/RegionalSeries'
 import SourcePanel from '../components/SourcePanel'
 import StatePanel from '../components/StatePanel'
 import { useSource } from '../source/SourceContext'
@@ -17,10 +23,16 @@ import './RegionalView.css'
 
 const RANKING_PREVIEW_SIZE = 8
 
+type SeriesState =
+  | { kind: 'idle' | 'loading' | 'empty' | 'error' | 'snapshot-missing' }
+  | { kind: 'ready'; data: RegionalSeriesResponse }
+
 export default function RegionalView() {
   const { sourceState, regionalLoadState, loadRegionalCompetence } = useSource()
   const [searchParams, setSearchParams] = useSearchParams()
   const [showAllRanking, setShowAllRanking] = useState(false)
+  const [seriesState, setSeriesState] = useState<SeriesState>({ kind: 'idle' })
+  const seriesRequest = useRef<AbortController | null>(null)
   const sourceData =
     sourceState.kind === 'live' || sourceState.kind === 'fallback'
       ? sourceState.data
@@ -72,6 +84,43 @@ export default function RegionalView() {
   const rankingItems = showAllRanking
     ? rankedItems
     : rankedItems.slice(0, RANKING_PREVIEW_SIZE)
+
+  useEffect(() => {
+    seriesRequest.current?.abort()
+    if (!selectedItem) {
+      setSeriesState({ kind: 'idle' })
+      return
+    }
+
+    if (sourceState.kind === 'fallback') {
+      try {
+        const snapshot = getRegiaoSerieSnapshot(selectedItem.region_code)
+        setSeriesState(snapshot ? { kind: 'ready', data: snapshot } : { kind: 'snapshot-missing' })
+      } catch {
+        setSeriesState({ kind: 'error' })
+      }
+      return
+    }
+
+    if (sourceState.kind !== 'live') {
+      setSeriesState({ kind: 'idle' })
+      return
+    }
+
+    const controller = new AbortController()
+    seriesRequest.current = controller
+    setSeriesState({ kind: 'loading' })
+    void fetchRegiaoSerie(selectedItem.region_code, { signal: controller.signal })
+      .then((data) => {
+        if (controller.signal.aborted) return
+        setSeriesState(data.items.length > 0 ? { kind: 'ready', data } : { kind: 'empty' })
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) setSeriesState({ kind: 'error' })
+      })
+
+    return () => controller.abort()
+  }, [selectedItem?.region_code, sourceState.kind])
 
   function updateParam(name: string, value: string) {
     setSearchParams((current) => {
@@ -297,6 +346,30 @@ export default function RegionalView() {
                   O numerador e o denominador exibidos foram lidos da Gold; nenhum indicador é
                   recalculado no navegador.
                 </MethodNote>
+
+                {seriesState.kind === 'loading' && (
+                  <StatePanel kind="loading" title="Carregando série regional" testId="regional-series-loading">
+                    Buscando as competências da região selecionada.
+                  </StatePanel>
+                )}
+                {seriesState.kind === 'empty' && (
+                  <StatePanel kind="empty" title="Série regional sem competências" testId="regional-series-empty">
+                    A fonte respondeu normalmente, mas não há meses publicados para esta região.
+                  </StatePanel>
+                )}
+                {seriesState.kind === 'snapshot-missing' && (
+                  <StatePanel kind="empty" title="Série fora do snapshot de contingência" testId="regional-series-snapshot-missing">
+                    O snapshot preserva a série de JUNDIAI; tente novamente para consultar outra região sem misturar fontes.
+                  </StatePanel>
+                )}
+                {seriesState.kind === 'error' && (
+                  <StatePanel kind="error" title="Série regional indisponível" testId="regional-series-error">
+                    O resumo continua válido, mas a série não será substituída silenciosamente por outra fonte.
+                  </StatePanel>
+                )}
+                {seriesState.kind === 'ready' && (
+                  <RegionalSeries data={seriesState.data} selectedCompetence={selectedCompetence} />
+                )}
 
                 <section className="ranking-panel" aria-labelledby="ranking-title">
                   <div className="block-heading">

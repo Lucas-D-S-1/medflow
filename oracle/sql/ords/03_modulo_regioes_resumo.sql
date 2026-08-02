@@ -587,6 +587,170 @@ begin
     ~'
   );
 
+  ords.define_template(
+    p_module_name => 'medflow_dev',
+    p_pattern     => 'regioes/:id/serie',
+    p_etag_type   => 'HASH',
+    p_comments    => 'Serie mensal de indicadores persistidos de uma regiao de saude.'
+  );
+
+  ords.define_handler(
+    p_module_name => 'medflow_dev',
+    p_pattern     => 'regioes/:id/serie',
+    p_method      => 'GET',
+    p_source_type => ords.source_type_collection_item,
+    p_mimes_allowed => 'application/json',
+    p_comments    => 'Ordem explicita da competencia mais recente para a mais antiga. Paginacao real: limit padrao 100, maximo 120; offset padrao 0.',
+    p_source      => q'~
+      with parametros_brutos as (
+        select :id as codigo_bruto,
+               :limit as limite_bruto,
+               :offset as deslocamento_bruto
+          from dual
+      ),
+      parametros_formatados as (
+        select p.*,
+               case
+                 when regexp_like(p.codigo_bruto, '^[0-9]{5}$') then p.codigo_bruto
+               end as codigo_regiao,
+               case
+                 when regexp_like(p.limite_bruto, '^[0-9]+$') then to_number(p.limite_bruto)
+               end as limite_solicitado,
+               case
+                 when regexp_like(p.deslocamento_bruto, '^[0-9]+$') then to_number(p.deslocamento_bruto)
+               end as deslocamento_solicitado
+          from parametros_brutos p
+      ),
+      parametros as (
+        select p.codigo_regiao,
+               coalesce(p.limite_solicitado, 100) as limite,
+               coalesce(p.deslocamento_solicitado, 0) as deslocamento,
+               case
+                 when p.codigo_regiao is not null
+                  and (p.limite_bruto is null or p.limite_solicitado between 1 and 120)
+                  and (p.deslocamento_bruto is null or p.deslocamento_solicitado >= 0)
+                 then 1
+                 else 0
+               end as parametros_validos
+          from parametros_formatados p
+      ),
+      filtrado as (
+        select v.*
+          from vw_api_regiao_serie v
+          cross join parametros p
+         where v.cd_regiao_saude = p.codigo_regiao
+      ),
+      ordenado as (
+        select f.*,
+               row_number() over (
+                 order by f.cd_competencia desc
+               ) as nr_linha,
+               count(*) over () as qt_total
+          from filtrado f
+      ),
+      pagina as (
+        select o.*
+          from ordenado o
+          cross join parametros p
+         where o.nr_linha > p.deslocamento
+           and o.nr_linha <= p.deslocamento + p.limite
+      )
+      select 'ok' as "status",
+             'oracle-live' as "source",
+             to_char(
+               systimestamp,
+               'YYYY-MM-DD"T"HH24:MI:SS.FF3TZH:TZM'
+             ) as "database_time",
+             '0.3.0' as "contract_version",
+             case
+               when maximo.cd_competencia is null then null
+               else substr(maximo.cd_competencia, 1, 4)
+                 || '-'
+                 || substr(maximo.cd_competencia, 5, 2)
+             end as "data_through",
+             json_object(
+               'region_code' value p.codigo_regiao,
+               'region_name' value meta.nm_regiao_saude,
+               'macroregion_code' value meta.cd_macrorregiao_saude,
+               'macroregion_name' value meta.nm_macrorregiao_saude
+               null on null returning json
+             ) as "region",
+             json_object(
+               'region_code' value p.codigo_regiao
+               returning json
+             ) as "filters",
+             json_object(
+               'limit' value p.limite,
+               'offset' value p.deslocamento,
+               'count' value coalesce(total.qt_total, 0),
+               'has_more' value case
+                 when coalesce(total.qt_total, 0) > p.deslocamento + p.limite
+                 then 'true'
+                 else 'false'
+               end format json,
+               'order' value 'competence_desc'
+               returning json
+             ) as "pagination",
+             coalesce(
+               (
+                 select json_arrayagg(
+                          json_object(
+                            'competence' value substr(x.cd_competencia, 1, 4)
+                              || '-'
+                              || substr(x.cd_competencia, 5, 2),
+                            'year' value x.nr_ano_competencia,
+                            'month' value x.nr_mes_competencia,
+                            'new_admissions' value x.qt_internacao_nova,
+                            'deaths' value x.qt_obito,
+                            'stay_days' value x.qt_dia_permanencia_soma,
+                            'approved_amount_nominal' value x.vl_aprovado_internacao_nova_soma,
+                            'hospitals_with_admissions' value x.qt_hospital_com_internacao,
+                            'estimated_patient_days' value x.qt_paciente_dia_estimado,
+                            'declared_sus_beds' value x.qt_leito_sus,
+                            'declared_capacity_bed_days' value x.qt_capacidade_teorica_leito_dia,
+                            'tmh_percent' value x.pc_tmh,
+                            'cmi_nominal' value x.vl_cmi,
+                            'average_stay_days' value x.nr_permanencia_media,
+                            'iph_ratio' value x.nr_iph_estimado,
+                            'iph_percent' value x.pc_iph_estimado,
+                            'historical_admissions_average' value x.qt_internacao_media_historica,
+                            'historical_years' value x.qt_ano_historico,
+                            'seasonality_index' value x.nr_indice_sazonalidade,
+                            'seasonal_variation_percent' value x.pc_variacao_sazonal,
+                            'seasonality_status' value x.st_indice_sazonalidade,
+                            'price_reference_competence' value x.cd_competencia_preco_referencia,
+                            'approved_amount_real' value x.vl_aprovado_internacao_nova_real_soma,
+                            'cmi_real' value x.vl_cmi_real
+                            null on null returning json
+                          )
+                          order by x.nr_linha
+                          returning json
+                        )
+                   from pagina x
+               ),
+               json_array(returning json)
+             ) as "items"
+        from parametros p
+        outer apply (
+          select f.nm_regiao_saude,
+                 f.cd_macrorregiao_saude,
+                 f.nm_macrorregiao_saude
+            from filtrado f
+           fetch first 1 row only
+        ) meta
+        outer apply (
+          select max(f.cd_competencia) as cd_competencia
+            from filtrado f
+        ) maximo
+        outer apply (
+          select max(o.qt_total) as qt_total
+            from ordenado o
+        ) total
+       where p.parametros_validos = 1
+       fetch first 1 row only
+    ~'
+  );
+
   commit;
 end;
 /

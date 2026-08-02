@@ -11,6 +11,9 @@ const methodologySnapshot = JSON.parse(
 const regionalSnapshot = JSON.parse(
   readFileSync(new URL('../src/fixtures/regioes-resumo.json', import.meta.url), 'utf8'),
 ) as Record<string, unknown>
+const regionalSeriesSnapshot = JSON.parse(
+  readFileSync(new URL('../src/fixtures/regiao-serie-35073.json', import.meta.url), 'utf8'),
+) as Record<string, unknown>
 const goldMetadata = JSON.parse(
   readFileSync(
     new URL('../../dados/gold/qualidade/METADADOS.json', import.meta.url),
@@ -38,6 +41,39 @@ async function mockLiveSource(page: Page) {
         database_time: '2026-08-01T12:00:00-03:00',
       }),
     })
+  })
+  await page.route('**/api/dev/v1/regioes/*/serie**', async (route) => {
+    const match = new URL(route.request().url()).pathname.match(/regioes\/(\d{5})\/serie$/)
+    const regionCode = match?.[1] ?? ''
+    const fixtureRegion = regionalSeriesSnapshot.region as Record<string, unknown>
+    const payload = regionCode === fixtureRegion.region_code
+      ? {
+          ...regionalSeriesSnapshot,
+          source: 'oracle-live',
+          database_time: '2026-08-01T12:00:00-03:00',
+        }
+      : {
+          ...regionalSeriesSnapshot,
+          source: 'oracle-live',
+          database_time: '2026-08-01T12:00:00-03:00',
+          data_through: null,
+          region: {
+            region_code: regionCode,
+            region_name: null,
+            macroregion_code: null,
+            macroregion_name: null,
+          },
+          filters: { region_code: regionCode },
+          pagination: {
+            limit: 100,
+            offset: 0,
+            count: 0,
+            has_more: false,
+            order: 'competence_desc',
+          },
+          items: [],
+        }
+    await route.fulfill({ contentType: 'application/json', body: JSON.stringify(payload) })
   })
 }
 
@@ -196,6 +232,10 @@ test('usa somente o snapshot quando o Oracle falha', async ({ page }) => {
   await expect(page.getByTestId('contract-version')).toHaveText('v0.3.0')
   await expect(page.getByTestId('fallback-note')).toContainText('nenhuma fonte foi misturada')
   await expect(page.getByTestId('regional-competence')).toBeDisabled()
+  await expect(page.getByTestId('regional-series-source')).toHaveText(
+    'Snapshot de contingência',
+  )
+  await expect(page.getByTestId('regional-series-current')).toContainText('65,0%')
   await page.getByRole('link', { name: 'Metodologia' }).click()
   await expect(page.getByTestId('coverage-regions')).toHaveText('62')
   await expect(page.getByTestId('coverage-admissions')).toHaveText('6.905.441')
@@ -408,6 +448,44 @@ test('expõe o mapa com percentis, seleção textual e uma única parada de tabu
   await expect(page.getByTestId('regional-map-svg').locator('[role="button"]')).toHaveCount(4)
   await expect(page.getByTestId('regional-map-legend')).toContainText('mínimo real 37,9%')
   await expect(page.getByTestId('regional-map-legend')).toContainText('máximo real 61,9%')
+})
+
+test('renderiza a série regional persistida com competência, amostra e denominador', async ({ page }) => {
+  await mockLiveSource(page)
+  await page.route('**/api/dev/v1/regioes/resumo**', async (route) => {
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        ...regionalSnapshot,
+        source: 'oracle-live',
+        database_time: '2026-08-01T12:00:00-03:00',
+      }),
+    })
+  })
+
+  await page.goto('/regional?competencia=2026-05&regiao=35073')
+
+  await expect(page.getByRole('heading', { name: 'Série de JUNDIAI' })).toBeVisible()
+  await expect(page.getByTestId('regional-series-source')).toHaveText('Oracle ao vivo')
+  await expect(page.getByTestId('regional-series-chart')).toBeVisible()
+  await expect(page.getByTestId('regional-series-current')).toContainText('05/2026 · IPH estimado')
+  await expect(page.getByTestId('regional-series-current')).toContainText('65,0%')
+  await expect(page.getByTestId('regional-series-current')).toContainText(
+    '15.028 pacientes-dia / 23.126 leitos-dia declarados',
+  )
+
+  await page.getByRole('radio', { name: 'TMH observado' }).click()
+  await expect(page.getByTestId('regional-series-current')).toContainText('3,5%')
+  await expect(page.getByTestId('regional-series-current')).toContainText(
+    '168 óbitos · 4.797 internações',
+  )
+
+  const details = page.locator('.series-values-details')
+  await expect(details.locator('summary')).toContainText('6 de 29')
+  await details.locator('summary').click()
+  await expect(details.locator('tbody tr')).toHaveCount(6)
+  await details.getByRole('button', { name: 'Ver todas as 29 competências' }).click()
+  await expect(details.locator('tbody tr')).toHaveCount(29)
 })
 
 test('explica pelo contrato quando a sazonalidade não é calculada', async ({ page }) => {
