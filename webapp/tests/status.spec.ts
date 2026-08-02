@@ -14,6 +14,9 @@ const regionalSnapshot = JSON.parse(
 const regionalSeriesSnapshot = JSON.parse(
   readFileSync(new URL('../src/fixtures/regiao-serie-35073.json', import.meta.url), 'utf8'),
 ) as Record<string, unknown>
+const flowSnapshot = JSON.parse(
+  readFileSync(new URL('../src/fixtures/fluxos-35073-2026-05.json', import.meta.url), 'utf8'),
+) as Record<string, unknown>
 const goldMetadata = JSON.parse(
   readFileSync(
     new URL('../../dados/gold/qualidade/METADADOS.json', import.meta.url),
@@ -216,6 +219,186 @@ test('renderiza os números reais do Oracle pelo proxy relativo', async ({ page 
   await expect(page.getByTestId('coverage-admissions')).toHaveText('6.905.441')
   await expect(page.getByTestId('coverage-benchmark-zero')).toHaveText('6.680')
   await expect(page.getByTestId('reconciliation-patient_days_cross_mart')).toContainText('diferença: 0')
+})
+
+test('renderiza fluxos persistidos, expande todos os destinos e preserva filtros na URL', async ({ page }) => {
+  await mockLiveSource(page)
+  await page.route('**/api/dev/v1/regioes/resumo**', async (route) => {
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        ...regionalSnapshot,
+        source: 'oracle-live',
+        database_time: '2026-08-01T12:00:00-03:00',
+      }),
+    })
+  })
+
+  let requestedCompetence = ''
+  await page.route('**/api/dev/v1/fluxos**', async (route) => {
+    const url = new URL(route.request().url())
+    const year = Number(url.searchParams.get('ano'))
+    const month = Number(url.searchParams.get('mes'))
+    requestedCompetence = `${year}-${String(month).padStart(2, '0')}`
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        ...flowSnapshot,
+        source: 'oracle-live',
+        database_time: '2026-08-01T12:00:00-03:00',
+        data_through: requestedCompetence,
+        filters: {
+          year,
+          month,
+          origin_region_code: '35073',
+          destination_region_code: null,
+        },
+      }),
+    })
+  })
+
+  await page.goto(
+    '/fluxos?competencia=2026-05&macrorregiao=3527&regiao=35073&hospital=0008028',
+  )
+
+  await expect(page.getByTestId('flow-source')).toHaveText('Oracle ao vivo')
+  await expect(page.getByTestId('flow-region-name')).toHaveText('JUNDIAI')
+  await expect(page.getByTestId('flow-own-care')).toHaveText('94,3%')
+  await expect(page.getByTestId('flow-evasion')).toHaveText('5,7%')
+  await expect(page.getByTestId('flow-attraction')).toHaveText('13,5%')
+  await expect(page.getByTestId('flow-resident-rate')).toHaveText('521,44')
+  await expect(page.getByTestId('flow-count')).toHaveText('8 de 23 destinos')
+  await expect(page.getByTestId('flow-row-35073')).toContainText('4.148')
+  await expect(page.getByTestId('flow-row-35073')).toContainText('94,3%')
+  await expect(page.getByTestId('flow-row-35072')).toContainText('117')
+  await expect(page.getByText('Saídas de residentes de São Paulo')).toBeVisible()
+
+  await page.getByRole('button', { name: 'Ver todos os 23 destinos' }).click()
+  await expect(page.getByTestId('flow-count')).toHaveText('23 de 23 destinos')
+  await expect(page.getByTestId('flow-row-35173')).toContainText('LITORAL NORTE')
+
+  await page.getByTestId('flow-competence').fill('2025-05')
+  await expect.poll(() => requestedCompetence).toBe('2025-05')
+  await expect(page).toHaveURL(/competencia=2025-05/)
+  await expect(page).toHaveURL(/macrorregiao=3527/)
+  await expect(page).toHaveURL(/regiao=35073/)
+  await expect(page).toHaveURL(/hospital=0008028/)
+})
+
+test('mantém a visão de fluxos no snapshot sem misturar fontes', async ({ page }) => {
+  await page.route('**/api/dev/v1/status', async (route) => {
+    await route.abort('connectionfailed')
+  })
+
+  await page.goto('/fluxos?competencia=2025-04&regiao=35011')
+
+  await expect(page.getByTestId('flow-source')).toHaveText('Snapshot de contingência')
+  await expect(page.getByTestId('flow-region-name')).toHaveText('JUNDIAI')
+  await expect(page.getByTestId('flow-own-care')).toHaveText('94,3%')
+  await expect(page.getByTestId('flow-competence')).toHaveValue('2026-05')
+  await expect(page.getByTestId('flow-competence')).toBeDisabled()
+  await expect(page.getByTestId('flow-origin')).toBeDisabled()
+  await expect(page.getByTestId('flow-destination')).toBeDisabled()
+  await expect(page.getByText('O snapshot preserva JUNDIAI em 05/2026')).toBeVisible()
+})
+
+test('distingue competência sem fluxo publicado de falha do endpoint', async ({ page }) => {
+  await mockLiveSource(page)
+  await page.route('**/api/dev/v1/regioes/resumo**', async (route) => {
+    const url = new URL(route.request().url())
+    const year = Number(url.searchParams.get('ano'))
+    const month = Number(url.searchParams.get('mes'))
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        ...regionalSnapshot,
+        source: 'oracle-live',
+        database_time: '2026-08-01T12:00:00-03:00',
+        data_through: `${year}-${String(month).padStart(2, '0')}`,
+        filters: { year, month, macroregion_code: null, region_code: null },
+      }),
+    })
+  })
+  // O endpoint responde normalmente: 200, count 0 e território não preenchido,
+  // que é como o Oracle devolve uma competência anterior à janela de dados.
+  await page.route('**/api/dev/v1/fluxos**', async (route) => {
+    const url = new URL(route.request().url())
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        status: 'ok',
+        source: 'oracle-live',
+        database_time: '2026-08-01T12:00:00-03:00',
+        contract_version: '0.3.0',
+        data_through: '2023-12',
+        filters: {
+          year: Number(url.searchParams.get('ano')),
+          month: Number(url.searchParams.get('mes')),
+          origin_region_code: '35073',
+          destination_region_code: null,
+        },
+        territory: {
+          region_code: '35073',
+          region_name: null,
+          macroregion_code: null,
+          macroregion_name: null,
+          population: null,
+          production_admissions: null,
+          resident_admissions_observed: null,
+          resident_admissions_in_own_region: null,
+          observed_intrastate_evasion_admissions: null,
+          admissions_received_from_other_sp_regions: null,
+          admissions_received_from_other_states: null,
+          resident_admission_rate_per_100k: null,
+          observed_evasion_percent: null,
+          attraction_percent: null,
+          own_care_percent: null,
+        },
+        pagination: {
+          limit: 200,
+          offset: 0,
+          count: 0,
+          has_more: false,
+          order: 'new_admissions_desc',
+        },
+        items: [],
+      }),
+    })
+  })
+
+  await page.goto('/fluxos?competencia=2023-12&regiao=35073')
+
+  await expect(page.getByTestId('flow-absent-competence')).toContainText(
+    'Competência sem fluxos publicados',
+  )
+  await expect(page.getByTestId('flow-absent-competence')).toContainText('12/2023')
+  await expect(page.getByTestId('flow-absent-competence')).toContainText('05/2026')
+  await expect(page.getByTestId('flow-error')).toHaveCount(0)
+  await expect(page.getByTestId('source-badge')).toHaveText('Oracle ao vivo')
+})
+
+test('isola erro do endpoint de fluxos sem substituir por snapshot', async ({ page }) => {
+  await mockLiveSource(page)
+  await page.route('**/api/dev/v1/regioes/resumo**', async (route) => {
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        ...regionalSnapshot,
+        source: 'oracle-live',
+        database_time: '2026-08-01T12:00:00-03:00',
+      }),
+    })
+  })
+  await page.route('**/api/dev/v1/fluxos**', async (route) => {
+    await route.abort('connectionfailed')
+  })
+
+  await page.goto('/fluxos?competencia=2026-05&regiao=35073')
+
+  await expect(page.getByTestId('source-badge')).toHaveText('Oracle ao vivo')
+  await expect(page.getByTestId('flow-error')).toContainText('Fluxos indisponíveis')
+  await expect(page.getByTestId('flow-source')).toHaveCount(0)
+  await expect(page.getByText('Snapshot de contingência')).toHaveCount(0)
 })
 
 test('usa somente o snapshot quando o Oracle falha', async ({ page }) => {

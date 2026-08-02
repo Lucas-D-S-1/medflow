@@ -751,6 +751,223 @@ begin
     ~'
   );
 
+  ords.define_template(
+    p_module_name => 'medflow_dev',
+    p_pattern     => 'fluxos',
+    p_etag_type   => 'HASH',
+    p_comments    => 'Matriz mensal agregada entre regiao de residencia e regiao de atendimento.'
+  );
+
+  ords.define_handler(
+    p_module_name => 'medflow_dev',
+    p_pattern     => 'fluxos',
+    p_method      => 'GET',
+    p_source_type => ords.source_type_collection_item,
+    p_mimes_allowed => 'application/json',
+    p_comments    => 'Ordem explicita por internacoes decrescentes. Paginacao real: limit padrao 100 (herdado do p_items_per_page do modulo, que o ORDS injeta no bind :limit antes do SQL), maximo 2000; offset padrao 0.',
+    p_source      => q'~
+      with parametros_brutos as (
+        select :ano as ano_bruto,
+               :mes as mes_bruto,
+               :origem as origem_bruta,
+               :destino as destino_bruto,
+               :limit as limite_bruto,
+               :offset as deslocamento_bruto
+          from dual
+      ),
+      parametros_formatados as (
+        select p.*,
+               case
+                 when p.ano_bruto is null then null
+                 when regexp_like(p.ano_bruto, '^[0-9]{4}$') then to_number(p.ano_bruto)
+               end as ano_solicitado,
+               case
+                 when regexp_like(p.mes_bruto, '^(0?[1-9]|1[0-2])$') then to_number(p.mes_bruto)
+               end as mes_solicitado,
+               case
+                 when p.origem_bruta is null then null
+                 when regexp_like(p.origem_bruta, '^([0-9]{5}|FORA_SP)$') then p.origem_bruta
+               end as origem_solicitada,
+               case
+                 when p.destino_bruto is null then null
+                 when regexp_like(p.destino_bruto, '^[0-9]{5}$') then p.destino_bruto
+               end as destino_solicitado,
+               case
+                 when regexp_like(p.limite_bruto, '^[0-9]+$') then to_number(p.limite_bruto)
+               end as limite_solicitado,
+               case
+                 when regexp_like(p.deslocamento_bruto, '^[0-9]+$') then to_number(p.deslocamento_bruto)
+               end as deslocamento_solicitado
+          from parametros_brutos p
+      ),
+      parametros as (
+        select coalesce(
+                 p.ano_solicitado,
+                 (select max(nr_ano_competencia) from vw_api_fluxos)
+               ) as ano,
+               case
+                 when p.mes_solicitado is not null then p.mes_solicitado
+                 when p.mes_bruto is null then (
+                   select max(v.nr_mes_competencia)
+                     from vw_api_fluxos v
+                    where v.nr_ano_competencia = coalesce(
+                            p.ano_solicitado,
+                            (select max(nr_ano_competencia) from vw_api_fluxos)
+                          )
+                 )
+               end as mes,
+               p.origem_solicitada as origem,
+               p.destino_solicitado as destino,
+               -- 100 e o p_items_per_page do modulo: o ORDS preenche :limit com
+               -- ele quando o chamador omite o parametro, entao este coalesce so
+               -- protege o caso de bind nulo. Declarar outro numero aqui nao
+               -- muda o observavel e mente no contrato.
+               coalesce(p.limite_solicitado, 100) as limite,
+               coalesce(p.deslocamento_solicitado, 0) as deslocamento,
+               case
+                 when (p.ano_bruto is null or p.ano_solicitado is not null)
+                  and (p.mes_bruto is null or p.mes_solicitado is not null)
+                  and (p.origem_bruta is null or p.origem_solicitada is not null)
+                  and (p.destino_bruto is null or p.destino_solicitado is not null)
+                  and (p.limite_bruto is null or p.limite_solicitado between 1 and 2000)
+                  and (p.deslocamento_bruto is null or p.deslocamento_solicitado >= 0)
+                 then 1
+                 else 0
+               end as parametros_validos
+          from parametros_formatados p
+      ),
+      filtrado as (
+        select v.*
+          from vw_api_fluxos v
+          cross join parametros p
+         where v.nr_ano_competencia = p.ano
+           and v.nr_mes_competencia = p.mes
+           and (p.origem is null or v.cd_origem_residencia = p.origem)
+           and (p.destino is null or v.cd_regiao_saude_atendimento = p.destino)
+      ),
+      ordenado as (
+        select f.*,
+               row_number() over (
+                 order by f.qt_internacao_nova desc,
+                          f.cd_origem_residencia,
+                          f.cd_regiao_saude_atendimento
+               ) as nr_linha,
+               count(*) over () as qt_total
+          from filtrado f
+      ),
+      pagina as (
+        select o.*
+          from ordenado o
+          cross join parametros p
+         where o.nr_linha > p.deslocamento
+           and o.nr_linha <= p.deslocamento + p.limite
+      )
+      select 'ok' as "status",
+             'oracle-live' as "source",
+             to_char(
+               systimestamp,
+               'YYYY-MM-DD"T"HH24:MI:SS.FF3TZH:TZM'
+             ) as "database_time",
+             '0.3.0' as "contract_version",
+             case
+               when p.ano is null or p.mes is null then null
+               else to_char(p.ano, 'FM0000')
+                 || '-'
+                 || to_char(p.mes, 'FM00')
+             end as "data_through",
+             json_object(
+               'year' value p.ano,
+               'month' value p.mes,
+               'origin_region_code' value p.origem,
+               'destination_region_code' value p.destino
+               null on null returning json
+             ) as "filters",
+             json_object(
+               'region_code' value p.origem,
+               'region_name' value meta.nm_origem_residencia,
+               'macroregion_code' value meta.cd_macrorregiao_origem,
+               'macroregion_name' value meta.nm_macrorregiao_origem,
+               'population' value meta.qt_populacao_ibge_2022,
+               'production_admissions' value meta.qt_internacao_producao_territorio,
+               'resident_admissions_observed' value meta.qt_internacao_residente_observada,
+               'resident_admissions_in_own_region' value meta.qt_internacao_residente_na_propria_regiao,
+               'observed_intrastate_evasion_admissions' value meta.qt_evasao_intrastadual_observada,
+               'admissions_received_from_other_sp_regions' value meta.qt_internacao_recebida_outra_regiao_sp,
+               'admissions_received_from_other_states' value meta.qt_internacao_recebida_fora_sp,
+               'resident_admission_rate_per_100k' value meta.tx_internacao_residente_observada_por_100_mil,
+               'observed_evasion_percent' value meta.pc_evasao_intrastadual_observada,
+               'attraction_percent' value meta.pc_atracao_assistencial,
+               'own_care_percent' value meta.pc_atendimento_intrarregional
+               null on null returning json
+             ) as "territory",
+             json_object(
+               'limit' value p.limite,
+               'offset' value p.deslocamento,
+               'count' value coalesce(total.qt_total, 0),
+               'has_more' value case
+                 when coalesce(total.qt_total, 0) > p.deslocamento + p.limite
+                 then 'true'
+                 else 'false'
+               end format json,
+               'order' value 'new_admissions_desc'
+               returning json
+             ) as "pagination",
+             coalesce(
+               (
+                 select json_arrayagg(
+                          json_object(
+                            'origin_region_code' value x.cd_origem_residencia,
+                            'origin_region_name' value x.nm_origem_residencia,
+                            'origin_macroregion_code' value x.cd_macrorregiao_origem,
+                            'origin_macroregion_name' value x.nm_macrorregiao_origem,
+                            'destination_region_code' value x.cd_regiao_saude_atendimento,
+                            'destination_region_name' value x.nm_regiao_saude_atendimento,
+                            'destination_macroregion_code' value x.cd_macrorregiao_atendimento,
+                            'destination_macroregion_name' value x.nm_macrorregiao_atendimento,
+                            'flow_type' value x.st_fluxo_assistencial,
+                            'new_admissions' value x.qt_internacao_nova,
+                            'origin_share_of_destination_percent' value x.pc_origem_no_atendimento,
+                            'destination_share_of_observed_origin_percent' value x.pc_destino_na_origem_observada
+                            null on null returning json
+                          )
+                          order by x.nr_linha
+                          returning json
+                        )
+                   from pagina x
+               ),
+               json_array(returning json)
+             ) as "items"
+        from parametros p
+        outer apply (
+          select v.nm_origem_residencia,
+                 v.cd_macrorregiao_origem,
+                 v.nm_macrorregiao_origem,
+                 v.qt_populacao_ibge_2022,
+                 v.qt_internacao_producao_territorio,
+                 v.qt_internacao_residente_observada,
+                 v.qt_internacao_residente_na_propria_regiao,
+                 v.qt_evasao_intrastadual_observada,
+                 v.qt_internacao_recebida_outra_regiao_sp,
+                 v.qt_internacao_recebida_fora_sp,
+                 v.tx_internacao_residente_observada_por_100_mil,
+                 v.pc_evasao_intrastadual_observada,
+                 v.pc_atracao_assistencial,
+                 v.pc_atendimento_intrarregional
+            from vw_api_fluxos v
+           where v.nr_ano_competencia = p.ano
+             and v.nr_mes_competencia = p.mes
+             and v.cd_origem_residencia = p.origem
+           fetch first 1 row only
+        ) meta
+        outer apply (
+          select max(o.qt_total) as qt_total
+            from ordenado o
+        ) total
+       where p.parametros_validos = 1
+       fetch first 1 row only
+    ~'
+  );
+
   commit;
 end;
 /
