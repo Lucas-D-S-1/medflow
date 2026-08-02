@@ -17,6 +17,9 @@ const regionalSeriesSnapshot = JSON.parse(
 const flowSnapshot = JSON.parse(
   readFileSync(new URL('../src/fixtures/fluxos-35073-2026-05.json', import.meta.url), 'utf8'),
 ) as Record<string, unknown>
+const icsapSnapshot = JSON.parse(
+  readFileSync(new URL('../src/fixtures/icsap-35073-2026-05.json', import.meta.url), 'utf8'),
+) as Record<string, unknown>
 const goldMetadata = JSON.parse(
   readFileSync(
     new URL('../../dados/gold/qualidade/METADADOS.json', import.meta.url),
@@ -44,6 +47,48 @@ async function mockLiveSource(page: Page) {
         database_time: '2026-08-01T12:00:00-03:00',
       }),
     })
+  })
+  await page.route('**/api/dev/v1/icsap**', async (route) => {
+    const url = new URL(route.request().url())
+    const year = Number(url.searchParams.get('ano'))
+    const month = Number(url.searchParams.get('mes'))
+    const regionCode = url.searchParams.get('regiao') ?? ''
+    const fixtureRegion = icsapSnapshot.region as Record<string, unknown>
+    const payload = regionCode === fixtureRegion.region_code
+      ? {
+          ...icsapSnapshot,
+          source: 'oracle-live',
+          database_time: '2026-08-01T12:00:00-03:00',
+          data_through: `${year}-${String(month).padStart(2, '0')}`,
+          filters: { year, month, region_code: regionCode },
+        }
+      : {
+          ...icsapSnapshot,
+          source: 'oracle-live',
+          database_time: '2026-08-01T12:00:00-03:00',
+          data_through: `${year}-${String(month).padStart(2, '0')}`,
+          filters: { year, month, region_code: regionCode },
+          region: {
+            region_code: regionCode,
+            region_name: null,
+            macroregion_code: null,
+            macroregion_name: null,
+            population: null,
+            resident_admissions_observed: null,
+            icsap_admissions: null,
+            icsap_share_of_resident_percent: null,
+            icsap_rate_per_10k: null,
+          },
+          pagination: {
+            limit: 200,
+            offset: 0,
+            count: 0,
+            has_more: false,
+            order: 'icsap_admissions_desc',
+          },
+          items: [],
+        }
+    await route.fulfill({ contentType: 'application/json', body: JSON.stringify(payload) })
   })
   await page.route('**/api/dev/v1/regioes/*/serie**', async (route) => {
     const match = new URL(route.request().url()).pathname.match(/regioes\/(\d{5})\/serie$/)
@@ -300,6 +345,157 @@ test('mantém a visão de fluxos no snapshot sem misturar fontes', async ({ page
   await expect(page.getByTestId('flow-origin')).toBeDisabled()
   await expect(page.getByTestId('flow-destination')).toBeDisabled()
   await expect(page.getByText('O snapshot preserva JUNDIAI em 05/2026')).toBeVisible()
+})
+
+test('renderiza a composição ICSAP persistida, expande os 19 grupos e mantém a nota populacional', async ({
+  page,
+}) => {
+  await mockLiveSource(page)
+  await page.route('**/api/dev/v1/regioes/resumo**', async (route) => {
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        ...regionalSnapshot,
+        source: 'oracle-live',
+        database_time: '2026-08-01T12:00:00-03:00',
+      }),
+    })
+  })
+  await page.route('**/api/dev/v1/fluxos**', async (route) => {
+    const url = new URL(route.request().url())
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        ...flowSnapshot,
+        source: 'oracle-live',
+        database_time: '2026-08-01T12:00:00-03:00',
+        data_through: `${url.searchParams.get('ano')}-${String(url.searchParams.get('mes')).padStart(2, '0')}`,
+        filters: {
+          year: Number(url.searchParams.get('ano')),
+          month: Number(url.searchParams.get('mes')),
+          origin_region_code: '35073',
+          destination_region_code: null,
+        },
+      }),
+    })
+  })
+
+  await page.goto('/fluxos?competencia=2026-05&regiao=35073')
+
+  await expect(page.getByTestId('icsap-rate')).toHaveText('5,93')
+  await expect(page.getByTestId('icsap-share')).toHaveText('11,4%')
+  await expect(page.getByTestId('icsap-groups')).toHaveText('19')
+  await expect(page.getByTestId('icsap-count')).toHaveText('8 de 19 grupos')
+
+  // O grupo mais frequente vem primeiro porque o contrato declara a ordem.
+  await expect(page.getByTestId('icsap-row-12')).toContainText('Doenças cerebrovasculares')
+  await expect(page.getByTestId('icsap-row-12')).toContainText('101')
+  await expect(page.getByTestId('icsap-row-12')).toContainText('20,2%')
+  await expect(page.getByTestId('icsap-row-08')).toContainText('85')
+
+  await expect(page.getByText('não prova que a internação era evitável')).toBeVisible()
+
+  await page.getByRole('button', { name: 'Ver todos os 19 grupos' }).click()
+  await expect(page.getByTestId('icsap-count')).toHaveText('19 de 19 grupos')
+
+  // A matriz de fluxos continua na mesma tela, sem ser afetada.
+  await expect(page.getByTestId('flow-count')).toHaveText('8 de 23 destinos')
+})
+
+test('isola falha da ICSAP sem derrubar a matriz de fluxos', async ({ page }) => {
+  await mockLiveSource(page)
+  await page.route('**/api/dev/v1/regioes/resumo**', async (route) => {
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        ...regionalSnapshot,
+        source: 'oracle-live',
+        database_time: '2026-08-01T12:00:00-03:00',
+      }),
+    })
+  })
+  await page.route('**/api/dev/v1/fluxos**', async (route) => {
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        ...flowSnapshot,
+        source: 'oracle-live',
+        database_time: '2026-08-01T12:00:00-03:00',
+      }),
+    })
+  })
+  await page.route('**/api/dev/v1/icsap**', async (route) => {
+    await route.abort('connectionfailed')
+  })
+
+  await page.goto('/fluxos?competencia=2026-05&regiao=35073')
+
+  await expect(page.getByTestId('icsap-error')).toContainText('ICSAP indisponível')
+  await expect(page.getByTestId('flow-count')).toHaveText('8 de 23 destinos')
+  await expect(page.getByTestId('flow-own-care')).toHaveText('94,3%')
+  await expect(page.getByTestId('source-badge')).toHaveText('Oracle ao vivo')
+  await expect(page.getByText('Snapshot de contingência')).toHaveCount(0)
+})
+
+test('distingue competência sem ICSAP publicada de falha do endpoint', async ({ page }) => {
+  await mockLiveSource(page)
+  await page.route('**/api/dev/v1/regioes/resumo**', async (route) => {
+    const url = new URL(route.request().url())
+    const year = Number(url.searchParams.get('ano'))
+    const month = Number(url.searchParams.get('mes'))
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        ...regionalSnapshot,
+        source: 'oracle-live',
+        database_time: '2026-08-01T12:00:00-03:00',
+        data_through: `${year}-${String(month).padStart(2, '0')}`,
+        filters: { year, month, macroregion_code: null, region_code: null },
+      }),
+    })
+  })
+  await page.route('**/api/dev/v1/icsap**', async (route) => {
+    const url = new URL(route.request().url())
+    const year = Number(url.searchParams.get('ano'))
+    const month = Number(url.searchParams.get('mes'))
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        ...icsapSnapshot,
+        source: 'oracle-live',
+        database_time: '2026-08-01T12:00:00-03:00',
+        data_through: `${year}-${String(month).padStart(2, '0')}`,
+        filters: { year, month, region_code: '35073' },
+        region: {
+          region_code: '35073',
+          region_name: null,
+          macroregion_code: null,
+          macroregion_name: null,
+          population: null,
+          resident_admissions_observed: null,
+          icsap_admissions: null,
+          icsap_share_of_resident_percent: null,
+          icsap_rate_per_10k: null,
+        },
+        pagination: {
+          limit: 200,
+          offset: 0,
+          count: 0,
+          has_more: false,
+          order: 'icsap_admissions_desc',
+        },
+        items: [],
+      }),
+    })
+  })
+
+  await page.goto('/fluxos?competencia=2023-12&regiao=35073')
+
+  await expect(page.getByTestId('icsap-absent-competence')).toContainText(
+    'Competência sem ICSAP publicada',
+  )
+  await expect(page.getByTestId('icsap-absent-competence')).toContainText('12/2023')
+  await expect(page.getByTestId('icsap-error')).toHaveCount(0)
 })
 
 test('distingue competência sem fluxo publicado de falha do endpoint', async ({ page }) => {

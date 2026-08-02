@@ -6,7 +6,14 @@ import {
   getFlowSnapshot,
   type FlowResponse,
 } from '../api/fluxos'
+import {
+  fetchIcsap,
+  getIcsapSnapshot,
+  IcsapAbsentCompetenceError,
+  type IcsapResponse,
+} from '../api/icsap'
 import FlowMatrix from '../components/FlowMatrix'
+import IcsapPanel from '../components/IcsapPanel'
 import MethodNote from '../components/MethodNote'
 import MetricCard from '../components/MetricCard'
 import SourcePanel from '../components/SourcePanel'
@@ -24,6 +31,10 @@ type FlowState =
   | { kind: 'idle' | 'loading' | 'error' | 'absent' }
   | { kind: 'ready'; data: FlowResponse }
 
+type IcsapState =
+  | { kind: 'idle' | 'loading' | 'error' | 'absent' }
+  | { kind: 'ready'; data: IcsapResponse }
+
 const COMPETENCE_PATTERN = /^(\d{4})-(0[1-9]|1[0-2])$/
 const REGION_CODE_PATTERN = /^\d{5}$/
 
@@ -31,7 +42,9 @@ export default function FluxosView() {
   const { sourceState } = useSource()
   const [searchParams, setSearchParams] = useSearchParams()
   const [flowState, setFlowState] = useState<FlowState>({ kind: 'idle' })
+  const [icsapState, setIcsapState] = useState<IcsapState>({ kind: 'idle' })
   const flowRequest = useRef<AbortController | null>(null)
+  const icsapRequest = useRef<AbortController | null>(null)
   const sourceData =
     sourceState.kind === 'live' || sourceState.kind === 'fallback'
       ? sourceState.data
@@ -127,6 +140,54 @@ export default function FluxosView() {
     sourceState.kind,
   ])
 
+  // A composição das ICSAP não depende do destino: ela é da região de
+  // residência na competência. Pedir de novo ao trocar o destino mostraria o
+  // mesmo número com outra requisição.
+  useEffect(() => {
+    icsapRequest.current?.abort()
+
+    if (sourceState.kind === 'fallback') {
+      try {
+        setIcsapState({ kind: 'ready', data: getIcsapSnapshot() })
+      } catch {
+        setIcsapState({ kind: 'error' })
+      }
+      return
+    }
+    if (
+      sourceState.kind !== 'live' ||
+      !selectedOrigin ||
+      !COMPETENCE_PATTERN.test(selectedCompetence)
+    ) {
+      setIcsapState({ kind: 'idle' })
+      return
+    }
+
+    const match = COMPETENCE_PATTERN.exec(selectedCompetence)!
+    const controller = new AbortController()
+    icsapRequest.current = controller
+    setIcsapState({ kind: 'loading' })
+    void fetchIcsap(
+      {
+        year: Number(match[1]),
+        month: Number(match[2]),
+        regionCode: selectedOrigin,
+      },
+      { signal: controller.signal },
+    )
+      .then((data) => {
+        if (!controller.signal.aborted) setIcsapState({ kind: 'ready', data })
+      })
+      .catch((erro: unknown) => {
+        if (controller.signal.aborted) return
+        setIcsapState({
+          kind: erro instanceof IcsapAbsentCompetenceError ? 'absent' : 'error',
+        })
+      })
+
+    return () => controller.abort()
+  }, [selectedCompetence, selectedOrigin, sourceState.kind])
+
   function updateParam(name: string, value: string) {
     setSearchParams((current) => {
       const next = new URLSearchParams(current)
@@ -146,6 +207,7 @@ export default function FluxosView() {
   }
 
   const data = flowState.kind === 'ready' ? flowState.data : null
+  const icsap = icsapState.kind === 'ready' ? icsapState.data : null
 
   return (
     <main className="page-main flows-page">
@@ -315,6 +377,73 @@ export default function FluxosView() {
                 </StatePanel>
               ) : (
                 <FlowMatrix data={data} />
+              )}
+            </>
+          )}
+
+          {icsapState.kind === 'loading' && (
+            <StatePanel kind="loading" title="Carregando ICSAP" testId="icsap-loading">
+              Buscando a composição dos 19 grupos de condições sensíveis.
+            </StatePanel>
+          )}
+          {icsapState.kind === 'absent' && (
+            <StatePanel
+              kind="empty"
+              title="Competência sem ICSAP publicada"
+              testId="icsap-absent-competence"
+            >
+              A fonte respondeu normalmente, mas não há ICSAP publicada para{' '}
+              {formatPeriod(selectedCompetence)}. O período disponível vai até{' '}
+              {formatPeriod(sourceData.status.data_through)}.
+            </StatePanel>
+          )}
+          {icsapState.kind === 'error' && (
+            <StatePanel kind="error" title="ICSAP indisponível" testId="icsap-error">
+              O endpoint de condições sensíveis não respondeu ou devolveu conteúdo
+              fora do contrato. A matriz de fluxos acima não foi afetada.
+            </StatePanel>
+          )}
+
+          {icsap && (
+            <>
+              <section
+                className="icsap-metrics"
+                aria-label="Indicadores de condições sensíveis à atenção primária"
+              >
+                <MetricCard
+                  label="Taxa ICSAP por 10 mil habitantes"
+                  value={formatDecimal(icsap.region.icsap_rate_per_10k)}
+                  detail={`${formatInteger(icsap.region.icsap_admissions)} internações ICSAP · população ${formatInteger(icsap.region.population)}`}
+                  testId="icsap-rate"
+                />
+                <MetricCard
+                  label="ICSAP no total de internações residentes"
+                  value={formatPercent(icsap.region.icsap_share_of_resident_percent)}
+                  detail={`${formatInteger(icsap.region.icsap_admissions)} de ${formatInteger(icsap.region.resident_admissions_observed)} internações residentes observadas`}
+                  testId="icsap-share"
+                />
+                <MetricCard
+                  label="Grupos oficiais observados"
+                  value={formatInteger(icsap.pagination.count)}
+                  detail="grupos da Portaria 221/2008 com linha publicada na competência"
+                  testId="icsap-groups"
+                />
+              </section>
+
+              <MethodNote>
+                ICSAP é medida populacional por região de residência: indica pressão
+                sobre a atenção primária, não prova que a internação era evitável nem
+                mede qualidade do hospital que atendeu. A proporção oficial da
+                Portaria 221/2008 usa outro denominador.
+              </MethodNote>
+
+              {icsap.items.length === 0 ? (
+                <StatePanel kind="empty" title="Nenhum grupo no recorte" testId="icsap-empty">
+                  A fonte respondeu normalmente, mas não observou internações por
+                  condições sensíveis nessa região e competência.
+                </StatePanel>
+              ) : (
+                <IcsapPanel data={icsap} />
               )}
             </>
           )}
