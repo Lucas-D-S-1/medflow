@@ -129,3 +129,10 @@
     border-radius: var(--radius-md);
   }
 }
+
+.hospital-series-table td:nth-child(1) { width: 16%; }
+.hospital-series-table td:nth-child(2) { width: 15%; }
+.hospital-series-table td:nth-child(3) { width: 25%; }
+.hospital-series-table td:nth-child(4) { width: 12%; }
+.hospital-series-table td:nth-child(5) { width: 15%; }
+.hospital-series-table td:nth-child(6) { width: 17%; }

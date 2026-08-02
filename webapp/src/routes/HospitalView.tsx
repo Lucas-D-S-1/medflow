@@ -6,6 +6,13 @@ import {
   HospitalAbsentCompetenceError,
   type HospitalListResponse,
 } from '../api/hospitais'
+import {
+  fetchHospitalSeries,
+  getHospitalSeriesSnapshot,
+  HospitalSeriesAbsentError,
+  type HospitalSeriesResponse,
+} from '../api/hospitalSerie'
+import HospitalSeries from '../components/HospitalSeries'
 import HospitalTable from '../components/HospitalTable'
 import MethodNote from '../components/MethodNote'
 import SourcePanel from '../components/SourcePanel'
@@ -18,6 +25,10 @@ type ListState =
   | { kind: 'idle' | 'loading' | 'error' | 'absent' }
   | { kind: 'ready'; data: HospitalListResponse }
 
+type SeriesState =
+  | { kind: 'idle' | 'loading' | 'error' | 'absent' }
+  | { kind: 'ready'; data: HospitalSeriesResponse }
+
 const COMPETENCE_PATTERN = /^(\d{4})-(0[1-9]|1[0-2])$/
 const REGION_CODE_PATTERN = /^\d{5}$/
 const CNES_PATTERN = /^\d{7}$/
@@ -26,7 +37,9 @@ export default function HospitalView() {
   const { sourceState } = useSource()
   const [searchParams, setSearchParams] = useSearchParams()
   const [listState, setListState] = useState<ListState>({ kind: 'idle' })
+  const [seriesState, setSeriesState] = useState<SeriesState>({ kind: 'idle' })
   const listRequest = useRef<AbortController | null>(null)
+  const seriesRequest = useRef<AbortController | null>(null)
 
   const sourceData =
     sourceState.kind === 'live' || sourceState.kind === 'fallback'
@@ -119,6 +132,46 @@ export default function HospitalView() {
 
     return () => controller.abort()
   }, [selectedCompetence, selectedRegion, sourceState.kind])
+
+  // A série é do hospital inteiro, não da competência: trocar o mês não a
+  // refaz. Ela só depende do CNES selecionado.
+  useEffect(() => {
+    seriesRequest.current?.abort()
+
+    if (!selectedCnes) {
+      setSeriesState({ kind: 'idle' })
+      return
+    }
+    if (sourceState.kind === 'fallback') {
+      try {
+        const snapshot = getHospitalSeriesSnapshot()
+        setSeriesState(
+          snapshot.hospital.cnes === selectedCnes
+            ? { kind: 'ready', data: snapshot }
+            : { kind: 'absent' },
+        )
+      } catch {
+        setSeriesState({ kind: 'error' })
+      }
+      return
+    }
+
+    const controller = new AbortController()
+    seriesRequest.current = controller
+    setSeriesState({ kind: 'loading' })
+    void fetchHospitalSeries(selectedCnes, { signal: controller.signal })
+      .then((data) => {
+        if (!controller.signal.aborted) setSeriesState({ kind: 'ready', data })
+      })
+      .catch((erro: unknown) => {
+        if (controller.signal.aborted) return
+        setSeriesState({
+          kind: erro instanceof HospitalSeriesAbsentError ? 'absent' : 'error',
+        })
+      })
+
+    return () => controller.abort()
+  }, [selectedCnes, sourceState.kind])
 
   function updateParam(name: string, value: string) {
     setSearchParams((current) => {
@@ -261,6 +314,25 @@ export default function HospitalView() {
               )}
             </>
           )}
+
+          {seriesState.kind === 'loading' && (
+            <StatePanel kind="loading" title="Carregando série" testId="serie-loading">
+              Buscando o histórico mensal do hospital selecionado.
+            </StatePanel>
+          )}
+          {seriesState.kind === 'absent' && (
+            <StatePanel kind="empty" title="Hospital sem série publicada" testId="serie-absent">
+              A fonte respondeu normalmente, mas não há série publicada para o CNES
+              selecionado.
+            </StatePanel>
+          )}
+          {seriesState.kind === 'error' && (
+            <StatePanel kind="error" title="Série do hospital indisponível" testId="serie-error">
+              O endpoint da série não respondeu ou devolveu conteúdo fora do contrato. A
+              lista de hospitais acima não foi afetada.
+            </StatePanel>
+          )}
+          {seriesState.kind === 'ready' && <HospitalSeries data={seriesState.data} />}
         </>
       )}
     </main>

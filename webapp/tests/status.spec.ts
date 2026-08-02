@@ -23,6 +23,9 @@ const icsapSnapshot = JSON.parse(
 const hospitalListSnapshot = JSON.parse(
   readFileSync(new URL('../src/fixtures/hospitais-35073-2026-05.json', import.meta.url), 'utf8'),
 ) as Record<string, unknown>
+const hospitalSeriesSnapshot = JSON.parse(
+  readFileSync(new URL('../src/fixtures/hospital-serie-3012212.json', import.meta.url), 'utf8'),
+) as Record<string, unknown>
 const goldMetadata = JSON.parse(
   readFileSync(
     new URL('../../dados/gold/qualidade/METADADOS.json', import.meta.url),
@@ -83,6 +86,46 @@ async function mockLiveSource(page: Page) {
             count: 0,
             has_more: false,
             order: 'new_admissions_desc',
+          },
+          items: [],
+        }
+    await route.fulfill({ contentType: 'application/json', body: JSON.stringify(payload) })
+  })
+  // Registrado depois de `hospitais**` de propósito: o Playwright confere as
+  // rotas na ordem inversa do registro, então a mais específica precisa vir
+  // por último para não ser engolida pelo glob geral.
+  await page.route('**/api/dev/v1/hospitais/*/serie**', async (route) => {
+    const cnes = new URL(route.request().url()).pathname.match(/hospitais\/(\d{7})\/serie$/)?.[1] ?? ''
+    const fixtureHospital = hospitalSeriesSnapshot.hospital as Record<string, unknown>
+    const payload = cnes === fixtureHospital.cnes
+      ? {
+          ...hospitalSeriesSnapshot,
+          source: 'oracle-live',
+          database_time: '2026-08-01T12:00:00-03:00',
+        }
+      : {
+          ...hospitalSeriesSnapshot,
+          source: 'oracle-live',
+          database_time: '2026-08-01T12:00:00-03:00',
+          data_through: null,
+          filters: { cnes },
+          hospital: {
+            cnes,
+            hospital_name: null,
+            unit_type_code: null,
+            unit_type_name: null,
+            municipality_code: null,
+            region_code: null,
+            region_name: null,
+            macroregion_code: null,
+            macroregion_name: null,
+          },
+          pagination: {
+            limit: 200,
+            offset: 0,
+            count: 0,
+            has_more: false,
+            order: 'competence_desc',
           },
           items: [],
         }
@@ -434,6 +477,63 @@ test('lista hospitais da região, marca amostra e capacidade, e seleciona pela U
   await expect(page).toHaveURL(/competencia=2026-05/)
   await expect(page).toHaveURL(/regiao=35073/)
   await expect(page.getByTestId('hospital-select-3012212')).toHaveText('Selecionado')
+})
+
+test('abre a série mensal do hospital selecionado com denominadores e CMI nominal', async ({
+  page,
+}) => {
+  await mockLiveSource(page)
+  await page.route('**/api/dev/v1/regioes/resumo**', async (route) => {
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        ...regionalSnapshot,
+        source: 'oracle-live',
+        database_time: '2026-08-01T12:00:00-03:00',
+      }),
+    })
+  })
+
+  await page.goto('/hospital?competencia=2026-05&regiao=35073&hospital=3012212')
+
+  await expect(page.getByTestId('serie-count')).toHaveText('6 de 29 competências')
+  await expect(page.getByTestId('serie-row-2026-05')).toContainText('05/2026')
+  await expect(page.getByTestId('serie-row-2026-05')).toContainText('903')
+  await expect(page.getByTestId('serie-row-2026-05')).toContainText('67,8%')
+  await expect(page.getByTestId('serie-row-2026-05')).toContainText('2.690 / 3.968 leito-dia')
+  await expect(page.getByTestId('serie-row-2026-05')).toContainText('3,56')
+
+  // CMI real e nominal divergem quando há correção de IPCA; ambos aparecem.
+  await expect(page.getByTestId('serie-row-2026-04')).toContainText('941,39')
+  await expect(page.getByTestId('serie-row-2026-04')).toContainText('nominal')
+  await expect(page.getByTestId('serie-row-2026-04')).toContainText('935,96')
+
+  await page.getByRole('button', { name: 'Ver todas as 29 competências' }).click()
+  await expect(page.getByTestId('serie-count')).toHaveText('29 de 29 competências')
+  await expect(page.getByTestId('serie-row-2024-01')).toBeVisible()
+})
+
+test('isola falha da série sem derrubar a lista de hospitais', async ({ page }) => {
+  await mockLiveSource(page)
+  await page.route('**/api/dev/v1/regioes/resumo**', async (route) => {
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        ...regionalSnapshot,
+        source: 'oracle-live',
+        database_time: '2026-08-01T12:00:00-03:00',
+      }),
+    })
+  })
+  await page.route('**/api/dev/v1/hospitais/*/serie**', async (route) => {
+    await route.abort('connectionfailed')
+  })
+
+  await page.goto('/hospital?competencia=2026-05&regiao=35073&hospital=3012212')
+
+  await expect(page.getByTestId('serie-error')).toContainText('Série do hospital indisponível')
+  await expect(page.getByTestId('hospital-count')).toHaveText('8 de 13 hospitais')
+  await expect(page.getByTestId('source-badge')).toHaveText('Oracle ao vivo')
 })
 
 test('trocar a região limpa o hospital selecionado da URL', async ({ page }) => {
