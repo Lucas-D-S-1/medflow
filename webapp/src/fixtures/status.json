@@ -1,8 +1,7 @@
 {
   "status": "ok",
   "source": "snapshot",
-  "database_time": "2026-08-01T00:00:00-03:00",
+  "database_time": "2026-08-01T21:12:53.587180+00:00",
   "data_through": "2026-05",
   "contract_version": "0.3.0"
 }
-

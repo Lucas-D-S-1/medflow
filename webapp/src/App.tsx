@@ -2,13 +2,18 @@ import { useCallback, useEffect, useState } from 'react'
 import {
   fetchStatus,
   getStatusSnapshot,
+  StatusContractError,
   type PublishedStatusResponse,
 } from './api/status'
 
 type SourceState =
   | { kind: 'loading' }
   | { kind: 'live'; data: PublishedStatusResponse }
-  | { kind: 'fallback'; data: PublishedStatusResponse }
+  | {
+      kind: 'fallback'
+      data: PublishedStatusResponse
+      reason: 'oracle-unavailable' | 'invalid-contract'
+    }
   | { kind: 'empty' }
   | { kind: 'error' }
 
@@ -42,9 +47,16 @@ export default function App() {
     try {
       const liveStatus = await fetchStatus()
       setSourceState(liveStatus ? { kind: 'live', data: liveStatus } : { kind: 'empty' })
-    } catch {
+    } catch (error) {
       try {
-        setSourceState({ kind: 'fallback', data: getStatusSnapshot() })
+        setSourceState({
+          kind: 'fallback',
+          data: getStatusSnapshot(),
+          reason:
+            error instanceof StatusContractError
+              ? 'invalid-contract'
+              : 'oracle-unavailable',
+        })
       } catch {
         setSourceState({ kind: 'error' })
       }
@@ -159,7 +171,10 @@ export default function App() {
                 <div className="fallback-note" data-testid="fallback-note">
                   <span aria-hidden="true">i</span>
                   <p>
-                    O Oracle não respondeu. Esta sessão usa somente o snapshot local;
+                    {sourceState.reason === 'invalid-contract'
+                      ? 'O Oracle respondeu, mas o conteúdo não corresponde ao contrato da API. '
+                      : 'A consulta ao Oracle falhou ou excedeu o tempo limite. '}
+                    Esta sessão usa somente o snapshot local;
                     nenhuma fonte foi misturada. Você pode{' '}
                     <button type="button" onClick={() => void loadStatus()}>tentar novamente</button>.
                   </p>

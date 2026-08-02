@@ -5,7 +5,7 @@ export type StatusResponse = {
   source: 'oracle-live' | 'snapshot'
   database_time: string
   data_through: string | null
-  contract_version: string
+  contract_version: typeof STATUS_CONTRACT_VERSION
 }
 
 export type PublishedStatusResponse = StatusResponse & {
@@ -13,19 +13,44 @@ export type PublishedStatusResponse = StatusResponse & {
 }
 
 const STATUS_PATH = '/api/dev/v1/status'
+export const STATUS_CONTRACT_VERSION = '0.3.0' as const
 
-function isStatusResponse(value: unknown): value is StatusResponse {
+const DATA_THROUGH_PATTERN = /^\d{4}-(0[1-9]|1[0-2])$/
+const DATABASE_TIME_PATTERN =
+  /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/
+
+export class StatusContractError extends Error {
+  constructor() {
+    super('contrato de status inválido')
+    this.name = 'StatusContractError'
+  }
+}
+
+function isValidDataThrough(value: unknown): value is string {
+  return typeof value === 'string' && DATA_THROUGH_PATTERN.test(value)
+}
+
+function isValidDatabaseTime(value: unknown): value is string {
+  return (
+    typeof value === 'string' &&
+    DATABASE_TIME_PATTERN.test(value) &&
+    Number.isFinite(Date.parse(value))
+  )
+}
+
+function isStatusResponse(
+  value: unknown,
+  expectedSource: StatusResponse['source'],
+): value is StatusResponse {
   if (!value || typeof value !== 'object') return false
 
   const candidate = value as Record<string, unknown>
   return (
     candidate.status === 'ok' &&
-    (candidate.source === 'oracle-live' || candidate.source === 'snapshot') &&
-    typeof candidate.database_time === 'string' &&
-    (candidate.data_through === null ||
-      (typeof candidate.data_through === 'string' &&
-        /^\d{4}-\d{2}$/.test(candidate.data_through))) &&
-    typeof candidate.contract_version === 'string'
+    candidate.source === expectedSource &&
+    isValidDatabaseTime(candidate.database_time) &&
+    (candidate.data_through === null || isValidDataThrough(candidate.data_through)) &&
+    candidate.contract_version === STATUS_CONTRACT_VERSION
   )
 }
 
@@ -50,8 +75,14 @@ export async function fetchStatus(
     if (response.status === 204) return null
     if (!response.ok) throw new Error(`status HTTP ${response.status}`)
 
-    const payload: unknown = await response.json()
-    if (!isStatusResponse(payload)) throw new Error('contrato de status inválido')
+    let payload: unknown
+    try {
+      payload = await response.json()
+    } catch {
+      throw new StatusContractError()
+    }
+
+    if (!isStatusResponse(payload, 'oracle-live')) throw new StatusContractError()
     return hasPublishedData(payload) ? payload : null
   } finally {
     window.clearTimeout(timeout)
@@ -59,7 +90,7 @@ export async function fetchStatus(
 }
 
 export function getStatusSnapshot(): PublishedStatusResponse {
-  if (!isStatusResponse(statusSnapshot) || !hasPublishedData(statusSnapshot)) {
+  if (!isStatusResponse(statusSnapshot, 'snapshot') || !hasPublishedData(statusSnapshot)) {
     throw new Error('fixture de status inválida')
   }
   return statusSnapshot
