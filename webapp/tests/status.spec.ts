@@ -26,6 +26,15 @@ const hospitalListSnapshot = JSON.parse(
 const hospitalSeriesSnapshot = JSON.parse(
   readFileSync(new URL('../src/fixtures/hospital-serie-3012212.json', import.meta.url), 'utf8'),
 ) as Record<string, unknown>
+const specialtySnapshot = JSON.parse(
+  readFileSync(
+    new URL('../src/fixtures/hospital-especialidades-3012212-2026-05.json', import.meta.url),
+    'utf8',
+  ),
+) as Record<string, unknown>
+const cidSnapshot = JSON.parse(
+  readFileSync(new URL('../src/fixtures/hospital-cids-3012212.json', import.meta.url), 'utf8'),
+) as Record<string, unknown>
 const goldMetadata = JSON.parse(
   readFileSync(
     new URL('../../dados/gold/qualidade/METADADOS.json', import.meta.url),
@@ -130,6 +139,46 @@ async function mockLiveSource(page: Page) {
           items: [],
         }
     await route.fulfill({ contentType: 'application/json', body: JSON.stringify(payload) })
+  })
+  await page.route('**/api/dev/v1/hospitais/*/especialidades**', async (route) => {
+    const url = new URL(route.request().url())
+    const cnes = url.pathname.match(/hospitais\/(\d{7})\/especialidades$/)?.[1] ?? ''
+    const year = Number(url.searchParams.get('ano'))
+    const month = Number(url.searchParams.get('mes'))
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        ...specialtySnapshot,
+        source: 'oracle-live',
+        database_time: '2026-08-01T12:00:00-03:00',
+        data_through: `${year}-${String(month).padStart(2, '0')}`,
+        filters: { cnes, year, month },
+        hospital: { ...(specialtySnapshot.hospital as object), cnes },
+        items: (specialtySnapshot.items as Record<string, unknown>[]).map((item) => ({
+          ...item,
+          cnes,
+        })),
+      }),
+    })
+  })
+  await page.route('**/api/dev/v1/hospitais/*/cids**', async (route) => {
+    const url = new URL(route.request().url())
+    const cnes = url.pathname.match(/hospitais\/(\d{7})\/cids$/)?.[1] ?? ''
+    const eligibleOnly = url.searchParams.get('elegivel') === '1'
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        ...cidSnapshot,
+        source: 'oracle-live',
+        database_time: '2026-08-01T12:00:00-03:00',
+        filters: { cnes, eligible_only: eligibleOnly },
+        hospital: { ...(cidSnapshot.hospital as object), cnes },
+        items: (cidSnapshot.items as Record<string, unknown>[]).map((item) => ({
+          ...item,
+          cnes,
+        })),
+      }),
+    })
   })
   await page.route('**/api/dev/v1/icsap**', async (route) => {
     const url = new URL(route.request().url())
@@ -511,6 +560,99 @@ test('abre a série mensal do hospital selecionado com denominadores e CMI nomin
   await page.getByRole('button', { name: 'Ver todas as 29 competências' }).click()
   await expect(page.getByTestId('serie-count')).toHaveText('29 de 29 competências')
   await expect(page.getByTestId('serie-row-2024-01')).toBeVisible()
+})
+
+test('mostra o perfil por especialidade somando as internações do hospital', async ({ page }) => {
+  await mockLiveSource(page)
+  await page.route('**/api/dev/v1/regioes/resumo**', async (route) => {
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        ...regionalSnapshot,
+        source: 'oracle-live',
+        database_time: '2026-08-01T12:00:00-03:00',
+      }),
+    })
+  })
+
+  await page.goto('/hospital?competencia=2026-05&regiao=35073&hospital=3012212')
+
+  await expect(page.getByTestId('especialidade-count')).toHaveText('4 de 4 especialidades')
+  await expect(page.getByTestId('especialidade-row-02')).toContainText('Obstetrícia')
+  await expect(page.getByTestId('especialidade-row-02')).toContainText('322')
+  await expect(page.getByTestId('especialidade-row-02')).toContainText('2,89')
+  await expect(page.getByTestId('especialidade-row-07')).toContainText('Pediatria')
+  await expect(page.getByTestId('especialidade-row-07')).toContainText('5,98')
+  await expect(page.getByTestId('especialidade-sample-03')).toContainText(
+    'amostra insuficiente para comparação',
+  )
+  // 322 + 300 + 258 + 23 = 903, o total do hospital na competência.
+  await expect(page.getByText('somam as 903 internações do hospital')).toBeVisible()
+})
+
+test('compara diagnósticos com pares elegíveis e explica quem não é elegível', async ({ page }) => {
+  await mockLiveSource(page)
+  await page.route('**/api/dev/v1/regioes/resumo**', async (route) => {
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        ...regionalSnapshot,
+        source: 'oracle-live',
+        database_time: '2026-08-01T12:00:00-03:00',
+      }),
+    })
+  })
+
+  await page.goto('/hospital?competencia=2026-05&regiao=35073&hospital=3012212')
+
+  // Referência regional visível junto da comparação.
+  await expect(page.getByTestId('cid-reference')).toContainText('42')
+  await expect(page.getByTestId('cid-reference')).toContainText('0,94')
+  await expect(page.getByTestId('cid-reference')).toContainText('43,5%')
+
+  await expect(page.getByTestId('cid-row-O820')).toContainText('Parto por cesariana eletiva')
+  await expect(page.getByTestId('cid-row-O820')).toContainText('3.387')
+  await expect(page.getByTestId('cid-row-O820')).toContainText('2,59')
+  await expect(page.getByTestId('cid-row-O820')).toContainText('2,23')
+  await expect(page.getByTestId('cid-ipr-O820')).toHaveText('1,16')
+  await expect(page.getByTestId('cid-row-J459')).toContainText('188 internações em 8 hospitais')
+  await expect(page.getByTestId('cid-ipr-J459')).toHaveText('0,82')
+
+  // A lista é truncada e diz isso.
+  await expect(page.getByTestId('cid-truncado')).toContainText('10 diagnósticos de maior volume')
+  await expect(page.getByTestId('cid-truncado')).toContainText('42')
+
+  // O recorte de elegíveis vive na URL.
+  await expect(page.getByTestId('cid-eligible-toggle')).toBeChecked()
+  // `click` em vez de `uncheck`: o input é controlado pela URL, e o `uncheck`
+  // do Playwright lê o estado antes de o React reprocessar a navegação.
+  await page.getByTestId('cid-eligible-toggle').click()
+  await expect(page).toHaveURL(/elegiveis=0/)
+  await expect(page.getByTestId('cid-eligible-toggle')).not.toBeChecked()
+})
+
+test('isola falha dos diagnósticos sem derrubar especialidades nem série', async ({ page }) => {
+  await mockLiveSource(page)
+  await page.route('**/api/dev/v1/regioes/resumo**', async (route) => {
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        ...regionalSnapshot,
+        source: 'oracle-live',
+        database_time: '2026-08-01T12:00:00-03:00',
+      }),
+    })
+  })
+  await page.route('**/api/dev/v1/hospitais/*/cids**', async (route) => {
+    await route.abort('connectionfailed')
+  })
+
+  await page.goto('/hospital?competencia=2026-05&regiao=35073&hospital=3012212')
+
+  await expect(page.getByTestId('cid-error')).toContainText('Diagnósticos indisponíveis')
+  await expect(page.getByTestId('especialidade-count')).toHaveText('4 de 4 especialidades')
+  await expect(page.getByTestId('serie-count')).toHaveText('6 de 29 competências')
+  await expect(page.getByTestId('hospital-count')).toHaveText('8 de 13 hospitais')
 })
 
 test('isola falha da série sem derrubar a lista de hospitais', async ({ page }) => {

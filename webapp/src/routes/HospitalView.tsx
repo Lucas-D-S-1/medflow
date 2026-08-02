@@ -12,8 +12,22 @@ import {
   HospitalSeriesAbsentError,
   type HospitalSeriesResponse,
 } from '../api/hospitalSerie'
+import {
+  fetchSpecialties,
+  getSpecialtySnapshot,
+  SpecialtyAbsentError,
+  type SpecialtyResponse,
+} from '../api/hospitalEspecialidades'
+import {
+  CidAbsentError,
+  fetchHospitalCids,
+  getHospitalCidsSnapshot,
+  type CidResponse,
+} from '../api/hospitalCids'
+import CidTable from '../components/CidTable'
 import HospitalSeries from '../components/HospitalSeries'
 import HospitalTable from '../components/HospitalTable'
+import SpecialtyTable from '../components/SpecialtyTable'
 import MethodNote from '../components/MethodNote'
 import SourcePanel from '../components/SourcePanel'
 import StatePanel from '../components/StatePanel'
@@ -29,6 +43,14 @@ type SeriesState =
   | { kind: 'idle' | 'loading' | 'error' | 'absent' }
   | { kind: 'ready'; data: HospitalSeriesResponse }
 
+type SpecialtyState =
+  | { kind: 'idle' | 'loading' | 'error' | 'absent' }
+  | { kind: 'ready'; data: SpecialtyResponse }
+
+type CidState =
+  | { kind: 'idle' | 'loading' | 'error' | 'absent' }
+  | { kind: 'ready'; data: CidResponse }
+
 const COMPETENCE_PATTERN = /^(\d{4})-(0[1-9]|1[0-2])$/
 const REGION_CODE_PATTERN = /^\d{5}$/
 const CNES_PATTERN = /^\d{7}$/
@@ -38,8 +60,12 @@ export default function HospitalView() {
   const [searchParams, setSearchParams] = useSearchParams()
   const [listState, setListState] = useState<ListState>({ kind: 'idle' })
   const [seriesState, setSeriesState] = useState<SeriesState>({ kind: 'idle' })
+  const [specialtyState, setSpecialtyState] = useState<SpecialtyState>({ kind: 'idle' })
+  const [cidState, setCidState] = useState<CidState>({ kind: 'idle' })
   const listRequest = useRef<AbortController | null>(null)
   const seriesRequest = useRef<AbortController | null>(null)
+  const specialtyRequest = useRef<AbortController | null>(null)
+  const cidRequest = useRef<AbortController | null>(null)
 
   const sourceData =
     sourceState.kind === 'live' || sourceState.kind === 'fallback'
@@ -59,6 +85,9 @@ export default function HospitalView() {
   const urlCompetence = searchParams.get('competencia') ?? ''
   const urlRegion = searchParams.get('regiao') ?? ''
   const urlHospital = searchParams.get('hospital') ?? ''
+  // O recorte de elegíveis vive na URL como os demais filtros, e vem ligado por
+  // padrão: sem ele a lista abre em diagnósticos que não têm IPR calculável.
+  const eligibleOnly = (searchParams.get('elegiveis') ?? '1') !== '0'
   const defaultRegion =
     regions.find((region) => region.region_code === '35073')?.region_code ??
     regions[0]?.region_code ??
@@ -172,6 +201,92 @@ export default function HospitalView() {
 
     return () => controller.abort()
   }, [selectedCnes, sourceState.kind])
+
+  // O perfil por especialidade é do hospital NA competência: depende dos dois.
+  useEffect(() => {
+    specialtyRequest.current?.abort()
+
+    if (!selectedCnes || !COMPETENCE_PATTERN.test(selectedCompetence)) {
+      setSpecialtyState({ kind: 'idle' })
+      return
+    }
+    if (sourceState.kind === 'fallback') {
+      try {
+        const snapshot = getSpecialtySnapshot()
+        setSpecialtyState(
+          snapshot.hospital.cnes === selectedCnes &&
+            snapshot.data_through === selectedCompetence
+            ? { kind: 'ready', data: snapshot }
+            : { kind: 'absent' },
+        )
+      } catch {
+        setSpecialtyState({ kind: 'error' })
+      }
+      return
+    }
+
+    const match = COMPETENCE_PATTERN.exec(selectedCompetence)!
+    const controller = new AbortController()
+    specialtyRequest.current = controller
+    setSpecialtyState({ kind: 'loading' })
+    void fetchSpecialties(
+      { cnes: selectedCnes, year: Number(match[1]), month: Number(match[2]) },
+      { signal: controller.signal },
+    )
+      .then((data) => {
+        if (!controller.signal.aborted) setSpecialtyState({ kind: 'ready', data })
+      })
+      .catch((erro: unknown) => {
+        if (controller.signal.aborted) return
+        setSpecialtyState({
+          kind: erro instanceof SpecialtyAbsentError ? 'absent' : 'error',
+        })
+      })
+
+    return () => controller.abort()
+  }, [selectedCnes, selectedCompetence, sourceState.kind])
+
+  // Os diagnósticos são do período agregado inteiro, não de uma competência:
+  // trocar o mês não muda o IPR. Dependem do CNES e do recorte de elegíveis.
+  useEffect(() => {
+    cidRequest.current?.abort()
+
+    if (!selectedCnes) {
+      setCidState({ kind: 'idle' })
+      return
+    }
+    if (sourceState.kind === 'fallback') {
+      try {
+        const snapshot = getHospitalCidsSnapshot()
+        setCidState(
+          snapshot.hospital.cnes === selectedCnes &&
+            snapshot.filters.eligible_only === eligibleOnly
+            ? { kind: 'ready', data: snapshot }
+            : { kind: 'absent' },
+        )
+      } catch {
+        setCidState({ kind: 'error' })
+      }
+      return
+    }
+
+    const controller = new AbortController()
+    cidRequest.current = controller
+    setCidState({ kind: 'loading' })
+    void fetchHospitalCids(
+      { cnes: selectedCnes, eligibleOnly },
+      { signal: controller.signal },
+    )
+      .then((data) => {
+        if (!controller.signal.aborted) setCidState({ kind: 'ready', data })
+      })
+      .catch((erro: unknown) => {
+        if (controller.signal.aborted) return
+        setCidState({ kind: erro instanceof CidAbsentError ? 'absent' : 'error' })
+      })
+
+    return () => controller.abort()
+  }, [selectedCnes, eligibleOnly, sourceState.kind])
 
   function updateParam(name: string, value: string) {
     setSearchParams((current) => {
@@ -333,6 +448,77 @@ export default function HospitalView() {
             </StatePanel>
           )}
           {seriesState.kind === 'ready' && <HospitalSeries data={seriesState.data} />}
+
+          {specialtyState.kind === 'loading' && (
+            <StatePanel kind="loading" title="Carregando especialidades" testId="especialidade-loading">
+              Buscando o perfil por especialidade do hospital na competência.
+            </StatePanel>
+          )}
+          {specialtyState.kind === 'absent' && (
+            <StatePanel
+              kind="empty"
+              title="Sem especialidade publicada"
+              testId="especialidade-absent"
+            >
+              A fonte respondeu normalmente, mas não há especialidade publicada para esse
+              hospital em {formatPeriod(selectedCompetence)}.
+            </StatePanel>
+          )}
+          {specialtyState.kind === 'error' && (
+            <StatePanel
+              kind="error"
+              title="Especialidades indisponíveis"
+              testId="especialidade-error"
+            >
+              O endpoint de especialidades não respondeu ou devolveu conteúdo fora do
+              contrato. A série e a lista acima não foram afetadas.
+            </StatePanel>
+          )}
+          {specialtyState.kind === 'ready' && <SpecialtyTable data={specialtyState.data} />}
+
+          {/* O recorte de elegíveis é controle, não conteúdo: fica fora do
+              painel de dados para não sumir enquanto a resposta é refeita. */}
+          {selectedCnes && cidState.kind !== 'idle' && (
+            <label className="cid-toggle">
+              <input
+                type="checkbox"
+                checked={eligibleOnly}
+                data-testid="cid-eligible-toggle"
+                onChange={(event) =>
+                  updateParam('elegiveis', event.target.checked ? '' : '0')
+                }
+              />
+              Mostrar apenas diagnósticos elegíveis para IPR
+            </label>
+          )}
+
+          {cidState.kind === 'loading' && (
+            <StatePanel kind="loading" title="Carregando diagnósticos" testId="cid-loading">
+              Buscando o índice de permanência relativa por diagnóstico.
+            </StatePanel>
+          )}
+          {cidState.kind === 'absent' && (
+            <StatePanel kind="empty" title="Sem diagnóstico publicado" testId="cid-absent">
+              A fonte respondeu normalmente, mas não há diagnóstico publicado para esse
+              hospital no período agregado.
+            </StatePanel>
+          )}
+          {cidState.kind === 'error' && (
+            <StatePanel kind="error" title="Diagnósticos indisponíveis" testId="cid-error">
+              O endpoint de diagnósticos não respondeu ou devolveu conteúdo fora do
+              contrato. Os blocos acima não foram afetados.
+            </StatePanel>
+          )}
+          {cidState.kind === 'ready' &&
+            (cidState.data.items.length === 0 ? (
+              <StatePanel kind="empty" title="Nenhum diagnóstico no recorte" testId="cid-empty">
+                {eligibleOnly
+                  ? 'Nenhum diagnóstico deste hospital tem amostra e par regional suficientes para calcular o IPR. Desmarque o recorte para ver os demais.'
+                  : 'A fonte respondeu normalmente, mas não observou diagnóstico para esse hospital.'}
+              </StatePanel>
+            ) : (
+              <CidTable data={cidState.data} eligibleOnly={eligibleOnly} />
+            ))}
         </>
       )}
     </main>

@@ -1510,6 +1510,355 @@ begin
     ~'
   );
 
+  ords.define_template(
+    p_module_name => 'medflow_dev',
+    p_pattern     => 'hospitais/:cnes/especialidades',
+    p_etag_type   => 'HASH',
+    p_comments    => 'Perfil por especialidade SIH de um hospital numa competencia.'
+  );
+
+  ords.define_handler(
+    p_module_name => 'medflow_dev',
+    p_pattern     => 'hospitais/:cnes/especialidades',
+    p_method      => 'GET',
+    p_source_type => ords.source_type_collection_item,
+    p_mimes_allowed => 'application/json',
+    p_comments    => 'Ordem explicita por internacoes novas decrescentes. Paginacao real: limit padrao 100 (herdado do p_items_per_page do modulo, que o ORDS injeta no bind :limit antes do SQL), maximo 2000; offset padrao 0.',
+    p_source      => q'~
+      with parametros_brutos as (
+        select :cnes as cnes_bruto,
+               :ano as ano_bruto,
+               :mes as mes_bruto,
+               :limit as limite_bruto,
+               :offset as deslocamento_bruto
+          from dual
+      ),
+      parametros_formatados as (
+        select p.*,
+               case
+                 when regexp_like(p.cnes_bruto, '^[0-9]{7}$') then p.cnes_bruto
+               end as cnes_solicitado,
+               case
+                 when p.ano_bruto is null then null
+                 when regexp_like(p.ano_bruto, '^[0-9]{4}$') then to_number(p.ano_bruto)
+               end as ano_solicitado,
+               case
+                 when regexp_like(p.mes_bruto, '^(0?[1-9]|1[0-2])$') then to_number(p.mes_bruto)
+               end as mes_solicitado,
+               case
+                 when regexp_like(p.limite_bruto, '^[0-9]+$') then to_number(p.limite_bruto)
+               end as limite_solicitado,
+               case
+                 when regexp_like(p.deslocamento_bruto, '^[0-9]+$') then to_number(p.deslocamento_bruto)
+               end as deslocamento_solicitado
+          from parametros_brutos p
+      ),
+      parametros as (
+        select p.cnes_solicitado as cnes,
+               coalesce(
+                 p.ano_solicitado,
+                 (select max(nr_ano_competencia) from vw_api_hospital_especialidades)
+               ) as ano,
+               case
+                 when p.mes_solicitado is not null then p.mes_solicitado
+                 when p.mes_bruto is null then (
+                   select max(v.nr_mes_competencia)
+                     from vw_api_hospital_especialidades v
+                    where v.nr_ano_competencia = coalesce(
+                            p.ano_solicitado,
+                            (select max(nr_ano_competencia) from vw_api_hospital_especialidades)
+                          )
+                 )
+               end as mes,
+               coalesce(p.limite_solicitado, 100) as limite,
+               coalesce(p.deslocamento_solicitado, 0) as deslocamento,
+               case
+                 when p.cnes_solicitado is not null
+                  and (p.ano_bruto is null or p.ano_solicitado is not null)
+                  and (p.mes_bruto is null or p.mes_solicitado is not null)
+                  and (p.limite_bruto is null or p.limite_solicitado between 1 and 2000)
+                  and (p.deslocamento_bruto is null or p.deslocamento_solicitado >= 0)
+                 then 1
+                 else 0
+               end as parametros_validos
+          from parametros_formatados p
+      ),
+      ordenado as (
+        select v.*,
+               row_number() over (
+                 order by v.qt_internacao_nova desc,
+                          v.cd_especialidade_sih
+               ) as nr_linha,
+               count(*) over () as qt_total
+          from vw_api_hospital_especialidades v
+          cross join parametros p
+         where v.cd_cnes = p.cnes
+           and v.nr_ano_competencia = p.ano
+           and v.nr_mes_competencia = p.mes
+      ),
+      pagina as (
+        select o.*
+          from ordenado o
+          cross join parametros p
+         where o.nr_linha > p.deslocamento
+           and o.nr_linha <= p.deslocamento + p.limite
+      )
+      select 'ok' as "status",
+             'oracle-live' as "source",
+             to_char(
+               systimestamp,
+               'YYYY-MM-DD"T"HH24:MI:SS.FF3TZH:TZM'
+             ) as "database_time",
+             '0.3.0' as "contract_version",
+             case
+               when p.ano is null or p.mes is null then null
+               else to_char(p.ano, 'FM0000')
+                 || '-'
+                 || to_char(p.mes, 'FM00')
+             end as "data_through",
+             json_object(
+               'cnes' value p.cnes,
+               'year' value p.ano,
+               'month' value p.mes
+               null on null returning json
+             ) as "filters",
+             json_object(
+               'cnes' value p.cnes,
+               'region_code' value meta.cd_regiao_saude,
+               'region_name' value meta.nm_regiao_saude,
+               'macroregion_code' value meta.cd_macrorregiao_saude,
+               'macroregion_name' value meta.nm_macrorregiao_saude,
+               'new_admissions_total' value meta.qt_internacao_nova_total
+               null on null returning json
+             ) as "hospital",
+             json_object(
+               'limit' value p.limite,
+               'offset' value p.deslocamento,
+               'count' value coalesce(total.qt_total, 0),
+               'has_more' value case
+                 when coalesce(total.qt_total, 0) > p.deslocamento + p.limite
+                 then 'true'
+                 else 'false'
+               end format json,
+               'order' value 'new_admissions_desc'
+               returning json
+             ) as "pagination",
+             coalesce(
+               (
+                 select json_arrayagg(
+                          json_object(
+                            'cnes' value x.cd_cnes,
+                            'specialty_code' value x.cd_especialidade_sih,
+                            'specialty_name' value x.nm_especialidade,
+                            'new_admissions' value x.qt_internacao_nova,
+                            'deaths' value x.qt_obito,
+                            'stay_days_total' value x.qt_dia_permanencia_soma,
+                            'tmh_percent' value x.pc_tmh,
+                            'cmi_nominal' value x.vl_cmi,
+                            'cmi_real' value x.vl_cmi_real,
+                            'average_stay_days' value x.nr_permanencia_media,
+                            'price_reference_competence' value x.cd_competencia_preco_referencia,
+                            'sample_status' value x.st_amostra
+                            null on null returning json
+                          )
+                          order by x.nr_linha
+                          returning json
+                        )
+                   from pagina x
+               ),
+               json_array(returning json)
+             ) as "items"
+        from parametros p
+        outer apply (
+          select v.cd_regiao_saude,
+                 v.nm_regiao_saude,
+                 v.cd_macrorregiao_saude,
+                 v.nm_macrorregiao_saude,
+                 (
+                   select sum(t.qt_internacao_nova)
+                     from vw_api_hospital_especialidades t
+                    where t.cd_cnes = p.cnes
+                      and t.nr_ano_competencia = p.ano
+                      and t.nr_mes_competencia = p.mes
+                 ) as qt_internacao_nova_total
+            from vw_api_hospital_especialidades v
+           where v.cd_cnes = p.cnes
+             and v.nr_ano_competencia = p.ano
+             and v.nr_mes_competencia = p.mes
+           fetch first 1 row only
+        ) meta
+        outer apply (
+          select max(o.qt_total) as qt_total
+            from ordenado o
+        ) total
+       where p.parametros_validos = 1
+       fetch first 1 row only
+    ~'
+  );
+
+  ords.define_template(
+    p_module_name => 'medflow_dev',
+    p_pattern     => 'hospitais/:cnes/cids',
+    p_etag_type   => 'HASH',
+    p_comments    => 'IPR por diagnostico principal de um hospital no periodo agregado, com benchmark regional.'
+  );
+
+  ords.define_handler(
+    p_module_name => 'medflow_dev',
+    p_pattern     => 'hospitais/:cnes/cids',
+    p_method      => 'GET',
+    p_source_type => ords.source_type_collection_item,
+    p_mimes_allowed => 'application/json',
+    p_comments    => 'Ordem explicita por internacoes novas decrescentes. Parametro elegivel=1 restringe aos diagnosticos com IPR calculavel. Paginacao real: limit padrao 100 (herdado do p_items_per_page do modulo, que o ORDS injeta no bind :limit antes do SQL), maximo 2000; offset padrao 0.',
+    p_source      => q'~
+      with parametros_brutos as (
+        select :cnes as cnes_bruto,
+               :elegivel as elegivel_bruto,
+               :limit as limite_bruto,
+               :offset as deslocamento_bruto
+          from dual
+      ),
+      parametros_formatados as (
+        select p.*,
+               case
+                 when regexp_like(p.cnes_bruto, '^[0-9]{7}$') then p.cnes_bruto
+               end as cnes_solicitado,
+               case
+                 when regexp_like(p.elegivel_bruto, '^[01]$') then to_number(p.elegivel_bruto)
+               end as elegivel_solicitado,
+               case
+                 when regexp_like(p.limite_bruto, '^[0-9]+$') then to_number(p.limite_bruto)
+               end as limite_solicitado,
+               case
+                 when regexp_like(p.deslocamento_bruto, '^[0-9]+$') then to_number(p.deslocamento_bruto)
+               end as deslocamento_solicitado
+          from parametros_brutos p
+      ),
+      parametros as (
+        select p.cnes_solicitado as cnes,
+               coalesce(p.elegivel_solicitado, 0) as somente_elegiveis,
+               coalesce(p.limite_solicitado, 100) as limite,
+               coalesce(p.deslocamento_solicitado, 0) as deslocamento,
+               case
+                 when p.cnes_solicitado is not null
+                  and (p.elegivel_bruto is null or p.elegivel_solicitado is not null)
+                  and (p.limite_bruto is null or p.limite_solicitado between 1 and 2000)
+                  and (p.deslocamento_bruto is null or p.deslocamento_solicitado >= 0)
+                 then 1
+                 else 0
+               end as parametros_validos
+          from parametros_formatados p
+      ),
+      ordenado as (
+        select v.*,
+               row_number() over (
+                 order by v.qt_internacao_nova desc,
+                          v.cd_cid_principal
+               ) as nr_linha,
+               count(*) over () as qt_total
+          from vw_api_hospital_cids v
+          cross join parametros p
+         where v.cd_cnes = p.cnes
+           and (p.somente_elegiveis = 0 or v.st_amostra = 'suficiente')
+      ),
+      pagina as (
+        select o.*
+          from ordenado o
+          cross join parametros p
+         where o.nr_linha > p.deslocamento
+           and o.nr_linha <= p.deslocamento + p.limite
+      )
+      select 'ok' as "status",
+             'oracle-live' as "source",
+             to_char(
+               systimestamp,
+               'YYYY-MM-DD"T"HH24:MI:SS.FF3TZH:TZM'
+             ) as "database_time",
+             '0.3.0' as "contract_version",
+             json_object(
+               'cnes' value p.cnes,
+               'eligible_only' value case when p.somente_elegiveis = 1 then 'true' else 'false' end format json
+               null on null returning json
+             ) as "filters",
+             json_object(
+               'cnes' value p.cnes,
+               'region_code' value meta.cd_regiao_saude,
+               'region_name' value meta.nm_regiao_saude,
+               'macroregion_code' value meta.cd_macrorregiao_saude,
+               'macroregion_name' value meta.nm_macrorregiao_saude,
+               'region_ipr_median' value meta.nr_ipr_mediana_regiao,
+               'region_eligible_combinations' value meta.qt_combinacao_ipr_elegivel_regiao,
+               'region_percent_above_reference' value meta.pc_combinacao_acima_referencia_regiao,
+               'hospital_eligible_combinations' value meta.qt_elegiveis_hospital
+               null on null returning json
+             ) as "hospital",
+             json_object(
+               'limit' value p.limite,
+               'offset' value p.deslocamento,
+               'count' value coalesce(total.qt_total, 0),
+               'has_more' value case
+                 when coalesce(total.qt_total, 0) > p.deslocamento + p.limite
+                 then 'true'
+                 else 'false'
+               end format json,
+               'order' value 'new_admissions_desc'
+               returning json
+             ) as "pagination",
+             coalesce(
+               (
+                 select json_arrayagg(
+                          json_object(
+                            'cnes' value x.cd_cnes,
+                            'cid_code' value x.cd_cid_principal,
+                            'cid_description' value x.ds_cid,
+                            'chapter_code' value x.cd_capitulo_cid,
+                            'chapter_description' value x.ds_capitulo_cid,
+                            'new_admissions' value x.qt_internacao_nova,
+                            'stay_days_total' value x.qt_dia_permanencia_soma,
+                            'benchmark_admissions' value x.qt_internacao_benchmark,
+                            'benchmark_stay_days_total' value x.qt_dia_permanencia_benchmark,
+                            'benchmark_hospitals' value x.qt_hospital_benchmark,
+                            'average_stay_hospital' value x.nr_permanencia_media_hospital,
+                            'average_stay_benchmark' value x.nr_permanencia_media_benchmark,
+                            'ipr' value x.nr_ipr,
+                            'sample_status' value x.st_amostra
+                            null on null returning json
+                          )
+                          order by x.nr_linha
+                          returning json
+                        )
+                   from pagina x
+               ),
+               json_array(returning json)
+             ) as "items"
+        from parametros p
+        outer apply (
+          select v.cd_regiao_saude,
+                 v.nm_regiao_saude,
+                 v.cd_macrorregiao_saude,
+                 v.nm_macrorregiao_saude,
+                 v.nr_ipr_mediana_regiao,
+                 v.qt_combinacao_ipr_elegivel_regiao,
+                 v.pc_combinacao_acima_referencia_regiao,
+                 (
+                   select count(*)
+                     from vw_api_hospital_cids t
+                    where t.cd_cnes = p.cnes
+                      and t.st_amostra = 'suficiente'
+                 ) as qt_elegiveis_hospital
+            from vw_api_hospital_cids v
+           where v.cd_cnes = p.cnes
+           fetch first 1 row only
+        ) meta
+        outer apply (
+          select max(o.qt_total) as qt_total
+            from ordenado o
+        ) total
+       where p.parametros_validos = 1
+       fetch first 1 row only
+    ~'
+  );
+
   commit;
 end;
 /
