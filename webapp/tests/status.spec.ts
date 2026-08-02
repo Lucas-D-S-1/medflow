@@ -20,6 +20,9 @@ const flowSnapshot = JSON.parse(
 const icsapSnapshot = JSON.parse(
   readFileSync(new URL('../src/fixtures/icsap-35073-2026-05.json', import.meta.url), 'utf8'),
 ) as Record<string, unknown>
+const hospitalListSnapshot = JSON.parse(
+  readFileSync(new URL('../src/fixtures/hospitais-35073-2026-05.json', import.meta.url), 'utf8'),
+) as Record<string, unknown>
 const goldMetadata = JSON.parse(
   readFileSync(
     new URL('../../dados/gold/qualidade/METADADOS.json', import.meta.url),
@@ -47,6 +50,43 @@ async function mockLiveSource(page: Page) {
         database_time: '2026-08-01T12:00:00-03:00',
       }),
     })
+  })
+  await page.route('**/api/dev/v1/hospitais**', async (route) => {
+    const url = new URL(route.request().url())
+    const year = Number(url.searchParams.get('ano'))
+    const month = Number(url.searchParams.get('mes'))
+    const regionCode = url.searchParams.get('regiao') ?? ''
+    const fixtureRegion = hospitalListSnapshot.region as Record<string, unknown>
+    const payload = regionCode === fixtureRegion.region_code
+      ? {
+          ...hospitalListSnapshot,
+          source: 'oracle-live',
+          database_time: '2026-08-01T12:00:00-03:00',
+          data_through: `${year}-${String(month).padStart(2, '0')}`,
+          filters: { year, month, region_code: regionCode },
+        }
+      : {
+          ...hospitalListSnapshot,
+          source: 'oracle-live',
+          database_time: '2026-08-01T12:00:00-03:00',
+          data_through: `${year}-${String(month).padStart(2, '0')}`,
+          filters: { year, month, region_code: regionCode },
+          region: {
+            region_code: regionCode,
+            region_name: null,
+            macroregion_code: null,
+            macroregion_name: null,
+          },
+          pagination: {
+            limit: 200,
+            offset: 0,
+            count: 0,
+            has_more: false,
+            order: 'new_admissions_desc',
+          },
+          items: [],
+        }
+    await route.fulfill({ contentType: 'application/json', body: JSON.stringify(payload) })
   })
   await page.route('**/api/dev/v1/icsap**', async (route) => {
     const url = new URL(route.request().url())
@@ -345,6 +385,133 @@ test('mantém a visão de fluxos no snapshot sem misturar fontes', async ({ page
   await expect(page.getByTestId('flow-origin')).toBeDisabled()
   await expect(page.getByTestId('flow-destination')).toBeDisabled()
   await expect(page.getByText('O snapshot preserva JUNDIAI em 05/2026')).toBeVisible()
+})
+
+test('lista hospitais da região, marca amostra e capacidade, e seleciona pela URL', async ({
+  page,
+}) => {
+  await mockLiveSource(page)
+  await page.route('**/api/dev/v1/regioes/resumo**', async (route) => {
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        ...regionalSnapshot,
+        source: 'oracle-live',
+        database_time: '2026-08-01T12:00:00-03:00',
+      }),
+    })
+  })
+
+  await page.goto('/hospital?competencia=2026-05&regiao=35073')
+
+  await expect(page.getByTestId('hospital-count')).toHaveText('8 de 13 hospitais')
+  await expect(page.getByTestId('hospital-row-2786435')).toContainText('HCSVP HOSPITAL SAO VICENTE')
+  await expect(page.getByTestId('hospital-row-2786435')).toContainText('1.456')
+  await expect(page.getByTestId('hospital-row-2786435')).toContainText('102,0%')
+  await expect(page.getByTestId('hospital-row-2786435')).toContainText('7,8%')
+  await expect(page.getByTestId('hospital-row-2786435')).toContainText('6,28')
+
+  // IPH acima de 100% precisa vir com a ressalva, nunca como ocupação real.
+  await expect(page.getByTestId('hospital-capacity-2786435')).toContainText(
+    'acima da capacidade declarada',
+  )
+  await expect(page.getByText('não ocupação real acima do teto físico')).toBeVisible()
+
+  await page.getByRole('button', { name: 'Ver todos os 13 hospitais' }).click()
+  await expect(page.getByTestId('hospital-count')).toHaveText('13 de 13 hospitais')
+
+  // Hospital sem internação nova não pode exibir TMH, permanência nem CMI.
+  await expect(page.getByTestId('hospital-row-2078538')).toContainText(
+    'sem internação nova na competência',
+  )
+  await expect(page.getByTestId('hospital-sample-2716801')).toContainText(
+    'amostra insuficiente para comparação',
+  )
+
+  // Selecionar grava o CNES na URL sem perder o recorte.
+  await page.getByTestId('hospital-select-3012212').click()
+  await expect(page).toHaveURL(/hospital=3012212/)
+  await expect(page).toHaveURL(/competencia=2026-05/)
+  await expect(page).toHaveURL(/regiao=35073/)
+  await expect(page.getByTestId('hospital-select-3012212')).toHaveText('Selecionado')
+})
+
+test('trocar a região limpa o hospital selecionado da URL', async ({ page }) => {
+  await mockLiveSource(page)
+  await page.route('**/api/dev/v1/regioes/resumo**', async (route) => {
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        ...regionalSnapshot,
+        source: 'oracle-live',
+        database_time: '2026-08-01T12:00:00-03:00',
+      }),
+    })
+  })
+
+  await page.goto('/hospital?competencia=2026-05&regiao=35073&hospital=3012212')
+  await expect(page.getByTestId('hospital-select-3012212')).toHaveText('Selecionado')
+
+  await page.getByTestId('hospital-region').selectOption('35011')
+  await expect(page).not.toHaveURL(/hospital=/)
+  await expect(page).toHaveURL(/regiao=35011/)
+  await expect(page).toHaveURL(/competencia=2026-05/)
+})
+
+test('distingue competência sem hospital publicado de falha do endpoint', async ({ page }) => {
+  await mockLiveSource(page)
+  await page.route('**/api/dev/v1/regioes/resumo**', async (route) => {
+    const url = new URL(route.request().url())
+    const year = Number(url.searchParams.get('ano'))
+    const month = Number(url.searchParams.get('mes'))
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        ...regionalSnapshot,
+        source: 'oracle-live',
+        database_time: '2026-08-01T12:00:00-03:00',
+        data_through: `${year}-${String(month).padStart(2, '0')}`,
+        filters: { year, month, macroregion_code: null, region_code: null },
+      }),
+    })
+  })
+  await page.route('**/api/dev/v1/hospitais**', async (route) => {
+    const url = new URL(route.request().url())
+    const year = Number(url.searchParams.get('ano'))
+    const month = Number(url.searchParams.get('mes'))
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        ...hospitalListSnapshot,
+        source: 'oracle-live',
+        database_time: '2026-08-01T12:00:00-03:00',
+        data_through: `${year}-${String(month).padStart(2, '0')}`,
+        filters: { year, month, region_code: '35073' },
+        region: {
+          region_code: '35073',
+          region_name: null,
+          macroregion_code: null,
+          macroregion_name: null,
+        },
+        pagination: {
+          limit: 200,
+          offset: 0,
+          count: 0,
+          has_more: false,
+          order: 'new_admissions_desc',
+        },
+        items: [],
+      }),
+    })
+  })
+
+  await page.goto('/hospital?competencia=2023-12&regiao=35073')
+
+  await expect(page.getByTestId('hospital-absent-competence')).toContainText(
+    'Competência sem hospitais publicados',
+  )
+  await expect(page.getByTestId('hospital-absent-competence')).toContainText('12/2023')
+  await expect(page.getByTestId('hospital-list-error')).toHaveCount(0)
 })
 
 test('renderiza a composição ICSAP persistida, expande os 19 grupos e mantém a nota populacional', async ({
