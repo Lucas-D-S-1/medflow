@@ -33,9 +33,12 @@ begin
                systimestamp,
                'YYYY-MM-DD"T"HH24:MI:SS.FF3TZH:TZM'
              ) as "database_time",
-             substr(cd_competencia_maxima, 1, 4)
-               || '-'
-               || substr(cd_competencia_maxima, 5, 2) as "data_through",
+             case
+               when cd_competencia_maxima is null then null
+               else substr(cd_competencia_maxima, 1, 4)
+                 || '-'
+                 || substr(cd_competencia_maxima, 5, 2)
+             end as "data_through",
              '0.3.0' as "contract_version"
         from vw_api_status
        fetch first 1 row only
