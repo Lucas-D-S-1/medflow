@@ -1,4 +1,4 @@
-# MedFlow — pipeline de dados
+# MedFlow — pipeline de dados e webapp
 
 **Enterprise Challenge FIAP × Oracle · Sprint 2 · Equipe Ômega Urban Tech**
 
@@ -13,8 +13,9 @@ espelhada neste repositório em 01/08/2026. A publicação no repositório
 [original `medflow`](https://github.com/Lucas-D-S-1/medflow) permanece como
 proveniência histórica.
 
-**Foco atual:** construir o webapp público sem licença, validar os dados exibidos e só
-então revalidar o Select AI e produzir a apresentação.
+**Foco atual:** publicar o módulo ORDS de produção e testar o link público. O
+webapp e a validação dos dados exibidos foram concluídos em 02/08/2026; falta
+publicar, revalidar o Select AI e produzir a apresentação.
 
 Proposta metodológica e revisão dos requisitos:
 [`REVISAO_REQUISITOS_E_PROPOSTA_GOLD.md`](REVISAO_REQUISITOS_E_PROPOSTA_GOLD.md).
@@ -153,6 +154,49 @@ Runbook e evidências:
 [`oracle/README.md`](oracle/README.md) e
 [`oracle/VALIDACAO_ORACLE_SELECT_AI.md`](oracle/VALIDACAO_ORACLE_SELECT_AI.md).
 
+### Webapp — concluído e revisado em 02/08/2026
+
+O produto é uma aplicação React + Vite em `webapp/`, servida por dez endpoints
+ORDS somente leitura em `api/dev/v1`, **todos `GET`**, sobre nove views de
+projeção pura. Nenhum objeto da Gold é publicado por AutoREST.
+
+| Rota | Pergunta que responde | Endpoints |
+|---|---|---|
+| `/regional` | Onde está o sinal e como ele evolui? | `regioes/resumo`, `regioes/{id}/serie` |
+| `/fluxos` | A população é atendida no próprio território, e quais condições sensíveis puxam a demanda? | `fluxos`, `icsap` |
+| `/hospital` | O que explica o sinal e onde ele se concentra? | `hospitais`, `.../serie`, `.../especialidades`, `.../cids` |
+| `/metodologia` | Posso confiar no número e quais são seus limites? | `status`, `metodologia` |
+
+Regras que o produto respeita, detalhadas em
+[`DECISOES.md`](../DECISOES.md), seção 10:
+
+- nenhum indicador é calculado fora da Gold — o front formata com `Intl`, não
+  calcula, e não inventa faixas nem cortes;
+- ausência legítima nunca é exibida como falha do endpoint, e indicador sem
+  denominador diz o motivo em vez de mostrar número;
+- fontes nunca se misturam: quando o Oracle não responde, a tela vai para o
+  snapshot de contingência com selo explícito e recusa trocar de recorte;
+- endpoints da mesma rota falham de forma independente;
+- IPH não é apresentado como ocupação real, ICSAP não é apresentada como
+  evitabilidade individual e IPR não é apresentado como qualidade ou desfecho;
+- nenhuma seção passa de metade da altura da página, sem rolagem horizontal em
+  1280x800 nem em 390x844.
+
+Os dados exibidos foram validados contra a Gold em **8.257.139 comparações
+campo a campo, com zero divergências**, cobrindo os marts inteiros. Números
+renderizados foram lidos do DOM com Playwright e conferidos contra os parquets.
+Detalhe da cobertura por endpoint no [`CHANGELOG.md`](CHANGELOG.md).
+
+Para rodar o webapp em desenvolvimento, com `oracle/.env` configurado:
+
+```bash
+cd webapp && npm install && npm run dev
+```
+
+O Vite serve em `http://127.0.0.1:5173` e faz proxy de `/api` para o ORDS, de
+modo que o navegador nunca recebe host nem credencial do Oracle. Testes:
+`npx playwright test`.
+
 ## O que a validação encontrou
 
 | Controle | Resultado |
@@ -220,6 +264,20 @@ Execute `00_extracao_dados.ipynb`, `01_engenharia_dados.ipynb` e
 O primeiro incorpora automaticamente novas competências comuns até 2026-12;
 o segundo promove a Silver apenas após todas as reconciliações. Reexecutar o
 mesmo recorte não duplica registros nem substitui Parquets sem necessidade.
+
+Para o Oracle e o webapp, com `oracle/.env` configurado a partir de
+`oracle/.env.example`:
+
+```bash
+python3 oracle/executar_sql.py oracle/sql/views/07_vw_api_hospitais.sql
+python3 oracle/executar_sql.py oracle/sql/ords/03_modulo_medflow_dev.sql
+cd webapp && npm install && npm run dev
+```
+
+Em `oracle/sql/views/` há uma view por fatia. Em `oracle/sql/ords/`, cada
+arquivo numerado é uma **redefinição cumulativa do módulo inteiro** — o `03`
+define os dez handlers e é o único que precisa ser reaplicado ao mudar
+qualquer endpoint.
 
 Os artefatos anteriores ficam em `dados/legado/`, `figuras/legado/`,
 `notebooks/_legado/` e `referencias/legado_sprint_1/`. Eles não alimentam o

@@ -1,6 +1,6 @@
 # PENDÊNCIAS — Challenge Oracle: MedFlow
 
-Atualizado em 01/08/2026, após carga e validação do Select AI.
+Atualizado em 02/08/2026, após a conclusão e revisão do webapp.
 Entrega da Sprint 2: **01/09/2026**.
 
 ## Concluído nesta revisão
@@ -105,20 +105,43 @@ O notebook gera sete marts e reconciliou:
 - GeoJSON e TopoJSON com 62 regiões válidas;
 - legado isolado sem exclusão.
 
-### 6. Fechar o produto no webapp — etapa atual
+### 6. Fechar o produto no webapp — concluído em 02/08/2026
 
-Construir o produto MVP em quatro visões:
+As quatro visões estão construídas e revisadas:
 
-1. **Visão executiva:** oferta, demanda residente, sazonalidade e pressão;
-2. **Fluxos e APS:** origem–destino, atração/evasão observada e ICSAP;
-3. **Hospital e pares:** IPR, TMH, CMI nominal/real, permanência e amostras;
-4. **Metodologia e qualidade:** fórmulas, cobertura, competência mais recente,
-   limitações e flags.
+1. **Visão executiva** (`/regional`): oferta, demanda residente, sazonalidade e
+   pressão, com mapa por percentis, ranking com amostra e série mensal;
+2. **Fluxos e APS** (`/fluxos`): matriz origem–destino, atração, atendimento
+   intrarregional, evasão intrastadual observada, taxa de internação residente,
+   taxa ICSAP e composição dos 19 grupos oficiais;
+3. **Hospital e pares** (`/hospital`): lista de hospitais elegíveis da região,
+   série mensal, perfil por especialidade e IPR por diagnóstico com benchmark
+   regional e tamanho das amostras;
+4. **Metodologia e qualidade** (`/metodologia`): fórmulas, cobertura,
+   competência mais recente, limitações e flags.
 
-Também é necessário confirmar a forma operacional de publicação e testar o
-link público nas condições atuais da conta. O produto não está aceito apenas
-por abrir: filtros, totais, rankings, períodos, amostras e interpretações devem
-ser conferidos contra a Gold e, quando aplicável, contra o Oracle.
+O webapp é React + Vite servido por dez endpoints ORDS somente leitura em
+`api/dev/v1`, todos `GET`, sobre nove views de projeção pura. Nenhum indicador é
+recalculado no SQL das views nem no TypeScript: o front formata com `Intl`, não
+calcula. Cada endpoint tem snapshot local de contingência; quando o Oracle não
+responde, a tela mostra o snapshot com selo explícito e recusa trocar de
+recorte, em vez de misturar fontes.
+
+**O produto não foi aceito por abrir.** As dez fatias foram revisadas contra a
+Gold antes de cada commit, com **8.257.139 comparações campo a campo e zero
+divergências**, cobrindo os marts inteiros de fluxos, ICSAP, hospitais, séries,
+especialidades e diagnósticos. A comparação é posicional contra a parquet
+ordenada pelas mesmas chaves do `order by` de cada handler, o que prova a
+ordenação declarada em cada contrato. Números renderizados foram lidos do DOM
+com Playwright e conferidos contra a Gold, e os estados de erro, ausência
+legítima e contingência foram medidos um a um.
+
+Cinco defeitos objetivos foram encontrados e corrigidos antes dos commits; os
+detalhes estão no `CHANGELOG.md` da sprint.
+
+**Ainda falta** confirmar a forma operacional de publicação e testar o link
+público nas condições atuais da conta. Hoje só existe o módulo de teste
+`api/dev/v1`; o módulo de produção `api/v1` não foi criado.
 
 ### 7. Infraestrutura Oracle — concluída
 
@@ -182,9 +205,9 @@ Próximo marco sugerido: **`v0.3.0` — Oracle e webapp MVP**.
 | Pipeline Bronze/Silver reproduzível | — | validado para 2024-01 a 2026-05 |
 | Indicadores hospitalares e territoriais validados | — | concluído |
 | Autonomous AI Database provisionado | — | carregado e reconciliado em 01/08/2026 |
-| Webapp navegável | — | etapa atual |
-| Link público | 10% | publicação a confirmar e testar |
-| Validação dos dados no produto | — | após montagem do webapp |
+| Webapp navegável | — | quatro visões concluídas e revisadas em 02/08/2026 |
+| Link público | 10% | **etapa atual** — só existe `api/dev/v1`; publicação a confirmar e testar |
+| Validação dos dados no produto | — | concluída: 8.257.139 comparações, zero divergências |
 | Oracle Select AI | — | validado tecnicamente; revalidar após o produto |
 | GitHub | 20% | `v0.2.0` publicada |
 | PPT / pitch | 10% | aguarda produto validado |
@@ -198,6 +221,16 @@ sprint_2_em_andamento/
 ├── notebooks/         fontes 00, 01 e 02; executados e legado separados
 ├── pipeline/          publicação, contratos, Gold, geografia e inventário
 ├── contratos/         JSON, mapeamento de colunas e inventário SHA-256
+├── oracle/
+│   ├── sql/views/     nove views de projeção pura; a fatia 8 reusa a da 7
+│   ├── sql/ords/      módulos ORDS; o 03 redefine o módulo inteiro
+│   └── *.py           conexão mTLS, carga e executor SQL
+├── webapp/
+│   ├── src/api/       um cliente por endpoint, com validação estrita
+│   ├── src/components/ componentes reusados entre as visões
+│   ├── src/routes/    uma rota por visão
+│   ├── src/fixtures/  snapshots de contingência, um por endpoint
+│   └── tests/         suíte Playwright
 ├── dados/
 │   ├── bronze/        origem, intermediário, Parquet e manifesto
 │   ├── silver/        dimensões, fatos e qualidade

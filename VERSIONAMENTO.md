@@ -49,11 +49,14 @@ posteriores usam uma nova versão; tags públicas existentes não são movidas.
 | `medflow-v0` | legado | Primeira baseline; mantida apenas por rastreabilidade |
 | `v0.1.0` | histórico | Espelhada neste repositório; a publicação original permanece como proveniência histórica |
 | `v0.2.0` | estável | Gold, geografia, contratos e validação integrada |
-| `v0.3.0` | em andamento | contrato 0.3.0 e Oracle concluídos; webapp MVP pendente |
+| `v0.3.0` | em andamento | contrato 0.3.0, Oracle e webapp MVP concluídos; falta publicar o link |
 
 A tag legada `medflow-v0` não deve ser apagada nem reutilizada. A `v0.1.0`
 foi espelhada neste repositório em 01/08/2026, preservando o commit histórico
 da entrega e sem apagar a referência ao
 [repositório original `medflow`](https://github.com/Lucas-D-S-1/medflow).
-A próxima publicação será a `v0.3.0` somente após a conclusão e validação do
-webapp MVP.
+O webapp MVP foi concluído e validado em 02/08/2026, com as quatro visões
+servidas por dez endpoints ORDS e os dados exibidos reconciliados contra a Gold
+em 8.257.139 comparações sem divergência. A `v0.3.0` será publicada depois que o
+módulo ORDS de produção (`api/v1`) existir e o link público for testado — hoje
+só há o módulo de teste `api/dev/v1`.

@@ -279,17 +279,94 @@ devolveram os rankings esperados. O IPH foi narrado como pressão sobre a
 capacidade, não ocupação real. Ordem vinculante para demonstrações futuras:
 SQL convencional, `showsql`, conferência e somente então `narrate`.
 
-## 10. Sprint 2
+## 10. Webapp — decisões tomadas na construção
+
+Registradas em 02/08/2026, depois de as dez fatias serem revisadas e commitadas.
+
+### 10.1 Nenhum indicador é calculado fora da Gold
+
+As views de API são projeção pura: leem colunas já persistidas e não contêm
+expressão de indicador. No TypeScript não há uma única operação aritmética
+sobre valor de indicador — o front formata com `Intl.NumberFormat`, não calcula.
+As únicas divisões no cliente são projeção de pixel (coordenada de gráfico e
+largura de barra decorativa).
+
+O corolário prático: **é proibido criar faixas, cortes ou classificações de
+indicador no cliente.** Se um corte é necessário, ele nasce na Gold, é
+persistido e chega pronto pela API. Isso vale para todas as fatias.
+
+### 10.2 Ausência legítima não pode ser exibida como falha
+
+Um endpoint que responde 200 com zero linhas está funcionando. A tela precisa
+dizer "não há dado publicado para este recorte", nunca "o endpoint não
+respondeu".
+
+Cada resposta traz um bloco de contexto (território, região ou hospital) que o
+cliente classifica em três estados: **completo**, **ausente** e **inválido**.
+Ausente exige que o bloco venha inteiramente nulo **e** que a resposta tenha
+zero itens — bloco vazio com itens é contradição e conta como contrato quebrado.
+Só o estado inválido leva à tela de erro.
+
+Isso vale também para indicador sem denominador: sem leito SUS declarado não
+existe IPH e sem internação nova não existem TMH, CMI nem permanência. Nesses
+casos a tela diz o motivo em vez de exibir número.
+
+### 10.3 O `p_items_per_page` do módulo ORDS sobrepõe o bind `:limit`
+
+O módulo `medflow_dev` foi definido com `p_items_per_page => 100`. Quando o
+chamador omite `limit`, o ORDS preenche o bind `:limit` com esse valor **antes**
+de o SQL do handler ser avaliado. Um `coalesce(:limit, N)` com `N` diferente de
+100 é código morto e faz o handler declarar um padrão que o serviço não pratica.
+
+Consequência para handlers futuros: conferir sempre chamando sem `limit`. E não
+subir o `p_items_per_page` do módulo — `/regioes/{id}/serie` declara máximo 120
+e passaria a responder 404 na chamada sem `limit`.
+
+### 10.4 Fontes nunca se misturam na mesma tela
+
+Quando o Oracle não responde, a tela inteira vai para o snapshot de contingência
+com selo explícito. O snapshot cobre um recorte só; pedir outro recorte nesse
+estado devolve um aviso, não um dado de outra origem. Endpoints da mesma rota
+falham de forma independente: a ICSAP pode cair sem derrubar a matriz de fluxos,
+e os diagnósticos podem cair sem derrubar a série do hospital.
+
+### 10.5 CORS restrito por origem
+
+Os endpoints são somente leitura sobre dados públicos e agregados, mas o CORS é
+restrito às origens do webapp. Isso é política de navegador, não autenticação, e
+está registrado como tal — não substitui os controles de acesso do banco.
+
+### 10.6 Nome de estado da Gold não é definição
+
+`benchmark_zero` parecia significar "sem hospital par na região" e significa o
+oposto: existem de 1 a 10 hospitais pares em todas as 6.680 linhas do estado, e
+o que é zero é a permanência média deles, o que tornaria o IPR uma divisão por
+zero. O rótulo errado chegou à tela e só caiu na revisão.
+
+Regra que fica: antes de nomear um estado da Gold na interface, conferir o que
+ele significa **nos dados**, não no nome da coluna.
+
+### 10.7 Uma seção não passa de metade da altura da página
+
+Interface longa demais deixa de ser navegável. Nenhuma seção pode ocupar mais
+de 50% da altura renderizada, em 1280x800 e em 390x844, sem rolagem horizontal
+em nenhum dos dois. Tabela longa vira dois blocos — prévia e "demais" — em vez
+de uma seção única. Lista truncada declara "N de M" e oferece ver todas.
+
+## 11. Sprint 2
 
 Entrega prevista: 01/09/2026.
 
+Concluído: as quatro visões do webapp, servidas por dez endpoints ORDS, com os
+dados do produto validados contra a Gold em 8.257.139 comparações sem
+divergência.
+
 Ordem de trabalho restante:
 
-1. construir as quatro visões do webapp usando ORDS e snapshot de contingência;
-2. validar filtros, totais, territorialidade e interpretações contra a Gold;
-3. revalidar as cinco perguntas do Select AI — três originais e duas novas;
-4. regenerar achados e figuras;
-5. atualizar pitch, vídeo, link público e roteiro da apresentação.
+1. publicar o módulo de produção `api/v1` e testar o link público;
+2. revalidar as cinco perguntas do Select AI — três originais e duas novas;
+3. regenerar achados e figuras;
+4. atualizar pitch, vídeo e roteiro da apresentação.
 
 A versão pública
 [`v0.2.0`](https://github.com/Lucas-D-S-1/fiap-1tscoa/releases/tag/v0.2.0)
