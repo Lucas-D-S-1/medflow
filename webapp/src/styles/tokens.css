@@ -1,0 +1,69 @@
+:root {
+  --font-body: 'DM Sans', system-ui, sans-serif;
+  --font-heading: 'Manrope', 'DM Sans', system-ui, sans-serif;
+  --font-size-xs: .75rem;
+  --font-size-sm: .875rem;
+  --font-size-md: 1.05rem;
+  --font-size-lg: 1.25rem;
+  --font-size-metric: clamp(1.45rem, 3vw, 2.25rem);
+
+  --space-1: .35rem;
+  --space-2: .6rem;
+  --space-3: .9rem;
+  --space-4: 1.25rem;
+  --space-5: 1.8rem;
+  --space-6: clamp(1.5rem, 4vw, 2.5rem);
+  --space-7: 3.5rem;
+  --space-8: 5rem;
+
+  --radius-sm: .55rem;
+  --radius-md: .8rem;
+  --radius-lg: 1.1rem;
+  --radius-xl: 1.4rem;
+  --radius-pill: 999px;
+
+  --color-page: #f3f5ef;
+  --color-page-glow: rgba(196, 224, 204, .55);
+  --color-nav-bg: rgba(248, 249, 244, .94);
+  --color-surface: #fffffc;
+  --color-surface-soft: #f8faf6;
+  --color-surface-translucent: rgba(255, 255, 252, .9);
+  --color-heading: #153c32;
+  --color-text: #17342f;
+  --color-text-muted: #526760;
+  --color-accent: #1d705a;
+  --color-accent-strong: #145b49;
+  --color-accent-soft: #e2f0ea;
+  --color-border: rgba(35, 75, 65, .18);
+  --color-border-strong: rgba(35, 75, 65, .34);
+  --color-live-text: #145c46;
+  --color-live-bg: #dff3e8;
+  --color-live-dot: #16875f;
+  --color-warning-text: #6c4618;
+  --color-warning-bg: #faebd1;
+  --color-warning-soft: #fff7e8;
+  --color-warning-dot: #ad671d;
+  --color-note-text: #214f43;
+  --color-note-bg: #e7f2ed;
+  --color-error-text: #873b34;
+  --color-error-bg: #f7e5e2;
+  --color-neutral-bg: #e9eee9;
+  --color-loader-track: #d4e1da;
+  --color-selected: #17211e;
+  --color-hover: #fffffc;
+  --color-map-muted: #dce2de;
+  --color-map-1: #d5e9e0;
+  --color-map-2: #9fcdbb;
+  --color-map-3: #62a087;
+  --color-map-4: #33745e;
+  --color-map-5: #124a3a;
+  --color-map-selected-fill: #f0b44d;
+
+  --border-subtle: 1px solid var(--color-border);
+  --border-strong: 1px solid var(--color-border-strong);
+  --border-dashed: 1px dashed var(--color-border-strong);
+  --focus-outline: .2rem solid rgba(20, 91, 73, .42);
+  --shadow-panel: 0 1.4rem 3.75rem rgba(38, 70, 59, .08);
+  --shadow-live-dot: 0 0 0 .25rem rgba(22, 135, 95, .16);
+  --shadow-warning-dot: 0 0 0 .25rem rgba(173, 103, 29, .16);
+}
