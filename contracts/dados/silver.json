@@ -1,0 +1,1004 @@
+{
+  "camada": "silver",
+  "versao_contrato": "0.3.0",
+  "gerado_em_utc": "2026-08-01T20:59:59.067598+00:00",
+  "principios": [
+    "Dados tipados, conformados, reconciliados e prontos para reuso.",
+    "Somente dimensões e fatos; indicadores e benchmarks pertencem à Gold.",
+    "Nomes em snake_case, no singular e com prefixos semânticos."
+  ],
+  "tabelas": [
+    {
+      "nome": "dim_tempo",
+      "caminho": "data/silver/dimensoes/dim_tempo.parquet",
+      "descricao": "Calendário mensal do recorte analítico.",
+      "grao": "uma linha por competência",
+      "chave_primaria_logica": [
+        "cd_competencia"
+      ],
+      "linhas": 29,
+      "colunas": [
+        {
+          "nome": "nr_ano_competencia",
+          "tipo": "int64",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Ano da competência de processamento."
+        },
+        {
+          "nome": "nr_mes_competencia",
+          "tipo": "int64",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Número do mês da competência de processamento."
+        },
+        {
+          "nome": "qt_dia_mes",
+          "tipo": "int64",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Quantidade de dias civis da competência."
+        },
+        {
+          "nome": "cd_competencia",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Competência no formato AAAAMM."
+        },
+        {
+          "nome": "dt_competencia",
+          "tipo": "datetime64[ns]",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Primeiro dia do mês de competência."
+        },
+        {
+          "nome": "nr_trimestre",
+          "tipo": "int32",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Número do trimestre civil da competência."
+        }
+      ]
+    },
+    {
+      "nome": "dim_hospital",
+      "caminho": "data/silver/dimensoes/dim_hospital.parquet",
+      "descricao": "Cadastro conformado dos hospitais presentes no SIH.",
+      "grao": "uma linha por CNES",
+      "chave_primaria_logica": [
+        "cd_cnes"
+      ],
+      "linhas": 653,
+      "colunas": [
+        {
+          "nome": "cd_cnes",
+          "tipo": "string",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Código de sete dígitos do estabelecimento no CNES."
+        },
+        {
+          "nome": "cd_municipio_ibge_6",
+          "tipo": "string",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Código municipal de seis dígitos usado nas bases do DATASUS."
+        },
+        {
+          "nome": "cd_tipo_unidade",
+          "tipo": "string",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Código CNES do tipo de unidade."
+        },
+        {
+          "nome": "cd_esfera_administrativa_cnes_lt",
+          "tipo": "string",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Código bruto da esfera administrativa no CNES/LT."
+        },
+        {
+          "nome": "cd_natureza_juridica",
+          "tipo": "string",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Código CONCLA da natureza jurídica."
+        },
+        {
+          "nome": "cd_tipo_gestao",
+          "tipo": "string",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Código do tipo de gestão do estabelecimento."
+        },
+        {
+          "nome": "cd_regiao_saude_cnes_lt",
+          "tipo": "string",
+          "aceita_nulo": true,
+          "nulos": 80,
+          "descricao": "Código de região declarado historicamente no arquivo CNES/LT."
+        },
+        {
+          "nome": "qt_regiao_saude_declarada_cnes_lt",
+          "tipo": "float64",
+          "aceita_nulo": true,
+          "nulos": 80,
+          "descricao": "Quantidade de códigos regionais distintos observados no histórico CNES/LT."
+        },
+        {
+          "nome": "cd_regiao_saude",
+          "tipo": "string",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Código oficial de cinco dígitos da região de saúde."
+        },
+        {
+          "nome": "nm_regiao_saude",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Nome oficial da região de saúde."
+        },
+        {
+          "nome": "cd_macrorregiao_saude",
+          "tipo": "string",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Código oficial da macrorregião de saúde."
+        },
+        {
+          "nome": "nm_macrorregiao_saude",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Nome oficial da macrorregião de saúde."
+        },
+        {
+          "nome": "nm_hospital_atual",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Nome fantasia atual do estabelecimento; não representa histórico mensal."
+        },
+        {
+          "nome": "nm_razao_social_hospital_atual",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Razão social atual do estabelecimento."
+        },
+        {
+          "nome": "nm_esfera_administrativa_atual",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Descrição atual da esfera administrativa obtida na API do CNES."
+        },
+        {
+          "nome": "dt_atualizacao_cadastro_cnes",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Data de atualização informada pela fotografia atual do CNES."
+        },
+        {
+          "nome": "ds_origem_regiao",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Fonte usada para atribuir a região analítica."
+        },
+        {
+          "nome": "fl_regiao_conflitante",
+          "tipo": "int8",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Indica hospital com mais de uma região declarada no histórico CNES/LT."
+        },
+        {
+          "nome": "fl_regiao_nao_confiavel",
+          "tipo": "int8",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Indica ausência de região oficial confiável."
+        },
+        {
+          "nome": "nm_tipo_unidade",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Descrição do tipo de unidade."
+        },
+        {
+          "nome": "nm_tipo_gestao",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Descrição do tipo de gestão do estabelecimento."
+        },
+        {
+          "nome": "nm_natureza_juridica",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Descrição CONCLA da natureza jurídica."
+        },
+        {
+          "nome": "fl_esfera_ausente_cnes_lt",
+          "tipo": "int8",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Indica ausência da esfera administrativa no CNES/LT."
+        },
+        {
+          "nome": "fl_cadastro_atual_nao_historico",
+          "tipo": "int8",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Indica atributo cadastral atual, sem vigência histórica garantida."
+        }
+      ]
+    },
+    {
+      "nome": "dim_municipio",
+      "caminho": "data/silver/dimensoes/dim_municipio.parquet",
+      "descricao": "Municípios paulistas e sua hierarquia regional.",
+      "grao": "uma linha por município",
+      "chave_primaria_logica": [
+        "cd_municipio_ibge_7"
+      ],
+      "linhas": 645,
+      "colunas": [
+        {
+          "nome": "cd_municipio_ibge_7",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Código oficial de sete dígitos do município no IBGE."
+        },
+        {
+          "nome": "cd_municipio_ibge_6",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Código municipal de seis dígitos usado nas bases do DATASUS."
+        },
+        {
+          "nome": "nm_municipio",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Nome oficial do município."
+        },
+        {
+          "nome": "sg_uf",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Sigla da unidade da Federação."
+        },
+        {
+          "nome": "nm_microrregiao",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Nome da microrregião geográfica do IBGE."
+        },
+        {
+          "nome": "nm_mesorregiao",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Nome da mesorregião geográfica do IBGE."
+        },
+        {
+          "nome": "cd_regiao_saude",
+          "tipo": "string",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Código oficial de cinco dígitos da região de saúde."
+        },
+        {
+          "nome": "nm_regiao_saude",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Nome oficial da região de saúde."
+        },
+        {
+          "nome": "cd_macrorregiao_saude",
+          "tipo": "string",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Código oficial da macrorregião de saúde."
+        },
+        {
+          "nome": "nm_macrorregiao_saude",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Nome oficial da macrorregião de saúde."
+        },
+        {
+          "nome": "qt_populacao_ibge_2022",
+          "tipo": "int64",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "População municipal do Censo IBGE 2022 distribuída no CSV oficial do Ministério da Saúde."
+        },
+        {
+          "nome": "ds_fonte_populacao",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Fonte e ano de referência da população municipal."
+        }
+      ]
+    },
+    {
+      "nome": "dim_especialidade",
+      "caminho": "data/silver/dimensoes/dim_especialidade.parquet",
+      "descricao": "Domínio observado de especialidades do SIH.",
+      "grao": "uma linha por especialidade",
+      "chave_primaria_logica": [
+        "cd_especialidade_sih"
+      ],
+      "linhas": 15,
+      "colunas": [
+        {
+          "nome": "cd_especialidade_sih",
+          "tipo": "string",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Código de especialidade da internação no SIH."
+        },
+        {
+          "nome": "qt_aih_aprovada",
+          "tipo": "Int64",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Quantidade de AIHs aprovadas associadas ao registro dimensional."
+        },
+        {
+          "nome": "nm_especialidade",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Descrição da especialidade do SIH."
+        },
+        {
+          "nome": "fl_especialidade_mapeada",
+          "tipo": "int8",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Indica se o código de especialidade possui de/para validado."
+        }
+      ]
+    },
+    {
+      "nome": "dim_cid",
+      "caminho": "data/silver/dimensoes/dim_cid.parquet",
+      "descricao": "Diagnósticos CID-10 observados no recorte.",
+      "grao": "uma linha por CID principal",
+      "chave_primaria_logica": [
+        "cd_cid_principal"
+      ],
+      "linhas": 9494,
+      "colunas": [
+        {
+          "nome": "cd_cid_principal",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Código CID-10 do diagnóstico principal."
+        },
+        {
+          "nome": "qt_aih_aprovada",
+          "tipo": "Int64",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Quantidade de AIHs aprovadas associadas ao registro dimensional."
+        },
+        {
+          "nome": "ds_cid",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Descrição completa do diagnóstico CID-10."
+        },
+        {
+          "nome": "ds_cid_abreviada",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Descrição abreviada do diagnóstico CID-10."
+        },
+        {
+          "nome": "ds_fonte_descricao",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Fonte usada para descrever ou mapear o código."
+        },
+        {
+          "nome": "cd_categoria_cid",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Categoria de três caracteres da CID-10."
+        },
+        {
+          "nome": "ds_categoria_cid",
+          "tipo": "object",
+          "aceita_nulo": true,
+          "nulos": 4,
+          "descricao": "Descrição da categoria CID-10."
+        },
+        {
+          "nome": "cd_capitulo_cid",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Código do capítulo da CID-10."
+        },
+        {
+          "nome": "ds_capitulo_cid",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Descrição do capítulo da CID-10."
+        }
+      ]
+    },
+    {
+      "nome": "dim_dominio",
+      "caminho": "data/silver/dimensoes/dim_dominio.parquet",
+      "descricao": "De/paras auditáveis dos códigos utilizados na Silver.",
+      "grao": "uma linha por campo e código",
+      "chave_primaria_logica": [
+        "nm_campo_origem",
+        "cd_dominio"
+      ],
+      "linhas": 84,
+      "colunas": [
+        {
+          "nome": "nm_campo_origem",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Nome do campo de origem ao qual o domínio se aplica."
+        },
+        {
+          "nome": "cd_dominio",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Código do domínio."
+        },
+        {
+          "nome": "ds_dominio",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Descrição do código do domínio."
+        },
+        {
+          "nome": "ds_fonte_dominio",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Fonte usada no de/para do domínio."
+        },
+        {
+          "nome": "st_mapeamento",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Estado de cobertura e validação do mapeamento."
+        }
+      ]
+    },
+    {
+      "nome": "fato_internacao",
+      "caminho": "data/silver/fatos/fato_internacao.parquet",
+      "descricao": "AIHs aprovadas enriquecidas e tipadas para análise.",
+      "grao": "uma linha por registro mensal de AIH",
+      "chave_primaria_logica": [],
+      "linhas": 7034961,
+      "colunas": [
+        {
+          "nome": "id_aih",
+          "tipo": "string",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Identificador da Autorização de Internação Hospitalar informado no SIH."
+        },
+        {
+          "nome": "cd_tipo_aih",
+          "tipo": "string",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Código que distingue internação nova de continuação de longa permanência."
+        },
+        {
+          "nome": "ds_tipo_aih",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Descrição do tipo de AIH."
+        },
+        {
+          "nome": "cd_cnes",
+          "tipo": "string",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Código de sete dígitos do estabelecimento no CNES."
+        },
+        {
+          "nome": "cd_municipio_ibge_6",
+          "tipo": "string",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Código municipal de seis dígitos usado nas bases do DATASUS."
+        },
+        {
+          "nome": "cd_municipio_residencia_ibge_6",
+          "tipo": "string",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Código DATASUS do município de residência do paciente."
+        },
+        {
+          "nome": "cd_regiao_saude",
+          "tipo": "string",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Código oficial de cinco dígitos da região de saúde."
+        },
+        {
+          "nome": "nm_regiao_saude",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Nome oficial da região de saúde."
+        },
+        {
+          "nome": "cd_macrorregiao_saude",
+          "tipo": "string",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Código oficial da macrorregião de saúde."
+        },
+        {
+          "nome": "nm_macrorregiao_saude",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Nome oficial da macrorregião de saúde."
+        },
+        {
+          "nome": "ds_origem_regiao",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Fonte usada para atribuir a região analítica."
+        },
+        {
+          "nome": "fl_regiao_conflitante",
+          "tipo": "int8",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Indica hospital com mais de uma região declarada no histórico CNES/LT."
+        },
+        {
+          "nome": "fl_regiao_nao_confiavel",
+          "tipo": "int8",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Indica ausência de região oficial confiável."
+        },
+        {
+          "nome": "nr_ano_competencia",
+          "tipo": "int16",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Ano da competência de processamento."
+        },
+        {
+          "nome": "nr_mes_competencia",
+          "tipo": "int8",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Número do mês da competência de processamento."
+        },
+        {
+          "nome": "cd_competencia",
+          "tipo": "string",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Competência no formato AAAAMM."
+        },
+        {
+          "nome": "dt_internacao",
+          "tipo": "datetime64[ns]",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Data de entrada da internação."
+        },
+        {
+          "nome": "dt_saida",
+          "tipo": "datetime64[ns]",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Data de saída da internação."
+        },
+        {
+          "nome": "fl_cruza_mes",
+          "tipo": "int8",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Indica internação cuja entrada e saída estão em meses diferentes."
+        },
+        {
+          "nome": "fl_competencia_diverge_saida",
+          "tipo": "int8",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Indica que a competência de processamento diverge do mês da saída."
+        },
+        {
+          "nome": "cd_especialidade_sih",
+          "tipo": "string",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Código de especialidade da internação no SIH."
+        },
+        {
+          "nome": "nm_especialidade",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Descrição da especialidade do SIH."
+        },
+        {
+          "nome": "cd_cid_principal",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Código CID-10 do diagnóstico principal."
+        },
+        {
+          "nome": "ds_cid",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Descrição completa do diagnóstico CID-10."
+        },
+        {
+          "nome": "ds_categoria_cid",
+          "tipo": "object",
+          "aceita_nulo": true,
+          "nulos": 17,
+          "descricao": "Descrição da categoria CID-10."
+        },
+        {
+          "nome": "cd_capitulo_cid",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Código do capítulo da CID-10."
+        },
+        {
+          "nome": "ds_capitulo_cid",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Descrição do capítulo da CID-10."
+        },
+        {
+          "nome": "ds_fonte_descricao",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Fonte usada para descrever ou mapear o código."
+        },
+        {
+          "nome": "qt_diaria_faturada",
+          "tipo": "int32",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Quantidade de diárias faturadas na AIH; não equivale automaticamente a permanência."
+        },
+        {
+          "nome": "qt_dia_permanencia",
+          "tipo": "int32",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Quantidade de dias de permanência registrada na AIH."
+        },
+        {
+          "nome": "vl_total_aprovado_sus",
+          "tipo": "float64",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Valor nominal total aprovado pelo SUS para a AIH."
+        },
+        {
+          "nome": "qt_diaria_uti_faturada",
+          "tipo": "int32",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Quantidade total de diárias de UTI faturadas na AIH."
+        },
+        {
+          "nome": "cd_tipo_uti",
+          "tipo": "string",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Código da marca ou tipo de UTI informado no SIH."
+        },
+        {
+          "nome": "ds_tipo_uti",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Descrição do código de UTI."
+        },
+        {
+          "nome": "nr_idade_informada",
+          "tipo": "int32",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Valor de idade informado, interpretado junto de cd_unidade_idade."
+        },
+        {
+          "nome": "cd_unidade_idade",
+          "tipo": "string",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Código da unidade usada para registrar a idade."
+        },
+        {
+          "nome": "ds_unidade_idade",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Descrição da unidade usada para registrar a idade."
+        },
+        {
+          "nome": "nr_idade_ano_aproximada",
+          "tipo": "float64",
+          "aceita_nulo": true,
+          "nulos": 1,
+          "descricao": "Idade aproximada em anos calculada a partir do valor e da unidade informados."
+        },
+        {
+          "nome": "cd_sexo",
+          "tipo": "string",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Código de sexo informado no SIH."
+        },
+        {
+          "nome": "ds_sexo",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Descrição do código de sexo."
+        },
+        {
+          "nome": "cd_carater_internacao",
+          "tipo": "string",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Código do caráter da internação."
+        },
+        {
+          "nome": "ds_carater_internacao",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Descrição do caráter da internação."
+        },
+        {
+          "nome": "cd_complexidade",
+          "tipo": "string",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Código do nível de complexidade do procedimento."
+        },
+        {
+          "nome": "ds_complexidade",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Descrição do nível de complexidade."
+        },
+        {
+          "nome": "fl_aih_aprovada",
+          "tipo": "int8",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Indicador unitário de AIH aprovada."
+        },
+        {
+          "nome": "fl_internacao_nova",
+          "tipo": "int8",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Indica AIH normal, considerada uma nova internação."
+        },
+        {
+          "nome": "fl_continuacao_longa_permanencia",
+          "tipo": "int8",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Indica AIH de continuação de longa permanência."
+        },
+        {
+          "nome": "qt_dia_permanencia_internacao_nova",
+          "tipo": "int32",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Dias de permanência somente quando a linha representa internação nova."
+        },
+        {
+          "nome": "qt_diaria_faturada_internacao_nova",
+          "tipo": "int32",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Diárias faturadas somente quando a linha representa internação nova."
+        },
+        {
+          "nome": "vl_aprovado_internacao_nova",
+          "tipo": "float64",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Valor aprovado somente para internações novas."
+        },
+        {
+          "nome": "vl_aprovado_continuacao",
+          "tipo": "float64",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Valor aprovado somente para continuações de longa permanência."
+        },
+        {
+          "nome": "fl_sem_diaria_faturada",
+          "tipo": "int8",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Indica AIH sem diária faturada."
+        },
+        {
+          "nome": "fl_permanencia_zero",
+          "tipo": "int8",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Indica permanência registrada igual a zero."
+        },
+        {
+          "nome": "fl_sem_valor",
+          "tipo": "int8",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Indica valor total aprovado igual a zero."
+        },
+        {
+          "nome": "fl_obito",
+          "tipo": "int8",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Indica óbito registrado na AIH."
+        },
+        {
+          "nome": "fl_obito_internacao_nova",
+          "tipo": "int8",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Indica óbito em uma internação nova."
+        },
+        {
+          "nome": "fl_aih_com_valor",
+          "tipo": "int8",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Indica AIH com valor total aprovado maior que zero."
+        },
+        {
+          "nome": "fl_uti",
+          "tipo": "int8",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Indica presença de marca de UTI ou diária de UTI faturada."
+        },
+        {
+          "nome": "nm_arquivo_origem",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Nome do arquivo DBF de origem da linha."
+        }
+      ]
+    },
+    {
+      "nome": "fato_leito_mensal",
+      "caminho": "data/silver/fatos/fato_leito_mensal.parquet",
+      "descricao": "Capacidade de leitos declarada no CNES.",
+      "grao": "uma linha por hospital e competência",
+      "chave_primaria_logica": [
+        "cd_cnes",
+        "cd_competencia"
+      ],
+      "linhas": 18690,
+      "colunas": [
+        {
+          "nome": "cd_cnes",
+          "tipo": "string",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Código de sete dígitos do estabelecimento no CNES."
+        },
+        {
+          "nome": "nr_ano_competencia",
+          "tipo": "int16",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Ano da competência de processamento."
+        },
+        {
+          "nome": "nr_mes_competencia",
+          "tipo": "int8",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Número do mês da competência de processamento."
+        },
+        {
+          "nome": "cd_competencia",
+          "tipo": "string",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Competência no formato AAAAMM."
+        },
+        {
+          "nome": "qt_leito_sus",
+          "tipo": "int32",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Quantidade mensal de leitos disponíveis ao SUS declarada no CNES."
+        },
+        {
+          "nome": "qt_leito_total",
+          "tipo": "int32",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Quantidade mensal total de leitos declarada no CNES."
+        },
+        {
+          "nome": "qt_tipo_leito",
+          "tipo": "int64",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Quantidade de tipos de leito distintos observados no mês."
+        },
+        {
+          "nome": "qt_dia_mes",
+          "tipo": "int64",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Quantidade de dias civis da competência."
+        },
+        {
+          "nome": "qt_capacidade_teorica_leito_dia",
+          "tipo": "int64",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Leitos SUS multiplicados pelos dias civis do mês."
+        }
+      ]
+    }
+  ]
+}

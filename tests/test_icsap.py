@@ -4,7 +4,7 @@ import unittest
 
 import pandas as pd
 
-from pipeline.icsap import GRUPOS_ICSAP, classificar_icsap, dimensao_grupo_icsap
+from medflow.icsap import GRUPOS_ICSAP, classificar_icsap, dimensao_grupo_icsap
 
 
 class TesteICSAP(unittest.TestCase):
