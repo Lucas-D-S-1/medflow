@@ -1,6 +1,6 @@
 # Dicionário da camada Silver — MedFlow
 
-Contrato de esquema `0.3.0`, gerado automaticamente em `2026-08-01T20:59:59.067598+00:00`.
+Contrato de esquema `0.3.0`, gerado automaticamente em `2026-08-08T18:16:05.574311+00:00`.
 
 ## Responsabilidade da camada
 
@@ -12,7 +12,7 @@ Contrato de esquema `0.3.0`, gerado automaticamente em `2026-08-01T20:59:59.0675
 
 Calendário mensal do recorte analítico.
 
-- Caminho: `dados/silver/dimensoes/dim_tempo.parquet`
+- Caminho: `data/silver/dimensoes/dim_tempo.parquet`
 - Grão: uma linha por competência
 - Linhas: 29
 - Chave lógica: `cd_competencia`
@@ -30,7 +30,7 @@ Calendário mensal do recorte analítico.
 
 Cadastro conformado dos hospitais presentes no SIH.
 
-- Caminho: `dados/silver/dimensoes/dim_hospital.parquet`
+- Caminho: `data/silver/dimensoes/dim_hospital.parquet`
 - Grão: uma linha por CNES
 - Linhas: 653
 - Chave lógica: `cd_cnes`
@@ -66,7 +66,7 @@ Cadastro conformado dos hospitais presentes no SIH.
 
 Municípios paulistas e sua hierarquia regional.
 
-- Caminho: `dados/silver/dimensoes/dim_municipio.parquet`
+- Caminho: `data/silver/dimensoes/dim_municipio.parquet`
 - Grão: uma linha por município
 - Linhas: 645
 - Chave lógica: `cd_municipio_ibge_7`
@@ -90,7 +90,7 @@ Municípios paulistas e sua hierarquia regional.
 
 Domínio observado de especialidades do SIH.
 
-- Caminho: `dados/silver/dimensoes/dim_especialidade.parquet`
+- Caminho: `data/silver/dimensoes/dim_especialidade.parquet`
 - Grão: uma linha por especialidade
 - Linhas: 15
 - Chave lógica: `cd_especialidade_sih`
@@ -106,7 +106,7 @@ Domínio observado de especialidades do SIH.
 
 Diagnósticos CID-10 observados no recorte.
 
-- Caminho: `dados/silver/dimensoes/dim_cid.parquet`
+- Caminho: `data/silver/dimensoes/dim_cid.parquet`
 - Grão: uma linha por CID principal
 - Linhas: 9,494
 - Chave lógica: `cd_cid_principal`
@@ -127,7 +127,7 @@ Diagnósticos CID-10 observados no recorte.
 
 De/paras auditáveis dos códigos utilizados na Silver.
 
-- Caminho: `dados/silver/dimensoes/dim_dominio.parquet`
+- Caminho: `data/silver/dimensoes/dim_dominio.parquet`
 - Grão: uma linha por campo e código
 - Linhas: 84
 - Chave lógica: `nm_campo_origem`, `cd_dominio`
@@ -144,7 +144,7 @@ De/paras auditáveis dos códigos utilizados na Silver.
 
 AIHs aprovadas enriquecidas e tipadas para análise.
 
-- Caminho: `dados/silver/fatos/fato_internacao.parquet`
+- Caminho: `data/silver/fatos/fato_internacao.parquet`
 - Grão: uma linha por registro mensal de AIH
 - Linhas: 7,034,961
 - Chave lógica: sem unicidade assumida; usar o identificador da fonte e a competência
@@ -215,7 +215,7 @@ AIHs aprovadas enriquecidas e tipadas para análise.
 
 Capacidade de leitos declarada no CNES.
 
-- Caminho: `dados/silver/fatos/fato_leito_mensal.parquet`
+- Caminho: `data/silver/fatos/fato_leito_mensal.parquet`
 - Grão: uma linha por hospital e competência
 - Linhas: 18,690
 - Chave lógica: `cd_cnes`, `cd_competencia`

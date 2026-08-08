@@ -1,10 +1,10 @@
 {
   "status": "ok",
   "source": "snapshot",
-  "database_time": "2026-08-01T21:12:53.587180+00:00",
+  "database_time": "2026-08-08T18:36:21.765237+00:00",
   "contract_version": "0.3.0",
   "data_through": "2026-05",
-  "gold_updated_at": "2026-08-01T21:12:53.587180+00:00",
+  "gold_updated_at": "2026-08-08T18:36:21.765237+00:00",
   "cmi_reference_competence": "2026-05",
   "coverage": {
     "regions": 62,

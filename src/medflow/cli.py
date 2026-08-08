@@ -1,16 +1,18 @@
 """Linha de comando do MedFlow.
 
-Expõe as etapas que já existem como pacote. Bronze e Silver ainda vivem nos
-notebooks 00 e 01 e entram aqui na fatia 4 da reorganização; até lá, os
-subcomandos correspondentes falham com uma mensagem explícita em vez de
-fingir que rodaram.
+Expõe o pipeline inteiro: `bronze`, `silver`, `gold` e `geografia` produzem as
+camadas; `validar` confere as três contra os contratos; `inventario` grava o
+SHA-256 de cada artefato.
+
+As camadas são idempotentes e não refazem o que já está no lugar. Use
+`--sobrescrever` na Bronze e na Silver para forçar a reconstrução — é o que
+prova a paridade quando o código muda de lugar.
 """
 
 from __future__ import annotations
 
 import argparse
 import json
-import sys
 from pathlib import Path
 
 
@@ -23,14 +25,8 @@ def _imprimir(resultado: object) -> None:
     print(json.dumps(resultado, ensure_ascii=False, indent=2, default=str))
 
 
-def _nao_implementado(camada: str) -> int:
-    print(
-        f"A camada {camada} ainda é executada pelo notebook correspondente em "
-        f"notebooks/. A extração para o pacote é a fatia 4 do plano de "
-        f"reorganização.",
-        file=sys.stderr,
-    )
-    return 2
+def _sobrescrever(args: argparse.Namespace) -> bool:
+    return bool(getattr(args, "sobrescrever", False))
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -43,8 +39,14 @@ def main(argv: list[str] | None = None) -> int:
     )
     sub = parser.add_subparsers(dest="comando", required=True)
 
-    sub.add_parser("bronze", help="ingestão fiel das fontes oficiais")
-    sub.add_parser("silver", help="dimensões, fatos e de/paras")
+    p_bronze = sub.add_parser("bronze", help="ingestão fiel das fontes oficiais")
+    p_bronze.add_argument(
+        "--sobrescrever",
+        action="store_true",
+        help="reconsolida os Parquet mesmo que já cubram o recorte atual",
+    )
+    p_silver = sub.add_parser("silver", help="dimensões, fatos e de/paras")
+    p_silver.add_argument("--sobrescrever", action="store_true")
     sub.add_parser("gold", help="marts e indicadores")
     sub.add_parser("geografia", help="regiões, população e malhas")
     sub.add_parser("validar", help="validação integrada das três camadas")
@@ -60,14 +62,35 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     base: Path = args.base
 
-    if args.comando in {"bronze", "silver"}:
-        return _nao_implementado(args.comando.capitalize())
+    if args.comando == "bronze":
+        from medflow.bronze import executar as executar_bronze
+
+        manifesto = executar_bronze(base=base, sobrescrever=_sobrescrever(args))
+        _imprimir(manifesto["checks"])
+        return 0
+
+    if args.comando == "silver":
+        from medflow.silver import executar as executar_silver
+
+        _imprimir(executar_silver(base=base, sobrescrever=_sobrescrever(args)))
+        return 0
 
     if args.comando == "gold":
+        from medflow.geografia import gerar_geografia
         from medflow.gold import calcular_gold
 
+        # As duas etapas escrevem o mesmo contrato: calcular_gold grava os 7
+        # marts e gerar_geografia acrescenta as 2 dimensões geográficas. Rodar
+        # só a primeira trunca o contrato de 9 para 7 tabelas e apaga as
+        # dimensões do DICIONARIO. São uma camada só, e rodam juntas.
         marts = calcular_gold(base=base, sobrescrever=True)
-        _imprimir({nome: len(frame) for nome, frame in marts.items()})
+        geografia = gerar_geografia(base=base)
+        _imprimir(
+            {
+                "marts": {nome: len(frame) for nome, frame in marts.items()},
+                "geografia": geografia,
+            }
+        )
         return 0
 
     if args.comando == "geografia":

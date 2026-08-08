@@ -1,7 +1,7 @@
 {
   "camada": "silver",
   "versao_contrato": "0.3.0",
-  "gerado_em_utc": "2026-08-01T20:59:59.075157+00:00",
+  "gerado_em_utc": "2026-08-08T18:16:05.576171+00:00",
   "competencias": [
     "202401",
     "202402",
@@ -60,49 +60,49 @@
   },
   "tabelas": {
     "dim_tempo": {
-      "caminho": "dados/silver/dimensoes/dim_tempo.parquet",
+      "caminho": "data/silver/dimensoes/dim_tempo.parquet",
       "linhas": 29,
       "colunas": 6,
       "sha256": "8feedf8475897450f1e9594cb53ae7d9546006128e645f4b401fc46190a5a0dd"
     },
     "dim_hospital": {
-      "caminho": "dados/silver/dimensoes/dim_hospital.parquet",
+      "caminho": "data/silver/dimensoes/dim_hospital.parquet",
       "linhas": 653,
       "colunas": 24,
       "sha256": "4e84fccff8299d4422f2767957891d380a6f2566c57313e54a44e62f2b0e5d29"
     },
     "dim_municipio": {
-      "caminho": "dados/silver/dimensoes/dim_municipio.parquet",
+      "caminho": "data/silver/dimensoes/dim_municipio.parquet",
       "linhas": 645,
       "colunas": 12,
       "sha256": "c9d9ff981373459b25a46e0fe2a42667f1c0439106a492e0e344fa2d1bdd1c3b"
     },
     "dim_especialidade": {
-      "caminho": "dados/silver/dimensoes/dim_especialidade.parquet",
+      "caminho": "data/silver/dimensoes/dim_especialidade.parquet",
       "linhas": 15,
       "colunas": 4,
       "sha256": "5cdeb99c7a2d2cef79cb165d2ea958cfc6017e642b2650177e8178688baadac6"
     },
     "dim_cid": {
-      "caminho": "dados/silver/dimensoes/dim_cid.parquet",
+      "caminho": "data/silver/dimensoes/dim_cid.parquet",
       "linhas": 9494,
       "colunas": 9,
       "sha256": "3bf3c0f0f773f0055e83bc929b01140a4d4e920347ee9223136dbbdba4340a6f"
     },
     "dim_dominio": {
-      "caminho": "dados/silver/dimensoes/dim_dominio.parquet",
+      "caminho": "data/silver/dimensoes/dim_dominio.parquet",
       "linhas": 84,
       "colunas": 5,
       "sha256": "cceb3c807ae2edfe8c6760c9470f1be8c2b62c8974fc5d514434030e984a1766"
     },
     "fato_internacao": {
-      "caminho": "dados/silver/fatos/fato_internacao.parquet",
+      "caminho": "data/silver/fatos/fato_internacao.parquet",
       "linhas": 7034961,
       "colunas": 59,
       "sha256": "e38cf053850377a1b5b470f8fb50ec8bfa7ce355c9b2052506b8d406d0ee2f27"
     },
     "fato_leito_mensal": {
-      "caminho": "dados/silver/fatos/fato_leito_mensal.parquet",
+      "caminho": "data/silver/fatos/fato_leito_mensal.parquet",
       "linhas": 18690,
       "colunas": 9,
       "sha256": "9b193f5b4305ca2c43aad68dd3e2ba68d38106fe7d2d33c267f6040180f50d99"

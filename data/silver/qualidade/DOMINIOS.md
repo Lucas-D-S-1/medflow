@@ -11,4 +11,4 @@
 | `MARCA_UTI` | 14 | nenhum | 100.0000% | mapeado_multifonte | MS/DATASUS + CEM |
 | `NAT_JUR` | 21 | nenhum | 100.0000% | mapeado | CONCLA/IBGE 2021 |
 
-Os nomes acima identificam os campos das fontes Bronze. Os nomes canônicos estão em `contratos/MAPEAMENTO_COLUNAS_ORIGEM_SILVER.csv`.
+Os nomes acima identificam os campos das fontes Bronze. Os nomes canônicos estão em `contracts/dados/MAPEAMENTO_COLUNAS_ORIGEM_SILVER.csv`.
