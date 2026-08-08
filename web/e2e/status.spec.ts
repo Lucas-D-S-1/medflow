@@ -382,7 +382,7 @@ test('filtra a competência sem abandonar o mapa espacial e o tamanho da amostra
   )
 })
 
-test('renderiza os números reais do Oracle pelo proxy relativo', async ({ page }) => {
+test('@live renderiza os números reais do Oracle pelo proxy relativo', async ({ page }) => {
   await page.goto('/')
 
   await expect(page.getByTestId('source-badge')).toHaveText('Oracle ao vivo', { timeout: 15_000 })
@@ -1078,7 +1078,7 @@ test('não descreve contrato inválido como indisponibilidade do Oracle', async 
   )
 })
 
-test('não mistura metodologia snapshot com status Oracle ao vivo', async ({ page }) => {
+test('@live não mistura metodologia snapshot com status Oracle ao vivo', async ({ page }) => {
   await page.route('**/api/dev/v1/status', async (route) => {
     await route.fulfill({
       contentType: 'application/json',

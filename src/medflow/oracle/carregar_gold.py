@@ -26,7 +26,6 @@ from pathlib import Path
 import oracledb
 import pandas as pd
 
-
 # src/medflow/oracle/carregar_gold.py -> a raiz do repositório é três níveis acima
 RAIZ = Path(__file__).resolve().parents[3]
 GOLD = RAIZ / "data" / "gold"

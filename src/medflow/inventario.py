@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
-from hashlib import sha256
 import json
+from datetime import UTC, datetime
+from hashlib import sha256
 from pathlib import Path
 
 
@@ -31,7 +31,7 @@ def gerar_inventario(base: Path, destino: Path) -> dict:
         if caminho.is_file()
     )
     inventario = {
-        "gerado_em_utc": datetime.now(timezone.utc).isoformat(),
+        "gerado_em_utc": datetime.now(UTC).isoformat(),
         "base": ".",
         "quantidade_arquivos": len(arquivos),
         "bytes": sum(caminho.stat().st_size for caminho in arquivos),

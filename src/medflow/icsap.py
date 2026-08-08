@@ -11,7 +11,6 @@ from dataclasses import dataclass
 
 import pandas as pd
 
-
 FONTE_ICSAP = (
     "https://bvsms.saude.gov.br/bvs/saudelegis/sas/2008/"
     "prt0221_17_04_2008.html"

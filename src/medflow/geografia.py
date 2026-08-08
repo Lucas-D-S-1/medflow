@@ -2,26 +2,25 @@
 
 from __future__ import annotations
 
-from collections import defaultdict
-from datetime import datetime, timezone
-from hashlib import sha256
 import json
+from collections import defaultdict
+from datetime import UTC, datetime
+from hashlib import sha256
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from zipfile import ZipFile
 
 import pandas as pd
 import shapefile
+import topojson
 from shapely import make_valid, union_all
 from shapely.geometry import mapping, shape
-import topojson
 
 from medflow.contratos import (
     _contrato_tabela,
     _gravar_json,
     _renderizar_dicionario,
 )
-
 
 URL_MALHA_IBGE = (
     "https://geoftp.ibge.gov.br/organizacao_do_territorio/malhas_territoriais/"
@@ -105,7 +104,11 @@ def gerar_geografia(*, base: Path) -> dict[str, int]:
             str(Path(temporario) / "SP_Municipios_2024.shp"),
             encoding="cp1252",
         )
-        for registro, geometria in zip(leitor.iterRecords(), leitor.iterShapes()):
+        # registros e geometrias vêm do mesmo shapefile e têm sempre o mesmo
+        # comprimento; strict deixa isso explícito em vez de truncar em silêncio
+        for registro, geometria in zip(
+            leitor.iterRecords(), leitor.iterShapes(), strict=True
+        ):
             atributos = registro.as_dict()
             cd_municipio = str(atributos["CD_MUN"]).zfill(7)
             codigos_lidos.add(cd_municipio)
@@ -191,7 +194,7 @@ def gerar_geografia(*, base: Path) -> dict[str, int]:
             "formato": "topojson",
         },
     ]
-    contrato["gerado_em_utc"] = datetime.now(timezone.utc).isoformat()
+    contrato["gerado_em_utc"] = datetime.now(UTC).isoformat()
     _gravar_json(contrato_path, contrato)
     (base / "data" / "gold" / "DICIONARIO.md").write_text(
         _renderizar_dicionario(contrato),

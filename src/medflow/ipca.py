@@ -7,7 +7,6 @@ from pathlib import Path
 
 import pandas as pd
 
-
 FONTE_IPCA = "https://sidra.ibge.gov.br/tabela/1737"
 VARIAVEL_NUMERO_INDICE = "2266"
 

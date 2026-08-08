@@ -2,16 +2,15 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
-from hashlib import sha256
 import json
-from pathlib import Path
 import re
+from datetime import UTC, datetime
+from hashlib import sha256
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
 import pyarrow.parquet as pq
-
 
 PADRAO_NOME = re.compile(r"^[a-z][a-z0-9_]*$")
 
@@ -203,7 +202,7 @@ def validar(base: Path) -> dict[str, int | str]:
     assert not ausentes, f"artefatos pré-migração ausentes: {ausentes[:10]}"
 
     resultado: dict[str, int | str] = {
-        "validado_em_utc": datetime.now(timezone.utc).isoformat(),
+        "validado_em_utc": datetime.now(UTC).isoformat(),
         "bronze_tabelas": bronze_tabelas,
         "bronze_colunas_documentadas": bronze_colunas,
         "silver_tabelas": silver_tabelas,
