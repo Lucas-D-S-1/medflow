@@ -182,6 +182,33 @@ Riscos conhecidos, registrados para não virarem surpresa:
   ORDS em 200 e as 585.296 linhas Gold íntegras. **Próximo limite: 15/08.**
   A automação do ping ainda não existe e está em aberto.
 
+### 7b. O DATASUS publicou 2026-06 — decisão em aberto
+
+Detectado em **08/08/2026**, ao reexecutar a Bronze pelo pacote: a descoberta
+remota passou a encontrar **30 competências** (2024-01 a 2026-06), não as 29
+do recorte validado. O código está certo; a fonte é que avançou.
+
+Avançar o recorte **não é uma mudança de código, é uma mudança de produto**, e
+invalida tudo que está publicado hoje:
+
+| O que muda | Hoje |
+|---|---|
+| Reconciliações Silver/Gold | 7.034.961 AIH e 6.905.441 internações novas |
+| Carga no Oracle | 585.296 linhas em 9 tabelas |
+| Snapshots do webapp | 10 fixtures geradas sobre 2026-05 |
+| Validação do produto | 8.257.139 comparações contra a Gold atual |
+| Documentação e apresentação | todos os números citados |
+
+São 24 dias até a entrega. A recomendação é **congelar em 2026-05** até depois
+da apresentação e tratar 2026-06 como demonstração da parametrização, não como
+recorte oficial. A capacidade já existe e não exige editar código:
+
+```python
+ContextoBronze(base=BASE, periodo_final=(2026, 5))
+```
+
+A decisão precisa ser tomada e registrada aqui antes da fatia 5.
+
 ### 8. Revalidar o Select AI depois do produto
 
 O Select AI já passou pela validação técnica inicial. Depois que o webapp e

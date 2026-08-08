@@ -2,6 +2,9 @@
 *.dbf
 *.dbc
 *.parquet
+# Escrita atômica do pipeline: o arquivo só vira definitivo ao ser promovido.
+# Sem esta regra, uma execução interrompida deixa o .parcial rastreável.
+*.parcial
 dados/bronze/origem/datasus/
 dados/bronze/intermediario/dbf/
 dados/bronze/origem/referencias/*.json

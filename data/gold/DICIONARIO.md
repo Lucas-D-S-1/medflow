@@ -1,6 +1,6 @@
 # Dicionário da camada Gold — MedFlow
 
-Contrato de esquema `0.3.0`, gerado automaticamente em `2026-08-01T21:12:55.970726+00:00`.
+Contrato de esquema `0.3.0`, gerado automaticamente em `2026-08-08T18:36:24.349536+00:00`.
 
 ## Responsabilidade da camada
 
@@ -16,7 +16,7 @@ Contrato de esquema `0.3.0`, gerado automaticamente em `2026-08-01T21:12:55.9707
 
 Pressão estimada, capacidade e volume mensal por hospital.
 
-- Caminho: `dados/gold/marts/mart_indicador_hospital_mensal.parquet`
+- Caminho: `data/gold/marts/mart_indicador_hospital_mensal.parquet`
 - Grão: uma linha por hospital e competência
 - Linhas: 18,690
 - Chave lógica: `cd_cnes`, `cd_competencia`
@@ -63,7 +63,7 @@ Pressão estimada, capacidade e volume mensal por hospital.
 
 TMH e CMI por hospital, especialidade e competência.
 
-- Caminho: `dados/gold/marts/mart_indicador_hospital_especialidade_mensal.parquet`
+- Caminho: `data/gold/marts/mart_indicador_hospital_especialidade_mensal.parquet`
 - Grão: uma linha por hospital, especialidade e competência
 - Linhas: 52,525
 - Chave lógica: `cd_cnes`, `cd_especialidade_sih`, `cd_competencia`
@@ -99,7 +99,7 @@ TMH e CMI por hospital, especialidade e competência.
 
 IPR por hospital e diagnóstico no período completo.
 
-- Caminho: `dados/gold/marts/mart_indicador_hospital_cid_periodo.parquet`
+- Caminho: `data/gold/marts/mart_indicador_hospital_cid_periodo.parquet`
 - Grão: uma linha por hospital e CID principal
 - Linhas: 447,334
 - Chave lógica: `cd_cnes`, `cd_cid_principal`
@@ -129,7 +129,7 @@ IPR por hospital e diagnóstico no período completo.
 
 Indicadores consolidados para mapa e visão executiva regional.
 
-- Caminho: `dados/gold/marts/mart_indicador_regiao_mensal.parquet`
+- Caminho: `data/gold/marts/mart_indicador_regiao_mensal.parquet`
 - Grão: uma linha por região de saúde e competência
 - Linhas: 1,798
 - Chave lógica: `cd_regiao_saude`, `cd_competencia`
@@ -183,7 +183,7 @@ Indicadores consolidados para mapa e visão executiva regional.
 
 Resumo da distribuição do IPR elegível por região de saúde.
 
-- Caminho: `dados/gold/marts/mart_indicador_regiao_periodo.parquet`
+- Caminho: `data/gold/marts/mart_indicador_regiao_periodo.parquet`
 - Grão: uma linha por região de saúde no período
 - Linhas: 62
 - Chave lógica: `cd_regiao_saude`
@@ -206,7 +206,7 @@ Resumo da distribuição do IPR elegível por região de saúde.
 
 Tabela analítica mart_fluxo_assistencial_regiao_mensal.
 
-- Caminho: `dados/gold/marts/mart_fluxo_assistencial_regiao_mensal.parquet`
+- Caminho: `data/gold/marts/mart_fluxo_assistencial_regiao_mensal.parquet`
 - Grão: granularidade documentada pelo pipeline produtor
 - Linhas: 30,018
 - Chave lógica: sem unicidade assumida; usar o identificador da fonte e a competência
@@ -233,7 +233,7 @@ Tabela analítica mart_fluxo_assistencial_regiao_mensal.
 
 Tabela analítica mart_icsap_regiao_mensal.
 
-- Caminho: `dados/gold/marts/mart_icsap_regiao_mensal.parquet`
+- Caminho: `data/gold/marts/mart_icsap_regiao_mensal.parquet`
 - Grão: granularidade documentada pelo pipeline produtor
 - Linhas: 34,162
 - Chave lógica: sem unicidade assumida; usar o identificador da fonte e a competência
@@ -259,7 +259,7 @@ Tabela analítica mart_icsap_regiao_mensal.
 
 Municípios, população e hierarquia regional para integração geográfica.
 
-- Caminho: `dados/gold/geografia/dim_geografia_municipio.csv`
+- Caminho: `data/gold/geografia/dim_geografia_municipio.csv`
 - Grão: uma linha por município
 - Linhas: 645
 - Chave lógica: `cd_municipio_ibge_7`
@@ -281,7 +281,7 @@ Municípios, população e hierarquia regional para integração geográfica.
 
 Regiões de saúde, população agregada e quantidade de municípios.
 
-- Caminho: `dados/gold/geografia/dim_geografia_regiao.csv`
+- Caminho: `data/gold/geografia/dim_geografia_regiao.csv`
 - Grão: uma linha por região de saúde
 - Linhas: 62
 - Chave lógica: `cd_regiao_saude`
@@ -301,7 +301,7 @@ Regiões de saúde, população agregada e quantidade de municípios.
 
 Polígonos das 62 regiões de saúde, dissolvidos da malha municipal IBGE 2024.
 
-- Caminho: `dados/gold/geografia/mapa_regiao_saude_sp.geojson`
+- Caminho: `data/gold/geografia/mapa_regiao_saude_sp.geojson`
 - Fonte: https://geoftp.ibge.gov.br/organizacao_do_territorio/malhas_territoriais/malhas_municipais/municipio_2024/UFs/SP/SP_Municipios_2024.zip
 - Formato: `geojson`
 
@@ -309,6 +309,6 @@ Polígonos das 62 regiões de saúde, dissolvidos da malha municipal IBGE 2024.
 
 Topologia simplificada das regiões de saúde para mapas customizados no BI.
 
-- Caminho: `dados/gold/geografia/mapa_regiao_saude_sp.topojson`
+- Caminho: `data/gold/geografia/mapa_regiao_saude_sp.topojson`
 - Fonte: https://geoftp.ibge.gov.br/organizacao_do_territorio/malhas_territoriais/malhas_municipais/municipio_2024/UFs/SP/SP_Municipios_2024.zip
 - Formato: `topojson`
