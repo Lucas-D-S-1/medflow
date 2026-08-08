@@ -1,6 +1,6 @@
 # Dicionário da camada Gold — MedFlow
 
-Contrato de esquema `0.3.0`, gerado automaticamente em `2026-08-08T18:36:24.349536+00:00`.
+Contrato de esquema `0.3.0`, gerado automaticamente em `2026-08-08T18:46:00.467018+00:00`.
 
 ## Responsabilidade da camada
 

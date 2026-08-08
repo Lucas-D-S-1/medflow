@@ -15,6 +15,7 @@ from typing import Any
 
 import pandas as pd
 
+from medflow.config import obter_logger
 from medflow.silver.agregados import (
     agregar_base,
     base_hospital_cid,
@@ -37,6 +38,8 @@ from medflow.silver.dominios import (
     inventariar_natureza_juridica,
 )
 from medflow.silver.fatos import fato_internacao, fato_leito_mensal
+
+logger = obter_logger("silver")
 
 __all__ = [
     "EntradaSilver",
@@ -83,8 +86,8 @@ def construir(entrada: EntradaSilver) -> dict[str, Any]:
         internacoes_novas=internacoes_novas,
     )
     indices = status_indices()
-    print(pd.Series(metricas).to_string())
-    print("\n", indices.to_string(index=False))
+    logger.info("reconciliação da Silver:\n%s", pd.Series(metricas).to_string())
+    logger.info("contrato dos índices:\n%s", indices.to_string(index=False))
 
     return {
         "saidas": {
@@ -118,7 +121,7 @@ def executar(*, base: Path, sobrescrever: bool = False) -> dict[str, Any]:
         manifesto_bronze=entrada.manifesto,
         sobrescrever=sobrescrever,
     )
-    print("\nSILVER VÁLIDA — saídas e documentação gravadas.")
+    logger.info("SILVER VÁLIDA — saídas e documentação gravadas")
     return {
         "metricas": construido["metricas"],
         "tabelas": {nome: len(frame) for nome, frame in saidas_canonicas.items()},

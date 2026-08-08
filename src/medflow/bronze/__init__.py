@@ -17,6 +17,9 @@ from medflow.bronze.conversao import consolidar_todos, descomprimir
 from medflow.bronze.ingestao import baixar
 from medflow.bronze.manifesto import gerar as gerar_manifesto
 from medflow.bronze.referencias import baixar_todas
+from medflow.config import Config, obter_logger
+
+logger = obter_logger("bronze")
 
 __all__ = [
     "ContextoBronze",
@@ -29,22 +32,41 @@ __all__ = [
 ]
 
 
-def executar(*, base: Path, sobrescrever: bool = False) -> dict[str, Any]:
-    """Executa a Bronze inteira e devolve o manifesto."""
+def executar(
+    *,
+    config: Config | None = None,
+    base: Path | None = None,
+    sobrescrever: bool = False,
+) -> dict[str, Any]:
+    """Executa a Bronze inteira e devolve o manifesto.
+
+    Passe `config` para controlar o recorte. `base` sozinho continua aceito
+    por compatibilidade com os notebooks e usa o recorte do ambiente.
+    """
     from medflow.contratos import documentar_bronze
 
-    contexto = ContextoBronze(base=base, sobrescrever=sobrescrever)
+    if config is None:
+        config = Config.do_ambiente(base=base)
+    base = config.base
+
+    contexto = ContextoBronze.do_config(config, sobrescrever=sobrescrever)
     contexto.criar_diretorios()
     contexto.descobrir()
 
-    print("origem DBC       :", contexto.dir_dbc.relative_to(base))
-    print("intermediário DBF:", contexto.dir_dbf.relative_to(base))
-    print("bronze Parquet   :", contexto.dir_parquet.relative_to(base))
-    print("recorte:", contexto.uf, contexto.competencias[0], "a", contexto.competencias[-1])
-    print("competências comuns:", len(contexto.competencias))
-    print(
-        "última RD:", max(contexto.disponiveis["RD"]),
-        "| última LT:", max(contexto.disponiveis["LT"]),
+    logger.info("origem DBC        %s", contexto.dir_dbc.relative_to(base))
+    logger.info("intermediário DBF %s", contexto.dir_dbf.relative_to(base))
+    logger.info("bronze Parquet    %s", contexto.dir_parquet.relative_to(base))
+    logger.info(
+        "recorte efetivo   %s %s a %s (%d competências)",
+        contexto.uf,
+        contexto.competencias[0],
+        contexto.competencias[-1],
+        len(contexto.competencias),
+    )
+    logger.info(
+        "última publicada  RD %s | LT %s",
+        max(contexto.disponiveis["RD"]),
+        max(contexto.disponiveis["LT"]),
     )
 
     baixar(contexto)
@@ -54,5 +76,5 @@ def executar(*, base: Path, sobrescrever: bool = False) -> dict[str, Any]:
 
     manifesto = gerar_manifesto(contexto, referencias, evolucao_esquema)
     documentar_bronze(base=base, manifesto=manifesto)
-    print("\nBRONZE VÁLIDA — ingestão completa.")
+    logger.info("BRONZE VÁLIDA — ingestão completa")
     return manifesto

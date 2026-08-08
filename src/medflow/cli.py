@@ -15,10 +15,14 @@ import argparse
 import json
 from pathlib import Path
 
+from medflow.config import Config, configurar_logging
 
-def raiz_padrao() -> Path:
-    """A raiz do repositório, dois níveis acima de src/medflow."""
-    return Path(__file__).resolve().parents[2]
+
+def _competencia(texto: str) -> tuple[int, int]:
+    """Aceita AAAA-MM na linha de comando."""
+    from medflow.config import _competencia as converter
+
+    return converter(texto, "competência")
 
 
 def _imprimir(resultado: object) -> None:
@@ -30,12 +34,40 @@ def _sobrescrever(args: argparse.Namespace) -> bool:
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(prog="medflow", description=__doc__)
+    parser = argparse.ArgumentParser(
+        prog="medflow",
+        description=__doc__,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
     parser.add_argument(
         "--base",
         type=Path,
-        default=raiz_padrao(),
-        help="raiz do repositório (padrão: a raiz deduzida do próprio pacote)",
+        default=None,
+        help="raiz do repositório (padrão: MEDFLOW_BASE, ou a raiz do próprio pacote)",
+    )
+    parser.add_argument(
+        "--periodo-inicial",
+        type=_competencia,
+        default=None,
+        metavar="AAAA-MM",
+        help="primeira competência (padrão: MEDFLOW_PERIODO_INICIAL, ou 2024-01)",
+    )
+    parser.add_argument(
+        "--periodo-final",
+        type=_competencia,
+        default=None,
+        metavar="AAAA-MM",
+        help="última competência (padrão: MEDFLOW_PERIODO_FINAL, ou 2026-05)",
+    )
+    parser.add_argument("--uf", default=None, help="padrão: MEDFLOW_UF, ou SP")
+    parser.add_argument(
+        "--log-nivel", default=None, help="DEBUG, INFO, WARNING… (padrão: INFO)"
+    )
+    parser.add_argument(
+        "--log-formato",
+        choices=("texto", "json"),
+        default=None,
+        help="padrão: MEDFLOW_LOG_FORMATO, ou texto",
     )
     sub = parser.add_subparsers(dest="comando", required=True)
 
@@ -60,12 +92,20 @@ def main(argv: list[str] | None = None) -> int:
     )
 
     args = parser.parse_args(argv)
-    base: Path = args.base
+    configurar_logging(args.log_nivel, args.log_formato)
+
+    config = Config.do_ambiente(
+        base=args.base,
+        uf=args.uf,
+        periodo_inicial=args.periodo_inicial,
+        periodo_final=args.periodo_final,
+    )
+    base: Path = config.base
 
     if args.comando == "bronze":
         from medflow.bronze import executar as executar_bronze
 
-        manifesto = executar_bronze(base=base, sobrescrever=_sobrescrever(args))
+        manifesto = executar_bronze(config=config, sobrescrever=_sobrescrever(args))
         _imprimir(manifesto["checks"])
         return 0
 

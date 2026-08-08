@@ -16,6 +16,10 @@ from typing import Any
 
 import pandas as pd
 
+from medflow.config import obter_logger
+
+logger = obter_logger("silver.dominios")
+
 DEPARA_ESPEC = {
     "01": "Cirurgia", "02": "Obstetrícia", "03": "Clínica médica",
     "04": "Crônicos", "05": "Psiquiatria", "06": "Tisiologia",
@@ -196,7 +200,7 @@ def inventariar(sih: pd.DataFrame) -> list[dict[str, Any]]:
                 "status": status,
             }
         )
-    print(pd.DataFrame(inventario).to_string(index=False))
+    logger.info("cobertura dos de/para:\n%s", pd.DataFrame(inventario).to_string(index=False))
     assert sih.ESPEC.isin(DEPARA_ESPEC).all(), "há especialidade sem de/para"
     assert sih.IDENT.isin(DEPARA_IDENT).all(), "há IDENT não classificado"
     return inventario

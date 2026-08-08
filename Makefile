@@ -47,6 +47,9 @@ validar:  ## validação integrada das três camadas contra os contratos
 inventario:  ## inventário SHA-256 dos artefatos de dados
 	$(PY) -m medflow.cli inventario
 
+fixtures:  ## reancora o carimbo da Gold nos snapshots do webapp
+	$(PY) scripts/reancorar_fixtures.py
+
 # --------------------------------------------------------------- testes
 
 test: test-py test-web  ## suíte completa: Python e frontend

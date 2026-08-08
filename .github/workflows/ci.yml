@@ -32,6 +32,9 @@ jobs:
       - name: Pytest
         run: pytest -q
 
+      - name: Snapshots do webapp batem com o carimbo da Gold
+        run: python scripts/reancorar_fixtures.py --conferir
+
   web:
     name: Frontend — build e Playwright
     runs-on: ubuntu-latest

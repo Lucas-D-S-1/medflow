@@ -19,6 +19,9 @@ import pyarrow.parquet as pq
 from dbfread import DBF
 
 from medflow.bronze.contexto import GRUPOS, ContextoBronze
+from medflow.config import obter_logger
+
+logger = obter_logger("bronze.conversao")
 
 
 def descomprimir(contexto: ContextoBronze) -> int:
@@ -30,7 +33,7 @@ def descomprimir(contexto: ContextoBronze) -> int:
             dbf = contexto.caminho_dbf(grupo, ano, mes)
             if not dbf.exists():
                 datasus_dbc.decompress(str(dbc), str(dbf))
-                print("convertido:", dbf.name)
+                logger.info("convertido %s", dbf.name, extra={"competencia": f"{ano}-{mes:02d}"})
                 convertidos += 1
     return convertidos
 
@@ -78,7 +81,7 @@ def consolidar(
         if campos != campos_iniciais
     }
     if mudancas:
-        print(f"[{grupo}] evolução de esquema:", mudancas)
+        logger.warning("[%s] evolução de esquema: %s", grupo, mudancas)
 
     if destino.exists() and not contexto.sobrescrever:
         cobertura = pd.read_parquet(
@@ -86,7 +89,9 @@ def consolidar(
         ).drop_duplicates()
         competencias_destino = set(map(tuple, cobertura.to_numpy()))
         if competencias_destino == set(contexto.competencias):
-            print("já existe com o recorte atual; validaremos sem substituir:", destino.name)
+            logger.info(
+                "já existe com o recorte atual, não será substituído: %s", destino.name
+            )
             return mudancas
 
     temporario = destino.with_suffix(".parquet.parcial")
@@ -116,7 +121,11 @@ def consolidar(
                 writer = pq.ParquetWriter(temporario, esquema_union, compression="snappy")
             writer.write_table(tabela)
             total += len(frame)
-            print(f"[{grupo}] {ano}-{mes:02d}: {len(frame):,} | acumulado {total:,}")
+            logger.info(
+                "[%s] %s linhas | acumulado %s",
+                grupo, f"{len(frame):,}", f"{total:,}",
+                extra={"competencia": f"{ano}-{mes:02d}"},
+            )
     finally:
         if writer is not None:
             writer.close()

@@ -13,9 +13,14 @@ from dataclasses import dataclass, field
 from ftplib import FTP
 from pathlib import Path
 
+from medflow.config import Config, obter_logger
+
+logger = obter_logger("bronze.contexto")
+
 UF = "SP"
 PERIODO_INICIAL = (2024, 1)
-PERIODO_FINAL = (2026, 12)
+# O padrão vem de config.PERIODO_FINAL_PADRAO, para existir num lugar só.
+PERIODO_FINAL = Config().periodo_final
 FTP_HOST = "ftp.datasus.gov.br"
 FTP_DIRS = {
     "RD": "/dissemin/publicos/SIHSUS/200801_/Dados",
@@ -62,7 +67,12 @@ def extrair_competencias(
 
 @dataclass
 class ContextoBronze:
-    """Caminhos e recorte de uma execução da Bronze."""
+    """Caminhos e recorte de uma execução da Bronze.
+
+    Prefira `ContextoBronze.do_config()`, que respeita as variáveis de
+    ambiente. O construtor direto continua servindo para testes e para fixar
+    um recorte específico em código.
+    """
 
     base: Path
     uf: str = UF
@@ -73,6 +83,16 @@ class ContextoBronze:
     listagens_remotas: dict[str, dict[str, str]] = field(default_factory=dict)
     disponiveis: dict[str, set[tuple[int, int]]] = field(default_factory=dict)
     competencias: list[tuple[int, int]] = field(default_factory=list)
+
+    @classmethod
+    def do_config(cls, config: Config, *, sobrescrever: bool = False) -> ContextoBronze:
+        return cls(
+            base=config.base,
+            uf=config.uf,
+            periodo_inicial=config.periodo_inicial,
+            periodo_final=config.periodo_final,
+            sobrescrever=sobrescrever,
+        )
 
     # -------------------------------------------------------------- caminhos
 
