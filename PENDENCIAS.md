@@ -178,6 +178,9 @@ Riscos conhecidos, registrados para não virarem surpresa:
   testados novamente antes da apresentação.
 - **Always Free hiberna por inatividade.** Conectar ao menos uma vez por semana
   e confirmar o estado `Disponível` na véspera da apresentação.
+  Último ping verificado em **08/08/2026**: conexão mTLS ok, os 10 endpoints
+  ORDS em 200 e as 585.296 linhas Gold íntegras. **Próximo limite: 15/08.**
+  A automação do ping ainda não existe e está em aberto.
 
 ### 8. Revalidar o Select AI depois do produto
 
