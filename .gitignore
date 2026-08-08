@@ -2,12 +2,12 @@
 *.dbf
 *.dbc
 *.parquet
-02_oracle_medflow/sprint_2_em_andamento/dados/bronze/origem/datasus/
-02_oracle_medflow/sprint_2_em_andamento/dados/bronze/intermediario/dbf/
-02_oracle_medflow/sprint_2_em_andamento/dados/bronze/origem/referencias/*.json
-02_oracle_medflow/sprint_2_em_andamento/dados/bronze/origem/referencias/*.zip
-02_oracle_medflow/sprint_2_em_andamento/dados/bronze/origem/referencias/*.html
-02_oracle_medflow/sprint_2_em_andamento/dados/bronze/origem/referencias/geografia/
+dados/bronze/origem/datasus/
+dados/bronze/intermediario/dbf/
+dados/bronze/origem/referencias/*.json
+dados/bronze/origem/referencias/*.zip
+dados/bronze/origem/referencias/*.html
+dados/bronze/origem/referencias/geografia/
 
 # Ambiente
 .venv/
@@ -60,14 +60,8 @@ truststore.jks
 # Metadados locais do Windows
 Thumbs.db
 
-# Asset oficial do Enterprise Challenge (203 MB; manter localmente)
-02_oracle_medflow/materiais_oficiais/asset.rar
-
-# Artefatos legados da Fase 4 com credencial Redis embutida (manter locais)
-00_fases/fase_1/assets/Cap 01 - PBL/4a_entrega_codigo_fonte_python_gera_mapa_html.txt
-00_fases/fase_4/assets/Cap 01 - PBL/4a_entrega_codigo_fonte_python_gera_mapa_html.txt
-01_pbl_cidade_alfa/entregues/fase_4/original/Omega_Urban_Tech_PBL_Fase_4.zip
-01_pbl_cidade_alfa/entregues/fase_4/conteudo_extraido/4ª_entrega_Omega_Urban_Tech_codigo_fonte_python_gera_mapa_html.txt
+# Material oficial do Challenge e artefatos de outras fases do curso ficam no
+# repositório acadêmico fiap-1tscoa; não têm caminho equivalente aqui.
 01_pbl_cidade_alfa/entregues/fase_4/conteudo_extraido/4ª_entrega_Omega_Urban_Tech_codigo_python_gera_mapa_html.pdf
 
 # Repositorio independente, com remote proprio
