@@ -2,9 +2,8 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from hashlib import sha256
-import json
 from pathlib import Path
 from typing import Any
 
@@ -19,7 +18,6 @@ from medflow.contratos import (
 )
 from medflow.icsap import VERSAO_LISTA_ICSAP, classificar_icsap, dimensao_grupo_icsap
 from medflow.ipca import carregar_ipca
-
 
 COLUNAS_FATO = [
     "id_aih",
@@ -905,7 +903,7 @@ def calcular_gold(*, base: Path, sobrescrever: bool = False) -> dict[str, pd.Dat
     contrato = {
         "camada": "gold",
         "versao_contrato": VERSAO_CONTRATO,
-        "gerado_em_utc": datetime.now(timezone.utc).isoformat(),
+        "gerado_em_utc": datetime.now(UTC).isoformat(),
         "principios": [
             "Marts orientados às perguntas de gestão e ao consumo no BI.",
             "Toda métrica expõe amostra, numerador, denominador ou estado de calculabilidade.",
@@ -971,7 +969,7 @@ def calcular_gold(*, base: Path, sobrescrever: bool = False) -> dict[str, pd.Dat
     metadados = {
         "camada": "gold",
         "versao_contrato": VERSAO_CONTRATO,
-        "gerado_em_utc": datetime.now(timezone.utc).isoformat(),
+        "gerado_em_utc": datetime.now(UTC).isoformat(),
         "metricas": metricas,
         "tabelas": {
             nome: {

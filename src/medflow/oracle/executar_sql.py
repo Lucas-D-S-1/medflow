@@ -7,11 +7,10 @@ Entende os comandos de apresentação usados nos arquivos (`set`, `column` e
 from __future__ import annotations
 
 import argparse
-from pathlib import Path
 import re
+from pathlib import Path
 
 from carregar_gold import conectar
-
 
 COMANDOS_CLIENTE = ("set ", "column ")
 

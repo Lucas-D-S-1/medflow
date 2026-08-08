@@ -1,0 +1,67 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "medflow"
+version = "0.3.0.dev0"
+description = "Pipeline Bronze/Silver/Gold e indicadores hospitalares do SUS para o Estado de São Paulo"
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "MIT" }
+authors = [{ name = "Lucas" }]
+
+# Fixadas nas versões com que o recorte 2024-01 a 2026-05 foi validado.
+# Trocar uma delas exige reexecutar o pipeline e conferir os SHA-256 dos
+# parquets contra contracts/INVENTARIO_PRE_REORG.json.
+dependencies = [
+    "pandas==2.3.3",
+    "pyarrow==25.0.0",
+    "numpy==2.5.1",
+    "oracledb==4.0.2",
+    "python-dotenv==1.2.2",
+    "requests==2.34.2",
+]
+
+[project.optional-dependencies]
+# Geometria regional: só é necessária para regerar o GeoJSON e o TopoJSON.
+geografia = [
+    "pyshp>=2.3,<3",
+    "shapely>=2.0,<3",
+    "topojson>=1.10,<2",
+]
+# Notebooks de análise e evidência.
+notebooks = [
+    "jupyter==1.1.1",
+    "ipykernel==7.3.0",
+    "matplotlib==3.11.1",
+]
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.6",
+]
+
+[project.scripts]
+medflow = "medflow.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/Lucas-D-S-1/medflow"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/medflow"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+
+[tool.ruff]
+line-length = 100
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+# E501 fica fora por ora: são 82 linhas longas em código de pipeline já
+# validado contra o recorte 2024-2026, e reformatá-las agora seria churn sem
+# retorno. Bronze e Silver são reescritos na fatia 4 e nascem dentro do
+# limite; quando o backlog restante couber numa revisão, esta linha sai.
+ignore = ["E501"]

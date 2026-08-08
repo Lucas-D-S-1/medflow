@@ -7,7 +7,6 @@ from pathlib import Path
 
 import oracledb
 
-
 VARIAVEIS_OBRIGATORIAS = (
     "ORACLE_USER",
     "ORACLE_PASSWORD",

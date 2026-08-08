@@ -2,16 +2,15 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
-from hashlib import sha256
 import csv
 import json
+from datetime import UTC, datetime
+from hashlib import sha256
 from pathlib import Path
 from typing import Any
 
 import pandas as pd
 import pyarrow.parquet as pq
-
 
 VERSAO_CONTRATO = "0.3.0"
 
@@ -304,7 +303,7 @@ DESCRICOES_TABELAS = {
 
 
 def _agora_utc() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 def _hash_arquivo(caminho: Path, bloco: int = 1024 * 1024) -> str:
