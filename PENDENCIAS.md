@@ -212,33 +212,57 @@ Próximo marco sugerido: **`v0.3.0` — Oracle e webapp MVP**.
 | Link público | 10% | **etapa atual** — só existe `api/dev/v1`; publicação a confirmar e testar |
 | Validação dos dados no produto | — | concluída: 8.257.139 comparações, zero divergências |
 | Oracle Select AI | — | validado tecnicamente; revalidar após o produto |
-| GitHub | 20% | `v0.2.0` publicada |
+| GitHub | 20% | `v0.2.0` publicada; repositório de entrega passou a ser `medflow` |
 | PPT / pitch | 10% | aguarda produto validado |
 | Vídeo YouTube | 10% | aguarda produto validado |
 | Apresentação técnica | 50% | aguarda produto e Select AI revalidados |
 
+## Reorganização em curso
+
+Iniciada em 08/08/2026. Este repositório passou a ser o de entrega; o
+`fiap-1tscoa` continua como arquivo acadêmico. A linhagem original da v0.1.0
+está preservada na branch `arquivo/v0-2026-07` e nas tags `v0` e `v0.1.0`.
+
+| Fatia | Estado |
+|---:|---|
+| 0 | congelada: `contracts/INVENTARIO_PRE_REORG.json`, tag `pre-reorg` |
+| 0b | descrição e topics do repositório corrigidos |
+| 1 | histórico filtrado publicado como novo `main` |
+| 2 | árvore na estrutura-alvo |
+| 3 | `pyproject.toml`, `cli.py`, `Makefile` e CI |
+| 4 a 10 | pendentes |
+
+**Portão da fatia 4:** os 48 parquets precisam manter o SHA-256 registrado em
+`contracts/INVENTARIO_PRE_REORG.json` depois que Bronze e Silver saírem dos
+notebooks. Conferir com `medflow inventario` e comparar.
+
 ## Organização vigente
 
 ```text
-sprint_2_em_andamento/
-├── notebooks/         fontes 00, 01 e 02; executados e legado separados
-├── pipeline/          publicação, contratos, Gold, geografia e inventário
-├── contratos/         JSON, mapeamento de colunas e inventário SHA-256
-├── oracle/
-│   ├── sql/views/     nove views de projeção pura; a fatia 8 reusa a da 7
-│   ├── sql/ords/      módulos ORDS; o 03 redefine o módulo inteiro
-│   └── *.py           conexão mTLS, carga e executor SQL
-├── webapp/
+medflow/
+├── src/medflow/       pacote: gold, contratos, icsap, ipca, geografia,
+│   │                  validar, inventario, cli
+│   └── oracle/        conexão mTLS, carga e executor SQL
+├── db/                o backend é o banco
+│   ├── schema/        usuário, tabelas Gold e validação da carga
+│   ├── views/         nove views de projeção pura; a fatia 8 reusa a da 7
+│   ├── ords/          módulos ORDS; o 03 redefine o módulo inteiro
+│   └── select_ai/     perguntas e SQL de referência
+├── web/
 │   ├── src/api/       um cliente por endpoint, com validação estrita
 │   ├── src/components/ componentes reusados entre as visões
 │   ├── src/routes/    uma rota por visão
 │   ├── src/fixtures/  snapshots de contingência, um por endpoint
-│   └── tests/         suíte Playwright
-├── dados/
-│   ├── bronze/        origem, intermediário, Parquet e manifesto
-│   ├── silver/        dimensões, fatos e qualidade
-│   ├── gold/          marts, geografia e qualidade
-│   └── legado/        contratos e recortes anteriores
-├── figuras/           Gold e legado separados
-└── referencias/       protótipos da Sprint 1 isolados
+│   └── e2e/           Playwright: 29 herméticos e 2 marcados @live
+├── contracts/
+│   ├── dados/         contratos Bronze, Silver e Gold, e o mapeamento
+│   └── INVENTARIO_*   baselines SHA-256 de 29/07 e da fatia 0
+├── notebooks/         fontes 00, 01 e 02
+├── data/              gitignored: bronze, silver, gold, legado
+├── docs/
+│   ├── decisoes/      DECISOES e a revisão de requisitos
+│   ├── pesquisa/      desk research
+│   ├── qualidade/     validações, figuras e notebooks executados
+│   └── entregas/      sprint 1
+└── tests/             pytest
 ```
