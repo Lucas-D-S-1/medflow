@@ -27,6 +27,9 @@ from medflow.bronze.referencias import (
     URL_REGIOES_CSV,
     ReferenciasBronze,
 )
+from medflow.config import obter_logger
+
+logger = obter_logger("bronze.manifesto")
 
 
 def hash_arquivo(caminho: Path, bloco: int = 1024 * 1024) -> str:
@@ -89,7 +92,8 @@ def gerar(
     """Reconcilia, grava o MANIFESTO.json e devolve o manifesto."""
     checks, validacoes = _reconciliar(contexto, ref)
     for chave, valor in checks.items():
-        print(f"{chave:<32} {valor:>12,} | {'OK' if validacoes[chave] else 'FALHOU'}")
+        nivel = logger.info if validacoes[chave] else logger.error
+        nivel("%-32s %12s | %s", chave, f"{valor:,}", "OK" if validacoes[chave] else "FALHOU")
     assert all(validacoes.values()), {
         chave: checks[chave] for chave, ok in validacoes.items() if not ok
     }

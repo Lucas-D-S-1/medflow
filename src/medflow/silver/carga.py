@@ -15,6 +15,10 @@ from zipfile import ZipFile
 
 import pandas as pd
 
+from medflow.config import obter_logger
+
+logger = obter_logger("silver.carga")
+
 COLS_SIH = [
     "N_AIH", "IDENT", "CNES", "MUNIC_MOV", "MUNIC_RES", "ESPEC",
     "QT_DIARIAS", "DIAS_PERM", "MORTE", "VAL_TOT", "DIAG_PRINC",
@@ -61,8 +65,8 @@ def carregar(base: Path) -> EntradaSilver:
 
     arq_sih = dir_parquet / manifesto["arquivos"]["sih"]["caminho"]
     arq_cnes = dir_parquet / manifesto["arquivos"]["cnes"]["caminho"]
-    print("entrada:", dir_parquet.relative_to(base))
-    print("saída  :", (base / "data" / "silver").relative_to(base))
+    logger.info("entrada %s", dir_parquet.relative_to(base))
+    logger.info("saída   %s", (base / "data" / "silver").relative_to(base))
 
     sih = pd.read_parquet(arq_sih, columns=COLS_SIH)
     cnes = pd.read_parquet(arq_cnes)
@@ -93,9 +97,9 @@ def carregar(base: Path) -> EntradaSilver:
     sih["_ano"] = pd.to_numeric(sih["ANO_CMPT"], errors="raise").astype("int16")
     sih["_mes"] = pd.to_numeric(sih["MES_CMPT"], errors="raise").astype("int8")
 
-    print(f"SIH : {sih.shape[0]:,} × {sih.shape[1]}")
-    print(f"CNES: {cnes.shape[0]:,} × {cnes.shape[1]}")
-    print("IDENT:", sih.IDENT.value_counts(dropna=False).to_dict())
+    logger.info("SIH  %s linhas × %d colunas", f"{sih.shape[0]:,}", sih.shape[1])
+    logger.info("CNES %s linhas × %d colunas", f"{cnes.shape[0]:,}", cnes.shape[1])
+    logger.info("IDENT %s", sih.IDENT.value_counts(dropna=False).to_dict())
 
     return EntradaSilver(
         base=base,

@@ -30,6 +30,9 @@ from zipfile import ZipFile
 import pandas as pd
 
 from medflow.bronze.contexto import ContextoBronze
+from medflow.config import obter_logger
+
+logger = obter_logger("bronze.referencias")
 
 URL_IBGE = "https://servicodados.ibge.gov.br/api/v1/localidades/estados/35/municipios"
 URL_REGIOES = (
@@ -120,7 +123,7 @@ def _baixar_ibge(contexto: ContextoBronze, ref: ReferenciasBronze) -> None:
         destino.write_bytes(conteudo)
     ref.arquivos["ibge"] = destino
     ref.municipios_ibge = len(json.loads(conteudo))
-    print("IBGE:", ref.municipios_ibge, "registros")
+    logger.info("IBGE: %d municípios", ref.municipios_ibge)
 
 
 def _baixar_regioes(contexto: ContextoBronze, ref: ReferenciasBronze) -> None:
@@ -164,7 +167,7 @@ def _baixar_concla(contexto: ContextoBronze, ref: ReferenciasBronze) -> None:
     destino = contexto.dir_referencias / "ibge_concla_natureza_juridica_2021.html"
     baixar_referencia(URL_CONCLA, destino, sobrescrever=contexto.sobrescrever)
     ref.arquivos["natureza_juridica_concla"] = destino
-    print("CONCLA natureza jurídica:", destino.stat().st_size, "bytes")
+    logger.info("CONCLA natureza jurídica: %d bytes", destino.stat().st_size)
 
 
 def _baixar_ipca(contexto: ContextoBronze, ref: ReferenciasBronze) -> None:
@@ -212,7 +215,7 @@ def _baixar_cnes_atual(contexto: ContextoBronze, ref: ReferenciasBronze) -> None
         respostas = dict(registros_cache)
 
     if faltantes:
-        print("estabelecimentos CNES a consultar:", len(faltantes))
+        logger.info("estabelecimentos CNES a consultar: %d", len(faltantes))
         with ThreadPoolExecutor(max_workers=12) as executor:
             futuros = [executor.submit(_consultar_cnes, codigo) for codigo in faltantes]
             for futuro in as_completed(futuros):
@@ -250,7 +253,9 @@ def baixar_todas(contexto: ContextoBronze) -> ReferenciasBronze:
     _baixar_ipca(contexto, ref)
     _baixar_cnes_atual(contexto, ref)
 
-    print("regiões/municípios MS:", len(ref.regioes))
-    print("arquivos no pacote CID-10:", len(ref.arquivos_cid))
-    print("estabelecimentos CNES atuais:", len(ref.cnes_atual_payload["registros"]))
+    logger.info("regiões/municípios MS: %d", len(ref.regioes))
+    logger.info("arquivos no pacote CID-10: %d", len(ref.arquivos_cid))
+    logger.info(
+        "estabelecimentos CNES atuais: %d", len(ref.cnes_atual_payload["registros"])
+    )
     return ref

@@ -14,6 +14,7 @@ from zipfile import ZipFile
 import numpy as np
 import pandas as pd
 
+from medflow.config import obter_logger
 from medflow.silver.carga import EntradaSilver
 from medflow.silver.dominios import (
     CID_COMPLEMENTAR,
@@ -24,6 +25,8 @@ from medflow.silver.dominios import (
     classificar_cid,
     normaliza_codigo,
 )
+
+logger = obter_logger("silver.dimensoes")
 
 
 def dimensao_tempo(competencias: list[tuple[int, int]]) -> pd.DataFrame:
@@ -212,13 +215,16 @@ def dimensao_hospital(entrada: EntradaSilver) -> tuple[pd.DataFrame, pd.DataFram
     )
     dim_hospital["fl_cadastro_atual_nao_historico"] = np.int8(1)
 
-    print(dim_hospital.origem_regiao.value_counts(dropna=False).to_string())
-    print("hospitais com nome atual:", dim_hospital.hospital_nome_atual.notna().sum())
-    print(
-        "hospitais com esfera atual:",
-        dim_hospital.esfera_administrativa_atual.notna().sum(),
+    logger.info(
+        "origem da região:\n%s",
+        dim_hospital.origem_regiao.value_counts(dropna=False).to_string(),
     )
-    print("hospitais com natureza jurídica:", dim_hospital.natureza_juridica.notna().sum())
+    logger.info(
+        "hospitais com nome atual %d | esfera atual %d | natureza jurídica %d",
+        dim_hospital.hospital_nome_atual.notna().sum(),
+        dim_hospital.esfera_administrativa_atual.notna().sum(),
+        dim_hospital.natureza_juridica.notna().sum(),
+    )
     return dim_hospital, regioes_oficiais
 
 

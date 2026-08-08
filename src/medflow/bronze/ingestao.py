@@ -11,6 +11,9 @@ from __future__ import annotations
 from ftplib import FTP
 
 from medflow.bronze.contexto import FTP_DIRS, FTP_HOST, GRUPOS, ContextoBronze
+from medflow.config import obter_logger
+
+logger = obter_logger("bronze.ingestao")
 
 
 def baixar_grupo(contexto: ContextoBronze, grupo: str) -> int:
@@ -18,7 +21,7 @@ def baixar_grupo(contexto: ContextoBronze, grupo: str) -> int:
     alvos = [contexto.nome(grupo, ano, mes) for ano, mes in contexto.competencias]
     faltantes = [nome for nome in alvos if not (contexto.dir_dbc / nome).exists()]
     if not faltantes:
-        print(f"[{grupo}] {len(alvos)} arquivos no cache")
+        logger.info("[%s] %d arquivos já no cache", grupo, len(alvos))
         return 0
 
     ftp = FTP(FTP_HOST, timeout=120)
@@ -34,7 +37,7 @@ def baixar_grupo(contexto: ContextoBronze, grupo: str) -> int:
             with parcial.open("wb") as arquivo:
                 ftp.retrbinary(f"RETR {real}", arquivo.write)
             parcial.rename(destino)
-            print("baixado:", nome)
+            logger.info("[%s] baixado %s", grupo, nome)
     finally:
         try:
             ftp.quit()

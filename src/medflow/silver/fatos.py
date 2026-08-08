@@ -14,6 +14,7 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
+from medflow.config import obter_logger
 from medflow.silver.dominios import (
     DEPARA_CAR_INT,
     DEPARA_COD_IDADE,
@@ -23,6 +24,8 @@ from medflow.silver.dominios import (
     DEPARA_SEXO,
     DEPARA_UTI,
 )
+
+logger = obter_logger("silver.fatos")
 
 COLS_FATO = [
     "N_AIH", "IDENT", "ident_descricao", "CNES", "municipio_cod6", "municipio_res_cod6",
@@ -124,7 +127,7 @@ def fato_internacao(
     )
 
     resultado = fato[COLS_FATO]
-    print("fato_internacao:", resultado.shape)
+    logger.info("fato_internacao %s linhas × %d colunas", f"{resultado.shape[0]:,}", resultado.shape[1])
     return resultado
 
 

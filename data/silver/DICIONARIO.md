@@ -1,6 +1,6 @@
 # Dicionário da camada Silver — MedFlow
 
-Contrato de esquema `0.3.0`, gerado automaticamente em `2026-08-08T18:16:05.574311+00:00`.
+Contrato de esquema `0.3.0`, gerado automaticamente em `2026-08-08T18:45:02.478431+00:00`.
 
 ## Responsabilidade da camada
 
