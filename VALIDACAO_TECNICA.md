@@ -1,6 +1,6 @@
 # Validação técnica integrada — MedFlow 0.3.0
 
-Executada em `2026-08-08T18:36:49.598858+00:00`.
+Executada em `2026-08-09T23:59:02.889305+00:00`.
 
 ## Resultado
 

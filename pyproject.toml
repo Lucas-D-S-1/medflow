@@ -19,7 +19,7 @@ dependencies = [
     "pyarrow==25.0.0",
     "numpy==2.5.1",
     "oracledb==4.0.2",
-    "python-dotenv==1.2.2",
+    "python-dotenv[cli]==1.2.2",
     "requests==2.34.2",
     # Bronze: descompressão DBC do DATASUS e leitura do DBF resultante.
     "datasus-dbc==0.1.3",
