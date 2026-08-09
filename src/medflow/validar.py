@@ -60,21 +60,51 @@ def validar(base: Path) -> dict[str, int | str]:
     silver_tabelas, silver_colunas = _validar_contrato(base, "silver")
     gold_tabelas, gold_colunas = _validar_contrato(base, "gold")
 
+    manifesto_bronze = json.loads(
+        (base / "data" / "bronze" / "MANIFESTO.json").read_text()
+    )
     metadados_silver = json.loads(
         (base / "data" / "silver" / "qualidade" / "METADADOS.json").read_text()
     )
     metadados_gold = json.loads(
         (base / "data" / "gold" / "qualidade" / "METADADOS.json").read_text()
     )
-    assert metadados_silver["metricas"]["linhas_sih_reconciliadas"] == 7_034_961
-    assert metadados_silver["metricas"]["internacoes_novas"] == 6_905_441
-    assert metadados_gold["metricas"]["internacoes_novas_reconciliadas"] == 6_905_441
-    assert metadados_gold["metricas"]["regioes_saude"] == 62
-    assert metadados_gold["metricas"]["competencias"] == 29
-    assert metadados_gold["metricas"]["linhas_is_calculadas"] == 310
-    assert metadados_gold["metricas"]["internacoes_residentes_sp_observadas"] == 6_846_665
-    assert metadados_gold["metricas"]["internacoes_residentes_fora_sp_atendidas"] == 58_776
-    assert metadados_gold["metricas"]["internacoes_icsap_residentes_sp_observadas"] == 953_656
+    geografia = json.loads(
+        (base / "data" / "gold" / "geografia" / "METADADOS.json").read_text()
+    )
+    silver = metadados_silver["metricas"]
+    gold = metadados_gold["metricas"]
+
+    # Estruturais de São Paulo na divisão oficial do Ministério da Saúde.
+    # Independem do recorte; se mudarem, foi a realidade que mudou.
+    assert geografia["municipios"] == 645
+    assert geografia["macrorregioes_saude"] == 19
+
+    # Invariantes ENTRE CAMADAS. Antes eram totais memorizados do recorte de
+    # 29 competências, o que fazia a validação quebrar sempre que o recorte
+    # avançasse — e um total memorizado não prova consistência, só prova que
+    # ninguém mexeu. Estas igualdades valem para qualquer recorte e provam o
+    # que interessa: nada se perdeu nem foi inventado entre as camadas.
+    assert silver["linhas_sih_reconciliadas"] == manifesto_bronze["checks"]["linhas_sih"]
+    assert silver["linhas_cnes_reconciliadas"] == manifesto_bronze["checks"]["linhas_cnes"]
+    assert (
+        silver["internacoes_novas"] + silver["continuacoes_longa_permanencia"]
+        == silver["linhas_sih_reconciliadas"]
+    )
+    assert gold["internacoes_novas_reconciliadas"] == silver["internacoes_novas"]
+    assert gold["competencias"] == len(manifesto_bronze["recorte"]["competencias"])
+    assert 0 < gold["internacoes_residentes_sp_observadas"] <= silver["internacoes_novas"]
+    assert 0 <= gold["internacoes_icsap_residentes_sp_observadas"] <= (
+        gold["internacoes_residentes_sp_observadas"]
+    )
+    assert gold["internacoes_residentes_fora_sp_atendidas"] >= 0
+    assert gold["linhas_is_calculadas"] >= 0
+
+    # Invariantes ESTRUTURAIS, independentes do recorte: São Paulo tem 62
+    # regiões e 19 macrorregiões de saúde na divisão oficial do Ministério da
+    # Saúde, e a lista oficial de ICSAP tem 19 grupos. Se um destes mudar, é
+    # a realidade que mudou, e a mudança precisa ser deliberada.
+    assert gold["regioes_saude"] == 62
 
     dir_marts = base / "data" / "gold" / "marts"
     hospital_mensal = pd.read_parquet(
@@ -139,23 +169,31 @@ def validar(base: Path) -> dict[str, int | str]:
         / regiao_mensal.qt_populacao_ibge_2022
         * 100_000,
     )
-    assert fluxo_mensal.qt_internacao_nova.sum() == 6_905_441
-    assert regiao_mensal.qt_internacao_residente_observada.sum() == 6_846_665
+    # O fluxo assistencial reparticiona as mesmas internações novas da Silver.
+    assert fluxo_mensal.qt_internacao_nova.sum() == silver["internacoes_novas"]
+    assert (
+        regiao_mensal.qt_internacao_residente_observada.sum()
+        == gold["internacoes_residentes_sp_observadas"]
+    )
+    # Todo residente paulista internado em SP ou ficou na própria região, ou
+    # evadiu para outra. Não há terceira possibilidade, em nenhum recorte.
     assert (
         regiao_mensal.qt_internacao_residente_na_propria_regiao.sum()
         + regiao_mensal.qt_evasao_intrastadual_observada.sum()
-        == 6_846_665
+        == gold["internacoes_residentes_sp_observadas"]
     )
+    # Quem sai de uma região entra em outra: a evasão estadual tem de fechar
+    # exatamente com a recepção. É a identidade que prova a matriz de fluxos.
     assert (
         regiao_mensal.qt_evasao_intrastadual_observada.sum()
         == regiao_mensal.qt_internacao_recebida_outra_regiao_sp.sum()
-        == 906_060
     )
     assert (
         icsap_mensal.qt_internacao_icsap.sum()
         == regiao_mensal.qt_internacao_icsap_residente_observada.sum()
-        == 953_656
+        == gold["internacoes_icsap_residentes_sp_observadas"]
     )
+    # Os 19 grupos da lista oficial de ICSAP; estrutural, não do recorte.
     assert icsap_mensal.cd_grupo_icsap.nunique() == 19
     assert np.allclose(
         hospital_mensal.vl_aprovado_internacao_nova_real_soma,
@@ -210,12 +248,15 @@ def validar(base: Path) -> dict[str, int | str]:
         "gold_tabelas": gold_tabelas,
         "gold_colunas_documentadas": gold_colunas,
         "artefatos_pre_migracao_preservados": len(preservados),
-        "aih_reconciliadas": 7_034_961,
-        "internacoes_novas_reconciliadas": 6_905_441,
-        "municipios": 645,
-        "regioes_saude": 62,
-        "macrorregioes_saude": 19,
-        "competencias": 29,
+        # Medidos, nunca memorizados: um relatório com número fixo continua
+        # afirmando o recorte antigo depois que o recorte avança, e isso é
+        # pior do que uma asserção que quebra — quebra avisa, relatório mente.
+        "aih_reconciliadas": silver["linhas_sih_reconciliadas"],
+        "internacoes_novas_reconciliadas": gold["internacoes_novas_reconciliadas"],
+        "municipios": geografia["municipios"],
+        "regioes_saude": gold["regioes_saude"],
+        "macrorregioes_saude": geografia["macrorregioes_saude"],
+        "competencias": gold["competencias"],
     }
     linhas = [
         "# Validação técnica integrada — MedFlow 0.3.0",

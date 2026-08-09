@@ -98,6 +98,13 @@ def consolidar(
     if temporario.exists():
         temporario.unlink()
 
+    # DÍVIDA CONHECIDA: cada competência é lida duas vezes — uma para deduzir
+    # o esquema e outra para escrever. São ~16 GB de leitura para 8,2 GB de
+    # DBF, e responde por quase todo o tempo dos ~18 minutos da consolidação.
+    # Ler uma vez, guardando os DataFrames ou inferindo o esquema sem
+    # materializar, é uma otimização segura agora que a paridade por hash
+    # existe para provar que o resultado não mudou. Não foi feita junto da
+    # extração porque a regra da fatia 4 é mover sem refatorar.
     esquemas = []
     for ano, mes in contexto.competencias:
         frame = ler_competencia(contexto, grupo, ano, mes)
