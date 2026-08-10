@@ -1,6 +1,6 @@
 # Dicionário da camada Bronze — MedFlow
 
-Contrato de esquema `0.3.0`, gerado automaticamente em `2026-08-01T21:12:04.735973+00:00`.
+Contrato de esquema `0.3.0`, gerado automaticamente em `2026-08-10T00:15:41.902237+00:00`.
 
 ## Responsabilidade da camada
 
@@ -12,9 +12,9 @@ Contrato de esquema `0.3.0`, gerado automaticamente em `2026-08-01T21:12:04.7359
 
 Registros SIH/RD preservados com linhagem técnica.
 
-- Caminho: `dados/bronze/parquet/sih_rd_sp_2024_2026.parquet`
+- Caminho: `data/bronze/parquet/sih_rd_sp_2024_2026.parquet`
 - Grão: uma linha conforme o registro original da fonte mensal
-- Linhas: 7,034,961
+- Linhas: 7,284,476
 - Chave lógica: sem unicidade assumida; usar o identificador da fonte e a competência
 
 | coluna | tipo | nulos | significado |
@@ -141,9 +141,9 @@ Registros SIH/RD preservados com linhagem técnica.
 
 Registros CNES/LT preservados com linhagem técnica.
 
-- Caminho: `dados/bronze/parquet/cnes_lt_sp_2024_2026.parquet`
+- Caminho: `data/bronze/parquet/cnes_lt_sp_2024_2026.parquet`
 - Grão: uma linha conforme o registro original da fonte mensal
-- Linhas: 243,085
+- Linhas: 251,457
 - Chave lógica: sem unicidade assumida; usar o identificador da fonte e a competência
 
 | coluna | tipo | nulos | significado |
@@ -186,7 +186,7 @@ Registros CNES/LT preservados com linhagem técnica.
 
 Resposta original da API de municípios do IBGE.
 
-- Caminho: `dados/bronze/origem/referencias/ibge_municipios_sp_raw.json`
+- Caminho: `data/bronze/origem/referencias/ibge_municipios_sp_raw.json`
 - Fonte: https://servicodados.ibge.gov.br/api/v1/localidades/estados/35/municipios
 - Formato: `json`
 
@@ -194,7 +194,7 @@ Resposta original da API de municípios do IBGE.
 
 Resposta original da API de regiões e macrorregiões de saúde.
 
-- Caminho: `dados/bronze/origem/referencias/ms_regioes_saude_sp_raw.json`
+- Caminho: `data/bronze/origem/referencias/ms_regioes_saude_sp_raw.json`
 - Fonte: https://apidadosabertos.saude.gov.br/macrorregiao-e-regiao-de-saude/municipio?sigla_uf=SP&limit=860&offset=0
 - Formato: `json`
 
@@ -202,7 +202,7 @@ Resposta original da API de regiões e macrorregiões de saúde.
 
 Pacote CSV oficial de regiões de saúde, população IBGE 2022 e municípios.
 
-- Caminho: `dados/bronze/origem/referencias/macrorregiao_de_saude_csv.zip`
+- Caminho: `data/bronze/origem/referencias/macrorregiao_de_saude_csv.zip`
 - Fonte: https://s3.sa-east-1.amazonaws.com/ckan.saude.gov.br/dbgeral/macroregiao_de_saude_csv.zip
 - Formato: `zip`
 
@@ -210,7 +210,7 @@ Pacote CSV oficial de regiões de saúde, população IBGE 2022 e municípios.
 
 Malha municipal oficial de São Paulo usada para formar as regiões do BI.
 
-- Caminho: `dados/bronze/origem/referencias/geografia/SP_Municipios_2024.zip`
+- Caminho: `data/bronze/origem/referencias/geografia/SP_Municipios_2024.zip`
 - Fonte: https://geoftp.ibge.gov.br/organizacao_do_territorio/malhas_territoriais/malhas_municipais/municipio_2024/UFs/SP/SP_Municipios_2024.zip
 - Formato: `zip`
 
@@ -218,7 +218,7 @@ Malha municipal oficial de São Paulo usada para formar as regiões do BI.
 
 Pacote original das tabelas CID-10 do DATASUS.
 
-- Caminho: `dados/bronze/origem/referencias/datasus_cid10_2008.zip`
+- Caminho: `data/bronze/origem/referencias/datasus_cid10_2008.zip`
 - Fonte: http://www2.datasus.gov.br/cid10/V2008/downloads/CID10CSV.zip
 - Formato: `zip`
 
@@ -226,7 +226,7 @@ Pacote original das tabelas CID-10 do DATASUS.
 
 Página oficial da CONCLA usada para natureza jurídica.
 
-- Caminho: `dados/bronze/origem/referencias/ibge_concla_natureza_juridica_2021.html`
+- Caminho: `data/bronze/origem/referencias/ibge_concla_natureza_juridica_2021.html`
 - Fonte: https://concla.ibge.gov.br/documentacao/3051-concla/estrutura/natureza-juridica-2021.html
 - Formato: `html`
 
@@ -234,6 +234,6 @@ Página oficial da CONCLA usada para natureza jurídica.
 
 Respostas atuais da API CNES para os hospitais observados.
 
-- Caminho: `dados/bronze/origem/referencias/ms_cnes_estabelecimentos_atuais_raw.json`
+- Caminho: `data/bronze/origem/referencias/ms_cnes_estabelecimentos_atuais_raw.json`
 - Fonte: https://apidadosabertos.saude.gov.br/cnes/estabelecimentos/{cnes}
 - Formato: `json`

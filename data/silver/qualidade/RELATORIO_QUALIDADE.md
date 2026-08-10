@@ -2,12 +2,12 @@
 
 ## Reconciliações
 
-- `linhas_sih_reconciliadas`: 7,034,961
-- `linhas_cnes_reconciliadas`: 243,085
-- `aih_aprovadas`: 7,034,961
-- `aih_distintas`: 6,909,807
-- `internacoes_novas`: 6,905,441
-- `continuacoes_longa_permanencia`: 129,520
+- `linhas_sih_reconciliadas`: 7,284,476
+- `linhas_cnes_reconciliadas`: 251,457
+- `aih_aprovadas`: 7,284,476
+- `aih_distintas`: 7,155,059
+- `internacoes_novas`: 7,150,693
+- `continuacoes_longa_permanencia`: 133,783
 - `especialidades_sem_depara`: 0
 - `hospitais_sem_match_cnes`: 0
 - `cids_sem_capitulo`: 0
@@ -18,12 +18,12 @@
 - `registros_sem_regiao`: 0
 - `internacoes_novas_sem_regiao`: 0
 - `hospitais_regiao_conflitante`: 4
-- `qt_diarias_igual_dias_perm_pct`: 70.0547
-- `qt_zero_dias_perm_positivo`: 181,584
-- `cruza_mes_pct`: 15.0798
-- `competencia_diverge_saida_pct`: 18.7633
-- `tmh_internacoes_novas_pct`: 5.1078
-- `proxy_iph_media_hospital_mes`: 0.472168
+- `qt_diarias_igual_dias_perm_pct`: 70.013
+- `qt_zero_dias_perm_positivo`: 187,827
+- `cruza_mes_pct`: 15.0697
+- `competencia_diverge_saida_pct`: 18.7715
+- `tmh_internacoes_novas_pct`: 5.1114
+- `proxy_iph_media_hospital_mes`: 0.472897
 
 ## Contratos aprovados dos índices
 

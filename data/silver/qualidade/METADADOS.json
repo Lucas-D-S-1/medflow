@@ -1,7 +1,7 @@
 {
   "camada": "silver",
   "versao_contrato": "0.3.0",
-  "gerado_em_utc": "2026-08-08T18:45:02.481681+00:00",
+  "gerado_em_utc": "2026-08-10T01:04:16.256599+00:00",
   "competencias": [
     "202401",
     "202402",
@@ -31,16 +31,17 @@
     "202602",
     "202603",
     "202604",
-    "202605"
+    "202605",
+    "202606"
   ],
-  "bronze_sha256": "e7db92ec2d7a8a7e7403611177cd88d7bfc2c42987d16d7c4a898c7fae961964",
+  "bronze_sha256": "fa850a4caaeca60b6c23f13c0cf13018a5e6bdd67c564a4954773fb2dcd3d513",
   "metricas": {
-    "linhas_sih_reconciliadas": 7034961,
-    "linhas_cnes_reconciliadas": 243085,
-    "aih_aprovadas": 7034961,
-    "aih_distintas": 6909807,
-    "internacoes_novas": 6905441,
-    "continuacoes_longa_permanencia": 129520,
+    "linhas_sih_reconciliadas": 7284476,
+    "linhas_cnes_reconciliadas": 251457,
+    "aih_aprovadas": 7284476,
+    "aih_distintas": 7155059,
+    "internacoes_novas": 7150693,
+    "continuacoes_longa_permanencia": 133783,
     "especialidades_sem_depara": 0,
     "hospitais_sem_match_cnes": 0,
     "cids_sem_capitulo": 0,
@@ -51,25 +52,25 @@
     "registros_sem_regiao": 0,
     "internacoes_novas_sem_regiao": 0,
     "hospitais_regiao_conflitante": 4,
-    "qt_diarias_igual_dias_perm_pct": 70.0547,
-    "qt_zero_dias_perm_positivo": 181584,
-    "cruza_mes_pct": 15.0798,
-    "competencia_diverge_saida_pct": 18.7633,
-    "tmh_internacoes_novas_pct": 5.1078,
-    "proxy_iph_media_hospital_mes": 0.472168
+    "qt_diarias_igual_dias_perm_pct": 70.013,
+    "qt_zero_dias_perm_positivo": 187827,
+    "cruza_mes_pct": 15.0697,
+    "competencia_diverge_saida_pct": 18.7715,
+    "tmh_internacoes_novas_pct": 5.1114,
+    "proxy_iph_media_hospital_mes": 0.472897
   },
   "tabelas": {
     "dim_tempo": {
       "caminho": "data/silver/dimensoes/dim_tempo.parquet",
-      "linhas": 29,
+      "linhas": 30,
       "colunas": 6,
-      "sha256": "8feedf8475897450f1e9594cb53ae7d9546006128e645f4b401fc46190a5a0dd"
+      "sha256": "104a4fefe9d3fef52225dbaea1730d14ff671fd40915e2ec1609b751954f473d"
     },
     "dim_hospital": {
       "caminho": "data/silver/dimensoes/dim_hospital.parquet",
-      "linhas": 653,
+      "linhas": 655,
       "colunas": 24,
-      "sha256": "4e84fccff8299d4422f2767957891d380a6f2566c57313e54a44e62f2b0e5d29"
+      "sha256": "1c2a6f83ac298a26ef1b76d7d4cc5c7ee5005f7c1919a983093cd94907ae2a83"
     },
     "dim_municipio": {
       "caminho": "data/silver/dimensoes/dim_municipio.parquet",
@@ -81,13 +82,13 @@
       "caminho": "data/silver/dimensoes/dim_especialidade.parquet",
       "linhas": 15,
       "colunas": 4,
-      "sha256": "5cdeb99c7a2d2cef79cb165d2ea958cfc6017e642b2650177e8178688baadac6"
+      "sha256": "7906696c6b41fdd0e70179103647959d8ca64d18b919bca0cb86f251d135284b"
     },
     "dim_cid": {
       "caminho": "data/silver/dimensoes/dim_cid.parquet",
-      "linhas": 9494,
+      "linhas": 9513,
       "colunas": 9,
-      "sha256": "3bf3c0f0f773f0055e83bc929b01140a4d4e920347ee9223136dbbdba4340a6f"
+      "sha256": "ae4de5c84fe652e9660e1102c52d0a78b771038ed3bb15f5f8901bb0cf400dd2"
     },
     "dim_dominio": {
       "caminho": "data/silver/dimensoes/dim_dominio.parquet",
@@ -97,15 +98,15 @@
     },
     "fato_internacao": {
       "caminho": "data/silver/fatos/fato_internacao.parquet",
-      "linhas": 7034961,
+      "linhas": 7284476,
       "colunas": 59,
-      "sha256": "e38cf053850377a1b5b470f8fb50ec8bfa7ce355c9b2052506b8d406d0ee2f27"
+      "sha256": "a903da1168ee3a5ce64250db946e5777df7fdf7350716a71849ae649f0c46f43"
     },
     "fato_leito_mensal": {
       "caminho": "data/silver/fatos/fato_leito_mensal.parquet",
-      "linhas": 18690,
+      "linhas": 19341,
       "colunas": 9,
-      "sha256": "9b193f5b4305ca2c43aad68dd3e2ba68d38106fe7d2d33c267f6040180f50d99"
+      "sha256": "3d5072a54794b44cf8803d25e3b63379664f42898ad8b36fa2f40430bcc9adfd"
     }
   }
 }

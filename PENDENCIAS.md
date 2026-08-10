@@ -182,7 +182,37 @@ Riscos conhecidos, registrados para não virarem surpresa:
   ORDS em 200 e as 585.296 linhas Gold íntegras. **Próximo limite: 15/08.**
   A automação do ping ainda não existe e está em aberto.
 
-### 7b. O DATASUS publicou 2026-06 — decisão em aberto
+### 7b. Recorte avançado para 2026-06 — concluído em 09/08/2026
+
+Decidido incluir junho e executado. O recorte oficial passa a ser
+**2024-01 a 2026-06, 30 competências**.
+
+| Métrica | 29 competências | 30 competências |
+|---|---:|---:|
+| AIH aprovadas | 7.034.961 | **7.284.476** |
+| Internações novas | 6.905.441 | **7.150.693** |
+| Hospitais | 653 | **655** |
+| CIDs observados | 9.494 | **9.513** |
+| Residentes SP observados | 6.846.665 | **7.089.959** |
+| ICSAP | 953.656 | **988.453** |
+| Evasão = atração | 906.060 | **939.143** |
+| Linhas no Oracle | 585.296 | **597.725** |
+| Reconciliação no banco | 36/36 ok | **36/36 ok** |
+
+Zero lacunas de de/para mesmo com CIDs e hospitais novos: as asserções de
+cobertura passaram sem intervenção.
+
+**Ainda pendente do avanço**, porque depende de fatias que não existem:
+
+- **conteúdo das fixtures** — os 10 snapshots ainda descrevem 2026-05. Os
+  testes herméticos passam porque são internamente consistentes, mas o
+  estado de contingência do webapp mostraria dado velho. Precisa do gerador
+  versionado, fatia 8 / B.4;
+- **revalidação campo a campo** — as 8.257.139 comparações contra a Gold
+  foram feitas no recorte antigo. Precisa dos scripts de reconciliação
+  versionados, fatia 6.
+
+### 7c. Histórico: como a decisão foi tomada
 
 Detectado em **08/08/2026**, ao reexecutar a Bronze pelo pacote: a descoberta
 remota passou a encontrar **30 competências** (2024-01 a 2026-06), não as 29
