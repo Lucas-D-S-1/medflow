@@ -1,13 +1,13 @@
 {
   "camada": "bronze",
-  "gerado_em_utc": "2026-08-01T21:12:04.556802+00:00",
+  "gerado_em_utc": "2026-08-10T00:15:41.701515+00:00",
   "recorte": {
     "uf": "SP",
     "periodo_solicitado": [
       "202401",
-      "202612"
+      "202606"
     ],
-    "ultima_competencia_comum": "202605",
+    "ultima_competencia_comum": "202606",
     "competencias": [
       "202401",
       "202402",
@@ -37,7 +37,8 @@
       "202602",
       "202603",
       "202604",
-      "202605"
+      "202605",
+      "202606"
     ]
   },
   "atualizacao": "descoberta remota; download incremental; consolidação promovida por arquivo parcial",
@@ -132,6 +133,12 @@
           "FONTE_ORC"
         ],
         "ausentes_em_relacao_uniao": []
+      },
+      "202606": {
+        "adicionadas_desde_inicio": [
+          "FONTE_ORC"
+        ],
+        "ausentes_em_relacao_uniao": []
       }
     },
     "LT": {}
@@ -147,32 +154,32 @@
     "MS_DEMAS_cnes_atual": "https://apidadosabertos.saude.gov.br/cnes/estabelecimentos/{cnes}",
     "DATASUS_CID10": "http://www2.datasus.gov.br/cid10/V2008/downloads/CID10CSV.zip",
     "IBGE_CONCLA_natureza_juridica": "https://concla.ibge.gov.br/documentacao/3051-concla/estrutura/natureza-juridica-2021.html",
-    "IBGE_IPCA_tabela_1737_variavel_2266": "https://apisidra.ibge.gov.br/values/t/1737/n1/all/v/2266/p/202401-202605?formato=json"
+    "IBGE_IPCA_tabela_1737_variavel_2266": "https://apisidra.ibge.gov.br/values/t/1737/n1/all/v/2266/p/202401-202606?formato=json"
   },
   "checks": {
-    "arquivos_rd_cache": 29,
-    "arquivos_lt_cache": 29,
-    "linhas_sih": 7034961,
+    "arquivos_rd_cache": 30,
+    "arquivos_lt_cache": 30,
+    "linhas_sih": 7284476,
     "colunas_sih": 117,
-    "linhas_cnes": 243085,
+    "linhas_cnes": 251457,
     "colunas_cnes": 31,
     "municipios_ibge": 645,
     "municipios_regiao_saude_ms": 645,
     "municipios_regiao_saude_ms_csv": 645,
-    "estabelecimentos_cnes_atuais": 653,
+    "estabelecimentos_cnes_atuais": 655,
     "arquivos_pacote_cid10": 6,
     "arquivos_malha_municipal_ibge": 5
   },
   "arquivos": {
     "sih": {
       "caminho": "sih_rd_sp_2024_2026.parquet",
-      "bytes": 342148130,
-      "sha256": "e7db92ec2d7a8a7e7403611177cd88d7bfc2c42987d16d7c4a898c7fae961964"
+      "bytes": 354430584,
+      "sha256": "fa850a4caaeca60b6c23f13c0cf13018a5e6bdd67c564a4954773fb2dcd3d513"
     },
     "cnes": {
       "caminho": "cnes_lt_sp_2024_2026.parquet",
-      "bytes": 2584440,
-      "sha256": "863741d9a2f2297c6ea296a6e4892e7e67f03f99149610dd9c2306a7fc693733"
+      "bytes": 2675008,
+      "sha256": "2cc10e5120e400c12eb4be95e2da91e2bd21c7dcb358c5b342e0c5d2a9682ab9"
     },
     "ibge": {
       "caminho": "ibge_municipios_sp_raw.json",
@@ -206,13 +213,13 @@
     },
     "ipca_ibge": {
       "caminho": "ibge_ipca_numero_indice_raw.json",
-      "bytes": 6594,
-      "sha256": "07499b0acc629ff2134cf41e57e3e29946ac4393752afbc4b5977fd6249a12bb"
+      "bytes": 6811,
+      "sha256": "e92f89ac483f80e96a37fe15c2c6e7469af73332d12d22b21c525c920460aa07"
     },
     "cnes_estabelecimentos_atuais": {
       "caminho": "ms_cnes_estabelecimentos_atuais_raw.json",
-      "bytes": 1256113,
-      "sha256": "ee54a131a3288b908a28993a160126f3b785651c21d867d6e9c2b2852a87da13"
+      "bytes": 1259939,
+      "sha256": "e8f921d4401d86528049d5f549eff4f24b6cd6939f736e1d82fd0bfb4f921c23"
     }
   }
 }

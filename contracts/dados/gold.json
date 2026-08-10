@@ -1,7 +1,7 @@
 {
   "camada": "gold",
   "versao_contrato": "0.3.0",
-  "gerado_em_utc": "2026-08-08T18:46:00.467018+00:00",
+  "gerado_em_utc": "2026-08-10T01:06:08.867400+00:00",
   "principios": [
     "Marts orientados às perguntas de gestão e ao consumo no BI.",
     "Toda métrica expõe amostra, numerador, denominador ou estado de calculabilidade.",
@@ -21,7 +21,7 @@
         "cd_cnes",
         "cd_competencia"
       ],
-      "linhas": 18690,
+      "linhas": 19341,
       "colunas": [
         {
           "nome": "cd_cnes",
@@ -181,14 +181,14 @@
           "nome": "nr_iph_estimado",
           "tipo": "float64",
           "aceita_nulo": true,
-          "nulos": 142,
+          "nulos": 146,
           "descricao": "Razão entre pacientes-dia estimados e leitos-dia declarados."
         },
         {
           "nome": "pc_iph_estimado",
           "tipo": "float64",
           "aceita_nulo": true,
-          "nulos": 142,
+          "nulos": 146,
           "descricao": "IPH estimado expresso em percentual."
         },
         {
@@ -209,21 +209,21 @@
           "nome": "pc_tmh",
           "tipo": "float64",
           "aceita_nulo": true,
-          "nulos": 998,
+          "nulos": 1049,
           "descricao": "Óbitos em internações novas divididos pelas internações novas, em percentual."
         },
         {
           "nome": "vl_cmi",
           "tipo": "float64",
           "aceita_nulo": true,
-          "nulos": 998,
+          "nulos": 1049,
           "descricao": "Valor nominal aprovado nas internações novas dividido pela quantidade de internações novas."
         },
         {
           "nome": "nr_permanencia_media",
           "tipo": "float64",
           "aceita_nulo": true,
-          "nulos": 998,
+          "nulos": 1049,
           "descricao": "Soma dos dias de permanência dividida pela quantidade de internações novas."
         },
         {
@@ -265,7 +265,7 @@
           "nome": "vl_cmi_real",
           "tipo": "float64",
           "aceita_nulo": true,
-          "nulos": 998,
+          "nulos": 1049,
           "descricao": "Valor aprovado médio corrigido pelo IPCA para a competência indicada em cd_competencia_preco_referencia."
         }
       ]
@@ -280,7 +280,7 @@
         "cd_especialidade_sih",
         "cd_competencia"
       ],
-      "linhas": 52525,
+      "linhas": 54328,
       "colunas": [
         {
           "nome": "cd_cnes",
@@ -461,7 +461,7 @@
         "cd_cnes",
         "cd_cid_principal"
       ],
-      "linhas": 447334,
+      "linhas": 455054,
       "colunas": [
         {
           "nome": "cd_cnes",
@@ -572,14 +572,14 @@
           "nome": "nr_permanencia_media_benchmark",
           "tipo": "float64",
           "aceita_nulo": true,
-          "nulos": 94813,
+          "nulos": 95542,
           "descricao": "Valor numérico referente a permanencia media benchmark."
         },
         {
           "nome": "nr_ipr",
           "tipo": "float64",
           "aceita_nulo": true,
-          "nulos": 416784,
+          "nulos": 423602,
           "descricao": "Permanência média do hospital/CID dividida pelo benchmark regional que exclui o hospital."
         },
         {
@@ -600,7 +600,7 @@
         "cd_regiao_saude",
         "cd_competencia"
       ],
-      "linhas": 1798,
+      "linhas": 1860,
       "colunas": [
         {
           "nome": "cd_regiao_saude",
@@ -993,7 +993,7 @@
       "descricao": "Tabela analítica mart_fluxo_assistencial_regiao_mensal.",
       "grao": "granularidade documentada pelo pipeline produtor",
       "chave_primaria_logica": [],
-      "linhas": 30018,
+      "linhas": 31033,
       "colunas": [
         {
           "nome": "cd_origem_residencia",
@@ -1055,14 +1055,14 @@
           "nome": "cd_macrorregiao_origem",
           "tipo": "string",
           "aceita_nulo": true,
-          "nulos": 1526,
+          "nulos": 1578,
           "descricao": "Macrorregião de saúde da residência; nula para residentes fora de SP."
         },
         {
           "nome": "nm_macrorregiao_origem",
           "tipo": "object",
           "aceita_nulo": true,
-          "nulos": 1526,
+          "nulos": 1578,
           "descricao": "Nome da macrorregião de residência; nulo para residentes fora de SP."
         },
         {
@@ -1108,7 +1108,7 @@
       "descricao": "Tabela analítica mart_icsap_regiao_mensal.",
       "grao": "granularidade documentada pelo pipeline produtor",
       "chave_primaria_logica": [],
-      "linhas": 34162,
+      "linhas": 35340,
       "colunas": [
         {
           "nome": "cd_regiao_saude",

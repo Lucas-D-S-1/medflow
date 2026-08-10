@@ -1,18 +1,18 @@
 {
-  "gerado_em_utc": "2026-08-08T05:18:03.012409+00:00",
+  "gerado_em_utc": "2026-08-10T01:23:46.548979+00:00",
   "base": ".",
-  "quantidade_arquivos": 318,
-  "bytes": 11071758834,
+  "quantidade_arquivos": 322,
+  "bytes": 11288952833,
   "arquivos": [
     {
       "caminho": "data/bronze/DICIONARIO.md",
-      "bytes": 20175,
-      "sha256": "1ed468ba381a99c004f2fd6340e7d6b8b8b933c3effe891f678ea01d9adb9be0"
+      "bytes": 20166,
+      "sha256": "01b1ec82970f6013dd59af53d53811cb38ef971fa24e6f9447526bf0d408a4cb"
     },
     {
       "caminho": "data/bronze/MANIFESTO.json",
-      "bytes": 6463,
-      "sha256": "dbc3c1223b1648298a085808aed5fd55fada064f593fe2eec902b3318ecbb360"
+      "bytes": 6617,
+      "sha256": "51aed6246618d8ff421b7daef701d54a775bcf144cbbd1641bc5a7b28d7fea7d"
     },
     {
       "caminho": "data/bronze/intermediario/dbf/LTSP2201.dbf",
@@ -280,6 +280,11 @@
       "sha256": "60cef0abef1c3b5fe8e012d78fb5b5a879b57e85c1043d174a2ee4a6a87ad722"
     },
     {
+      "caminho": "data/bronze/intermediario/dbf/LTSP2606.dbf",
+      "bytes": 921850,
+      "sha256": "4158763cd5cdc6fbbd42d5670353639d594283e27d61cb6afd9259947f624c36"
+    },
+    {
       "caminho": "data/bronze/intermediario/dbf/RDSP2201.dbf",
       "bytes": 139750789,
       "sha256": "92a0c8f3a1f1450b49d1358cb90ffb980caac47d5b7f16d477c9bbc1d0f6ab04"
@@ -543,6 +548,11 @@
       "caminho": "data/bronze/intermediario/dbf/RDSP2605.dbf",
       "bytes": 179866529,
       "sha256": "50d8771fa97cd0274f0b7ac59ad38e4b9ead80905fb56c9fb48ec668c4d2b2c4"
+    },
+    {
+      "caminho": "data/bronze/intermediario/dbf/RDSP2606.dbf",
+      "bytes": 175662241,
+      "sha256": "b3bfc2794a0c70c3263434941772856e21723de63b4fc3b654ddf3c5fe00efbe"
     },
     {
       "caminho": "data/bronze/intermediario/dbf/STSP2312.dbf",
@@ -815,6 +825,11 @@
       "sha256": "b3e47754be06cfa9b89644089875481edcd182ff2547a5725c37d7964f561ccb"
     },
     {
+      "caminho": "data/bronze/origem/datasus/LTSP2606.dbc",
+      "bytes": 101193,
+      "sha256": "71b37cb1b59ecddcfd11d790a93ac8b7e4e45c893973b42072e5ca44f9689dc4"
+    },
+    {
       "caminho": "data/bronze/origem/datasus/RDSP2201.dbc",
       "bytes": 15549230,
       "sha256": "8ae4e3a106dbdd27e7c1a75591f4f692255364d8238044451fb00b7d85346c68"
@@ -1080,6 +1095,11 @@
       "sha256": "38b614b85233f07028e14ab77c44bef22100c34211189b4f30db55ec2f1bf744"
     },
     {
+      "caminho": "data/bronze/origem/datasus/RDSP2606.dbc",
+      "bytes": 19832222,
+      "sha256": "959a4bb39af0bf24395b7dd3c47c7b521d92fde0433d490bc7780b1c1a598e6c"
+    },
+    {
       "caminho": "data/bronze/origem/datasus/STSP2312.dbc",
       "bytes": 4380035,
       "sha256": "c1e0d57a1ec5379345463ffa4e83d8d06032f3d1bbdda3bd24186eafd1e1ad2f"
@@ -1101,8 +1121,8 @@
     },
     {
       "caminho": "data/bronze/origem/referencias/ibge_ipca_numero_indice_raw.json",
-      "bytes": 6594,
-      "sha256": "07499b0acc629ff2134cf41e57e3e29946ac4393752afbc4b5977fd6249a12bb"
+      "bytes": 6811,
+      "sha256": "e92f89ac483f80e96a37fe15c2c6e7469af73332d12d22b21c525c920460aa07"
     },
     {
       "caminho": "data/bronze/origem/referencias/ibge_municipios_sp_raw.json",
@@ -1116,8 +1136,8 @@
     },
     {
       "caminho": "data/bronze/origem/referencias/ms_cnes_estabelecimentos_atuais_raw.json",
-      "bytes": 1256113,
-      "sha256": "ee54a131a3288b908a28993a160126f3b785651c21d867d6e9c2b2852a87da13"
+      "bytes": 1259939,
+      "sha256": "e8f921d4401d86528049d5f549eff4f24b6cd6939f736e1d82fd0bfb4f921c23"
     },
     {
       "caminho": "data/bronze/origem/referencias/ms_regioes_saude_sp_raw.json",
@@ -1126,18 +1146,18 @@
     },
     {
       "caminho": "data/bronze/parquet/cnes_lt_sp_2024_2026.parquet",
-      "bytes": 2584440,
-      "sha256": "863741d9a2f2297c6ea296a6e4892e7e67f03f99149610dd9c2306a7fc693733"
+      "bytes": 2675008,
+      "sha256": "2cc10e5120e400c12eb4be95e2da91e2bd21c7dcb358c5b342e0c5d2a9682ab9"
     },
     {
       "caminho": "data/bronze/parquet/sih_rd_sp_2024_2026.parquet",
-      "bytes": 342148130,
-      "sha256": "e7db92ec2d7a8a7e7403611177cd88d7bfc2c42987d16d7c4a898c7fae961964"
+      "bytes": 354430584,
+      "sha256": "fa850a4caaeca60b6c23f13c0cf13018a5e6bdd67c564a4954773fb2dcd3d513"
     },
     {
       "caminho": "data/gold/DICIONARIO.md",
-      "bytes": 23277,
-      "sha256": "cca4b03b30dcfb4d5f557d55ce64d177aaf06474ab12a6a659085ab39cdc00a9"
+      "bytes": 23274,
+      "sha256": "cf3f9fb3c528fee867fb3acbb8615e7457183722da3f1585c7115eaac5724cd2"
     },
     {
       "caminho": "data/gold/geografia/METADADOS.json",
@@ -1171,48 +1191,48 @@
     },
     {
       "caminho": "data/gold/marts/mart_fluxo_assistencial_regiao_mensal.parquet",
-      "bytes": 440364,
-      "sha256": "f85e04e50bda9e43a5d1ee709038d57f93f62beeeeb93c67aa72d06f6167ad9b"
+      "bytes": 452705,
+      "sha256": "af478d4cd39eb70f7e40e9d147d3a5a9fd4c837f536ffaae5578f6296336d5ee"
     },
     {
       "caminho": "data/gold/marts/mart_icsap_regiao_mensal.parquet",
-      "bytes": 298052,
-      "sha256": "e7c716aaa232d0eaa373b313cdba982a9ce8b985186ac8fb29115fa43ef44a94"
+      "bytes": 304043,
+      "sha256": "1ee7c3ad48cffe6c93918ce23dfe41ecfa34a10a0e9c4f7aab5b686895615935"
     },
     {
       "caminho": "data/gold/marts/mart_indicador_hospital_cid_periodo.parquet",
-      "bytes": 7594454,
-      "sha256": "ce80d11894b114efe80c0c47657678a590f41afa464f5c2be2c94ef57fb9c5ab"
+      "bytes": 7718665,
+      "sha256": "0d777d7bf745e37cf49de943f3c31bbf3301c78d6597e761f7ea7a2da007c907"
     },
     {
       "caminho": "data/gold/marts/mart_indicador_hospital_especialidade_mensal.parquet",
-      "bytes": 2599216,
-      "sha256": "d7338a9ebdff85faccc2581e2513fb167d9b876dd50406412eb3bc5fa958924f"
+      "bytes": 2686125,
+      "sha256": "1cd5f7cd756dd096d8586b4497a7800f9f2d3fa69c5e64fb7b608a7af28268dd"
     },
     {
       "caminho": "data/gold/marts/mart_indicador_hospital_mensal.parquet",
-      "bytes": 1410694,
-      "sha256": "5989e56eb93355e36b557737a690cea55c7fd50a787776208454769e8bf4a5ad"
+      "bytes": 1459285,
+      "sha256": "bb939818a187ef7844f6590755c7b841557cf4d1b9dab85bf30192626dc40297"
     },
     {
       "caminho": "data/gold/marts/mart_indicador_regiao_mensal.parquet",
-      "bytes": 333362,
-      "sha256": "7066f2091d2be628cd5c3d2a1253b3798aaa2a9bbc49f3c8a44385368e513d98"
+      "bytes": 344072,
+      "sha256": "d43e06628604dcbff4741470b752e56f8f17a4b4a7ca584279f6d4ca25e30cc5"
     },
     {
       "caminho": "data/gold/marts/mart_indicador_regiao_periodo.parquet",
-      "bytes": 11977,
-      "sha256": "71862d989a1dfab368b20080589796b52e33631d3d338404480ea17a6ce365aa"
+      "bytes": 11972,
+      "sha256": "9015a40694b8dc74eea15cb4d22738db50d006d237171f7f14ecc63e167ca54a"
     },
     {
       "caminho": "data/gold/qualidade/METADADOS.json",
-      "bytes": 2546,
-      "sha256": "2c7ae6cadf3f67156785f334287e7ba4e22ae0f3fcef128f001ae6214ae07ef3"
+      "bytes": 2538,
+      "sha256": "f7a46f85b37036e6d5eab5a759689a1ace32eadbc4fe6ecf51150a49f293d4e3"
     },
     {
       "caminho": "data/gold/qualidade/RELATORIO_QUALIDADE.md",
-      "bytes": 1443,
-      "sha256": "3049aa75a8d3ba7e7eb5dd2eaa9f1d0a122d7ff9d5c59d5aa04c4f242cc6f941"
+      "bytes": 1442,
+      "sha256": "63c3db7fc50e1f8e834901853b97764305114cba4ea45615d1ea89f3866a5122"
     },
     {
       "caminho": "data/legado/README.md",
@@ -1441,13 +1461,13 @@
     },
     {
       "caminho": "data/silver/DICIONARIO.md",
-      "bytes": 14136,
-      "sha256": "d3332f5f1369bf623dab5570000cdf4e94316ee04400f6318bbb5fea7eff995c"
+      "bytes": 14129,
+      "sha256": "c5e8c2c45d1e4f8c3eabe889f990aa4e04a83402b215c108d6b5dd3270f5c11d"
     },
     {
       "caminho": "data/silver/dimensoes/dim_cid.parquet",
-      "bytes": 655941,
-      "sha256": "3bf3c0f0f773f0055e83bc929b01140a4d4e920347ee9223136dbbdba4340a6f"
+      "bytes": 656523,
+      "sha256": "ae4de5c84fe652e9660e1102c52d0a78b771038ed3bb15f5f8901bb0cf400dd2"
     },
     {
       "caminho": "data/silver/dimensoes/dim_dominio.parquet",
@@ -1457,12 +1477,12 @@
     {
       "caminho": "data/silver/dimensoes/dim_especialidade.parquet",
       "bytes": 3594,
-      "sha256": "5cdeb99c7a2d2cef79cb165d2ea958cfc6017e642b2650177e8178688baadac6"
+      "sha256": "7906696c6b41fdd0e70179103647959d8ca64d18b919bca0cb86f251d135284b"
     },
     {
       "caminho": "data/silver/dimensoes/dim_hospital.parquet",
-      "bytes": 53119,
-      "sha256": "4e84fccff8299d4422f2767957891d380a6f2566c57313e54a44e62f2b0e5d29"
+      "bytes": 53213,
+      "sha256": "1c2a6f83ac298a26ef1b76d7d4cc5c7ee5005f7c1919a983093cd94907ae2a83"
     },
     {
       "caminho": "data/silver/dimensoes/dim_municipio.parquet",
@@ -1471,33 +1491,33 @@
     },
     {
       "caminho": "data/silver/dimensoes/dim_tempo.parquet",
-      "bytes": 4817,
-      "sha256": "8feedf8475897450f1e9594cb53ae7d9546006128e645f4b401fc46190a5a0dd"
+      "bytes": 4829,
+      "sha256": "104a4fefe9d3fef52225dbaea1730d14ff671fd40915e2ec1609b751954f473d"
     },
     {
       "caminho": "data/silver/fatos/fato_internacao.parquet",
-      "bytes": 224466427,
-      "sha256": "e38cf053850377a1b5b470f8fb50ec8bfa7ce355c9b2052506b8d406d0ee2f27"
+      "bytes": 232539350,
+      "sha256": "a903da1168ee3a5ce64250db946e5777df7fdf7350716a71849ae649f0c46f43"
     },
     {
       "caminho": "data/silver/fatos/fato_leito_mensal.parquet",
-      "bytes": 52922,
-      "sha256": "9b193f5b4305ca2c43aad68dd3e2ba68d38106fe7d2d33c267f6040180f50d99"
+      "bytes": 53566,
+      "sha256": "3d5072a54794b44cf8803d25e3b63379664f42898ad8b36fa2f40430bcc9adfd"
     },
     {
       "caminho": "data/silver/qualidade/DOMINIOS.md",
-      "bytes": 843,
-      "sha256": "19cafa72609872bb255d35b498749049abc899d6cd1f16d56e06137cc5bddb68"
+      "bytes": 840,
+      "sha256": "528b7cf1e7da8df4421477366c7443d98237591a8d94e9c7153996e4fc9e5a22"
     },
     {
       "caminho": "data/silver/qualidade/METADADOS.json",
-      "bytes": 3236,
-      "sha256": "83b195b1194debc26a7c3d824f343de2547289810728edbe31594f179f97b76f"
+      "bytes": 3241,
+      "sha256": "ae92a729ebeaea5b6bffc2e0c4578695d6247444383330c5fc7df44f462cdc3f"
     },
     {
       "caminho": "data/silver/qualidade/RELATORIO_QUALIDADE.md",
-      "bytes": 1565,
-      "sha256": "a6137fad44384d8565ddc9dbb889bfdb563dc54331087d4a7e6fdab8342c4205"
+      "bytes": 1564,
+      "sha256": "5a6e48036d006c35a1ae3adf486304fd1cbe4a9daf29927147569b506a411e82"
     },
     {
       "caminho": "docs/qualidade/figuras/gold/README.md",
@@ -1555,21 +1575,6 @@
       "sha256": "189e865ffbd39a98fba144b832029167f736e178d5ce268ef3ff14acf63a176a"
     },
     {
-      "caminho": "notebooks/00_extracao_dados.ipynb",
-      "bytes": 26891,
-      "sha256": "a618cde16390031e612e01c7741584a780589238311510dfc252fec53a03930b"
-    },
-    {
-      "caminho": "notebooks/01_engenharia_dados.ipynb",
-      "bytes": 44060,
-      "sha256": "14d0904bcd254d5316a0097dbf17a337a628fe3b18d5b6fefe20b9a5a74d57fc"
-    },
-    {
-      "caminho": "notebooks/02_analise_dados.ipynb",
-      "bytes": 1702,
-      "sha256": "e442b6dcb742b84aae53e40594d148f0ccdfe1fb6c4355c20b1e36175063df14"
-    },
-    {
       "caminho": "docs/qualidade/notebooks_executados/00_extracao_dados.ipynb",
       "bytes": 32502,
       "sha256": "42d5461db24dafb08caba67d9a0aaacd281e09407f4594837cd184380ed15828"
@@ -1593,8 +1598,21 @@
       "caminho": "docs/qualidade/notebooks_executados/v0.1.0/01_engenharia_dados_executed.ipynb",
       "bytes": 53729,
       "sha256": "ec72ee8ab464450ee4dc0a1de57693cf7959bffb8ed528d7811602e865caed3b"
+    },
+    {
+      "caminho": "notebooks/00_extracao_dados.ipynb",
+      "bytes": 3533,
+      "sha256": "29b604ab6b2ce0702a03008ae2b0dfd7fa495bba39d089cebd6314ab689e0ede"
+    },
+    {
+      "caminho": "notebooks/01_engenharia_dados.ipynb",
+      "bytes": 3828,
+      "sha256": "e063786ce455ce2f1021d72187e5fb5e015a5c889833d07ceff1d4e3e041665e"
+    },
+    {
+      "caminho": "notebooks/02_analise_dados.ipynb",
+      "bytes": 1590,
+      "sha256": "458fc0fc10af00a7ea29759c4fef851639f697d85244335b44966e94fe37c690"
     }
-  ],
-  "reancorado_em": "2026-08-08",
-  "nota": "Caminhos reancorados na estrutura-alvo da fatia 2. Os SHA-256 são os mesmos gerados na fatia 0 e não foram recalculados. 12 entradas saíram por exclusão prevista no plano, seção 6."
+  ]
 }

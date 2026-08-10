@@ -1,6 +1,6 @@
 # Validação técnica integrada — MedFlow 0.3.0
 
-Executada em `2026-08-09T23:59:02.889305+00:00`.
+Executada em `2026-08-10T01:08:19.152318+00:00`.
 
 ## Resultado
 
@@ -8,7 +8,7 @@ Executada em `2026-08-09T23:59:02.889305+00:00`.
 - Todas as tabelas e colunas possuem descrição.
 - Nomes Silver/Gold aderentes a `snake_case`.
 - Nenhum arquivo `.parcial` residual.
-- 265 artefatos de data/figuras pré-migração preservados por SHA-256.
+- 38 artefatos de data/figuras pré-migração preservados por SHA-256.
 - 7.034.961 AIHs e 6.905.441 internações novas reconciliadas.
 - Fórmulas TMH, IPR, IS, IPH, permanência média, IPCA e taxa populacional por residência recalculadas.
 - Fluxos origem-destino reconciliados; 906.060 saídas inter-regionais fecham com as entradas correspondentes.

@@ -21,6 +21,7 @@ import argparse
 import json
 import os
 import sys
+import time
 from pathlib import Path
 
 import oracledb
@@ -113,12 +114,44 @@ def contar(conexao: oracledb.Connection, tabela: str) -> int:
         return int(cursor.fetchone()[0])
 
 
+# ORA-00060 e ORA-12860 são deadlock; ORA-30006 é espera por lock de recurso.
+ERROS_DE_LOCK = (60, 12860, 30006)
+
+
+def _apagar_com_retentativa(
+    conexao: oracledb.Connection, tabela: str, tentativas: int = 4
+) -> None:
+    for tentativa in range(1, tentativas + 1):
+        try:
+            with conexao.cursor() as cursor:
+                cursor.execute(f"delete from {tabela}")
+            conexao.commit()
+            return
+        except oracledb.DatabaseError as erro:
+            (problema,) = erro.args
+            if problema.code not in ERROS_DE_LOCK or tentativa == tentativas:
+                raise
+            conexao.rollback()
+            espera = 2**tentativa
+            print(
+                f"  {tabela}: ORA-{problema.code:05d} na tentativa {tentativa}; "
+                f"nova tentativa em {espera}s"
+            )
+            time.sleep(espera)
+
+
 def esvaziar(conexao: oracledb.Connection) -> None:
-    """Apaga o conteúdo na ordem inversa das dependências."""
+    """Apaga o conteúdo na ordem inversa das dependências.
+
+    Cada tabela é apagada e confirmada em separado. Fazer as nove numa
+    transação só segurava lock sobre 585 mil linhas do início ao fim da
+    operação, e isso colidia com o ORDS servindo a API ao vivo — foi o que
+    produziu o ORA-12860 em 09/08/2026. Confirmar por tabela encurta a janela
+    de lock para o tempo de uma tabela, e a ordem filho-antes-de-pai continua
+    respeitando as chaves estrangeiras a cada commit.
+    """
     for tabela, _ in reversed(TABELAS):
-        with conexao.cursor() as cursor:
-            cursor.execute(f"delete from {tabela}")
-    conexao.commit()
+        _apagar_com_retentativa(conexao, tabela)
 
 
 def carregar(conexao: oracledb.Connection, tabela: str, quadro: pd.DataFrame, lote: int) -> int:

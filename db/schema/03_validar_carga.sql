@@ -24,16 +24,16 @@ with conferencia (ordem, metrica, esperado, obtido) as (
   select 2, 'linhas dim_geografia_municipio', 645,
          (select count(*) from dim_geografia_municipio) from dual
   union all
-  select 3, 'linhas mart_indicador_hospital_mensal', 18690,
+  select 3, 'linhas mart_indicador_hospital_mensal', 19341,
          (select count(*) from mart_indicador_hospital_mensal) from dual
   union all
-  select 4, 'linhas mart_indicador_hospital_especialidade_mensal', 52525,
+  select 4, 'linhas mart_indicador_hospital_especialidade_mensal', 54328,
          (select count(*) from mart_indicador_hospital_especialidade_mensal) from dual
   union all
-  select 5, 'linhas mart_indicador_hospital_cid_periodo', 447334,
+  select 5, 'linhas mart_indicador_hospital_cid_periodo', 455054,
          (select count(*) from mart_indicador_hospital_cid_periodo) from dual
   union all
-  select 6, 'linhas mart_indicador_regiao_mensal', 1798,
+  select 6, 'linhas mart_indicador_regiao_mensal', 1860,
          (select count(*) from mart_indicador_regiao_mensal) from dual
   union all
   select 7, 'linhas mart_indicador_regiao_periodo', 62,
@@ -42,63 +42,63 @@ with conferencia (ordem, metrica, esperado, obtido) as (
   -- Reconciliação do total de internações novas: os quatro marts partem do
   -- mesmo fato e têm de fechar no mesmo número.
   union all
-  select 8, 'internacoes novas em hospital_mensal', 6905441,
+  select 8, 'internacoes novas em hospital_mensal', 7150693,
          (select sum(qt_internacao_nova) from mart_indicador_hospital_mensal) from dual
   union all
-  select 9, 'internacoes novas em especialidade_mensal', 6905441,
+  select 9, 'internacoes novas em especialidade_mensal', 7150693,
          (select sum(qt_internacao_nova) from mart_indicador_hospital_especialidade_mensal) from dual
   union all
-  select 10, 'internacoes novas em hospital_cid_periodo', 6905441,
+  select 10, 'internacoes novas em hospital_cid_periodo', 7150693,
          (select sum(qt_internacao_nova) from mart_indicador_hospital_cid_periodo) from dual
   union all
-  select 11, 'internacoes novas em regiao_mensal', 6905441,
+  select 11, 'internacoes novas em regiao_mensal', 7150693,
          (select sum(qt_internacao_nova) from mart_indicador_regiao_mensal) from dual
   union all
-  select 12, 'internacoes novas em regiao_periodo', 6905441,
+  select 12, 'internacoes novas em regiao_periodo', 7150693,
          (select sum(qt_internacao_nova) from mart_indicador_regiao_periodo) from dual
 
   -- Métricas do gate técnico
   union all
-  select 13, 'pacientes-dia estimados', 32425897,
+  select 13, 'pacientes-dia estimados', 33593969,
          (select sum(qt_paciente_dia_estimado) from mart_indicador_hospital_mensal) from dual
   union all
-  select 14, 'hospitais-mes acima da capacidade declarada', 493,
+  select 14, 'hospitais-mes acima da capacidade declarada', 511,
          (select sum(fl_acima_capacidade_declarada) from mart_indicador_hospital_mensal) from dual
   union all
-  select 15, 'hospitais-mes sem leito SUS declarado', 142,
+  select 15, 'hospitais-mes sem leito SUS declarado', 146,
          (select count(*) from mart_indicador_hospital_mensal
           where st_capacidade = 'sem_leito_sus_declarado') from dual
   union all
-  select 16, 'IPH nulo por ausencia de leito SUS declarado', 142,
+  select 16, 'IPH nulo por ausencia de leito SUS declarado', 146,
          (select count(*) from mart_indicador_hospital_mensal
           where nr_iph_estimado is null) from dual
   union all
-  select 17, 'combinacoes IPR elegiveis', 30550,
+  select 17, 'combinacoes IPR elegiveis', 31452,
          (select count(*) from mart_indicador_hospital_cid_periodo
           where nr_ipr is not null) from dual
   union all
-  select 18, 'combinacoes IPR com amostra suficiente', 30550,
+  select 18, 'combinacoes IPR com amostra suficiente', 31452,
          (select count(*) from mart_indicador_hospital_cid_periodo
           where st_amostra = 'suficiente') from dual
   union all
-  select 19, 'linhas TMH/CMI com amostra suficiente', 36006,
+  select 19, 'linhas TMH/CMI com amostra suficiente', 37257,
          (select count(*) from mart_indicador_hospital_especialidade_mensal
           where st_amostra = 'suficiente') from dual
   union all
-  select 20, 'linhas de IS calculadas', 310,
+  select 20, 'linhas de IS calculadas', 372,
          (select count(*) from mart_indicador_regiao_mensal
           where nr_indice_sazonalidade is not null) from dual
   union all
-  select 21, 'linhas de IS com estado calculado', 310,
+  select 21, 'linhas de IS com estado calculado', 372,
          (select count(*) from mart_indicador_regiao_mensal
           where st_indice_sazonalidade = 'calculado') from dual
 
   -- Cardinalidades do recorte
   union all
-  select 22, 'competencias distintas', 29,
+  select 22, 'competencias distintas', 30,
          (select count(distinct cd_competencia) from mart_indicador_hospital_mensal) from dual
   union all
-  select 23, 'hospitais distintos', 653,
+  select 23, 'hospitais distintos', 655,
          (select count(distinct cd_cnes) from mart_indicador_hospital_mensal) from dual
   union all
   select 24, 'regioes de saude distintas', 62,
@@ -109,34 +109,34 @@ with conferencia (ordem, metrica, esperado, obtido) as (
 
   -- Novos produtos territoriais do contrato 0.3.0
   union all
-  select 26, 'linhas mart_fluxo_assistencial_regiao_mensal', 30018,
+  select 26, 'linhas mart_fluxo_assistencial_regiao_mensal', 31033,
          (select count(*) from mart_fluxo_assistencial_regiao_mensal) from dual
   union all
-  select 27, 'linhas mart_icsap_regiao_mensal', 34162,
+  select 27, 'linhas mart_icsap_regiao_mensal', 35340,
          (select count(*) from mart_icsap_regiao_mensal) from dual
   union all
-  select 28, 'internacoes novas no fluxo origem-destino', 6905441,
+  select 28, 'internacoes novas no fluxo origem-destino', 7150693,
          (select sum(qt_internacao_nova) from mart_fluxo_assistencial_regiao_mensal) from dual
   union all
-  select 29, 'internacoes de residentes SP observadas', 6846665,
+  select 29, 'internacoes de residentes SP observadas', 7089959,
          (select sum(qt_internacao_residente_observada) from mart_indicador_regiao_mensal) from dual
   union all
-  select 30, 'residentes fora de SP atendidos', 58776,
+  select 30, 'residentes fora de SP atendidos', 60734,
          (select sum(qt_internacao_recebida_fora_sp) from mart_indicador_regiao_mensal) from dual
   union all
-  select 31, 'ICSAP no resumo regional', 953656,
+  select 31, 'ICSAP no resumo regional', 988453,
          (select sum(qt_internacao_icsap_residente_observada) from mart_indicador_regiao_mensal) from dual
   union all
-  select 32, 'ICSAP no detalhamento por grupo', 953656,
+  select 32, 'ICSAP no detalhamento por grupo', 988453,
          (select sum(qt_internacao_icsap) from mart_icsap_regiao_mensal) from dual
   union all
-  select 33, 'evasao intrastadual observada', 906060,
+  select 33, 'evasao intrastadual observada', 939143,
          (select sum(qt_evasao_intrastadual_observada) from mart_indicador_regiao_mensal) from dual
   union all
-  select 34, 'atracao entre regioes de SP', 906060,
+  select 34, 'atracao entre regioes de SP', 939143,
          (select sum(qt_internacao_recebida_outra_regiao_sp) from mart_indicador_regiao_mensal) from dual
   union all
-  select 35, 'competencia do preco de referencia IPCA', 202605,
+  select 35, 'competencia do preco de referencia IPCA', 202606,
          (select to_number(max(cd_competencia_preco_referencia)) from mart_indicador_regiao_mensal) from dual
   union all
   select 36, 'grupos ICSAP distintos', 19,

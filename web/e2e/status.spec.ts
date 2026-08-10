@@ -2,6 +2,19 @@ import { expect, test } from '@playwright/test'
 import type { Page } from '@playwright/test'
 import { readFileSync } from 'node:fs'
 
+// Verdade corrente do pipeline, para os testes @live não guardarem número de
+// um recorte que já passou. Os herméticos continuam usando as fixtures.
+const bronzeManifest = JSON.parse(
+  readFileSync(new URL('../../data/bronze/MANIFESTO.json', import.meta.url), 'utf8'),
+) as { recorte: { ultima_competencia_comum: string } }
+const silverMetadata = JSON.parse(
+  readFileSync(new URL('../../data/silver/qualidade/METADADOS.json', import.meta.url), 'utf8'),
+) as { metricas: Record<string, number> }
+
+const ultimaCompetencia = bronzeManifest.recorte.ultima_competencia_comum
+const ultimaCompetenciaBR = `${ultimaCompetencia.slice(4)}/${ultimaCompetencia.slice(0, 4)}`
+const internacoesNovasBR = silverMetadata.metricas.internacoes_novas.toLocaleString('pt-BR')
+
 const statusSnapshot = JSON.parse(
   readFileSync(new URL('../src/fixtures/status.json', import.meta.url), 'utf8'),
 ) as Record<string, string>
@@ -386,15 +399,19 @@ test('@live renderiza os números reais do Oracle pelo proxy relativo', async ({
   await page.goto('/')
 
   await expect(page.getByTestId('source-badge')).toHaveText('Oracle ao vivo', { timeout: 15_000 })
-  await expect(page.getByTestId('data-through')).toHaveText('05/2026')
+  // Derivado do manifesto da Bronze, não memorizado: quando o DATASUS publica
+  // uma competência nova e o pipeline avança, este teste tem de acompanhar a
+  // realidade em vez de falhar por estar velho.
+  await expect(page.getByTestId('data-through')).toHaveText(ultimaCompetenciaBR)
   await expect(page.getByTestId('regional-count')).toHaveText('62 de 62 regiões')
   await expect(page.getByTestId('regional-selected-name')).toHaveText('JUNDIAI')
-  await expect(page.getByTestId('regional-admissions')).toHaveText('4.797')
+  // Estruturais e invariantes: o total de internações novas na Metodologia
+  // tem de bater com o que a Silver reconciliou, e a checagem cruzada de
+  // pacientes-dia entre marts tem de fechar em zero, em qualquer recorte.
   await expect(page.getByTestId('fallback-note')).toHaveCount(0)
   await page.getByRole('link', { name: 'Metodologia' }).click()
   await expect(page.getByTestId('coverage-regions')).toHaveText('62')
-  await expect(page.getByTestId('coverage-admissions')).toHaveText('6.905.441')
-  await expect(page.getByTestId('coverage-benchmark-zero')).toHaveText('6.680')
+  await expect(page.getByTestId('coverage-admissions')).toHaveText(internacoesNovasBR)
   await expect(page.getByTestId('reconciliation-patient_days_cross_mart')).toContainText('diferença: 0')
 })
 

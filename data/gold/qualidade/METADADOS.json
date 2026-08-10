@@ -1,65 +1,65 @@
 {
   "camada": "gold",
   "versao_contrato": "0.3.0",
-  "gerado_em_utc": "2026-08-08T18:45:58.040296+00:00",
+  "gerado_em_utc": "2026-08-10T01:06:06.417941+00:00",
   "metricas": {
-    "internacoes_novas_reconciliadas": 6905441,
-    "pacientes_dia_estimados": 32425897,
+    "internacoes_novas_reconciliadas": 7150693,
+    "pacientes_dia_estimados": 33593969,
     "regioes_saude": 62,
-    "competencias": 29,
-    "internacoes_residentes_sp_observadas": 6846665,
-    "internacoes_residentes_fora_sp_atendidas": 58776,
-    "internacoes_icsap_residentes_sp_observadas": 953656,
-    "fluxos_origem_destino_mensais": 30018,
-    "linhas_is_calculadas": 310,
-    "combinacoes_ipr_elegiveis": 30550,
-    "cobertura_internacoes_ipr_pct": 57.1383,
-    "linhas_tmh_cmi_amostra_suficiente": 36006,
-    "hospitais_mes_acima_capacidade_declarada": 493,
-    "hospitais_mes_sem_leito_sus_declarado": 142
+    "competencias": 30,
+    "internacoes_residentes_sp_observadas": 7089959,
+    "internacoes_residentes_fora_sp_atendidas": 60734,
+    "internacoes_icsap_residentes_sp_observadas": 988453,
+    "fluxos_origem_destino_mensais": 31033,
+    "linhas_is_calculadas": 372,
+    "combinacoes_ipr_elegiveis": 31452,
+    "cobertura_internacoes_ipr_pct": 57.489,
+    "linhas_tmh_cmi_amostra_suficiente": 37257,
+    "hospitais_mes_acima_capacidade_declarada": 511,
+    "hospitais_mes_sem_leito_sus_declarado": 146
   },
   "tabelas": {
     "mart_indicador_hospital_mensal": {
       "caminho": "data/gold/marts/mart_indicador_hospital_mensal.parquet",
-      "linhas": 18690,
+      "linhas": 19341,
       "colunas": 35,
-      "sha256": "5989e56eb93355e36b557737a690cea55c7fd50a787776208454769e8bf4a5ad"
+      "sha256": "bb939818a187ef7844f6590755c7b841557cf4d1b9dab85bf30192626dc40297"
     },
     "mart_indicador_hospital_especialidade_mensal": {
       "caminho": "data/gold/marts/mart_indicador_hospital_especialidade_mensal.parquet",
-      "linhas": 52525,
+      "linhas": 54328,
       "colunas": 24,
-      "sha256": "d7338a9ebdff85faccc2581e2513fb167d9b876dd50406412eb3bc5fa958924f"
+      "sha256": "1cd5f7cd756dd096d8586b4497a7800f9f2d3fa69c5e64fb7b608a7af28268dd"
     },
     "mart_indicador_hospital_cid_periodo": {
       "caminho": "data/gold/marts/mart_indicador_hospital_cid_periodo.parquet",
-      "linhas": 447334,
+      "linhas": 455054,
       "colunas": 18,
-      "sha256": "ce80d11894b114efe80c0c47657678a590f41afa464f5c2be2c94ef57fb9c5ab"
+      "sha256": "0d777d7bf745e37cf49de943f3c31bbf3301c78d6597e761f7ea7a2da007c907"
     },
     "mart_indicador_regiao_mensal": {
       "caminho": "data/gold/marts/mart_indicador_regiao_mensal.parquet",
-      "linhas": 1798,
+      "linhas": 1860,
       "colunas": 42,
-      "sha256": "7066f2091d2be628cd5c3d2a1253b3798aaa2a9bbc49f3c8a44385368e513d98"
+      "sha256": "d43e06628604dcbff4741470b752e56f8f17a4b4a7ca584279f6d4ca25e30cc5"
     },
     "mart_indicador_regiao_periodo": {
       "caminho": "data/gold/marts/mart_indicador_regiao_periodo.parquet",
       "linhas": 62,
       "colunas": 11,
-      "sha256": "71862d989a1dfab368b20080589796b52e33631d3d338404480ea17a6ce365aa"
+      "sha256": "9015a40694b8dc74eea15cb4d22738db50d006d237171f7f14ecc63e167ca54a"
     },
     "mart_fluxo_assistencial_regiao_mensal": {
       "caminho": "data/gold/marts/mart_fluxo_assistencial_regiao_mensal.parquet",
-      "linhas": 30018,
+      "linhas": 31033,
       "colunas": 15,
-      "sha256": "f85e04e50bda9e43a5d1ee709038d57f93f62beeeeb93c67aa72d06f6167ad9b"
+      "sha256": "af478d4cd39eb70f7e40e9d147d3a5a9fd4c837f536ffaae5578f6296336d5ee"
     },
     "mart_icsap_regiao_mensal": {
       "caminho": "data/gold/marts/mart_icsap_regiao_mensal.parquet",
-      "linhas": 34162,
+      "linhas": 35340,
       "colunas": 14,
-      "sha256": "e7c716aaa232d0eaa373b313cdba982a9ce8b985186ac8fb29115fa43ef44a94"
+      "sha256": "1ee7c3ad48cffe6c93918ce23dfe41ecfa34a10a0e9c4f7aab5b686895615935"
     }
   }
 }

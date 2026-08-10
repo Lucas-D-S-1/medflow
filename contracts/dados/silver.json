@@ -1,7 +1,7 @@
 {
   "camada": "silver",
   "versao_contrato": "0.3.0",
-  "gerado_em_utc": "2026-08-08T18:45:02.478431+00:00",
+  "gerado_em_utc": "2026-08-10T01:04:16.253709+00:00",
   "principios": [
     "Dados tipados, conformados, reconciliados e prontos para reuso.",
     "Somente dimensões e fatos; indicadores e benchmarks pertencem à Gold.",
@@ -16,7 +16,7 @@
       "chave_primaria_logica": [
         "cd_competencia"
       ],
-      "linhas": 29,
+      "linhas": 30,
       "colunas": [
         {
           "nome": "nr_ano_competencia",
@@ -70,7 +70,7 @@
       "chave_primaria_logica": [
         "cd_cnes"
       ],
-      "linhas": 653,
+      "linhas": 655,
       "colunas": [
         {
           "nome": "cd_cnes",
@@ -118,14 +118,14 @@
           "nome": "cd_regiao_saude_cnes_lt",
           "tipo": "string",
           "aceita_nulo": true,
-          "nulos": 80,
+          "nulos": 81,
           "descricao": "Código de região declarado historicamente no arquivo CNES/LT."
         },
         {
           "nome": "qt_regiao_saude_declarada_cnes_lt",
           "tipo": "float64",
           "aceita_nulo": true,
-          "nulos": 80,
+          "nulos": 81,
           "descricao": "Quantidade de códigos regionais distintos observados no histórico CNES/LT."
         },
         {
@@ -386,7 +386,7 @@
       "chave_primaria_logica": [
         "cd_cid_principal"
       ],
-      "linhas": 9494,
+      "linhas": 9513,
       "colunas": [
         {
           "nome": "cd_cid_principal",
@@ -507,7 +507,7 @@
       "descricao": "AIHs aprovadas enriquecidas e tipadas para análise.",
       "grao": "uma linha por registro mensal de AIH",
       "chave_primaria_logica": [],
-      "linhas": 7034961,
+      "linhas": 7284476,
       "colunas": [
         {
           "nome": "id_aih",
@@ -785,8 +785,8 @@
         {
           "nome": "ds_sexo",
           "tipo": "object",
-          "aceita_nulo": false,
-          "nulos": 0,
+          "aceita_nulo": true,
+          "nulos": 10,
           "descricao": "Descrição do código de sexo."
         },
         {
@@ -933,7 +933,7 @@
         "cd_cnes",
         "cd_competencia"
       ],
-      "linhas": 18690,
+      "linhas": 19341,
       "colunas": [
         {
           "nome": "cd_cnes",
