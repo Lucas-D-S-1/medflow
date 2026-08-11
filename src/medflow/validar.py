@@ -184,9 +184,9 @@ def validar(base: Path) -> dict[str, int | str]:
     )
     # Quem sai de uma região entra em outra: a evasão estadual tem de fechar
     # exatamente com a recepção. É a identidade que prova a matriz de fluxos.
+    evasao_intrastadual = int(regiao_mensal.qt_evasao_intrastadual_observada.sum())
     assert (
-        regiao_mensal.qt_evasao_intrastadual_observada.sum()
-        == regiao_mensal.qt_internacao_recebida_outra_regiao_sp.sum()
+        evasao_intrastadual == regiao_mensal.qt_internacao_recebida_outra_regiao_sp.sum()
     )
     assert (
         icsap_mensal.qt_internacao_icsap.sum()
@@ -211,7 +211,8 @@ def validar(base: Path) -> dict[str, int | str]:
         (base / "data" / "gold" / "geografia" / "mapa_regiao_saude_sp.topojson").read_text()
     )
     assert topo["type"] == "Topology"
-    assert len(topo["objects"]["regioes_saude"]["geometries"]) == 62
+    geometrias_regionais = len(topo["objects"]["regioes_saude"]["geometries"])
+    assert geometrias_regionais == 62
 
     inventario_pre = json.loads(
         (base / "contracts" / "INVENTARIO_PRE_MIGRACAO.json").read_text()
@@ -285,7 +286,15 @@ def validar(base: Path) -> dict[str, int | str]:
         "regioes_saude": gold["regioes_saude"],
         "macrorregioes_saude": geografia["macrorregioes_saude"],
         "competencias": gold["competencias"],
+        "evasao_intrastadual": evasao_intrastadual,
+        "icsap_reconciliadas": gold["internacoes_icsap_residentes_sp_observadas"],
+        "geometrias_regionais": geometrias_regionais,
     }
+
+    def br(valor: int) -> str:
+        """Milhar com ponto, como o resto do produto escreve número."""
+        return f"{valor:,}".replace(",", ".")
+
     linhas = [
         "# Validação técnica integrada — MedFlow 0.3.0",
         "",
@@ -298,12 +307,16 @@ def validar(base: Path) -> dict[str, int | str]:
         "- Nomes Silver/Gold aderentes a `snake_case`.",
         "- Nenhum arquivo `.parcial` residual.",
         f"- {len(preservados)} artefatos de data/figuras pré-migração preservados por SHA-256.",
-        "- 7.034.961 AIHs e 6.905.441 internações novas reconciliadas.",
+        f"- {br(silver['linhas_sih_reconciliadas'])} AIHs e "
+        f"{br(gold['internacoes_novas_reconciliadas'])} internações novas reconciliadas.",
         "- Fórmulas TMH, IPR, IS, IPH, permanência média, IPCA e taxa populacional por residência recalculadas.",
-        "- Fluxos origem-destino reconciliados; 906.060 saídas inter-regionais fecham com as entradas correspondentes.",
-        "- 953.656 ICSAP reconciliadas entre resumo regional e 19 grupos da Portaria SAS/MS 221/2008.",
-        "- 645 municípios, 62 regiões, 19 macrorregiões e 29 competências.",
-        "- TopoJSON com 62 geometrias regionais.",
+        f"- Fluxos origem-destino reconciliados; {br(evasao_intrastadual)} saídas "
+        "inter-regionais fecham com as entradas correspondentes.",
+        f"- {br(gold['internacoes_icsap_residentes_sp_observadas'])} ICSAP reconciliadas "
+        "entre resumo regional e 19 grupos da Portaria SAS/MS 221/2008.",
+        f"- {br(geografia['municipios'])} municípios, {gold['regioes_saude']} regiões, "
+        f"{geografia['macrorregioes_saude']} macrorregiões e {gold['competencias']} competências.",
+        f"- TopoJSON com {geometrias_regionais} geometrias regionais.",
         "",
         "## Cobertura documental",
         "",

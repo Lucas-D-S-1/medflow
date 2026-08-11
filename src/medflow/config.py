@@ -30,13 +30,14 @@ from pathlib import Path
 
 PADRAO_COMPETENCIA = re.compile(r"^(\d{4})-(\d{2})$")
 
-# Última competência do recorte validado. O SIH/RD e o CNES/LT já publicaram
-# 2026-06, mas avançar o recorte não é mudança de código: invalida as
-# reconciliações publicadas, a carga do Oracle, as fixtures do webapp e os
-# números da apresentação. O padrão fica congelado até essa decisão ser
-# tomada; ver PENDENCIAS.md, item 7b. Para incluir junho, basta
-# MEDFLOW_PERIODO_FINAL=2026-06 — sem tocar no código.
-PERIODO_FINAL_PADRAO = "2026-05"
+# Última competência do recorte oficial, avançada para 2026-06 na fatia 5b e
+# reconciliada ponta a ponta: Silver, Gold, carga do Oracle e 36/36 no banco.
+# O padrão precisa acompanhar o recorte entregue — um clone limpo que rode
+# `make bronze silver gold` tem de reproduzir os números publicados, não os da
+# revisão anterior. Ver PENDENCIAS.md, item 7b.
+PERIODO_INICIAL_PADRAO = "2024-01"
+PERIODO_FINAL_PADRAO = "2026-06"
+UF_PADRAO = "SP"
 
 
 def _competencia(texto: str, variavel: str) -> tuple[int, int]:
@@ -51,6 +52,10 @@ def _competencia(texto: str, variavel: str) -> tuple[int, int]:
     return ano, mes
 
 
+_PERIODO_INICIAL = _competencia(PERIODO_INICIAL_PADRAO, "PERIODO_INICIAL_PADRAO")
+_PERIODO_FINAL = _competencia(PERIODO_FINAL_PADRAO, "PERIODO_FINAL_PADRAO")
+
+
 def raiz_padrao() -> Path:
     """A raiz do repositório, dois níveis acima de `src/medflow`."""
     return Path(__file__).resolve().parents[2]
@@ -60,10 +65,13 @@ def raiz_padrao() -> Path:
 class Config:
     """Recorte e caminhos de uma execução."""
 
+    # Os padrões saem das constantes acima, não de literais repetidos: o
+    # recorte é um fato só, e duas cópias dele divergem na primeira vez que
+    # uma competência nova entra.
     base: Path = field(default_factory=raiz_padrao)
-    uf: str = "SP"
-    periodo_inicial: tuple[int, int] = (2024, 1)
-    periodo_final: tuple[int, int] = (2026, 5)
+    uf: str = UF_PADRAO
+    periodo_inicial: tuple[int, int] = _PERIODO_INICIAL
+    periodo_final: tuple[int, int] = _PERIODO_FINAL
 
     @classmethod
     def do_ambiente(cls, **sobreposicoes) -> Config:
@@ -73,10 +81,10 @@ class Config:
         )
         return cls(
             base=Path(base).expanduser().resolve(),
-            uf=sobreposicoes.pop("uf", None) or os.getenv("MEDFLOW_UF", "SP"),
+            uf=sobreposicoes.pop("uf", None) or os.getenv("MEDFLOW_UF", UF_PADRAO),
             periodo_inicial=sobreposicoes.pop("periodo_inicial", None)
             or _competencia(
-                os.getenv("MEDFLOW_PERIODO_INICIAL", "2024-01"),
+                os.getenv("MEDFLOW_PERIODO_INICIAL", PERIODO_INICIAL_PADRAO),
                 "MEDFLOW_PERIODO_INICIAL",
             ),
             periodo_final=sobreposicoes.pop("periodo_final", None)
