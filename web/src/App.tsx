@@ -1,9 +1,9 @@
 import { Navigate, NavLink, Route, Routes } from 'react-router-dom'
-import { SourceProvider } from './source/SourceContext'
-import FluxosView from './routes/FluxosView'
-import HospitalView from './routes/HospitalView'
-import MetodologiaView from './routes/MetodologiaView'
-import RegionalView from './routes/RegionalView'
+import { SourceProvider } from './shared/SourceContext'
+import FluxosView from './features/fluxos/FluxosView'
+import HospitalView from './features/hospital/HospitalView'
+import MetodologiaView from './features/metodologia/MetodologiaView'
+import RegionalView from './features/regional/RegionalView'
 
 function Shell() {
   return (

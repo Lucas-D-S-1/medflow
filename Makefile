@@ -8,7 +8,7 @@ DOTENV  := $(PY) -m dotenv -f .env run --
 # os alvos de frontend rodam dentro de web/, então o .env fica um nível acima
 DOTENV_WEB := ../$(PY) -m dotenv -f ../.env run --
 
-.PHONY: help setup bronze silver gold geografia validar inventario test test-py test-web lint contrato reconciliar reconciliar-completo web-install web-build web-e2e oracle-ping oracle-carregar limpar
+.PHONY: fixtures fixtures-conferir fixtures-carimbo help setup bronze silver gold geografia validar inventario test test-py test-web lint contrato reconciliar reconciliar-completo web-install web-build web-e2e oracle-ping oracle-carregar limpar
 
 help:  ## lista os alvos disponíveis
 	@grep -hE '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) \
@@ -47,7 +47,13 @@ validar:  ## validação integrada das três camadas contra os contratos
 inventario:  ## inventário SHA-256 dos artefatos de dados
 	$(PY) -m medflow.cli inventario
 
-fixtures:  ## reancora o carimbo da Gold nos snapshots do webapp
+fixtures:  ## regrava os 10 snapshots do webapp a partir da API ao vivo
+	cd web && $(DOTENV_WEB) node scripts/gerar-mocks.ts
+
+fixtures-conferir:  ## não escreve; falha se algum snapshot estiver desatualizado
+	cd web && $(DOTENV_WEB) node scripts/gerar-mocks.ts --conferir
+
+fixtures-carimbo:  ## offline: só reancora o carimbo da Gold nos snapshots
 	$(PY) scripts/reancorar_fixtures.py
 
 # --------------------------------------------------------------- testes
@@ -80,7 +86,7 @@ web-install:  ## instala as dependências do frontend
 web-build:  ## typecheck e build de produção
 	cd web && npm run build
 
-test-web: web-build  ## build mais a suíte Playwright completa, 31 testes
+test-web: web-build  ## build mais a suíte Playwright completa, 32 testes
 	cd web && $(DOTENV_WEB) npx playwright test
 
 test-web-ci: web-build  ## só os 29 testes herméticos, sem tocar no Oracle

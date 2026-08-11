@@ -1,0 +1,85 @@
+{
+  "status": "ok",
+  "source": "snapshot",
+  "database_time": "2026-08-10T01:06:06.417941+00:00",
+  "contract_version": "0.3.0",
+  "data_through": "2026-06",
+  "filters": {
+    "cnes": "3012212",
+    "year": 2026,
+    "month": 6
+  },
+  "hospital": {
+    "cnes": "3012212",
+    "region_code": "35073",
+    "region_name": "JUNDIAI",
+    "macroregion_code": "3527",
+    "macroregion_name": "RRAS16",
+    "new_admissions_total": 885
+  },
+  "pagination": {
+    "limit": 200,
+    "offset": 0,
+    "count": 4,
+    "has_more": false,
+    "order": "new_admissions_desc"
+  },
+  "items": [
+    {
+      "price_reference_competence": "202606",
+      "cnes": "3012212",
+      "stay_days_total": 1732,
+      "cmi_real": 1485.2348,
+      "cmi_nominal": 1485.2348,
+      "average_stay_days": 5.109145,
+      "deaths": 4,
+      "specialty_code": "07",
+      "tmh_percent": 1.179941,
+      "new_admissions": 339,
+      "sample_status": "suficiente",
+      "specialty_name": "Pediatria"
+    },
+    {
+      "price_reference_competence": "202606",
+      "cnes": "3012212",
+      "stay_days_total": 941,
+      "cmi_real": 822.9703,
+      "cmi_nominal": 822.9703,
+      "average_stay_days": 3.29021,
+      "deaths": 0,
+      "specialty_code": "02",
+      "tmh_percent": 0,
+      "new_admissions": 286,
+      "sample_status": "suficiente",
+      "specialty_name": "Obstetrícia"
+    },
+    {
+      "price_reference_competence": "202606",
+      "cnes": "3012212",
+      "stay_days_total": 397,
+      "cmi_real": 1056.2212,
+      "cmi_nominal": 1056.2212,
+      "average_stay_days": 1.661088,
+      "deaths": 1,
+      "specialty_code": "01",
+      "tmh_percent": 0.41841,
+      "new_admissions": 239,
+      "sample_status": "suficiente",
+      "specialty_name": "Cirurgia"
+    },
+    {
+      "price_reference_competence": "202606",
+      "cnes": "3012212",
+      "stay_days_total": 50,
+      "cmi_real": 397.2362,
+      "cmi_nominal": 397.2362,
+      "average_stay_days": 2.380952,
+      "deaths": 0,
+      "specialty_code": "03",
+      "tmh_percent": 0,
+      "new_admissions": 21,
+      "sample_status": "amostra_insuficiente",
+      "specialty_name": "Clínica médica"
+    }
+  ]
+}

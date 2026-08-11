@@ -40,7 +40,7 @@ select '0.3.0' as contract_version,
            || substr(r.cd_competencia_maxima, 5, 2)
        end as data_through,
        r.cd_competencia_preco_referencia,
-       '2026-08-01T21:12:53.587180+00:00' as gold_updated_at,
+       (select m.gerado_em_utc from gold_manifesto m) as gold_updated_at,
        (select count(*) from dim_geografia_regiao) as qt_regiao_saude,
        r.qt_competencia,
        r.qt_internacao_nova,

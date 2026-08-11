@@ -10,7 +10,7 @@ import '@fontsource/manrope/latin-700.css'
 import App from './App'
 import './styles/tokens.css'
 import './styles.css'
-import './components/components.css'
+import './shared/components.css'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

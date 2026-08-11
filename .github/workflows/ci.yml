@@ -32,6 +32,14 @@ jobs:
       - name: Pytest
         run: pytest -q
 
+      # A checagem de conteúdo (`make fixtures-conferir`) precisa do Oracle e
+      # não roda aqui de propósito: um push não deve ficar vermelho porque o
+      # Always Free hibernou.
+      #
+      # Este passo confere só o carimbo, e num runner limpo não há Gold com que
+      # comparar — o script detecta isso e sai sem erro. Até 11/08/2026 ele
+      # levantava FileNotFoundError, o que tornava o passo impossível de passar
+      # aqui: um portão que nunca fecha não é portão.
       - name: Snapshots do webapp batem com o carimbo da Gold
         run: python scripts/reancorar_fixtures.py --conferir
 
@@ -42,7 +50,7 @@ jobs:
       run:
         working-directory: web
     env:
-      # 29 dos 31 testes interceptam as rotas e nunca chegam ao proxy. Os
+      # 30 dos 32 testes interceptam as rotas e nunca chegam ao proxy. Os
       # outros 2 são integração ao vivo contra o Oracle, marcados @live e
       # excluídos aqui: um push não deve ficar vermelho porque o Always Free
       # hibernou. O valor de fachada mantém o guard do vite.config válido
