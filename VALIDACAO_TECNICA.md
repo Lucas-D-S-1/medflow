@@ -1,6 +1,6 @@
 # Validação técnica integrada — MedFlow 0.3.0
 
-Executada em `2026-08-10T01:08:19.152318+00:00`.
+Executada em `2026-08-11T18:12:17.139589+00:00`.
 
 ## Resultado
 
@@ -9,11 +9,11 @@ Executada em `2026-08-10T01:08:19.152318+00:00`.
 - Nomes Silver/Gold aderentes a `snake_case`.
 - Nenhum arquivo `.parcial` residual.
 - 38 artefatos de data/figuras pré-migração preservados por SHA-256.
-- 7.034.961 AIHs e 6.905.441 internações novas reconciliadas.
+- 7.284.476 AIHs e 7.150.693 internações novas reconciliadas.
 - Fórmulas TMH, IPR, IS, IPH, permanência média, IPCA e taxa populacional por residência recalculadas.
-- Fluxos origem-destino reconciliados; 906.060 saídas inter-regionais fecham com as entradas correspondentes.
-- 953.656 ICSAP reconciliadas entre resumo regional e 19 grupos da Portaria SAS/MS 221/2008.
-- 645 municípios, 62 regiões, 19 macrorregiões e 29 competências.
+- Fluxos origem-destino reconciliados; 939.143 saídas inter-regionais fecham com as entradas correspondentes.
+- 988.453 ICSAP reconciliadas entre resumo regional e 19 grupos da Portaria SAS/MS 221/2008.
+- 645 municípios, 62 regiões, 19 macrorregiões e 30 competências.
 - TopoJSON com 62 geometrias regionais.
 
 ## Cobertura documental

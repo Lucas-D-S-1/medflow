@@ -15,7 +15,12 @@ import argparse
 import json
 from pathlib import Path
 
-from medflow.config import Config, configurar_logging
+from medflow.config import (
+    PERIODO_FINAL_PADRAO,
+    PERIODO_INICIAL_PADRAO,
+    Config,
+    configurar_logging,
+)
 
 
 def _competencia(texto: str) -> tuple[int, int]:
@@ -50,14 +55,14 @@ def main(argv: list[str] | None = None) -> int:
         type=_competencia,
         default=None,
         metavar="AAAA-MM",
-        help="primeira competência (padrão: MEDFLOW_PERIODO_INICIAL, ou 2024-01)",
+        help=f"primeira competência (padrão: MEDFLOW_PERIODO_INICIAL, ou {PERIODO_INICIAL_PADRAO})",
     )
     parser.add_argument(
         "--periodo-final",
         type=_competencia,
         default=None,
         metavar="AAAA-MM",
-        help="última competência (padrão: MEDFLOW_PERIODO_FINAL, ou 2026-05)",
+        help=f"última competência (padrão: MEDFLOW_PERIODO_FINAL, ou {PERIODO_FINAL_PADRAO})",
     )
     parser.add_argument("--uf", default=None, help="padrão: MEDFLOW_UF, ou SP")
     parser.add_argument(

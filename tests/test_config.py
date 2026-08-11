@@ -1,13 +1,16 @@
 """O contrato de configuração do pipeline.
 
 O que estes testes protegem é a promessa da fatia 5: trocar o recorte é
-configuração, não edição de código. E o padrão congelado em 2026-05 é uma
-decisão de produto — se alguém mudá-lo sem querer, um teste avisa.
+configuração, não edição de código. O padrão, porém, não é livre — ele tem de
+ser o recorte que foi de fato entregue, senão um clone limpo regenera números
+diferentes dos publicados. É o que `test_padrao_reproduz_o_recorte_entregue`
+verifica contra o manifesto real da Bronze.
 """
 
 from __future__ import annotations
 
 import dataclasses
+import json
 import logging
 from pathlib import Path
 
@@ -15,6 +18,7 @@ import pytest
 
 from medflow.config import (
     PERIODO_FINAL_PADRAO,
+    PERIODO_INICIAL_PADRAO,
     Config,
     _competencia,
     configurar_logging,
@@ -39,21 +43,37 @@ class TestCompetencia:
 
 
 class TestConfig:
-    def test_padrao_esta_congelado_no_recorte_validado(self):
-        # Ver PENDENCIAS.md, item 7b. Avançar isto invalida as reconciliações
-        # publicadas, a carga do Oracle e as fixtures do webapp.
-        assert PERIODO_FINAL_PADRAO == "2026-05"
-        assert Config().periodo_final == (2026, 5)
-        assert Config().periodo_inicial == (2024, 1)
+    def test_padroes_da_classe_saem_das_constantes(self):
+        # Um fato, uma fonte. Antes da fatia 6 o recorte estava escrito em
+        # quatro lugares e três deles ficaram para trás quando a 5b avançou
+        # para junho.
+        assert Config().periodo_final == _competencia(PERIODO_FINAL_PADRAO, "x")
+        assert Config().periodo_inicial == _competencia(PERIODO_INICIAL_PADRAO, "x")
         assert Config().uf == "SP"
 
+    def test_padrao_reproduz_o_recorte_entregue(self):
+        """O padrão do código tem de bater com o manifesto que gerou a Gold.
+
+        Divergir aqui significa que `make bronze silver gold` num clone limpo
+        produz um recorte diferente do que está no Oracle e na apresentação —
+        o defeito que esta asserção existe para tornar barulhento.
+        """
+        manifesto = Config().base / "data" / "bronze" / "MANIFESTO.json"
+        if not manifesto.is_file():
+            pytest.skip("Bronze não materializada nesta máquina (data/ é gitignored)")
+        recorte = json.loads(manifesto.read_text(encoding="utf-8"))["recorte"]
+        ultima = recorte["ultima_competencia_comum"]
+        assert PERIODO_FINAL_PADRAO == f"{ultima[:4]}-{ultima[4:]}"
+        primeira = recorte["competencias"][0]
+        assert PERIODO_INICIAL_PADRAO == f"{primeira[:4]}-{primeira[4:]}"
+
     def test_ambiente_muda_o_recorte_sem_tocar_no_codigo(self, monkeypatch):
-        monkeypatch.setenv("MEDFLOW_PERIODO_FINAL", "2026-06")
+        monkeypatch.setenv("MEDFLOW_PERIODO_FINAL", "2026-07")
         monkeypatch.setenv("MEDFLOW_PERIODO_INICIAL", "2025-03")
         monkeypatch.setenv("MEDFLOW_UF", "RJ")
         config = Config.do_ambiente()
         assert config.periodo_inicial == (2025, 3)
-        assert config.periodo_final == (2026, 6)
+        assert config.periodo_final == (2026, 7)
         assert config.uf == "RJ"
 
     def test_argumento_vence_a_variavel_de_ambiente(self, monkeypatch):
