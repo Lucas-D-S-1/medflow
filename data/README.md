@@ -36,6 +36,23 @@ defeito para ficar clara:
 As saídas regeneráveis têm garantias mais fortes que um hash: contratos,
 manifesto e invariantes conferidas a cada `make validar`.
 
+## Por que 12 MB de referência estão versionados
+
+`bronze/origem/referencias/` guarda a malha municipal do IBGE, o CSV de regiões
+do Ministério da Saúde, a CID-10 do DATASUS e as respostas das APIs oficiais.
+São 12 MB — a maior parte do repositório — e o pipeline sabe baixá-los sozinho
+(`bronze/referencias.py`). Versioná-los parece desperdício, e é deliberado.
+
+O motivo é que **URL de órgão público muda**. O IBGE reorganiza o `geoftp`, o
+MS troca o bucket, o DATASUS renomeia o pacote da CID. Quando isso acontece, um
+repositório que só guarda o endereço deixa de reproduzir o recorte validado, e
+não há como saber se o arquivo novo é o mesmo que produziu os números
+publicados. A cópia versionada, com o SHA-256 no `MANIFESTO.json`, responde
+essa pergunta anos depois.
+
+12 MB é barato para essa garantia. Se um dia deixar de ser, a saída é publicar
+as referências como *release asset* — não apagá-las.
+
 ## O manifesto é a fonte do recorte
 
 `bronze/MANIFESTO.json` registra fonte, volumetria, SHA-256 e as competências
