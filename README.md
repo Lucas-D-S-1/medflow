@@ -21,7 +21,7 @@ Proposta metodológica e revisão dos requisitos:
 [`docs/decisoes/REVISAO_REQUISITOS_E_PROPOSTA_GOLD.md`](docs/decisoes/REVISAO_REQUISITOS_E_PROPOSTA_GOLD.md).
 
 Arquitetura detalhada:
-[`ARQUITETURA_CAMADAS.md`](ARQUITETURA_CAMADAS.md).
+[`ARQUITETURA.md`](ARQUITETURA.md).
 Nomenclatura:
 [`contracts/NOMENCLATURA.md`](contracts/NOMENCLATURA.md).
 Contrato da API:

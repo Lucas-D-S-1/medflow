@@ -7,7 +7,7 @@ a solução técnica já construída. Ele reúne evidências externas, compara
 soluções existentes e registra um roteiro opcional para medir a utilidade real
 se o produto evoluir depois da entrega acadêmica.
 
-O desenho técnico correspondente está em [`arquitetura.md`](../../arquitetura.md).
+O desenho técnico correspondente está em [`ARQUITETURA.md`](../../ARQUITETURA.md).
 
 ## 1. Resposta executiva
 
