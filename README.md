@@ -341,9 +341,11 @@ arquivo numerado é uma **redefinição cumulativa do módulo inteiro** — o `0
 define os dez handlers e é o único que precisa ser reaplicado ao mudar
 qualquer endpoint.
 
-Os artefatos anteriores ficam em `dados/legado/`, `figuras/legado/`,
-`notebooks/_legado/` e `referencias/legado_sprint_1/`. Eles não alimentam o
-contrato `0.3.0`.
+Os artefatos anteriores ficam em `data/legado/` e
+`docs/qualidade/figuras/legado/`. Eles não alimentam o contrato `0.3.0`, e são
+preservados porque a checagem de preservação do `medflow validar` prova, por
+SHA-256, que a migração de julho de 2026 não perdeu nada que o pipeline não
+regenera.
 
 ## Fontes
 

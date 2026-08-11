@@ -159,10 +159,12 @@ analítica. A cobertura do fato passou a 100%, sem imputação arbitrária.
 - `NAT_JUR`: CONCLA/IBGE 2021, 21/21 códigos observados; o código `1228`,
   surgido no perfil mais recente de um hospital, foi incorporado como
   “Consórcio Público de Direito Privado”;
-- `DIAG_PRINC`: DATASUS CID-10 2008 e complementos oficiais do MS,
-  9.494/9.494 códigos observados;
+- `DIAG_PRINC`: DATASUS CID-10 2008 e complementos oficiais do MS, cobrindo
+  **todos** os códigos observados — a cobertura é asserção do pipeline, não
+  contagem copiada: quando o recorte avançou e 19 CIDs novos entraram, ela
+  passou sem intervenção;
 - `MARCA_UTI`: MS/DATASUS e CEM, 14/14 códigos observados;
-- nome e esfera atuais: API oficial CNES, 653/653 hospitais.
+- nome e esfera atuais: API oficial CNES, cobrindo todos os hospitais observados.
 
 Nome e esfera são fotografia atual, explicitamente marcados como não
 históricos. O `ESFERA_A` bruto do CNES/LT permanece vazio e não é preenchido
@@ -192,7 +194,7 @@ Qualquer indicador aprovado deve ser apresentado em quatro camadas:
   `SOBRESCREVER=True`.
 - Arquivos em construção usam sufixo `.parcial`.
 - A Silver só promove dados após reconciliar totais e domínios.
-- todo material anterior foi isolado em `dados/legado/` e não alimenta o
+- todo material anterior foi isolado em `data/legado/` e não alimenta o
   pipeline `0.3.0`.
 
 ## 9. Infraestrutura Oracle

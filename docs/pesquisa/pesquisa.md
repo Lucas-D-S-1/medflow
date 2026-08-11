@@ -243,19 +243,22 @@ sozinhas, não garantem impacto.
 
 ### 6.1 Pontos fortes
 
-- 7.034.961 AIHs preservadas na Silver;
-- 6.905.441 internações novas distinguidas de 129.520 continuações;
-- 29 competências comuns de SIH e CNES;
+- AIH aprovada, internação nova e continuação de longa permanência contadas
+  e reconciliadas separadamente;
 - cobertura integral dos códigos observados usados nos de/paras;
 - 645 municípios, 62 regiões e 19 macrorregiões;
 - nove tabelas Gold e 175 colunas documentadas;
-- 585.296 linhas reconciliadas no Oracle;
+- carga do Oracle conferida tabela a tabela contra a Gold;
 - 36/36 métricas Oracle com estado `ok` e seis gates de integridade vazios;
-- 6.846.665 internações de residentes paulistas observadas em hospitais de SP;
-- 906.060 fluxos inter-regionais simétricos entre saída e entrada;
-- 953.656 ICSAP reconciliadas entre resumo e 19 grupos oficiais;
+- evasão inter-regional simétrica entre saída e entrada, por construção;
+- ICSAP reconciliada entre o resumo regional e os 19 grupos oficiais;
 - geografia e metadados versionados;
 - ausência e denominador zero preservados, sem descarte silencioso.
+
+A volumetria de cada item está em [`VALIDACAO_TECNICA.md`](../../VALIDACAO_TECNICA.md),
+que é gerado a cada `make validar`. Este documento é argumentativo e não repete
+número: quando o recorte avança, prosa com total cravado passa a mentir, e foi o
+que aconteceu com a versão anterior desta lista.
 
 Os novos sinais não são residuais: 13,23% das internações observadas de
 residentes ocorreram em outra região paulista, e 13,93% das internações de

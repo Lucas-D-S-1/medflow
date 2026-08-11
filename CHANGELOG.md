@@ -7,7 +7,7 @@ A versão da release e a versão dos contratos de dados evoluem separadamente.
 
 ### Adicionado
 
-- `webapp/`: aplicação React + Vite com as quatro visões do produto
+- `web/`: aplicação React + Vite com as quatro visões do produto
   (`/regional`, `/fluxos`, `/hospital`, `/metodologia`), construída em dez
   fatias verticais — cada fatia entrega view SQL, handler ORDS, snapshot de
   contingência, interface e teste, e só é commitada após revisão independente;
@@ -19,10 +19,10 @@ A versão da release e a versão dos contratos de dados evoluem separadamente.
 - snapshot local de contingência por endpoint: quando o Oracle não responde, a
   tela mostra os dados versionados com selo explícito e recusa trocar de
   recorte, em vez de misturar fontes;
-- suíte Playwright com 31 testes cobrindo renderização contra a Gold, estados
+- suíte Playwright cobrindo renderização contra a Gold, estados
   de erro, ausência legítima, contingência, preservação de filtros na URL e
   ausência de rolagem horizontal em 1280x800 e 390x844;
-- diretório `oracle/` com o setup reproduzível do Autonomous AI Database,
+- diretório `db/` com o setup reproduzível do Autonomous AI Database,
   sem segredos versionados;
 - `db/schema/01_criar_usuario_medflow.sql`: esquema de aplicação `MEDFLOW` separado
   do `ADMIN`, com `DWROLE`, quota e acesso ao Database Actions;
@@ -36,11 +36,11 @@ A versão da release e a versão dos contratos de dados evoluem separadamente.
   demonstração e o SQL de referência de cada uma;
 - `docs/qualidade/VALIDACAO_ORACLE_SELECT_AI.md`: evidências da conexão, carga,
   reconciliação, rankings e respostas do Select AI.
-- `pipeline/icsap.py`: classificação versionada dos 19 grupos da Portaria
+- `src/medflow/icsap.py`: classificação versionada dos 19 grupos da Portaria
   SAS/MS 221/2008;
-- `pipeline/ipca.py`: leitura do número-índice IPCA/IBGE preservado na Bronze;
+- `src/medflow/ipca.py`: leitura do número-índice IPCA/IBGE preservado na Bronze;
 - marts de fluxo assistencial e ICSAP por região de residência;
-- `oracle/executar_sql.py`: executor SQL/PLSQL pela conexão mTLS existente.
+- `src/medflow/oracle/executar_sql.py`: executor SQL/PLSQL pela conexão mTLS existente.
 
 ### Alterado
 
@@ -52,7 +52,7 @@ A versão da release e a versão dos contratos de dados evoluem separadamente.
   documenta os aliases do workload Lakehouse;
 - `requirements.txt` inclui `pandas`, `pyarrow` e `python-dotenv`, necessários
   à carga e ao uso seguro do `.env`;
-- `README.md` do `oracle/` virou runbook de seis passos com os riscos de
+- `README.md` do `db/` virou runbook de seis passos com os riscos de
   Always Free e de disponibilidade do Select AI;
 - comentários de negócio e perguntas do Select AI explicitam os cortes de
   100 hospital-mês e 10 combinações hospital-CID.
@@ -167,6 +167,22 @@ Quatro defeitos, três deles no produto:
 4. 34 asserções herméticas cravavam a competência e 24 cravavam também os
    números. Passam a derivar da fixture; a suíte foi de 31 para 32 testes.
 
+**Limpeza para publicação.** O repositório saiu de 216 para 205 arquivos e de
+17,7 para 15,2 MB, com uma pergunta só: o que um avaliador ou alguém que reusa
+o projeto precisa ver? Saíram a configuração das ferramentas de IA, o material
+de curso da Sprint 1, a evidência da v0.1.0, um `requirements-geografia.txt`
+órfão e uma cópia congelada de um relatório que é gerado.
+
+Os três documentos de arquitetura — `arquitetura.md`, `ARQUITETURA_CAMADAS.md`
+e `PIPELINE.md`, 838 linhas descrevendo a mesma coisa em recortes diferentes —
+viraram `ARQUITETURA.md`. Fundir revelou que a tabela "estado real versus
+arquitetura-alvo" ainda dizia *Proposto* para views, endpoints, webapp e
+snapshot, todos entregues desde 02/08.
+
+Duas remoções previstas no plano **não** foram feitas: `figuras/legado/` e os
+CSVs de 2022-2023 são carregados pela checagem de preservação, que casa
+artefatos por SHA-256. Removê-los derrubaria 24 dos 38 artefatos exigidos.
+
 ### Validado em 01/08/2026
 
 - conexão mTLS como `MEDFLOW`;
@@ -244,7 +260,7 @@ seção passando de metade da altura da página em 1280x800 nem em 390x844.
 - consumidores da Silver `0.1.x` precisam aplicar
   `contratos/MAPEAMENTO_COLUNAS_ORIGEM_SILVER.csv`;
 - tabelas `base_hospital_*` não existem mais na Silver;
-- artefatos de 2022–2023 ficam somente em `dados/legado/`;
+- artefatos de 2022–2023 ficam somente em `data/legado/`;
 - o proxy baseado em `QT_DIARIAS` não alimenta o IPH Gold.
 
 ## 0.1.0 — 29/07/2026
