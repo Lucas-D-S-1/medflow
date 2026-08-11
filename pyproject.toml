@@ -42,6 +42,12 @@ notebooks = [
 dev = [
     "pytest>=8.0",
     "ruff>=0.6",
+    # O contrato da API é YAML e os testes o validam de verdade, contra o
+    # esquema OpenAPI 3.1 e contra o SQL dos handlers. Sem declarar, o pytest
+    # passaria localmente (o PyYAML entra de carona pelo Jupyter) e quebraria
+    # na CI, que instala só `.[dev]`.
+    "pyyaml>=6.0",
+    "openapi-spec-validator>=0.7",
 ]
 
 [project.scripts]

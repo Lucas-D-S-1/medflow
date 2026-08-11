@@ -1,0 +1,1049 @@
+openapi: 3.1.0
+
+# Este arquivo descreve o que a API DEVOLVE HOJE, não o que seria desejável.
+# Onde o comportamento atual é discutível, há um `x-observado` dizendo isso em
+# vez de um schema otimista — um contrato que descreve a intenção em vez do
+# observável é pior que nenhum, porque quem o lê para de conferir.
+#
+# `tests/test_openapi.py` compara este arquivo com o SQL versionado em
+# `db/ords/` e com a API viva. Divergir os três é o defeito que ele procura.
+
+info:
+  title: MedFlow — API de leitura
+  version: 0.3.0
+  summary: Indicadores hospitalares e territoriais do SUS em São Paulo, 2024-01 a 2026-06.
+  description: |
+    Dez endpoints somente leitura, todos `GET`, servidos por Oracle REST Data
+    Services (ORDS) diretamente do Autonomous Database. **Não existe servidor
+    de aplicação entre a tela e o banco** — o backend é o banco, e `db/` é o
+    código de servidor do produto.
+
+    Nenhum indicador é calculado aqui. Cada endpoint projeta colunas já
+    persistidas na camada Gold, através de views de projeção pura; o cliente
+    formata, não calcula. A consequência prática: um número exibido na tela
+    pode ser rastreado até uma linha de parquet sem passar por nenhuma
+    aritmética intermediária, e `tests/reconciliacao/` prova isso campo a
+    campo.
+
+    ### Ordenação faz parte do contrato
+
+    Cada coleção declara seu `order by` no handler, e o produto depende dele
+    ("os 10 maiores"). Onde há `pagination.order`, ele nomeia a ordenação
+    aplicada. A reconciliação compara posicionalmente, justamente para que uma
+    ordenação trocada seja detectada.
+
+    ### Escala decimal
+
+    Os números vêm arredondados pelo banco para a escala declarada na DDL em
+    `db/schema/02_criar_tabelas_gold.sql` — em geral seis casas para índices e
+    razões, duas para valores monetários. O arredondamento do Oracle é
+    meio-para-cima, não o meio-para-par do IEEE.
+  contact:
+    name: Equipe Ômega Urban Tech — Enterprise Challenge FIAP × Oracle
+  license:
+    name: Dados públicos DATASUS/IBGE/MS
+
+servers:
+  - url: https://gf68e03b2a30d55-medflow.adb.sa-saopaulo-1.oraclecloudapps.com/ords/medflow/api/dev/v1
+    description: |
+      Módulo de desenvolvimento `medflow_dev`. É o único que existe hoje; o
+      módulo de produção `api/v1` ainda não foi criado (ver PENDENCIAS).
+      CORS liberado apenas para `http://localhost:5173`, a origem do Vite em
+      desenvolvimento — o navegador nunca recebe host nem credencial do
+      Oracle, porque o Vite faz proxy de `/api`.
+
+tags:
+  - name: saúde
+    description: Estado do banco e metodologia publicada.
+  - name: território
+    description: Regiões de saúde, séries mensais, fluxos e ICSAP.
+  - name: hospital
+    description: Hospitais, séries, especialidades e diagnósticos.
+
+paths:
+  /status:
+    get:
+      tags: [saúde]
+      operationId: obterStatus
+      summary: Saúde do Oracle e competência mais recente persistida.
+      description: |
+        É o que o webapp chama primeiro. Quando este endpoint não responde, a
+        tela vai para o snapshot de contingência com selo explícito e **recusa
+        trocar de recorte**, em vez de misturar fontes.
+      responses:
+        "200":
+          description: O banco respondeu.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, source, database_time, contract_version]
+                properties:
+                  status: { $ref: "#/components/schemas/Status" }
+                  source: { $ref: "#/components/schemas/Source" }
+                  database_time: { $ref: "#/components/schemas/DatabaseTime" }
+                  data_through: { $ref: "#/components/schemas/DataThrough" }
+                  contract_version: { $ref: "#/components/schemas/ContractVersion" }
+                  links: { $ref: "#/components/schemas/Links" }
+
+  /metodologia:
+    get:
+      tags: [saúde]
+      operationId: obterMetodologia
+      summary: Fórmulas, cobertura, reconciliações, cortes e limitações.
+      description: |
+        Alimenta a visão `/metodologia`, que existe para responder "posso
+        confiar neste número e quais são seus limites?". As `limitations` são
+        texto deliberado, não boilerplate: IPH não é ocupação real, ICSAP não é
+        evitabilidade individual, IPR não é qualidade nem desfecho.
+      responses:
+        "200":
+          description: Metodologia publicada, derivada dos metadados da Gold.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MetodologiaEnvelope" }
+
+  /regioes/resumo:
+    get:
+      tags: [território]
+      operationId: listarResumoRegional
+      summary: As 62 regiões de saúde numa competência, ordenadas por pressão.
+      parameters:
+        - $ref: "#/components/parameters/Ano"
+        - $ref: "#/components/parameters/Mes"
+        - $ref: "#/components/parameters/Macrorregiao"
+        - $ref: "#/components/parameters/RegiaoFiltro"
+        - $ref: "#/components/parameters/Limite200"
+        - $ref: "#/components/parameters/Deslocamento"
+      responses:
+        "200":
+          description: |
+            Ordenado por `iph_percent` decrescente com nulos por último, e
+            `region_code` como desempate.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/EnvelopeBase"
+                  - type: object
+                    required: [filters, pagination, items]
+                    properties:
+                      filters: { $ref: "#/components/schemas/FiltrosResumoRegional" }
+                      pagination: { $ref: "#/components/schemas/PaginacaoSemOrdem" }
+                      items:
+                        type: array
+                        items: { $ref: "#/components/schemas/ItemResumoRegional" }
+        "404": { $ref: "#/components/responses/ParametroInvalido" }
+      x-observado:
+        pagination-sem-order: |
+          É o único endpoint de coleção cujo `pagination` não traz a chave
+          `order`, embora ordene. A ordenação existe e é estável; só não está
+          declarada na resposta. Inconsistência conhecida, registrada aqui em
+          vez de silenciada.
+
+  /regioes/{id}/serie:
+    get:
+      tags: [território]
+      operationId: obterSerieRegional
+      summary: Série mensal completa de uma região de saúde.
+      parameters:
+        - $ref: "#/components/parameters/IdRegiao"
+        - $ref: "#/components/parameters/Limite120"
+        - $ref: "#/components/parameters/Deslocamento"
+      responses:
+        "200":
+          description: Ordenado por competência decrescente.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/EnvelopeBase"
+                  - type: object
+                    required: [region, filters, pagination, items]
+                    properties:
+                      region: { $ref: "#/components/schemas/ContextoRegiao" }
+                      filters:
+                        type: object
+                        properties:
+                          region_code: { $ref: "#/components/schemas/CodigoRegiao" }
+                      pagination: { $ref: "#/components/schemas/Paginacao" }
+                      items:
+                        type: array
+                        items: { $ref: "#/components/schemas/ItemSerieRegional" }
+        "404": { $ref: "#/components/responses/ParametroInvalido" }
+
+  /fluxos:
+    get:
+      tags: [território]
+      operationId: listarFluxos
+      summary: Matriz origem–destino do fluxo assistencial numa competência.
+      description: |
+        Cada linha é um par origem de residência × região de atendimento. O
+        objeto `territory` traz o contexto da origem: população, produção,
+        evasão, atração e atendimento no próprio território.
+
+        Evasão aqui é **intrastadual observada** — saída da região de
+        residência para outra região de São Paulo. O dado não permite afirmar
+        evasão para fora do estado, e o contrato não afirma.
+      parameters:
+        - $ref: "#/components/parameters/Ano"
+        - $ref: "#/components/parameters/Mes"
+        - $ref: "#/components/parameters/Origem"
+        - $ref: "#/components/parameters/Destino"
+        - $ref: "#/components/parameters/Limite2000"
+        - $ref: "#/components/parameters/Deslocamento"
+      responses:
+        "200":
+          description: |
+            Ordenado por `new_admissions` decrescente, com origem e destino
+            como desempate.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/EnvelopeBase"
+                  - type: object
+                    required: [filters, territory, pagination, items]
+                    properties:
+                      filters: { $ref: "#/components/schemas/FiltrosFluxos" }
+                      territory: { $ref: "#/components/schemas/ContextoTerritorio" }
+                      pagination: { $ref: "#/components/schemas/Paginacao" }
+                      items:
+                        type: array
+                        items: { $ref: "#/components/schemas/ItemFluxo" }
+        "404": { $ref: "#/components/responses/ParametroInvalido" }
+
+  /icsap:
+    get:
+      tags: [território]
+      operationId: listarIcsap
+      summary: Os 19 grupos ICSAP de uma região numa competência.
+      description: |
+        Internações por Condições Sensíveis à Atenção Primária, na lista
+        oficial da Portaria SAS/MS 221/2008. Indicador **populacional**, de
+        acesso à atenção básica no território de residência — não é medida de
+        evitabilidade de um caso individual, e o contrato não a apresenta assim.
+      parameters:
+        - $ref: "#/components/parameters/Ano"
+        - $ref: "#/components/parameters/Mes"
+        - $ref: "#/components/parameters/RegiaoObrigatoria"
+        - $ref: "#/components/parameters/Limite2000"
+        - $ref: "#/components/parameters/Deslocamento"
+      responses:
+        "200":
+          description: |
+            Ordenado por `icsap_admissions` decrescente, com região e grupo
+            como desempate.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/EnvelopeBase"
+                  - type: object
+                    required: [filters, region, pagination, items]
+                    properties:
+                      filters: { $ref: "#/components/schemas/FiltrosIcsap" }
+                      region: { $ref: "#/components/schemas/ContextoRegiaoIcsap" }
+                      pagination: { $ref: "#/components/schemas/Paginacao" }
+                      items:
+                        type: array
+                        items: { $ref: "#/components/schemas/ItemIcsap" }
+        "404": { $ref: "#/components/responses/ParametroInvalido" }
+
+  /hospitais:
+    get:
+      tags: [hospital]
+      operationId: listarHospitais
+      summary: Hospitais de uma região numa competência.
+      parameters:
+        - $ref: "#/components/parameters/Ano"
+        - $ref: "#/components/parameters/Mes"
+        - $ref: "#/components/parameters/Regiao"
+        - $ref: "#/components/parameters/Cnes"
+        - $ref: "#/components/parameters/Limite2000"
+        - $ref: "#/components/parameters/Deslocamento"
+      responses:
+        "200":
+          description: |
+            Ordenado por `new_admissions` decrescente, com `cnes` como
+            desempate.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/EnvelopeBase"
+                  - type: object
+                    required: [filters, region, pagination, items]
+                    properties:
+                      filters: { $ref: "#/components/schemas/FiltrosHospitais" }
+                      region: { $ref: "#/components/schemas/ContextoRegiao" }
+                      pagination: { $ref: "#/components/schemas/Paginacao" }
+                      items:
+                        type: array
+                        items: { $ref: "#/components/schemas/ItemHospital" }
+        "404": { $ref: "#/components/responses/ParametroInvalido" }
+
+  /hospitais/{cnes}/serie:
+    get:
+      tags: [hospital]
+      operationId: obterSerieHospital
+      summary: Série mensal completa de um hospital.
+      parameters:
+        - $ref: "#/components/parameters/CnesCaminho"
+        - $ref: "#/components/parameters/Limite2000"
+        - $ref: "#/components/parameters/Deslocamento"
+      responses:
+        "200":
+          description: Ordenado por competência decrescente.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/EnvelopeBase"
+                  - type: object
+                    required: [filters, hospital, pagination, items]
+                    properties:
+                      filters:
+                        type: object
+                        properties:
+                          cnes: { $ref: "#/components/schemas/Cnes" }
+                      hospital: { $ref: "#/components/schemas/ContextoHospital" }
+                      pagination: { $ref: "#/components/schemas/Paginacao" }
+                      items:
+                        type: array
+                        items: { $ref: "#/components/schemas/ItemSerieHospital" }
+        "404": { $ref: "#/components/responses/ParametroInvalido" }
+
+  /hospitais/{cnes}/especialidades:
+    get:
+      tags: [hospital]
+      operationId: listarEspecialidadesHospital
+      summary: Perfil por especialidade de um hospital numa competência.
+      parameters:
+        - $ref: "#/components/parameters/CnesCaminho"
+        - $ref: "#/components/parameters/Ano"
+        - $ref: "#/components/parameters/Mes"
+        - $ref: "#/components/parameters/Limite2000"
+        - $ref: "#/components/parameters/Deslocamento"
+      responses:
+        "200":
+          description: |
+            Ordenado por `new_admissions` decrescente, com `specialty_code`
+            como desempate.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/EnvelopeBase"
+                  - type: object
+                    required: [filters, hospital, pagination, items]
+                    properties:
+                      filters: { $ref: "#/components/schemas/FiltrosEspecialidades" }
+                      hospital: { $ref: "#/components/schemas/ContextoHospitalEspecialidade" }
+                      pagination: { $ref: "#/components/schemas/Paginacao" }
+                      items:
+                        type: array
+                        items: { $ref: "#/components/schemas/ItemEspecialidade" }
+        "404": { $ref: "#/components/responses/ParametroInvalido" }
+
+  /hospitais/{cnes}/cids:
+    get:
+      tags: [hospital]
+      operationId: listarDiagnosticosHospital
+      summary: IPR por diagnóstico principal, no período agregado.
+      description: |
+        Índice de Permanência Relativa: a permanência média do hospital num
+        diagnóstico, dividida pela permanência média dos **outros** hospitais
+        da mesma região no mesmo diagnóstico.
+
+        O IPR só é calculado quando a amostra sustenta a comparação — 20
+        internações no hospital, 50 no benchmark e ao menos 4 hospitais na
+        região. Fora disso `ipr` é nulo e `sample_status` diz o motivo, em vez
+        de publicar uma razão entre dois ruídos.
+
+        É o único endpoint agregado por período, não por competência: por isso
+        não traz `data_through`.
+      parameters:
+        - $ref: "#/components/parameters/CnesCaminho"
+        - $ref: "#/components/parameters/Elegivel"
+        - $ref: "#/components/parameters/Limite2000"
+        - $ref: "#/components/parameters/Deslocamento"
+      responses:
+        "200":
+          description: |
+            Ordenado por `new_admissions` decrescente, com `cid_code` como
+            desempate.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/EnvelopeSemCompetencia"
+                  - type: object
+                    required: [filters, hospital, pagination, items]
+                    properties:
+                      filters: { $ref: "#/components/schemas/FiltrosCids" }
+                      hospital: { $ref: "#/components/schemas/ContextoHospitalCid" }
+                      pagination: { $ref: "#/components/schemas/Paginacao" }
+                      items:
+                        type: array
+                        items: { $ref: "#/components/schemas/ItemCid" }
+        "404": { $ref: "#/components/responses/ParametroInvalido" }
+
+components:
+  responses:
+    ParametroInvalido:
+      description: |
+        **Parâmetro fora do formato ou do intervalo aceito.**
+
+        O corpo é uma página HTML de erro do ORDS, não JSON. Isso não é o
+        comportamento desejável — um 400 com corpo JSON seria — mas é o
+        observável, e o contrato descreve o observável.
+
+        A causa é estrutural: os handlers são consultas SQL, e uma consulta
+        SQL não escolhe o código HTTP. Cada handler valida os parâmetros num
+        CTE e termina com `where parametros_validos = 1`; quando a validação
+        reprova, a consulta não devolve linha e o ORDS traduz "sem linha" em
+        404. Mudar para 400 exigiria reescrever os handlers como blocos
+        PL/SQL, que podem atribuir `:status_code`.
+      content:
+        text/html:
+          schema:
+            type: string
+
+  parameters:
+    Ano:
+      name: ano
+      in: query
+      required: false
+      description: Ano da competência. Omitido, usa o mais recente disponível.
+      schema: { type: string, pattern: "^[0-9]{4}$" }
+      example: "2026"
+    Mes:
+      name: mes
+      in: query
+      required: false
+      description: |
+        Mês da competência, com ou sem zero à esquerda. Omitido, usa o mês mais
+        recente do ano em questão.
+      schema: { type: string, pattern: "^(0?[1-9]|1[0-2])$" }
+      example: "06"
+    Macrorregiao:
+      name: macrorregiao
+      in: query
+      required: false
+      description: Filtra por macrorregião de saúde.
+      schema: { type: string, pattern: "^[0-9]{4}$" }
+      example: "3527"
+    RegiaoFiltro:
+      name: regiao
+      in: query
+      required: false
+      description: Filtra o resumo por uma região específica.
+      schema: { type: string, pattern: "^[0-9]{5}$" }
+      example: "35073"
+    RegiaoObrigatoria:
+      name: regiao
+      in: query
+      required: true
+      description: |
+        Região de saúde de residência. Obrigatório: ICSAP é indicador
+        populacional de um território, e sem território declarado o número não
+        significa nada. Omitido, o endpoint responde 404.
+      schema: { type: string, pattern: "^[0-9]{5}$" }
+      example: "35073"
+    Regiao:
+      name: regiao
+      in: query
+      required: false
+      description: |
+        Restringe a lista a uma região de saúde. Omitido, devolve os hospitais
+        de todo o estado na competência.
+      schema: { type: string, pattern: "^[0-9]{5}$" }
+      example: "35073"
+    IdRegiao:
+      name: id
+      in: path
+      required: true
+      description: Código oficial de cinco dígitos da região de saúde.
+      schema: { type: string, pattern: "^[0-9]{5}$" }
+      example: "35073"
+    Origem:
+      name: origem
+      in: query
+      required: true
+      description: |
+        Região de residência de origem, ou `FORA_SP` para residentes de outras
+        unidades da federação atendidos em São Paulo. Obrigatório: sem ele a
+        resposta somaria fluxos de origens diferentes sem dizer de quem são.
+        Omitido, o endpoint responde 404.
+      schema: { type: string, pattern: "^([0-9]{5}|FORA_SP)$" }
+      example: "35073"
+    Destino:
+      name: destino
+      in: query
+      required: false
+      description: Restringe a uma região de atendimento.
+      schema: { type: string, pattern: "^[0-9]{5}$" }
+      example: "35011"
+    Cnes:
+      name: cnes
+      in: query
+      required: false
+      deprecated: true
+      description: |
+        **Aceito e ignorado.** O handler valida o formato mas o `where` de
+        `/hospitais` nunca usa o valor: a resposta é a mesma com ou sem ele.
+        Declarado aqui porque a API o aceita, e marcado como obsoleto para que
+        ninguém o adote achando que filtra. Ver PENDENCIAS, fatia 7.
+      schema: { type: string, pattern: "^[0-9]{7}$" }
+      example: "3012212"
+    CnesCaminho:
+      name: cnes
+      in: path
+      required: true
+      description: Código de sete dígitos do estabelecimento no CNES.
+      schema: { type: string, pattern: "^[0-9]{7}$" }
+      example: "3012212"
+    Elegivel:
+      name: elegivel
+      in: query
+      required: false
+      description: |
+        `1` restringe aos diagnósticos com IPR calculável, isto é, com
+        `sample_status` igual a `suficiente`.
+      schema: { type: string, enum: ["0", "1"], default: "0" }
+    Limite120:
+      name: limit
+      in: query
+      required: false
+      description: Itens por página. Máximo 120 neste endpoint.
+      schema: { type: integer, minimum: 1, maximum: 120, default: 100 }
+    Limite200:
+      name: limit
+      in: query
+      required: false
+      description: Itens por página. Máximo 200 neste endpoint.
+      schema: { type: integer, minimum: 1, maximum: 200, default: 100 }
+    Limite2000:
+      name: limit
+      in: query
+      required: false
+      description: Itens por página. Máximo 2000 neste endpoint.
+      schema: { type: integer, minimum: 1, maximum: 2000, default: 100 }
+    Deslocamento:
+      name: offset
+      in: query
+      required: false
+      description: Quantos itens pular. Paginação real, aplicada no banco.
+      schema: { type: integer, minimum: 0, default: 0 }
+
+  schemas:
+    Status:
+      type: string
+      enum: [ok]
+      description: Sempre `ok` numa resposta 200; o erro não chega aqui.
+    Source:
+      type: string
+      enum: [oracle-live]
+      description: |
+        Sempre `oracle-live`. O selo de contingência do webapp não vem daqui —
+        ele é o cliente registrando que *não* conseguiu falar com o Oracle.
+    DatabaseTime:
+      type: string
+      format: date-time
+      description: Horário do servidor Oracle, com fuso, no instante da consulta.
+    DataThrough:
+      type: [string, "null"]
+      pattern: "^[0-9]{4}-[0-9]{2}$"
+      description: Competência mais recente persistida na Gold, em `AAAA-MM`.
+      example: "2026-06"
+    ContractVersion:
+      type: string
+      const: "0.3.0"
+      description: |
+        Versão do contrato de dados, que evolui separadamente da versão da
+        release. Ver `VERSIONAMENTO.md`.
+    Links:
+      type: array
+      description: Acrescentado pelo ORDS, não pelos handlers.
+      items:
+        type: object
+        properties:
+          rel: { type: string }
+          href: { type: string, format: uri }
+
+    EnvelopeBase:
+      type: object
+      required: [status, source, database_time, contract_version, data_through]
+      properties:
+        status: { $ref: "#/components/schemas/Status" }
+        source: { $ref: "#/components/schemas/Source" }
+        database_time: { $ref: "#/components/schemas/DatabaseTime" }
+        contract_version: { $ref: "#/components/schemas/ContractVersion" }
+        data_through: { $ref: "#/components/schemas/DataThrough" }
+        links: { $ref: "#/components/schemas/Links" }
+    EnvelopeSemCompetencia:
+      type: object
+      required: [status, source, database_time, contract_version]
+      properties:
+        status: { $ref: "#/components/schemas/Status" }
+        source: { $ref: "#/components/schemas/Source" }
+        database_time: { $ref: "#/components/schemas/DatabaseTime" }
+        contract_version: { $ref: "#/components/schemas/ContractVersion" }
+        links: { $ref: "#/components/schemas/Links" }
+
+    Paginacao:
+      type: object
+      required: [limit, offset, count, has_more, order]
+      properties:
+        limit: { type: integer }
+        offset: { type: integer }
+        count:
+          type: integer
+          description: Total de itens no recorte, não da página.
+        has_more: { type: boolean }
+        order:
+          type: string
+          description: Nome da ordenação aplicada, declarada pelo handler.
+          examples: [new_admissions_desc, competence_desc]
+    PaginacaoSemOrdem:
+      type: object
+      required: [limit, offset, count, has_more]
+      properties:
+        limit: { type: integer }
+        offset: { type: integer }
+        count: { type: integer }
+        has_more: { type: boolean }
+
+    CodigoRegiao:
+      type: [string, "null"]
+      pattern: "^[0-9]{5}$"
+    Cnes:
+      type: string
+      pattern: "^[0-9]{7}$"
+    Competencia:
+      type: string
+      pattern: "^[0-9]{4}-[0-9]{2}$"
+    StatusAmostra:
+      type: string
+      enum: [suficiente, amostra_insuficiente, benchmark_zero]
+      description: |
+        Por que um indicador comparativo pode estar nulo. `benchmark_zero`
+        distingue "não dá para calcular" de "não tem amostra": são coisas
+        diferentes e a tela as apresenta diferente.
+    StatusCapacidade:
+      type: string
+      enum: [disponivel, sem_leito_sus_declarado]
+      description: |
+        `sem_leito_sus_declarado` significa denominador ausente no CNES, não
+        ocupação zero. Nesse estado o IPH é nulo, nunca 0%.
+    StatusSazonalidade:
+      type: string
+      enum: [calculado, fora_periodo_alvo, historico_insuficiente]
+
+    ContextoRegiao:
+      type: object
+      properties:
+        region_code: { $ref: "#/components/schemas/CodigoRegiao" }
+        region_name: { type: [string, "null"] }
+        macroregion_code: { type: [string, "null"] }
+        macroregion_name: { type: [string, "null"] }
+    ContextoRegiaoIcsap:
+      allOf:
+        - $ref: "#/components/schemas/ContextoRegiao"
+        - type: object
+          properties:
+            population: { type: [integer, "null"] }
+            resident_admissions_observed: { type: [integer, "null"] }
+            icsap_admissions: { type: [integer, "null"] }
+            icsap_share_of_resident_percent: { type: [number, "null"] }
+            icsap_rate_per_10k: { type: [number, "null"] }
+    ContextoTerritorio:
+      allOf:
+        - $ref: "#/components/schemas/ContextoRegiao"
+        - type: object
+          properties:
+            population: { type: [integer, "null"] }
+            production_admissions:
+              type: [integer, "null"]
+              description: Internações produzidas na região, independente da residência.
+            resident_admissions_observed: { type: [integer, "null"] }
+            resident_admissions_in_own_region: { type: [integer, "null"] }
+            observed_intrastate_evasion_admissions: { type: [integer, "null"] }
+            admissions_received_from_other_sp_regions: { type: [integer, "null"] }
+            admissions_received_from_other_states: { type: [integer, "null"] }
+            resident_admission_rate_per_100k: { type: [number, "null"] }
+            observed_evasion_percent: { type: [number, "null"] }
+            attraction_percent: { type: [number, "null"] }
+            own_care_percent: { type: [number, "null"] }
+    ContextoHospital:
+      type: object
+      properties:
+        cnes: { $ref: "#/components/schemas/Cnes" }
+        hospital_name: { type: [string, "null"] }
+        unit_type_code: { type: [string, "null"] }
+        unit_type_name: { type: [string, "null"] }
+        municipality_code: { type: [string, "null"] }
+        region_code: { $ref: "#/components/schemas/CodigoRegiao" }
+        region_name: { type: [string, "null"] }
+        macroregion_code: { type: [string, "null"] }
+        macroregion_name: { type: [string, "null"] }
+    ContextoHospitalEspecialidade:
+      type: object
+      properties:
+        cnes: { $ref: "#/components/schemas/Cnes" }
+        region_code: { $ref: "#/components/schemas/CodigoRegiao" }
+        region_name: { type: [string, "null"] }
+        macroregion_code: { type: [string, "null"] }
+        macroregion_name: { type: [string, "null"] }
+        new_admissions_total: { type: [integer, "null"] }
+    ContextoHospitalCid:
+      type: object
+      properties:
+        cnes: { $ref: "#/components/schemas/Cnes" }
+        region_code: { $ref: "#/components/schemas/CodigoRegiao" }
+        region_name: { type: [string, "null"] }
+        macroregion_code: { type: [string, "null"] }
+        macroregion_name: { type: [string, "null"] }
+        region_ipr_median: { type: [number, "null"] }
+        region_eligible_combinations: { type: [integer, "null"] }
+        region_percent_above_reference: { type: [number, "null"] }
+        hospital_eligible_combinations: { type: [integer, "null"] }
+
+    FiltrosResumoRegional:
+      type: object
+      properties:
+        year: { type: [integer, "null"] }
+        month: { type: [integer, "null"] }
+        macroregion_code: { type: [string, "null"] }
+        region_code: { type: [string, "null"] }
+    FiltrosFluxos:
+      type: object
+      properties:
+        year: { type: [integer, "null"] }
+        month: { type: [integer, "null"] }
+        origin_region_code: { type: [string, "null"] }
+        destination_region_code: { type: [string, "null"] }
+    FiltrosIcsap:
+      type: object
+      properties:
+        year: { type: [integer, "null"] }
+        month: { type: [integer, "null"] }
+        region_code: { type: [string, "null"] }
+    FiltrosHospitais:
+      type: object
+      properties:
+        year: { type: [integer, "null"] }
+        month: { type: [integer, "null"] }
+        region_code: { type: [string, "null"] }
+    FiltrosEspecialidades:
+      type: object
+      properties:
+        cnes: { $ref: "#/components/schemas/Cnes" }
+        year: { type: [integer, "null"] }
+        month: { type: [integer, "null"] }
+    FiltrosCids:
+      type: object
+      properties:
+        cnes: { $ref: "#/components/schemas/Cnes" }
+        eligible_only: { type: boolean }
+
+    ItemResumoRegional:
+      type: object
+      description: Uma região de saúde numa competência.
+      properties:
+        region_code: { type: string }
+        region_name: { type: string }
+        macroregion_code: { type: string }
+        macroregion_name: { type: string }
+        municipality_count:
+          type: integer
+          description: Vem da dimensão geográfica, não do mart.
+        new_admissions: { type: integer }
+        deaths: { type: integer }
+        stay_days: { type: integer }
+        approved_amount_nominal: { type: number }
+        hospitals_with_admissions: { type: integer }
+        estimated_patient_days: { type: integer }
+        declared_sus_beds: { type: [integer, "null"] }
+        declared_capacity_bed_days: { type: [integer, "null"] }
+        population: { type: integer }
+        resident_admissions_observed: { type: integer }
+        resident_admissions_in_own_region: { type: integer }
+        observed_intrastate_evasion_admissions: { type: integer }
+        icsap_resident_admissions_observed: { type: integer }
+        admissions_received_from_other_sp_regions: { type: integer }
+        admissions_received_from_other_states: { type: integer }
+        resident_admission_rate_per_100k: { type: [number, "null"] }
+        observed_evasion_percent: { type: [number, "null"] }
+        attraction_percent: { type: [number, "null"] }
+        icsap_share_of_observed_resident_admissions_percent: { type: [number, "null"] }
+        icsap_rate_per_10k: { type: [number, "null"] }
+        tmh_percent: { type: [number, "null"] }
+        cmi_nominal: { type: [number, "null"] }
+        average_stay_days: { type: [number, "null"] }
+        iph_ratio:
+          type: [number, "null"]
+          description: |
+            Pressão estimada sobre a capacidade declarada, **não ocupação
+            real**: o denominador é a capacidade mensal do CNES, não censo
+            diário de leitos operacionais. Nulo quando não há leito declarado.
+        iph_percent: { type: [number, "null"] }
+        historical_admissions_average: { type: [number, "null"] }
+        historical_years: { type: [integer, "null"] }
+        seasonality_index: { type: [number, "null"] }
+        seasonal_variation_percent: { type: [number, "null"] }
+        seasonality_status: { $ref: "#/components/schemas/StatusSazonalidade" }
+        ipca_index: { type: [number, "null"] }
+        ipca_factor: { type: [number, "null"] }
+        price_reference_competence: { type: [string, "null"] }
+        approved_amount_real: { type: [number, "null"] }
+        cmi_real: { type: [number, "null"] }
+
+    ItemSerieRegional:
+      type: object
+      description: Um mês da série de uma região.
+      properties:
+        year: { type: integer }
+        month: { type: integer }
+        competence:
+          $ref: "#/components/schemas/Competencia"
+          description: Montado pelo handler a partir de `year` e `month`.
+        new_admissions: { type: integer }
+        deaths: { type: integer }
+        stay_days: { type: integer }
+        approved_amount_nominal: { type: number }
+        hospitals_with_admissions: { type: integer }
+        estimated_patient_days: { type: integer }
+        declared_sus_beds: { type: [integer, "null"] }
+        declared_capacity_bed_days: { type: [integer, "null"] }
+        tmh_percent: { type: [number, "null"] }
+        cmi_nominal: { type: [number, "null"] }
+        average_stay_days: { type: [number, "null"] }
+        iph_ratio: { type: [number, "null"] }
+        iph_percent: { type: [number, "null"] }
+        historical_admissions_average: { type: [number, "null"] }
+        historical_years: { type: [integer, "null"] }
+        seasonality_index: { type: [number, "null"] }
+        seasonal_variation_percent: { type: [number, "null"] }
+        seasonality_status: { $ref: "#/components/schemas/StatusSazonalidade" }
+        price_reference_competence: { type: [string, "null"] }
+        approved_amount_real: { type: [number, "null"] }
+        cmi_real: { type: [number, "null"] }
+
+    ItemFluxo:
+      type: object
+      description: Um par origem de residência × região de atendimento.
+      properties:
+        origin_region_code: { type: string }
+        origin_region_name: { type: string }
+        origin_macroregion_code: { type: [string, "null"] }
+        origin_macroregion_name: { type: [string, "null"] }
+        destination_region_code: { type: string }
+        destination_region_name: { type: string }
+        destination_macroregion_code: { type: [string, "null"] }
+        destination_macroregion_name: { type: [string, "null"] }
+        flow_type:
+          type: string
+          description: |
+            Distingue atendimento intrarregional, inter-regional dentro de São
+            Paulo e entrada de residentes de outras UFs.
+        new_admissions: { type: integer }
+        origin_share_of_destination_percent: { type: [number, "null"] }
+        destination_share_of_observed_origin_percent: { type: [number, "null"] }
+
+    ItemIcsap:
+      type: object
+      description: Um dos 19 grupos ICSAP numa região e competência.
+      properties:
+        region_code: { type: string }
+        group_code: { type: string }
+        group_name: { type: string }
+        icsap_admissions: { type: integer }
+        group_share_of_icsap_percent: { type: [number, "null"] }
+        group_rate_per_10k: { type: [number, "null"] }
+
+    ItemHospital:
+      type: object
+      description: Um hospital numa competência.
+      properties:
+        cnes: { $ref: "#/components/schemas/Cnes" }
+        hospital_name: { type: [string, "null"] }
+        unit_type_code: { type: [string, "null"] }
+        unit_type_name: { type: [string, "null"] }
+        municipality_code: { type: [string, "null"] }
+        region_code: { $ref: "#/components/schemas/CodigoRegiao" }
+        sus_beds: { type: [integer, "null"] }
+        new_admissions: { type: integer }
+        deaths: { type: integer }
+        patient_days_estimated: { type: integer }
+        declared_bed_days: { type: [integer, "null"] }
+        iph_percent: { type: [number, "null"] }
+        tmh_percent: { type: [number, "null"] }
+        cmi_real: { type: [number, "null"] }
+        average_stay_days: { type: [number, "null"] }
+        sample_status: { $ref: "#/components/schemas/StatusAmostra" }
+        capacity_status: { $ref: "#/components/schemas/StatusCapacidade" }
+        above_declared_capacity:
+          type: integer
+          enum: [0, 1]
+          description: 1 quando o IPH passa de 1, isto é, de 100%.
+
+    ItemSerieHospital:
+      type: object
+      description: Um mês da série de um hospital.
+      properties:
+        year: { type: integer }
+        month: { type: integer }
+        competence:
+          $ref: "#/components/schemas/Competencia"
+          description: Montado pelo handler a partir de `year` e `month`.
+        sus_beds: { type: [integer, "null"] }
+        new_admissions: { type: integer }
+        deaths: { type: integer }
+        patient_days_estimated: { type: integer }
+        declared_bed_days: { type: [integer, "null"] }
+        iph_percent: { type: [number, "null"] }
+        tmh_percent: { type: [number, "null"] }
+        cmi_nominal: { type: [number, "null"] }
+        cmi_real: { type: [number, "null"] }
+        average_stay_days: { type: [number, "null"] }
+        price_reference_competence: { type: [string, "null"] }
+        sample_status: { $ref: "#/components/schemas/StatusAmostra" }
+        capacity_status: { $ref: "#/components/schemas/StatusCapacidade" }
+        above_declared_capacity: { type: integer, enum: [0, 1] }
+
+    ItemEspecialidade:
+      type: object
+      description: Uma especialidade de um hospital numa competência.
+      properties:
+        cnes: { $ref: "#/components/schemas/Cnes" }
+        specialty_code: { type: string }
+        specialty_name: { type: string }
+        new_admissions: { type: integer }
+        deaths: { type: integer }
+        stay_days_total: { type: integer }
+        tmh_percent: { type: [number, "null"] }
+        cmi_nominal: { type: [number, "null"] }
+        cmi_real: { type: [number, "null"] }
+        average_stay_days: { type: [number, "null"] }
+        price_reference_competence: { type: [string, "null"] }
+        sample_status: { $ref: "#/components/schemas/StatusAmostra" }
+
+    ItemCid:
+      type: object
+      description: Um diagnóstico principal de um hospital, no período agregado.
+      properties:
+        cnes: { $ref: "#/components/schemas/Cnes" }
+        cid_code: { type: string }
+        cid_description: { type: string }
+        chapter_code: { type: string }
+        chapter_description: { type: string }
+        new_admissions: { type: integer }
+        stay_days_total: { type: integer }
+        benchmark_admissions: { type: integer }
+        benchmark_stay_days_total: { type: integer }
+        benchmark_hospitals:
+          type: integer
+          description: Hospitais da região no mesmo CID, excluído o próprio.
+        average_stay_hospital: { type: [number, "null"] }
+        average_stay_benchmark: { type: [number, "null"] }
+        ipr:
+          type: [number, "null"]
+          description: |
+            Permanência média do hospital dividida pela do benchmark. Nulo
+            quando `sample_status` não é `suficiente`. **Não é medida de
+            qualidade nem de desfecho clínico** — não há ajuste de risco.
+        sample_status: { $ref: "#/components/schemas/StatusAmostra" }
+
+    MetodologiaEnvelope:
+      type: object
+      required: [status, source, database_time, contract_version]
+      properties:
+        status: { $ref: "#/components/schemas/Status" }
+        source: { $ref: "#/components/schemas/Source" }
+        database_time: { $ref: "#/components/schemas/DatabaseTime" }
+        contract_version: { $ref: "#/components/schemas/ContractVersion" }
+        data_through: { $ref: "#/components/schemas/DataThrough" }
+        gold_updated_at:
+          type: string
+          format: date-time
+          description: Carimbo de geração da Gold. É por ele que o webapp sabe se o snapshot local envelheceu.
+        cmi_reference_competence:
+          $ref: "#/components/schemas/Competencia"
+          description: Competência de referência do IPCA para o CMI real.
+        coverage:
+          type: object
+          description: Volumetria do recorte, medida — nunca memorizada.
+          additionalProperties: { type: integer }
+        reconciliations:
+          type: array
+          description: Checagens cruzadas entre marts; `difference` tem de ser zero.
+          items:
+            type: object
+            properties:
+              id: { type: string }
+              label: { type: string }
+              left_label: { type: string }
+              left_value: { type: integer }
+              right_label: { type: string }
+              right_value: { type: integer }
+              difference: { type: integer }
+              status: { type: string }
+              note: { type: string }
+        definitions:
+          type: array
+          items:
+            type: object
+            properties:
+              id: { type: string }
+              label: { type: string }
+              definition: { type: string }
+              gold_field: { type: string }
+              value_status: { type: string }
+              value_note: { type: string }
+        states:
+          type: array
+          description: Os estados de ausência legítima, com quantos casos cada um tem.
+          items:
+            type: object
+            properties:
+              id: { type: string }
+              label: { type: string }
+              description: { type: string }
+              count: { type: integer }
+              count_label: { type: string }
+        formulas:
+          type: array
+          items:
+            type: object
+            properties:
+              id: { type: string }
+              label: { type: string }
+              expression: { type: string }
+              interpretation: { type: string }
+        cuts:
+          type: array
+          description: Cortes de amostra de cada indicador.
+          items:
+            type: object
+            properties:
+              id: { type: string }
+              label: { type: string }
+              minimum_new_admissions: { type: integer }
+              description: { type: string }
+        sources:
+          type: array
+          items:
+            type: object
+            properties:
+              id: { type: string }
+              label: { type: string }
+              scope: { type: string }
+        limitations:
+          type: array
+          description: |
+            O que o dado não sustenta. Texto deliberado, revisado com a
+            metodologia; não é aviso genérico.
+          items: { type: string }
+        links: { $ref: "#/components/schemas/Links" }
