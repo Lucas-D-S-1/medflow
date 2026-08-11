@@ -526,8 +526,7 @@ medflow/
 ├── docs/
 │   ├── decisoes/      DECISOES e a revisão de requisitos
 │   ├── pesquisa/      desk research
-│   ├── qualidade/     validações, figuras e notebooks executados
-│   └── entregas/      sprint 1
+│   └── qualidade/     validações, figuras e notebooks executados
 └── tests/             três níveis
     ├── test_indicadores.py        unidade: as fórmulas nas bordas
     ├── test_contratos_camadas.py  contrato: cada camada contra seu JSON

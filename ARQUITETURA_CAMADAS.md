@@ -61,7 +61,7 @@ medflow/
 ├── contracts/dados/      contratos Bronze, Silver e Gold
 ├── notebooks/            leitura narrada do pipeline, não o motor
 ├── data/                 gitignored: bronze, silver, gold, legado
-├── docs/                 decisões, pesquisa, qualidade e entregas
+├── docs/                 decisões, pesquisa e qualidade
 └── tests/                unidade, contrato e reconciliação
 ```
 

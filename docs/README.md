@@ -1,14 +1,16 @@
-# `docs/` — decisões, pesquisa, evidência e entregas
+# `docs/` — decisões, pesquisa e evidência
 
 **O quê.** O que explica o projeto e o que prova o que ele afirma. Código e
 contratos ficam fora daqui; isto é o registro do raciocínio e das medições.
+
+A entrega da Sprint 1 não está aqui: ela vive no repositório acadêmico
+`fiap-1tscoa`, que é onde o material de curso pertence.
 
 | Pasta | Conteúdo | Quando ler |
 |---|---|---|
 | `decisoes/` | `DECISOES.md` e a revisão de requisitos que originou a Gold | antes de discordar de uma escolha |
 | `pesquisa/` | desk research sobre indicadores hospitalares e territoriais | ao questionar a metodologia de um índice |
 | `qualidade/` | validações executadas, figuras e notebooks com saída | ao precisar de evidência datada |
-| `entregas/` | o que foi entregue na Sprint 1 | contexto histórico |
 
 ## Evidência é datada, e continua datada
 
