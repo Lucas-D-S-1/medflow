@@ -51,7 +51,14 @@ def _validar_contrato(base: Path, nome: str) -> tuple[int, int]:
     return tabelas, colunas
 
 
-def validar(base: Path) -> dict[str, int | str]:
+def validar(base: Path, *, publicar: bool = True) -> dict[str, int | str]:
+    """Valida as três camadas e, por padrão, publica o `VALIDACAO_TECNICA.md`.
+
+    `publicar=False` mede sem escrever. Existe para os testes: eles precisam do
+    resultado medido, mas reescrever um arquivo versionado a cada `pytest`
+    deixava a árvore suja em toda execução — e uma árvore sempre suja é uma
+    árvore em que ninguém mais olha o `git status`.
+    """
     assert not list((base / "data").rglob("*.parcial"))
     for antigo in ("raw", "processados", "curados", "referencias", "_backup_parquets_originais"):
         assert not (base / "data" / antigo).exists(), antigo
@@ -324,7 +331,8 @@ def validar(base: Path) -> dict[str, int | str]:
         f"- Silver: {silver_tabelas} tabelas, {silver_colunas} colunas.",
         f"- Gold: {gold_tabelas} tabelas, {gold_colunas} colunas.",
     ]
-    (base / "VALIDACAO_TECNICA.md").write_text("\n".join(linhas), encoding="utf-8")
+    if publicar:
+        (base / "VALIDACAO_TECNICA.md").write_text("\n".join(linhas), encoding="utf-8")
     return resultado
 
 

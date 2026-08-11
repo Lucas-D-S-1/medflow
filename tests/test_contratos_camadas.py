@@ -213,8 +213,13 @@ class TestValidadorDeContrato:
 
 @pytest.fixture(scope="module")
 def resultado_da_validacao() -> dict[str, int | str]:
-    """A validação integrada percorre 11 GB; roda uma vez por módulo."""
-    return validar(Config().base)
+    """A validação integrada percorre 11 GB; roda uma vez por módulo.
+
+    `publicar=False` de propósito: o teste mede, mas não reescreve o
+    `VALIDACAO_TECNICA.md`. Publicar é papel do `make validar`, e um `pytest`
+    que suja a árvore em toda execução ensina a ignorar o `git status`.
+    """
+    return validar(Config().base, publicar=False)
 
 
 @precisa_de_dados
