@@ -1,7 +1,7 @@
 # PIPELINE — contratos Bronze, Silver e Gold do MedFlow
 
-Atualizado em 29/07/2026 após execuções integrais e idempotentes para o recorte
-disponível de 2024-01 a 2026-05.
+Atualizado em 10/08/2026 após execuções integrais e idempotentes para o recorte
+disponível de 2024-01 a 2026-06, 30 competências.
 
 ## Contrato das camadas
 
@@ -75,8 +75,9 @@ Inclui:
 2. **De/paras:** todos os códigos observados de especialidade, natureza
    jurídica, CID e UTI estão cobertos e têm proveniência.
 3. **Identificadores preservados:** `N_AIH`, `IDENT` e `COD_IDADE` estão no fato.
-4. **Unidade de contagem:** 7.034.961 AIHs aprovadas, 6.905.441 internações
-   novas e 129.520 continuações.
+4. **Unidade de contagem:** AIH aprovada, internação nova e continuação de
+   longa permanência são contadas separadamente e reconciliadas entre si. No
+   recorte atual: 7.284.476, 7.150.693 e 133.783.
 5. **Permanência:** `DIAS_PERM` alimenta permanência; `QT_DIARIAS` permanece
    nomeado como faturamento.
 6. **Região:** região analítica vem da referência oficial municipal do MS;
@@ -91,7 +92,8 @@ Inclui:
 
 A Silver só grava se:
 
-- fato SIH = 7.034.961 linhas;
+- fato SIH = as linhas registradas no `MANIFESTO.json` da Bronze — a
+  igualdade é medida contra o manifesto, nunca contra um total memorizado;
 - AIH normal + continuação = total do fato;
 - todos os códigos `ESPEC` observados tiverem de/para;
 - todos os CIDs tiverem capítulo e descrição;
@@ -127,11 +129,15 @@ estimada, não ocupação real.
 
 ## Reconciliações Gold
 
-- 6.905.441 internações novas nos marts hospitalar, especialidade e regional;
-- 310 linhas de IS calculadas, correspondentes a 62 regiões × 5 meses de 2026;
-- 30.550 combinações hospital/CID elegíveis para IPR;
+As reconciliações comparam camadas entre si, não contra número fixo. Os
+valores do recorte atual, para referência:
+
+- 7.150.693 internações novas, idênticas nos marts hospitalar, especialidade e
+  regional;
+- 372 linhas de IS calculadas, correspondentes a 62 regiões × 6 meses de 2026;
+- 31.452 combinações hospital/CID elegíveis para IPR;
 - 645 municípios e 62 regiões associados à geometria sem imputação;
-- 142 hospital/mês com denominador CNES zero preservados com IPH nulo.
+- 146 hospital/mês com denominador CNES zero preservados com IPH nulo.
 
 ## Artefatos legados
 

@@ -7,8 +7,8 @@ anteriores quando houver conflito.
 
 - São Paulo, competências solicitadas de 2024 a 2026.
 - A execução usa todas as competências comuns já publicadas para SIH/RD e
-  CNES/LT. Na validação de 29/07/2026, o recorte efetivo foi
-  **2024-01 a 2026-05 (29 meses)**; 2026 é um período parcial.
+  CNES/LT. O recorte efetivo é **2024-01 a 2026-06 (30 meses)**, avançado em
+  09/08/2026; 2026 é um período parcial.
 - A descoberta remota e o cache incremental permitem que o mesmo batch mensal
   incorpore novas competências até 2026-12 sem alterar o código.
 - Fontes públicas: SIH/RD, CNES/LT, API de Dados Abertos do Ministério da
@@ -18,8 +18,8 @@ anteriores quando houver conflito.
 
 Volumetria Bronze validada:
 
-- SIH/RD: 7.034.961 linhas e 117 colunas;
-- CNES/LT: 243.085 linhas e 31 colunas;
+- SIH/RD: 7.284.476 linhas e 117 colunas;
+- CNES/LT: 251.457 linhas e 31 colunas;
 - IBGE: 645 municípios.
 
 ## 2. Arquitetura de dados
@@ -59,10 +59,10 @@ uma nova internação.
 
 No recorte:
 
-- 7.034.961 AIHs aprovadas;
-- 6.909.807 números de AIH distintos;
-- 6.905.441 internações novas;
-- 129.520 registros de continuação.
+- 7.284.476 AIHs aprovadas;
+- 7.155.059 números de AIH distintos;
+- 7.150.693 internações novas;
+- 133.783 registros de continuação.
 
 Decisão: preservar `N_AIH` e `IDENT` no fato e expor contagens separadas. Os
 indicadores usam internações novas; continuações aparecem separadamente no
@@ -217,7 +217,7 @@ Warehouse" não existe mais como opção, e a
 descreve o Lakehouse como "an evolution of Oracle's Autonomous Data Warehouse
 that adds support for open-source technologies like Apache Iceberg".
 
-É o workload adequado ao MedFlow porque o projeto tem carga em lote, 7.034.961
+É o workload adequado ao MedFlow porque o projeto tem carga em lote, 7.284.476
 registros de AIH, transformações Bronze/Silver/Gold, consultas analíticas e
 agregações, modelo dimensional com fatos e dimensões, indicadores e dashboards,
 e a possibilidade futura de consultar Parquet/Iceberg direto no Object Storage
@@ -358,8 +358,9 @@ de uma seção única. Lista truncada declara "N de M" e oferece ver todas.
 Entrega prevista: 01/09/2026.
 
 Concluído: as quatro visões do webapp, servidas por dez endpoints ORDS, com os
-dados do produto validados contra a Gold em 8.257.139 comparações sem
-divergência.
+dados do produto validados contra a Gold em 8.403.103 comparações sem
+divergência — reproduzíveis a qualquer momento com `make reconciliar-completo`,
+desde a fatia 6 da reorganização.
 
 Ordem de trabalho restante:
 

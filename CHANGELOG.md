@@ -1,6 +1,6 @@
 # Changelog
 
-As releases seguem a política de [`VERSIONAMENTO.md`](../../VERSIONAMENTO.md).
+As releases seguem a política de [`VERSIONAMENTO.md`](VERSIONAMENTO.md).
 A versão da release e a versão dos contratos de dados evoluem separadamente.
 
 ## 0.3.0 — em andamento
@@ -24,17 +24,17 @@ A versão da release e a versão dos contratos de dados evoluem separadamente.
   ausência de rolagem horizontal em 1280x800 e 390x844;
 - diretório `oracle/` com o setup reproduzível do Autonomous AI Database,
   sem segredos versionados;
-- `sql/01_criar_usuario_medflow.sql`: esquema de aplicação `MEDFLOW` separado
+- `db/schema/01_criar_usuario_medflow.sql`: esquema de aplicação `MEDFLOW` separado
   do `ADMIN`, com `DWROLE`, quota e acesso ao Database Actions;
-- `sql/02_criar_tabelas_gold.sql`: modelo dimensional com 2 dimensões e 7
+- `db/schema/02_criar_tabelas_gold.sql`: modelo dimensional com 2 dimensões e 7
   marts, chaves primárias, estrangeiras, índices e 175 colunas comentadas;
-- `carregar_gold.py`: carga idempotente de 585.296 linhas em ordem de
-  dependência, com `--conferir` e `--somente`;
-- `sql/03_validar_carga.sql`: reconciliação de 36 métricas contra o contrato
+- `carregar_gold.py`: carga idempotente em ordem de dependência, com
+  `--conferir` e `--somente`; 597.725 linhas no recorte atual;
+- `db/schema/03_validar_carga.sql`: reconciliação de 36 métricas contra o contrato
   `0.3.0`, mais seis verificações de integridade;
-- `sql/04_select_ai.sql`: Resource Principal OCI, profile, cinco perguntas da
+- `db/select_ai/04_select_ai.sql`: Resource Principal OCI, profile, cinco perguntas da
   demonstração e o SQL de referência de cada uma;
-- `oracle/VALIDACAO_ORACLE_SELECT_AI.md`: evidências da conexão, carga,
+- `docs/qualidade/VALIDACAO_ORACLE_SELECT_AI.md`: evidências da conexão, carga,
   reconciliação, rankings e respostas do Select AI.
 - `pipeline/icsap.py`: classificação versionada dos 19 grupos da Portaria
   SAS/MS 221/2008;
@@ -61,6 +61,111 @@ A versão da release e a versão dos contratos de dados evoluem separadamente.
 - permanência média é persistida diretamente nas visões mensais;
 - fluxos distinguem atendimento intrarregional, inter-regional em SP e entrada
   de residentes de outras UFs, sem alegar evasão para fora de SP.
+
+### Reorganização do repositório — 08 a 10/08/2026
+
+Este repositório passou a ser o de entrega. A linhagem original da `v0.1.0`
+está preservada na branch `arquivo/v0-2026-07` e nas tags `v0` e `v0.1.0`.
+
+**Fatia 4 — Bronze e Silver saem dos notebooks.** A ingestão, a conversão, o
+manifesto, as dimensões, os fatos e os de/paras viraram `src/medflow/bronze/`
+e `src/medflow/silver/`. O portão foi objetivo: SHA-256 idêntico ao inventário
+congelado na fatia 0.
+
+**Fatia 5 — parametrização e logging.** Recorte, UF e caminhos saem do
+ambiente; `logging` estruturado com etapa e competência em cada linha
+substitui os `print`.
+
+**Fatia 5b — o recorte avançou para 2026-06.** O DATASUS publicou junho e a
+decisão foi incluí-lo. O recorte oficial passa a ser **2024-01 a 2026-06, 30
+competências**:
+
+| Métrica | 29 competências | 30 competências |
+|---|---:|---:|
+| AIH aprovadas | 7.034.961 | **7.284.476** |
+| Internações novas | 6.905.441 | **7.150.693** |
+| Hospitais · CIDs | 653 · 9.494 | **655 · 9.513** |
+| ICSAP | 953.656 | **988.453** |
+| Evasão = atração | 906.060 | **939.143** |
+| Linhas no Oracle | 585.296 | **597.725** |
+
+Zero lacunas de de/para mesmo com 19 CIDs e 2 hospitais novos. Três defeitos
+só apareceram porque o recorte se mexeu: `ORA-12860` na recarga, a checagem de
+preservação misturando artefatos imutáveis com saídas do pipeline, e os
+esperados congelados em `03_validar_carga.sql`.
+
+**Fatia 6 — testes em três níveis.** A suíte foi de 24 para 155 testes:
+
+- **unidade** (`tests/test_indicadores.py`): cada fórmula nas bordas —
+  denominador zero, benchmark vazio, hospital sem leito SUS declarado,
+  competência ausente no IPCA, internação que cruza o mês;
+- **contrato** (`tests/test_contratos_camadas.py`): cada camada contra o seu
+  JSON, com o validador exercitado também no caminho de reprovação;
+- **reconciliação** (`tests/reconciliacao/`): a API ORDS contra a Gold, campo
+  a campo, posicional e sem tolerância. Lê do SQL versionado o mapa de campos,
+  a ordenação, o teto de paginação e a escala decimal, em vez de guardar cópia
+  dos 150 campos. Dois modos: amostra e varredura completa.
+
+A varredura completa sobre as 30 competências deu **8.403.103 comparações e
+zero divergências**, em 25.303 recortes e 25.611 requisições. O que antes era
+um evento manual de dez fatias virou `make reconciliar-completo`.
+
+O 429 do ORDS derrubou a primeira tentativa: o recuo era por requisição, mas o
+limite é global — enquanto uma thread esperava, as outras duas seguiam batendo.
+O freio passou a ser do cliente inteiro, com espaçamento adaptativo. Estabilizou
+em 1,27 s entre chamadas e absorveu 258 recuos sem perder nenhuma.
+
+Três defeitos encontrados pelos testes novos:
+
+1. `PERIODO_FINAL_PADRAO` ainda era `2026-05`, então um clone limpo não
+   reproduzia o recorte entregue. O recorte estava escrito em quatro lugares;
+   virou uma constante, conferida contra o `MANIFESTO.json` da Bronze;
+2. o `VALIDACAO_TECNICA.md` trazia os totais como literais e contradizia os
+   próprios dados; passou a ser derivado dos metadados;
+3. `qt_municipio` vem de uma dimensão, não do mart, e teria sido pulado em
+   silêncio pelo comparador.
+
+**Fatia 7 — o contrato da API.** `contracts/openapi.yaml` descreve os 10
+endpoints: parâmetros com formato e teto, envelope, itens campo a campo e
+comportamento de erro. `tests/test_openapi.py` o confere contra o SQL dos
+handlers e contra a API viva, para que o contrato não vire uma terceira versão
+da verdade ao lado do SQL e dos tipos TypeScript.
+
+Três defeitos apareceram ao escrever o contrato:
+
+1. **`origem` em `/fluxos` e `regiao` em `/icsap` passam a ser obrigatórios.**
+   Omitidos, os endpoints devolviam 200 somando fluxos e grupos de **todas** as
+   regiões numa página só, com o contexto nulo — 1.015 e 1.178 linhas de
+   territórios diferentes. Ausência de filtro não é filtro vazio;
+2. **`cnes` em `/hospitais` é aceito, validado e ignorado** pelo `where`.
+   Declarado `deprecated` no contrato em vez de silenciado. Não corrigido: o
+   plano não listou esse endpoint;
+3. **`competence` não estava sendo reconciliado.** As séries montam esse campo
+   por concatenação, e o extrator da fatia 6 só enxergava projeções diretas de
+   coluna. Campos derivados agora entram na comparação, e um teste pergunta à
+   API quais chaves ela devolve para fechar o buraco.
+
+Parâmetro inválido continua devolvendo **404 com HTML**, não 400 com JSON: os
+handlers são consultas SQL, e uma consulta SQL não escolhe o código HTTP. O
+contrato documenta o motivo em vez de descrever um 400 que não existe.
+
+**Fatia 8 / B.4 — gerador de fixtures.** `web/scripts/gerar-mocks.ts` regrava
+os dez snapshots a partir da API ao vivo (`make fixtures`), com a competência
+lida do manifesto da Bronze. As fixtures deixaram de descrever 2026-05.
+
+Quatro defeitos, três deles no produto:
+
+1. **`gold_updated_at` era literal dentro de `vw_api_metodologia`** e ficou
+   congelado em 01/08 enquanto a Gold era regerada em 10/08 — a tela anunciava
+   uma data que o dado contradizia. Passa a vir da tabela `gold_manifesto`,
+   escrita por `carregar_gold.py` a cada carga;
+2. **`FluxosView` e `HospitalView` cravavam a competência** no texto do estado
+   de contingência ("O snapshot preserva JUNDIAI em 05/2026"), contradizendo os
+   números logo abaixo. Passam a derivar do dado exibido;
+3. **o passo de fixtures da CI nunca poderia passar**: `reancorar_fixtures.py`
+   levantava `FileNotFoundError` num runner limpo, porque `data/` é gitignored;
+4. 34 asserções herméticas cravavam a competência e 24 cravavam também os
+   números. Passam a derivar da fixture; a suíte foi de 31 para 32 testes.
 
 ### Validado em 01/08/2026
 

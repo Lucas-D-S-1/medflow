@@ -3,6 +3,13 @@
 Executada em **01/08/2026** no Autonomous AI Database `MEDFLOW`, versão 26ai,
 workload Lakehouse, região `sa-saopaulo-1`.
 
+> **Evidência datada.** As contagens abaixo são as do recorte de 29
+> competências, vigente naquele dia. Em 09/08/2026 o recorte avançou para 30
+> competências e a carga passou a 597.725 linhas, mantendo 36/36 na
+> reconciliação. O estado corrente do banco não se lê aqui: rode
+> `make oracle-carregar` com `--conferir` e
+> `medflow.oracle.executar_sql db/schema/03_validar_carga.sql`.
+
 ## Conexão e modelo
 
 - conexão mTLS validada no banco `GF68E03B2A30D55_MEDFLOW`;

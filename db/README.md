@@ -1,4 +1,21 @@
-# Oracle — setup e carga do MedFlow
+# `db/` — o backend do MedFlow
+
+**Este diretório é o servidor da aplicação.** Não há Node nem Python entre a
+tela e o banco: o ORDS publica os endpoints direto do Autonomous Database, e as
+nove views mais os módulos ORDS daqui não são "scripts auxiliares do Oracle",
+são o código de servidor do produto. Menos peças, menos coisa para cair na
+apresentação, e o dado nunca é recalculado fora do banco.
+
+| Pasta | Papel |
+|---|---|
+| `schema/` | usuário, modelo dimensional e reconciliação da carga |
+| `views/` | nove views de projeção pura, uma por fatia do produto |
+| `ords/` | módulos REST; o `03` redefine o módulo inteiro |
+| `select_ai/` | perguntas da demonstração e o SQL de referência |
+
+O contrato do que esses handlers expõem está em
+[`../contracts/openapi.yaml`](../contracts/openapi.yaml), e
+`tests/test_openapi.py` confere que ele não divergiu deste SQL nem da API viva.
 
 Configuração reproduzível e sem segredos para o Autonomous AI Database
 `MEDFLOW`. Nada neste diretório contém credencial: wallet, `.env`, chaves e
@@ -21,7 +38,8 @@ arquivos de conexão são ignorados pelo Git.
 
 - conexão mTLS validada como `MEDFLOW`;
 - 2 dimensões, 7 marts, 175 colunas comentadas e 10 índices secundários;
-- **585.296 linhas** carregadas: 584.589 nos marts e 707 nas dimensões;
+- **597.725 linhas** carregadas: 597.018 nos marts e 707 nas dimensões
+  (recorte de 30 competências; eram 585.296 na validação de 01/08);
 - 36/36 métricas de reconciliação com estado `ok`;
 - seis verificações adicionais de integridade com zero ocorrências;
 - Resource Principal OCI habilitado para o esquema;
@@ -30,14 +48,14 @@ arquivos de conexão são ignorados pelo Git.
   novas perguntas territoriais aguardam a revalidação planejada do Select AI.
 
 As evidências e os rankings obtidos estão em
-[`VALIDACAO_ORACLE_SELECT_AI.md`](VALIDACAO_ORACLE_SELECT_AI.md).
+[`../docs/qualidade/VALIDACAO_ORACLE_SELECT_AI.md`](../docs/qualidade/VALIDACAO_ORACLE_SELECT_AI.md).
 
 ## Instalação
 
 Na raiz do repositório:
 
 ```bash
-uv pip install --python .venv/bin/python -r 02_oracle_medflow/sprint_2_em_andamento/oracle/requirements.txt
+make setup        # instala o pacote com os extras, incluindo oracledb
 ```
 
 ## Wallet e variáveis
@@ -45,18 +63,18 @@ uv pip install --python .venv/bin/python -r 02_oracle_medflow/sprint_2_em_andame
 Use um **wallet de instância**, restrito ao `MEDFLOW`. Extraia-o localmente em:
 
 ```text
-02_oracle_medflow/sprint_2_em_andamento/oracle/wallets/MEDFLOW/
+wallets/MEDFLOW/
 ```
 
 A senha do wallet deve ser diferente da senha do usuário `ADMIN`.
 
-Na raiz de `sprint_2_em_andamento/`:
+Na raiz do repositório:
 
 ```bash
-cp oracle/.env.example oracle/.env
+cp .env.example .env
 ```
 
-Preencha `oracle/.env` localmente. Confirme os aliases reais no `tnsnames.ora`
+Preencha o `.env` da raiz localmente. Confirme os aliases reais no `tnsnames.ora`
 do wallet: no workload Lakehouse o esperado é `medflow_low`, `medflow_medium`,
 `medflow_high`, `medflow_tp` e `medflow_tpurgent`.
 
@@ -77,11 +95,12 @@ SQLcl.
 
 ### Passo 2 — teste de conexão
 
-Na raiz de `sprint_2_em_andamento/`:
+Na raiz do repositório:
 
 ```bash
-../../.venv/bin/python -m dotenv -f oracle/.env run -- \
-  ../../.venv/bin/python oracle/testar_conexao.py
+make oracle-ping              # ou, sem make:
+.venv/bin/python -m dotenv -f .env run -- \
+  .venv/bin/python src/medflow/oracle/testar_conexao.py
 ```
 
 O teste consulta apenas o nome do banco, o esquema conectado e o horário do
@@ -90,26 +109,33 @@ servidor. Nenhuma credencial é exibida.
 ### Passo 4 — carga
 
 ```bash
-../../.venv/bin/python -m dotenv -f oracle/.env run -- \
-  ../../.venv/bin/python oracle/carregar_gold.py
+make oracle-carregar          # ou, sem make:
+.venv/bin/python -m dotenv -f .env run -- \
+  .venv/bin/python src/medflow/oracle/carregar_gold.py
 ```
 
 A carga é idempotente: esvazia cada tabela antes de inserir, na ordem inversa
-das chaves estrangeiras. São 585.296 linhas em 9 tabelas: 584.589 linhas nos
+das chaves estrangeiras. São 597.725 linhas em 9 tabelas: 597.018 nos
 sete marts e 707 nas duas dimensões. Para conferir sem carregar:
 
 ```bash
-../../.venv/bin/python -m dotenv -f oracle/.env run -- \
-  ../../.venv/bin/python oracle/carregar_gold.py --conferir
+make oracle-carregar          # ou, sem make:
+.venv/bin/python -m dotenv -f .env run -- \
+  .venv/bin/python src/medflow/oracle/carregar_gold.py --conferir
 ```
 
 ### Passo 5 — reconciliação
 
-`sql/03_validar_carga.sql` compara 36 métricas contra
-`dados/gold/qualidade/METADADOS.json`, contrato `0.3.0`. **Toda linha tem de
-sair como `ok`.** Os marts partem do mesmo fato e precisam fechar em
-6.905.441 internações novas; se um divergir, a carga perdeu dado e o dashboard
-não deve ser construído sobre essa base.
+`schema/03_validar_carga.sql` compara 36 métricas contra
+`data/gold/qualidade/METADADOS.json`, contrato `0.3.0`. **Toda linha tem de
+sair como `ok`.** Os marts partem do mesmo fato e precisam fechar no mesmo
+total de internações novas — 7.150.693 no recorte atual; se um divergir, a
+carga perdeu dado e o dashboard não deve ser construído sobre essa base.
+
+Os valores esperados do SQL não são digitados à mão: `scripts/atualizar_esperados_sql.py`
+os regenera a partir dos metadados, e exige `carregar_gold.py --conferir`
+antes — abençoar o estado do banco sem conferência independente seria só
+carimbar.
 
 ### Passo 6 — Select AI
 
@@ -158,4 +184,4 @@ tipo de imprecisão que a banca cobra.
 
 Os Parquets dos marts não são versionados (`.gitignore`). Gere-os localmente
 com `notebooks/02_analise_dados.ipynb` antes da carga; os SHA-256 de
-referência estão em `dados/gold/qualidade/METADADOS.json`.
+referência estão em `data/gold/qualidade/METADADOS.json`.

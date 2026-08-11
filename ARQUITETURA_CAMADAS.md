@@ -42,32 +42,32 @@ SIH/RD + CNES/LT + APIs MS/IBGE + CSV MS + IPCA + malha IBGE
 ## Estrutura física
 
 ```text
-sprint_2_em_andamento/
-├── notebooks/
-│   ├── 00_extracao_dados.ipynb
-│   ├── 01_engenharia_dados.ipynb
-│   ├── 02_analise_dados.ipynb
-│   ├── executados/
-│   └── _legado/
-├── pipeline/
-│   ├── contratos.py
-│   ├── geografia.py
-│   ├── gold.py
-│   ├── icsap.py
-│   ├── ipca.py
-│   └── inventario.py
-├── contratos/
-├── dados/
-│   ├── bronze/
-│   ├── silver/
-│   ├── gold/
-│   └── legado/
-├── figuras/
-│   ├── gold/
-│   └── legado/
-└── referencias/
-    └── legado_sprint_1/
+medflow/
+├── src/medflow/
+│   ├── config.py         recorte, caminhos e logging, tudo do ambiente
+│   ├── bronze/           ingestão, conversão, manifesto e referências
+│   ├── silver/           dimensões, fatos, de/paras e agregados
+│   ├── oracle/           conexão mTLS, carga e executor SQL
+│   ├── gold.py           marts e indicadores
+│   ├── contratos.py      publicação e dicionários
+│   ├── geografia.py      regiões, população e malhas
+│   ├── icsap.py          os 19 grupos da Portaria SAS/MS 221/2008
+│   ├── ipca.py           número-índice e fator de correção
+│   ├── validar.py        validação integrada das três camadas
+│   ├── inventario.py     SHA-256 dos artefatos de dados
+│   └── cli.py            `medflow bronze|silver|gold|…`
+├── db/                   schema, views, módulos ORDS e Select AI
+├── web/                  React + Vite, um cliente por endpoint
+├── contracts/dados/      contratos Bronze, Silver e Gold
+├── notebooks/            leitura narrada do pipeline, não o motor
+├── data/                 gitignored: bronze, silver, gold, legado
+├── docs/                 decisões, pesquisa, qualidade e entregas
+└── tests/                unidade, contrato e reconciliação
 ```
+
+A árvore acima é posterior à reorganização de 08/08/2026. A estrutura anterior,
+com `sprint_2_em_andamento/`, `pipeline/` e `dados/`, permanece no repositório
+acadêmico `fiap-1tscoa` e no histórico do Git.
 
 ## Fronteiras
 
