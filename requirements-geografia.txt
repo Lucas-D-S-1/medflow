@@ -1,4 +1,0 @@
-# Dependências opcionais para gerar a geometria regional do BI.
-pyshp>=2.3,<3
-shapely>=2.0,<3
-topojson>=1.10,<2
