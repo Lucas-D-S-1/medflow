@@ -1,12 +1,17 @@
 # Arquitetura end-to-end do MedFlow
 
-**Documento de decisão e validação · versão 0.1 · 01/08/2026**
+**Documento de decisão e validação · contrato de dados `0.3.0` · 11/08/2026**
 
-Este documento descreve a arquitetura-alvo do produto MedFlow, do dado oficial
-ao consumo pelo usuário. Ele complementa a arquitetura de dados já registrada em
-[`ARQUITETURA_CAMADAS.md`](ARQUITETURA_CAMADAS.md): aquele documento define
-Bronze, Silver e Gold; este conecta o pipeline ao Oracle, à API, ao webapp, à
-contingência e ao processo de validação do produto.
+Este é o documento único de arquitetura do MedFlow, do dado oficial ao consumo
+pelo usuário: o zoneamento das três camadas e suas fronteiras, os controles que
+bloqueiam a promoção, a ligação com o Oracle, a API, o webapp, a contingência e
+o processo de validação.
+
+Ele resulta da fusão de três documentos que descreviam a mesma arquitetura em
+recortes diferentes — `arquitetura.md`, `ARQUITETURA_CAMADAS.md` e
+`PIPELINE.md`. Três descrições da mesma coisa divergem, e divergiram: cada uma
+carregava uma volumetria própria, e duas ficaram para trás quando o recorte
+avançou.
 
 A validação do problema de negócio, o benchmarking e o protocolo de pesquisa
 estão em [`docs/pesquisa/pesquisa.md`](docs/pesquisa/pesquisa.md).
@@ -131,28 +136,115 @@ flowchart TB
     SNAP --> BADGE
 ```
 
-## 4. Estado real versus arquitetura-alvo
+## 4. As três camadas: responsabilidade e fronteira
 
-| Componente | Estado em 01/08/2026 | Evidência ou próximo artefato |
+O zoneamento segue a referência da fase 3 do curso, com os nomes que o projeto
+adotou:
+
+| Termo da aula | Termo do projeto | Responsabilidade |
 |---|---|---|
-| Bronze, Silver e Gold | Implementado e validado | `PIPELINE.md` e `VALIDACAO_TECNICA.md` |
-| Geografia das regiões | Implementada e validada | 645 municípios, 62 regiões e 19 macrorregiões |
-| Oracle Autonomous AI Database | Implementado e validado | `db/README.md` |
-| Carga dimensional Oracle | Implementada e reconciliada | 597.725 linhas; 36/36 controles `ok` |
-| Select AI | Implementado e validado | `docs/qualidade/VALIDACAO_ORACLE_SELECT_AI.md` |
-| Contrato das telas | Definido neste documento | implementar no webapp |
-| Views públicas para consumo | Proposto | criar SQL versionado |
-| Endpoints ORDS próprios | Proposto | criar e testar handlers GET |
-| Webapp React/TypeScript | Proposto | construir após aprovação do problema |
-| Snapshot de contingência | Proposto | exportar JSON da Gold no build |
-| Deploy GitHub Pages | Proposto | workflow de build/deploy |
-| Heartbeat e alerta | Proposto | workflow agendado e manual |
-| Validação com usuários | Evolução futura, não bloqueante | roteiro opcional em `pesquisa.md` |
+| Raw | Bronze | preservar fontes, linhagem e serializações fiéis |
+| Trusted | Silver | tipar, conformar, reconciliar, documentar dimensões e fatos |
+| Curated | Gold | aplicar regras de negócio, indicadores, agregações e ativos de BI |
+| Refined | Platinum | fora do escopo atual |
 
-Essa distinção impede que a arquitetura desejada seja apresentada como
-funcionalidade já entregue.
+O que cada camada **pode** e **não pode** fazer é o que impede a regra de
+negócio de vazar para onde ela não é auditável.
 
-## 5. Processo completo
+### Bronze — adquirir e preservar
+
+Executada por `medflow bronze`.
+
+Permitido: download e cache; descoberta da última competência comum de SIH/RD e
+CNES/LT; descompressão técnica DBC/DBF; serialização em Parquet; metadados de
+linhagem; manifesto com hashes, esquema e volumetria.
+
+Proibido: filtro analítico, preenchimento de ausência, de/para, normalização de
+código de negócio, dimensão, fato ou indicador.
+
+Estrutura: `origem/datasus` guarda o DBC imutável; `origem/referencias`, os
+JSON, ZIP, HTML, CSV e a malha oficial; `intermediario/dbf` é cache técnico
+descartável; `parquet` é a serialização fiel.
+
+Fronteiras: o DBF é cache, não fonte soberana; o Parquet pode acrescentar
+apenas arquivo e competência de origem; nomes de coluna permanecem iguais aos
+da fonte.
+
+### Silver — conformar e reconciliar
+
+Executada por `medflow silver`.
+
+Inclui tipagem, todos os de/paras, dimensões e fatos com nomes canônicos,
+classificação de qualidade e origem, reconciliações antes da promoção e
+documentação automática de esquema, domínios e qualidade.
+
+Proibido: indicador, benchmark ou classificação de negócio; publicação de
+agregados `base_*`; exposição de nome bruto quando já existe conceito canônico.
+
+Fronteiras: contém somente dimensões e fatos reutilizáveis; mantém a
+competência como chave `cd_competencia`.
+
+### Gold — aplicar os contratos de negócio
+
+Executada por `medflow gold`.
+
+Inclui TMH e CMI por hospital, especialidade e mês; IPR por hospital/CID com
+benchmark regional que exclui o próprio hospital; IS regional de 2026 contra
+2024–2025; IPH por mês civil sobre pacientes-dia reconstruídos; permanência
+média e CMI real corrigido pelo IPCA; demanda por região de residência e taxa
+populacional territorialmente coerente; fluxos origem–destino e evasão
+intrastadual observada; ICSAP por residência nos 19 grupos oficiais; e os
+ativos geográficos CSV, GeoJSON e TopoJSON.
+
+Fronteiras: registra amostras e denominadores insuficientes **sem descartá-los**;
+oferece chaves regionais consistentes em todos os marts; separa região de
+residência da região do hospital; preserva o CMI nominal ao lado do real; e
+mantém explícito que o IPH é pressão estimada, não ocupação real.
+
+## 5. Estrutura física do repositório
+
+```text
+medflow/
+├── src/medflow/          o pipeline: config, bronze, silver, gold, oracle
+├── db/                   o backend: schema, views, módulos ORDS e Select AI
+├── web/                  o produto: React + Vite, agrupado por funcionalidade
+├── contracts/            contratos de dados, OpenAPI, nomenclatura e inventários
+├── notebooks/            a narrativa do pipeline — leitura, não motor
+├── data/                 as camadas materializadas; quase tudo fora do Git
+├── docs/                 decisões, pesquisa e evidência datada
+├── tests/                unidade, contrato, OpenAPI e reconciliação
+└── scripts/              utilitários de manutenção
+```
+
+Cada pasta tem um README que responde o quê, por quê e como. A árvore é
+posterior à reorganização de 08/08/2026; a anterior, com `sprint_2_em_andamento/`,
+`pipeline/` e `dados/`, permanece no repositório acadêmico `fiap-1tscoa` e no
+histórico do Git.
+
+## 6. Estado real versus arquitetura-alvo
+
+| Componente | Estado em 11/08/2026 | Evidência |
+|---|---|---|
+| Bronze, Silver e Gold | implementado e validado | seções 4 e 8; `VALIDACAO_TECNICA.md` |
+| Geografia das regiões | implementada e validada | 645 municípios, 62 regiões, 19 macrorregiões |
+| Oracle Autonomous AI Database | implementado e validado | [`db/README.md`](db/README.md) |
+| Carga dimensional Oracle | implementada e reconciliada | 597.725 linhas; 36/36 controles `ok` |
+| Select AI | validado tecnicamente | [`docs/qualidade/VALIDACAO_ORACLE_SELECT_AI.md`](docs/qualidade/VALIDACAO_ORACLE_SELECT_AI.md) |
+| Views públicas de projeção | implementadas | nove views em `db/views/` |
+| Endpoints ORDS próprios | implementados | dez handlers `GET` em `db/ords/`; contrato em [`contracts/openapi.yaml`](contracts/openapi.yaml) |
+| Webapp React/TypeScript | implementado e revisado | quatro visões em `web/`; Playwright 32/32 |
+| Snapshot de contingência | implementado | dez snapshots em `web/src/mocks/`, regerados por `make fixtures` |
+| Reconciliação API × Gold | implementada e versionada | `tests/reconciliacao/`; `make reconciliar-completo` |
+| Módulo ORDS de produção `api/v1` | **não existe** | só há o módulo de teste `api/dev/v1` |
+| Deploy e link público | **não existe** | é a etapa atual; ver `PENDENCIAS.md` |
+| Heartbeat e alerta | **não existe** | o ping do Oracle é manual e semanal |
+| Validação com usuários | evolução futura, não bloqueante | roteiro opcional em [`docs/pesquisa/pesquisa.md`](docs/pesquisa/pesquisa.md) |
+
+Esta tabela existe para impedir que a arquitetura desejada seja apresentada
+como funcionalidade entregue. As três linhas em negrito são o que falta, e é
+por isso que estão escritas assim.
+
+## 7. Processo completo
 
 ### Etapa 0 — determinar o recorte reproduzível
 
@@ -364,7 +456,80 @@ Antes da apresentação:
 O Select AI é uma camada adicional de exploração; ele não substitui os
 endpoints determinísticos nem os controles do produto.
 
-## 6. Contratos dos indicadores
+## 8. Controles e reconciliações que bloqueiam a promoção
+
+Oito controles atravessam o pipeline, e nenhum deles é conselho: cada um é
+verificado antes de uma camada ser publicada.
+
+1. **Inventário de domínios** — cobertura medida por campo, lacunas explícitas.
+2. **De/paras** — todos os códigos observados de especialidade, natureza
+   jurídica, CID e UTI cobertos, com proveniência.
+3. **Identificadores preservados** — `N_AIH`, `IDENT` e `COD_IDADE` no fato.
+4. **Unidade de contagem** — AIH aprovada, internação nova e continuação de
+   longa permanência contadas separadamente e reconciliadas entre si.
+5. **Permanência** — `DIAS_PERM` alimenta permanência; `QT_DIARIAS` permanece
+   nomeado como faturamento, porque é o que ele é.
+6. **Região** — a região analítica vem da referência oficial municipal do MS; a
+   declaração histórica do CNES/LT e seus quatro conflitos ficam preservados
+   para auditoria.
+7. **Nulos em agrupamento** — `dropna=False` e reconciliação impedem perda
+   silenciosa.
+8. **Indicadores** — calculados na Gold, com amostra, denominador,
+   residência/atendimento e limitações explícitos.
+
+### A Silver só grava se
+
+- o fato SIH tiver as linhas registradas no `MANIFESTO.json` da Bronze — a
+  igualdade é medida contra o manifesto, nunca contra um total memorizado;
+- AIH normal + continuação for igual ao total do fato;
+- todo código `ESPEC` observado tiver de/para;
+- todo CID tiver capítulo e descrição;
+- todo hospital do SIH existir na dimensão hospital, com região, natureza
+  jurídica, nome e esfera atuais;
+- a dimensão municipal cobrir os 645 municípios e reconciliar API e CSV
+  oficiais;
+- as chaves `cd_competencia`, `cd_cnes` e `cd_regiao_saude` não perderem
+  cobertura.
+
+Nome e esfera atuais **não** reescrevem o cadastro histórico: a dimensão
+hospital os identifica com sufixo `_atual` e
+`fl_cadastro_atual_nao_historico=1`. Exigir o atributo vigente em cada
+competência de 2024–2026 demandaria uma fonte cadastral histórica que não
+existe publicamente.
+
+### As reconciliações da Gold comparam camadas, não números fixos
+
+As internações novas têm de ser idênticas nos marts hospitalar, de
+especialidade e regional; a evasão inter-regional tem de fechar com a recepção;
+a ICSAP do resumo tem de bater com a soma dos 19 grupos; municípios e regiões
+têm de casar com a geometria sem imputação; e hospital-mês com denominador CNES
+zero é preservado com IPH nulo, não descartado.
+
+Os valores do recorte corrente ficam em `VALIDACAO_TECNICA.md`, que é **gerado**
+a cada `make validar`. Este documento não os repete de propósito: número
+copiado para prosa envelhece sem avisar.
+
+## 9. IPH: o proxy histórico e o contrato atual
+
+O proxy usado na Sprint 1 era:
+
+```text
+SUM(QT_DIARIAS) / (leitos_SUS × dias_do_mês)
+```
+
+Ele reproduz a média `0,472168`, e isso **não** comprova ocupação real:
+`QT_DIARIAS` é faturamento, a competência pode divergir da saída, e cerca de
+15% das internações cruzam o mês. Medir ocupação física exigiria distribuir os
+intervalos de internação no calendário e validar as regras de leito e
+transferência.
+
+O proxy permanece apenas na trilha de auditoria. O mart Gold reconstrói os
+pacientes-dia pelas datas de entrada e saída e os relaciona à capacidade CNES
+do mês civil; capacidade zero produz IPH nulo com status
+`sem_leito_sus_declarado`. Ainda assim o resultado é **pressão estimada sobre
+capacidade declarada**, e é assim que o produto o nomeia.
+
+## 10. Contratos dos indicadores
 
 | Indicador | Cálculo atual | Regra de leitura | Limitação obrigatória |
 |---|---|---|---|
@@ -384,7 +549,7 @@ Não serão criados sem validação de especialista limiares clínicos do tipo
 como “maior valor observado” ou “priorizar investigação”, nunca “melhor” ou
 “pior hospital”.
 
-## 7. Visões planejadas
+## 11. Visões planejadas
 
 ### 7.1 Visão executiva regional
 
@@ -447,7 +612,7 @@ Componentes mínimos:
 Essa tela não é apêndice. Ela faz parte do produto porque evita transformar
 dados administrativos em afirmações clínicas indevidas.
 
-## 8. Jornada de decisão que será validada
+## 12. Jornada de decisão que será validada
 
 ```mermaid
 flowchart LR
@@ -462,7 +627,7 @@ flowchart LR
 O produto termina em “registrar hipótese de investigação”. A ação operacional
 depende de informação local, equipe técnica e governança do gestor.
 
-## 9. Segurança, privacidade e governança
+## 13. Segurança, privacidade e governança
 
 - somente dados públicos e agregados chegam ao navegador;
 - nenhum dado pessoal ou linha de AIH é exposto;
@@ -482,7 +647,7 @@ ações de gestão, esta arquitetura de API pública deixa de ser suficiente. Se
 necessário autenticação, autorização por perfil, auditoria de acesso, avaliação
 LGPD e um backend protegido.
 
-## 10. Disponibilidade, observabilidade e recuperação
+## 14. Disponibilidade, observabilidade e recuperação
 
 | Risco | Detecção | Resposta do MVP |
 |---|---|---|
@@ -506,7 +671,7 @@ LGPD e um backend protegido.
 7. executar o roteiro controlado do Select AI;
 8. guardar screenshots ou vídeo curto como última contingência visual.
 
-## 11. Critérios de aceite do produto
+## 15. Critérios de aceite do produto
 
 O MVP só estará pronto para apresentação quando:
 
@@ -523,7 +688,7 @@ O MVP só estará pronto para apresentação quando:
   como ocupação real;
 - o preflight completo passar na véspera da apresentação.
 
-## 12. Sequência recomendada de implementação
+## 16. Sequência recomendada de implementação
 
 1. aprovar problema, persona, decisões e limites usando `pesquisa.md`;
 2. desenhar wireframes das quatro visões e testar com dados estáticos;
@@ -539,7 +704,7 @@ O MVP só estará pronto para apresentação quando:
 Testes com usuários permanecem como evolução futura caso o MedFlow continue
 depois da entrega acadêmica.
 
-## 13. Decisões que evitam complexidade sem valor
+## 17. Decisões que evitam complexidade sem valor
 
 | Alternativa | Decisão | Motivo |
 |---|---|---|
@@ -552,7 +717,7 @@ depois da entrega acadêmica.
 | esconder indisponibilidade | não usar | snapshot sempre recebe selo de contingência |
 | semáforo clínico arbitrário | não usar | falta validação de especialista e ajuste de risco |
 
-## 14. Custos e dependências
+## 18. Custos e dependências
 
 O desenho busca custo financeiro recorrente zero no MVP:
 
@@ -565,13 +730,13 @@ O desenho busca custo financeiro recorrente zero no MVP:
 de atualizar dados, revisar reprocessamentos, monitorar hibernação, validar
 indicadores, corrigir dependências e executar o preflight.
 
-## 15. Referências técnicas
+## 19. Referências técnicas
 
 ### Internas
 
-- [`ARQUITETURA_CAMADAS.md`](ARQUITETURA_CAMADAS.md)
-- [`PIPELINE.md`](PIPELINE.md)
-- [`VALIDACAO_TECNICA.md`](VALIDACAO_TECNICA.md)
+- [`VALIDACAO_TECNICA.md`](VALIDACAO_TECNICA.md) — gerado a cada `make validar`
+- [`contracts/openapi.yaml`](contracts/openapi.yaml) — o contrato dos 10 endpoints
+- [`contracts/NOMENCLATURA.md`](contracts/NOMENCLATURA.md) — convenção de tabelas e colunas
 - [`docs/decisoes/REVISAO_REQUISITOS_E_PROPOSTA_GOLD.md`](docs/decisoes/REVISAO_REQUISITOS_E_PROPOSTA_GOLD.md)
 - [`db/README.md`](db/README.md)
 - [`docs/qualidade/VALIDACAO_ORACLE_SELECT_AI.md`](docs/qualidade/VALIDACAO_ORACLE_SELECT_AI.md)
