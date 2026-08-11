@@ -1,6 +1,6 @@
 # PENDÊNCIAS — Challenge Oracle: MedFlow
 
-Atualizado em 11/08/2026, após a fatia 8 da reorganização.
+Atualizado em 11/08/2026, após a fatia 9 e a limpeza para publicação.
 Entrega da Sprint 2: **01/09/2026**.
 
 ## Concluído nesta revisão
@@ -295,7 +295,25 @@ está preservada na branch `arquivo/v0-2026-07` e nas tags `v0` e `v0.1.0`.
 | 7 | `db/` como backend e o contrato OpenAPI dos 10 endpoints |
 | 8 | front por funcionalidade, gerador de fixtures e specs por visão |
 | 9 | README por pasta, respondendo o quê / por quê / como |
-| 10 | pendente: tag `v0.3.0` |
+| 10 | **bloqueada** — ver abaixo |
+| limpeza | o que se publica: 216 → 205 arquivos, 17,7 → 15,2 MB |
+
+### Fatia 10 — a tag `v0.3.0` está bloqueada por um conflito de critério
+
+Dois documentos discordam sobre quando a tag sai, e nenhum dos dois está
+obviamente errado:
+
+- a **seção 7 do `PLANO_REORGANIZACAO`** coloca a tag como última fatia da
+  reorganização, antes dos passos de produto — publicar `api/v1`, testar o
+  link, revalidar o Select AI;
+- o **`VERSIONAMENTO.md`** diz que a `v0.3.0` só sai depois que o módulo ORDS
+  de produção existir e o link público for testado.
+
+A reorganização está pronta e o produto não. Tagear agora marcaria um
+repositório organizado que ainda não entrega o link — e a `v0.3.0` foi
+anunciada como "Oracle e webapp MVP", que inclui o consumo público.
+
+Nada foi tageado. A decisão é de produto e precisa ser tomada, não deduzida.
 
 **Portão da fatia 4:** os 48 parquets precisam manter o SHA-256 registrado em
 `contracts/INVENTARIO_PRE_REORG.json` depois que Bronze e Silver saírem dos
@@ -495,6 +513,30 @@ carrega e que ninguém adivinha lendo o código:
 - `tests/` explica o que cada nível prova que os outros não provam.
 
 Zero links quebrados nos `.md` do repositório.
+
+### Limpeza para publicação — 11/08/2026
+
+Feita depois da fatia 9, com uma pergunta só: o que um avaliador ou alguém que
+reusa o projeto precisa ver? Saíram a configuração das ferramentas de IA
+(`CLAUDE.md`, `AGENTS.md`, `.ai-memory.toml`, agora no `.gitignore` e ainda no
+disco de quem trabalha aqui), o material de curso da Sprint 1, a evidência da
+v0.1.0, um `requirements-geografia.txt` órfão e uma cópia congelada do
+relatório de validação — que é gerado, e portanto divergia em silêncio.
+
+Os três documentos de arquitetura viraram um. Ao fundir apareceu que a tabela
+"estado real versus arquitetura-alvo" dizia *Proposto* para views, endpoints,
+webapp e snapshot, todos entregues desde 02/08: a tabela que existe para
+impedir que o desejado pareça entregue estava fazendo o contrário.
+
+**Duas remoções previstas no plano não foram feitas.** `figuras/legado/` e os
+CSVs de 2022-2023 são carregados pela checagem de preservação do `validar.py`,
+que casa artefatos por SHA-256 — removê-los derrubaria 24 dos 38 artefatos
+exigidos e o portão falharia para sempre. Custam 0,7 MB e provam que a migração
+de julho não perdeu arquivo. Ficam.
+
+Os 12 MB de referências brutas também ficam, e o `data/README.md` agora explica
+por quê: URL de órgão público muda, e sem a cópia versionada com SHA-256 não há
+como saber se o arquivo novo é o que produziu os números publicados.
 
 ## Organização vigente
 

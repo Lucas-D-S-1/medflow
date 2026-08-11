@@ -5,6 +5,14 @@ da mentoria, inconsistências da apresentação da Sprint 1, decisões aprovadas
 definições que ainda pertencem à camada de entrega. A Gold descrita aqui foi
 implementada, validada e publicada no contrato de dados `0.3.0`.
 
+> **Registro de decisão, com data.** As correções listadas aqui foram tomadas
+> sobre o recorte de 29 competências, vigente naquele dia. Em 09/08/2026 o
+> recorte avançou para **2024-01 a 2026-06, 30 competências**, e os números
+> citados no texto acompanham a decisão original, não o estado atual. O estado
+> corrente está em [`VALIDACAO_TECNICA.md`](../../VALIDACAO_TECNICA.md), gerado
+> a cada `make validar`. Reescrever um registro de decisão para caber no
+> presente o transforma em opinião.
+
 ## 1. Materiais revisados
 
 - `1TSCOA - Regras gerais - Challenge Oracle_RevFinal.pdf`, páginas 6–12 e
