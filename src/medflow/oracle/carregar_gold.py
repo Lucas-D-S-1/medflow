@@ -167,6 +167,32 @@ def carregar(conexao: oracledb.Connection, tabela: str, quadro: pd.DataFrame, lo
     return len(linhas)
 
 
+def registrar_proveniencia(conexao: oracledb.Connection, gerado_em_utc: str) -> None:
+    """Grava de qual execução da Gold vieram as linhas que estão no banco.
+
+    A view `vw_api_metodologia` publica esse carimbo como `gold_updated_at`, e
+    o webapp o usa para dizer "Gold atualizada em …". Antes ele era um literal
+    dentro da própria view: ficou congelado em 01/08 enquanto a Gold era
+    regerada em 10/08, e a tela passou a anunciar uma data que o dado servido
+    contradizia. Agora ele acompanha a carga porque é escrito por ela.
+    """
+    with conexao.cursor() as cursor:
+        cursor.execute(
+            """
+            merge into gold_manifesto alvo
+            using (select 1 as id, :carimbo as gerado_em_utc from dual) origem
+               on (alvo.id = origem.id)
+             when matched then
+               update set alvo.gerado_em_utc = origem.gerado_em_utc,
+                          alvo.carregado_em = systimestamp
+             when not matched then
+               insert (id, gerado_em_utc) values (origem.id, origem.gerado_em_utc)
+            """,
+            carimbo=gerado_em_utc,
+        )
+    conexao.commit()
+
+
 def main() -> int:
     analisador = argparse.ArgumentParser(description=__doc__)
     analisador.add_argument("--somente", action="append", default=[], metavar="TABELA")
@@ -216,8 +242,14 @@ def main() -> int:
             print(f"{tabela:<48} {carregadas:>9} linhas{marca}")
             total += carregadas
 
+        # Só depois da carga inteira: o carimbo declara de qual Gold são as
+        # linhas que estão lá, e uma carga parcial (--somente) não muda isso.
+        if not argumentos.somente:
+            registrar_proveniencia(conexao, esperado["gerado_em_utc"])
+            print(f"\nProveniência registrada: Gold de {esperado['gerado_em_utc']}.")
+
         print(f"\nCarga concluída: {total} linhas em {len(selecionadas)} tabelas.")
-        print("Rode sql/03_validar_carga.sql para a reconciliação dos indicadores.")
+        print("Rode db/schema/03_validar_carga.sql para a reconciliação dos indicadores.")
 
     return 0
 

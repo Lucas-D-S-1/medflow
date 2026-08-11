@@ -501,6 +501,33 @@ comment on column mart_icsap_regiao_mensal.pc_grupo_no_total_icsap is 'Participa
 comment on column mart_icsap_regiao_mensal.tx_icsap_grupo_por_10_mil_habitantes is 'Internacoes do grupo por 10 mil habitantes da regiao, com populacao do Censo 2022.';
 
 -- ---------------------------------------------------------------------
+-- Proveniencia da carga
+-- ---------------------------------------------------------------------
+-- Uma linha, escrita por carregar_gold.py a cada carga, com o gerado_em_utc
+-- do manifesto Gold local. Existe porque `gold_updated_at` era um literal
+-- dentro de vw_api_metodologia: a view prometia, em comentario, que o valor
+-- correspondia ao manifesto publicado, e ficou congelado em 01/08 enquanto a
+-- Gold era regerada em 10/08. A tela anunciava uma data e servia outra.
+--
+-- O check de linha unica nao e zelo: com duas linhas a view voltaria a poder
+-- devolver a antiga.
+
+create table gold_manifesto (
+  id            number(1)          default 1 not null,
+  gerado_em_utc varchar2(40 char)  not null,
+  carregado_em  timestamp with time zone default systimestamp not null,
+  constraint pk_gold_manifesto primary key (id),
+  constraint ck_gold_manifesto_linha_unica check (id = 1)
+);
+
+comment on table gold_manifesto is
+  'Proveniencia da carga: de qual execucao da Gold vieram as linhas que estao no banco. Uma unica linha, reescrita a cada carga.';
+comment on column gold_manifesto.gerado_em_utc is
+  'gerado_em_utc do METADADOS.json da Gold que originou esta carga.';
+comment on column gold_manifesto.carregado_em is
+  'Quando a carga foi aplicada neste banco.';
+
+-- ---------------------------------------------------------------------
 -- Indices para os padroes de consulta do BI e do Select AI
 -- ---------------------------------------------------------------------
 

@@ -7,9 +7,14 @@ carimbo para provar de qual Gold vieram — há um teste Playwright que exige
 carimbo precisa ser corrigido à mão a cada execução, o que já falhou duas
 vezes numa só sessão.
 
-Escopo deliberadamente pequeno: reancora **só o carimbo**. Regerar o
-*conteúdo* das fixtures a partir do endpoint ao vivo é o gerador versionado
-da fatia 8 (B.4 do plano), e não é o que este script faz.
+Escopo deliberadamente pequeno: reancora **só o carimbo**, e por isso funciona
+sem o Oracle no ar. Regerar o *conteúdo* é `web/scripts/gerar-mocks.ts`
+(`make fixtures`), que busca as dez respostas na API — a divisão é essa:
+
+- **reexecutou a Gold e ainda não recarregou o Oracle:** `make fixtures-carimbo`
+  basta, porque só o carimbo mudou;
+- **o recorte avançou, ou algum contrato de endpoint mudou:** `make fixtures`,
+  porque o conteúdo mudou junto.
 
     python scripts/reancorar_fixtures.py [--conferir]
 """
@@ -24,7 +29,7 @@ from pathlib import Path
 
 RAIZ = Path(__file__).resolve().parents[1]
 METADADOS_GOLD = RAIZ / "data" / "gold" / "qualidade" / "METADADOS.json"
-DIR_FIXTURES = RAIZ / "web" / "src" / "fixtures"
+DIR_FIXTURES = RAIZ / "web" / "src" / "mocks"
 
 # ISO-8601 com microssegundos e deslocamento, como o pipeline grava.
 CARIMBO = re.compile(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+\+00:00")
@@ -42,6 +47,14 @@ def main() -> int:
         help="não escreve; sai com 1 se alguma fixture estiver desatualizada",
     )
     args = parser.parse_args()
+
+    # `data/` é gitignored: num clone limpo, e portanto na CI, não há Gold com
+    # que comparar. Sair em silêncio é o comportamento correto — o contrário
+    # tornava este passo impossível de passar fora de uma máquina que já
+    # rodou o pipeline, que é justamente o que acontecia até 11/08/2026.
+    if not METADADOS_GOLD.is_file():
+        print(f"Gold não materializada em {METADADOS_GOLD.parent}; nada a conferir.")
+        return 0
 
     atual = carimbo_da_gold()
     desatualizadas: list[str] = []
