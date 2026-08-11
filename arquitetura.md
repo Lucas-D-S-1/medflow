@@ -9,7 +9,7 @@ Bronze, Silver e Gold; este conecta o pipeline ao Oracle, à API, ao webapp, à
 contingência e ao processo de validação do produto.
 
 A validação do problema de negócio, o benchmarking e o protocolo de pesquisa
-estão em [`pesquisa.md`](pesquisa.md).
+estão em [`docs/pesquisa/pesquisa.md`](docs/pesquisa/pesquisa.md).
 
 ## 1. Decisão executiva
 
@@ -137,9 +137,9 @@ flowchart TB
 |---|---|---|
 | Bronze, Silver e Gold | Implementado e validado | `PIPELINE.md` e `VALIDACAO_TECNICA.md` |
 | Geografia das regiões | Implementada e validada | 645 municípios, 62 regiões e 19 macrorregiões |
-| Oracle Autonomous AI Database | Implementado e validado | `oracle/README.md` |
-| Carga dimensional Oracle | Implementada e reconciliada | 585.296 linhas; 36/36 controles `ok` |
-| Select AI | Implementado e validado | `oracle/VALIDACAO_ORACLE_SELECT_AI.md` |
+| Oracle Autonomous AI Database | Implementado e validado | `db/README.md` |
+| Carga dimensional Oracle | Implementada e reconciliada | 597.725 linhas; 36/36 controles `ok` |
+| Select AI | Implementado e validado | `docs/qualidade/VALIDACAO_ORACLE_SELECT_AI.md` |
 | Contrato das telas | Definido neste documento | implementar no webapp |
 | Views públicas para consumo | Proposto | criar SQL versionado |
 | Endpoints ORDS próprios | Proposto | criar e testar handlers GET |
@@ -158,7 +158,7 @@ funcionalidade já entregue.
 
 O extrator consulta as competências disponíveis e usa a última competência
 comum entre SIH/RD e CNES/LT dentro do intervalo solicitado. O recorte atual é
-São Paulo, de janeiro de 2024 a maio de 2026, totalizando 29 competências.
+São Paulo, de janeiro de 2024 a junho de 2026, totalizando 30 competências.
 
 O mês mais recente deve aparecer no produto como **competência disponível**, e
 não como “dado em tempo real”. O SIH aceita apresentação e reprocessamento de
@@ -193,8 +193,8 @@ O notebook `01_engenharia_dados.ipynb`:
 - explicita atributos atuais que não podem ser tratados como históricos;
 - bloqueia a promoção se as reconciliações falharem.
 
-A Silver validada contém 7.034.961 AIHs, das quais 6.905.441 representam
-internações novas e 129.520 são continuações de longa permanência.
+A Silver validada contém 7.284.476 AIHs, das quais 7.150.693 representam
+internações novas e 133.783 são continuações de longa permanência.
 
 ### Etapa 3 — aplicar contratos de negócio na Gold
 
@@ -202,13 +202,13 @@ O notebook `02_analise_dados.ipynb` produz sete marts:
 
 | Mart | Grão | Linhas | Uso principal |
 |---|---|---:|---|
-| `mart_indicador_hospital_mensal` | hospital × mês | 18.690 | IPH, TMH, CMI nominal/real e permanência média |
-| `mart_indicador_hospital_especialidade_mensal` | hospital × especialidade × mês | 52.525 | perfil, amostra, permanência e CMI real |
-| `mart_indicador_hospital_cid_periodo` | hospital × CID no período | 447.334 | IPR e benchmark regional |
-| `mart_indicador_regiao_mensal` | região × mês | 1.798 | oferta, demanda residente, IS, fluxo e ICSAP |
+| `mart_indicador_hospital_mensal` | hospital × mês | 19.341 | IPH, TMH, CMI nominal/real e permanência média |
+| `mart_indicador_hospital_especialidade_mensal` | hospital × especialidade × mês | 54.328 | perfil, amostra, permanência e CMI real |
+| `mart_indicador_hospital_cid_periodo` | hospital × CID no período | 455.054 | IPR e benchmark regional |
+| `mart_indicador_regiao_mensal` | região × mês | 1.860 | oferta, demanda residente, IS, fluxo e ICSAP |
 | `mart_indicador_regiao_periodo` | região no período | 62 | síntese regional do IPR |
-| `mart_fluxo_assistencial_regiao_mensal` | origem de residência × atendimento × mês | 30.018 | matriz de referência, atração e dependência |
-| `mart_icsap_regiao_mensal` | residência × mês × grupo ICSAP | 34.162 | taxa e composição dos 19 grupos oficiais |
+| `mart_fluxo_assistencial_regiao_mensal` | origem de residência × atendimento × mês | 31.033 | matriz de referência, atração e dependência |
+| `mart_icsap_regiao_mensal` | residência × mês × grupo ICSAP | 35.340 | taxa e composição dos 19 grupos oficiais |
 
 A Gold também publica as dimensões geográficas de 645 municípios e 62 regiões,
 além de GeoJSON e TopoJSON para o mapa.
@@ -230,14 +230,16 @@ O status atual do pipeline é aderente ao contrato `0.3.0`.
 
 ### Etapa 5 — carregar e reconciliar o Oracle
 
-O script `oracle/carregar_gold.py` carrega duas dimensões e sete marts no
+O script `src/medflow/oracle/carregar_gold.py` carrega duas dimensões e sete marts no
 schema `MEDFLOW`. A operação é idempotente para uma carga completa: limpa as
 tabelas na ordem segura e reinsere os arquivos Gold.
 
-Depois da carga, `oracle/sql/03_validar_carga.sql` compara 36 métricas com os
+Depois da carga, `db/schema/03_validar_carga.sql` compara 36 métricas com os
 metadados locais. O produto só pode trocar para a nova versão quando todas
-retornarem `ok`. A carga atual possui 585.296 linhas no Oracle e seis consultas
-de integridade retornam vazias.
+retornarem `ok`. A carga atual possui 597.725 linhas no Oracle e seis consultas
+de integridade retornam vazias. Os valores esperados do SQL são regenerados a
+partir dos metadados por `scripts/atualizar_esperados_sql.py`, e não ficam
+congelados no arquivo.
 
 ### Etapa 6 — publicar um contrato de leitura via ORDS
 
@@ -274,7 +276,7 @@ O endpoint `status` deve devolver, no mínimo:
   "status": "ok",
   "source": "oracle-live",
   "database_time": "2026-08-01T12:00:00-03:00",
-  "data_through": "2026-05",
+  "data_through": "2026-06",
   "contract_version": "0.3.0"
 }
 ```
@@ -570,9 +572,9 @@ indicadores, corrigir dependências e executar o preflight.
 - [`ARQUITETURA_CAMADAS.md`](ARQUITETURA_CAMADAS.md)
 - [`PIPELINE.md`](PIPELINE.md)
 - [`VALIDACAO_TECNICA.md`](VALIDACAO_TECNICA.md)
-- [`REVISAO_REQUISITOS_E_PROPOSTA_GOLD.md`](REVISAO_REQUISITOS_E_PROPOSTA_GOLD.md)
-- [`oracle/README.md`](oracle/README.md)
-- [`oracle/VALIDACAO_ORACLE_SELECT_AI.md`](oracle/VALIDACAO_ORACLE_SELECT_AI.md)
+- [`docs/decisoes/REVISAO_REQUISITOS_E_PROPOSTA_GOLD.md`](docs/decisoes/REVISAO_REQUISITOS_E_PROPOSTA_GOLD.md)
+- [`db/README.md`](db/README.md)
+- [`docs/qualidade/VALIDACAO_ORACLE_SELECT_AI.md`](docs/qualidade/VALIDACAO_ORACLE_SELECT_AI.md)
 
 ### Oficiais
 

@@ -24,8 +24,7 @@ release `v0.4.0` pode continuar consumindo o contrato de dados `0.3.0`.
 
 O estado de uma release é registrado em três lugares:
 
-1. `02_oracle_medflow/sprint_2_em_andamento/CHANGELOG.md`, durante o
-   desenvolvimento;
+1. `CHANGELOG.md`, durante o desenvolvimento;
 2. tag anotada no commit exato da entrega;
 3. GitHub Release, com resumo e evidências de validação.
 
@@ -57,6 +56,7 @@ da entrega e sem apagar a referência ao
 [repositório original `medflow`](https://github.com/Lucas-D-S-1/medflow).
 O webapp MVP foi concluído e validado em 02/08/2026, com as quatro visões
 servidas por dez endpoints ORDS e os dados exibidos reconciliados contra a Gold
-em 8.257.139 comparações sem divergência. A `v0.3.0` será publicada depois que o
+em 8.403.103 comparações sem divergência, reproduzíveis com
+`make reconciliar-completo`. A `v0.3.0` será publicada depois que o
 módulo ORDS de produção (`api/v1`) existir e o link público for testado — hoje
 só há o módulo de teste `api/dev/v1`.

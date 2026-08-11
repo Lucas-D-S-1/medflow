@@ -3,7 +3,7 @@
 **Enterprise Challenge FIAP × Oracle · Sprint 2 · Equipe Ômega Urban Tech**
 
 Recorte solicitado: Estado de São Paulo, competências de 2024 a 2026.
-Recorte disponível e validado: **2024-01 a 2026-05 (29 meses)**.
+Recorte disponível e validado: **2024-01 a 2026-06 (30 meses)**.
 Versão pública estável:
 [`v0.2.0`](https://github.com/Lucas-D-S-1/fiap-1tscoa/releases/tag/v0.2.0),
 com Silver canônica, Gold, contratos de dados e ativos geográficos.
@@ -18,18 +18,20 @@ webapp e a validação dos dados exibidos foram concluídos em 02/08/2026; falta
 publicar, revalidar o Select AI e produzir a apresentação.
 
 Proposta metodológica e revisão dos requisitos:
-[`REVISAO_REQUISITOS_E_PROPOSTA_GOLD.md`](REVISAO_REQUISITOS_E_PROPOSTA_GOLD.md).
+[`docs/decisoes/REVISAO_REQUISITOS_E_PROPOSTA_GOLD.md`](docs/decisoes/REVISAO_REQUISITOS_E_PROPOSTA_GOLD.md).
 
 Arquitetura detalhada:
 [`ARQUITETURA_CAMADAS.md`](ARQUITETURA_CAMADAS.md).
 Nomenclatura:
-[`CONTRATO_NOMENCLATURA.md`](CONTRATO_NOMENCLATURA.md).
+[`contracts/NOMENCLATURA.md`](contracts/NOMENCLATURA.md).
+Contrato da API:
+[`contracts/openapi.yaml`](contracts/openapi.yaml).
 Último gate:
 [`VALIDACAO_TECNICA.md`](VALIDACAO_TECNICA.md).
 Mudanças incompatíveis:
 [`CHANGELOG.md`](CHANGELOG.md).
 Política de tags e releases:
-[`VERSIONAMENTO.md`](../../VERSIONAMENTO.md).
+[`VERSIONAMENTO.md`](VERSIONAMENTO.md).
 
 ## Estado validado em 01/08/2026
 
@@ -55,30 +57,30 @@ GOLD: indicadores hospitalares/territoriais, fluxos, ICSAP e geografia
 
 O notebook `00_extracao_dados.ipynb`:
 
-- preserva DBC em `dados/bronze/origem/datasus/`;
-- mantém DBF apenas como cache em `dados/bronze/intermediario/dbf/`;
+- preserva DBC em `data/bronze/origem/datasus/`;
+- mantém DBF apenas como cache em `data/bronze/intermediario/dbf/`;
 - descobre as competências comuns de SIH/RD e CNES/LT dentro de 2024–2026;
 - baixa somente arquivos ainda ausentes no cache a cada batch mensal;
 - serializa o conteúdo DBF em Parquet sem filtro, imputação ou de/para;
 - acrescenta apenas linhagem técnica de arquivo e competência;
 - preserva as respostas e arquivos oficiais de município, região de saúde,
   CID-10, IPCA, natureza jurídica e cadastro atual dos estabelecimentos;
-- grava Parquets fiéis em `dados/bronze/parquet/`;
-- grava `dados/bronze/MANIFESTO.json` com fonte, volumetria e SHA-256;
+- grava Parquets fiéis em `data/bronze/parquet/`;
+- grava `data/bronze/MANIFESTO.json` com fonte, volumetria e SHA-256;
 - preserva também o CSV oficial de regiões/população e a malha IBGE 2024.
 
 Saídas validadas:
 
 | Artefato | Linhas | Colunas |
 |---|---:|---:|
-| `sih_rd_sp_2024_2026.parquet` | 7.034.961 | 117 |
-| `cnes_lt_sp_2024_2026.parquet` | 243.085 | 31 |
+| `sih_rd_sp_2024_2026.parquet` | 7.284.476 | 117 |
+| `cnes_lt_sp_2024_2026.parquet` | 251.457 | 31 |
 | `ibge_municipios_sp_raw.json` | 645 municípios | — |
 | `ms_regioes_saude_sp_raw.json` | 645 municípios | — |
-| `ms_cnes_estabelecimentos_atuais_raw.json` | 653 hospitais | — |
+| `ms_cnes_estabelecimentos_atuais_raw.json` | 655 hospitais | — |
 | `datasus_cid10_2008.zip` | 6 tabelas | — |
 | `ibge_concla_natureza_juridica_2021.html` | página oficial | — |
-| `ibge_ipca_numero_indice_raw.json` | 29 competências | — |
+| `ibge_ipca_numero_indice_raw.json` | 30 competências | — |
 
 As colunas adicionais em relação à fonte são somente de linhagem.
 
@@ -103,8 +105,8 @@ Saídas canônicas:
 
 | Base | Linhas | Papel |
 |---|---:|---|
-| `silver/fatos/fato_internacao` | 7.034.961 | AIH aprovada, tipada e enriquecida |
-| `silver/fatos/fato_leito_mensal` | 18.690 | capacidade CNES por hospital e mês |
+| `silver/fatos/fato_internacao` | 7.284.476 | AIH aprovada, tipada e enriquecida |
+| `silver/fatos/fato_leito_mensal` | 19.341 | capacidade CNES por hospital e mês |
 | `silver/dimensoes/dim_municipio` | 645 | município, região e população IBGE 2022 |
 | 5 outras dimensões | — | tempo, hospital, especialidade, CID e domínios |
 
@@ -122,13 +124,13 @@ O notebook `02_analise_dados.ipynb` publica:
 
 | Mart | Linhas | Indicadores |
 |---|---:|---|
-| `mart_indicador_hospital_mensal` | 18.690 | IPH, TMH, CMI nominal/real e permanência |
-| `mart_indicador_hospital_especialidade_mensal` | 52.525 | TMH, CMI e permanência com amostra |
-| `mart_indicador_hospital_cid_periodo` | 447.334 | IPR e benchmark regional |
-| `mart_indicador_regiao_mensal` | 1.798 | oferta, residência, IS, fluxo e ICSAP |
+| `mart_indicador_hospital_mensal` | 19.341 | IPH, TMH, CMI nominal/real e permanência |
+| `mart_indicador_hospital_especialidade_mensal` | 54.328 | TMH, CMI e permanência com amostra |
+| `mart_indicador_hospital_cid_periodo` | 455.054 | IPR e benchmark regional |
+| `mart_indicador_regiao_mensal` | 1.860 | oferta, residência, IS, fluxo e ICSAP |
 | `mart_indicador_regiao_periodo` | 62 | distribuição regional do IPR |
-| `mart_fluxo_assistencial_regiao_mensal` | 30.018 | origem–destino assistencial |
-| `mart_icsap_regiao_mensal` | 34.162 | 19 grupos ICSAP por residência |
+| `mart_fluxo_assistencial_regiao_mensal` | 31.033 | origem–destino assistencial |
+| `mart_icsap_regiao_mensal` | 35.340 | 19 grupos ICSAP por residência |
 
 Também são gerados:
 
@@ -144,21 +146,26 @@ Lakehouse, região São Paulo:
 
 - esquema de aplicação separado do `ADMIN`;
 - 2 dimensões, 7 marts, 175 colunas comentadas e 10 índices secundários;
-- 585.296 linhas carregadas e conferidas;
+- 597.725 linhas carregadas e conferidas;
 - 36/36 métricas Oracle com estado `ok` e seis gates vazios;
 - profile `MEDFLOW_GENAI` usando OCI Generative AI por Resource Principal;
 - três perguntas originais validadas em SQL, `showsql` e `narrate`; duas novas
   perguntas territoriais aguardam a revalidação pós-produto.
 
 Runbook e evidências:
-[`oracle/README.md`](oracle/README.md) e
-[`oracle/VALIDACAO_ORACLE_SELECT_AI.md`](oracle/VALIDACAO_ORACLE_SELECT_AI.md).
+[`db/README.md`](db/README.md) e
+[`docs/qualidade/VALIDACAO_ORACLE_SELECT_AI.md`](docs/qualidade/VALIDACAO_ORACLE_SELECT_AI.md).
 
 ### Webapp — concluído e revisado em 02/08/2026
 
-O produto é uma aplicação React + Vite em `webapp/`, servida por dez endpoints
+O produto é uma aplicação React + Vite em `web/`, servida por dez endpoints
 ORDS somente leitura em `api/dev/v1`, **todos `GET`**, sobre nove views de
 projeção pura. Nenhum objeto da Gold é publicado por AutoREST.
+
+O contrato dos dez endpoints está em
+[`contracts/openapi.yaml`](contracts/openapi.yaml), conferido por teste contra
+o SQL dos handlers e contra a API viva — um contrato que ninguém confere vira
+só uma terceira versão da verdade.
 
 | Rota | Pergunta que responde | Endpoints |
 |---|---|---|
@@ -168,7 +175,7 @@ projeção pura. Nenhum objeto da Gold é publicado por AutoREST.
 | `/metodologia` | Posso confiar no número e quais são seus limites? | `status`, `metodologia` |
 
 Regras que o produto respeita, detalhadas em
-[`DECISOES.md`](../DECISOES.md), seção 10:
+[`DECISOES.md`](docs/decisoes/DECISOES.md), seção 10:
 
 - nenhum indicador é calculado fora da Gold — o front formata com `Intl`, não
   calcula, e não inventa faixas nem cortes;
@@ -182,15 +189,21 @@ Regras que o produto respeita, detalhadas em
 - nenhuma seção passa de metade da altura da página, sem rolagem horizontal em
   1280x800 nem em 390x844.
 
-Os dados exibidos foram validados contra a Gold em **8.257.139 comparações
-campo a campo, com zero divergências**, cobrindo os marts inteiros. Números
-renderizados foram lidos do DOM com Playwright e conferidos contra os parquets.
-Detalhe da cobertura por endpoint no [`CHANGELOG.md`](CHANGELOG.md).
+Os dados exibidos são validados contra a Gold **campo a campo, posicional e
+sem tolerância**. A última varredura completa, em 10/08/2026 sobre as 30
+competências, fez **8.403.103 comparações com zero divergências**, cobrindo os
+marts inteiros. Números renderizados foram lidos do DOM com Playwright e
+conferidos contra os parquets.
 
-Para rodar o webapp em desenvolvimento, com `oracle/.env` configurado:
+Isso deixou de ser um evento manual: `make reconciliar-completo` reproduz a
+varredura, e `make reconciliar` roda a amostra em segundos. O método está em
+[`tests/reconciliacao/README.md`](tests/reconciliacao/README.md); a cobertura
+por endpoint, no [`CHANGELOG.md`](CHANGELOG.md).
+
+Para rodar o webapp em desenvolvimento, com o `.env` da raiz configurado:
 
 ```bash
-cd webapp && npm install && npm run dev
+cd web && npm install && npm run dev
 ```
 
 O Vite serve em `http://127.0.0.1:5173` e faz proxy de `/api` para o ORDS, de
@@ -201,10 +214,10 @@ modo que o navegador nunca recebe host nem credencial do Oracle. Testes:
 
 | Controle | Resultado |
 |---|---:|
-| AIHs aprovadas | 7.034.961 |
-| AIHs distintas (`N_AIH`) | 6.909.807 |
-| Internações novas (`IDENT=1`) | 6.905.441 |
-| Continuações de longa permanência (`IDENT=5`) | 129.520 |
+| AIHs aprovadas | 7.284.476 |
+| AIHs distintas (`N_AIH`) | 7.155.059 |
+| Internações novas (`IDENT=1`) | 7.150.693 |
+| Continuações de longa permanência (`IDENT=5`) | 133.783 |
 | Cobertura dos 15 códigos `ESPEC` observados | 100% |
 | Cobertura de capítulo CID | 100% |
 | Hospitais SIH sem correspondência no CNES/LT | 0 |
@@ -251,30 +264,79 @@ nome e esfera atuais foram adicionados em colunas próprias, com flag temporal,
 para impedir que uma fotografia atual seja apresentada como cadastro de
 2024–2026.
 
+## Onde fica o quê
+
+Cada pasta tem um README que responde o quê, por quê e como. O mapa:
+
+| Pasta | O que é | README |
+|---|---|---|
+| `src/medflow/` | o pipeline: Bronze, Silver, Gold e a carga do Oracle | [ler](src/medflow/README.md) |
+| `db/` | **o backend**: schema, views de projeção e módulos ORDS | [ler](db/README.md) |
+| `web/` | o produto: quatro visões em React + Vite | [ler](web/README.md) |
+| `contracts/` | o que o projeto promete, e quem confere cada promessa | [ler](contracts/README.md) |
+| `tests/` | três níveis, três garantias diferentes | [ler](tests/README.md) |
+| `data/` | as camadas materializadas; quase tudo fora do Git | [ler](data/README.md) |
+| `docs/` | decisões, pesquisa, evidência datada e entregas | [ler](docs/README.md) |
+| `notebooks/` | a narrativa do pipeline — leitura, não motor | [ler](notebooks/README.md) |
+| `scripts/` | utilitários de manutenção que não produzem dado | [ler](scripts/README.md) |
+
 ## Como executar
 
-Na raiz do repositório:
+O pipeline vive no pacote `medflow`, não nos notebooks. Num clone limpo:
 
 ```bash
-.venv/bin/jupyter lab
+make setup                      # venv e instalação editável
+make bronze silver gold geografia
+make validar                    # validação integrada das três camadas
 ```
 
-Execute `00_extracao_dados.ipynb`, `01_engenharia_dados.ipynb` e
-`02_analise_dados.ipynb`, nessa ordem.
-O primeiro incorpora automaticamente novas competências comuns até 2026-12;
-o segundo promove a Silver apenas após todas as reconciliações. Reexecutar o
-mesmo recorte não duplica registros nem substitui Parquets sem necessidade.
+Cada etapa é idempotente: reexecutar o mesmo recorte não duplica registro nem
+reescreve Parquet sem necessidade. A Bronze incorpora automaticamente as
+competências comuns novas de SIH/RD e CNES/LT.
 
-Para o Oracle e o webapp, com `oracle/.env` configurado a partir de
-`oracle/.env.example`:
+**Trocar o recorte é configuração, não código.** O padrão vive em
+`src/medflow/config.py` e acompanha o que foi entregue; para experimentar
+outro, use o ambiente:
 
 ```bash
-python3 oracle/executar_sql.py oracle/sql/views/07_vw_api_hospitais.sql
-python3 oracle/executar_sql.py oracle/sql/ords/03_modulo_medflow_dev.sql
-cd webapp && npm install && npm run dev
+MEDFLOW_PERIODO_FINAL=2026-07 make bronze silver gold
 ```
 
-Em `oracle/sql/views/` há uma view por fatia. Em `oracle/sql/ords/`, cada
+Os notebooks em `notebooks/` continuam sendo a leitura narrada do pipeline,
+mas não são mais o motor.
+
+### Testes
+
+```bash
+make test                    # pytest e a suíte do frontend
+make lint                    # ruff
+make reconciliar             # amostra: API contra a Gold, campo a campo
+make reconciliar-completo    # a varredura inteira, sob demanda
+```
+
+Os testes estão em três níveis, e cada um prova algo que os outros não provam:
+
+| Nível | Onde | O que garante |
+|---|---|---|
+| unidade | `tests/test_indicadores.py` | cada fórmula nas bordas: denominador zero, benchmark vazio, hospital sem leito declarado, competência ausente |
+| contrato | `tests/test_contratos_camadas.py` | cada camada obedece ao seu JSON, e o validador reprova o que deve reprovar |
+| contrato da API | `tests/test_openapi.py` | o `openapi.yaml` bate com o SQL dos handlers e com a API viva |
+| reconciliação | `tests/reconciliacao/` | o que a API devolve é o que está na Gold — mesmo dígito, mesma ordem |
+
+A reconciliação precisa do Oracle no ar; sem `ORDS_BASE_URL` ela se pula em
+vez de falhar, e é por isso que a CI segue verde sem wallet. O detalhe do
+método está em [`tests/reconciliacao/README.md`](tests/reconciliacao/README.md).
+
+Para o Oracle e o webapp, com o `.env` da raiz configurado a partir de
+`.env.example`:
+
+```bash
+python3 src/medflow/oracle/executar_sql.py db/views/07_vw_api_hospitais.sql
+python3 src/medflow/oracle/executar_sql.py db/ords/03_modulo_medflow_dev.sql
+cd web && npm install && npm run dev
+```
+
+Em `db/views/` há uma view por fatia. Em `db/ords/`, cada
 arquivo numerado é uma **redefinição cumulativa do módulo inteiro** — o `03`
 define os dez handlers e é o único que precisa ser reaplicado ao mudar
 qualquer endpoint.

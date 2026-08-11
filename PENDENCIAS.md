@@ -1,6 +1,6 @@
 # PENDÊNCIAS — Challenge Oracle: MedFlow
 
-Atualizado em 02/08/2026, após a conclusão e revisão do webapp.
+Atualizado em 11/08/2026, após a fatia 8 da reorganização.
 Entrega da Sprint 2: **01/09/2026**.
 
 ## Concluído nesta revisão
@@ -21,7 +21,7 @@ Entrega da Sprint 2: **01/09/2026**.
 - descrição coberta para os 9.494 códigos CID observados.
 - `MARCA_UTI` coberta por fontes MS/DATASUS e CEM.
 - todos os agregados com `dropna=False` e reconciliação.
-- documentação e metadados automáticos em `dados/silver/`.
+- documentação e metadados automáticos em `data/silver/`.
 - duas execuções Silver consecutivas com as mesmas reconciliações, sem
   arquivos `.parcial` residuais.
 - versão pública [`v0.1.0`](https://github.com/Lucas-D-S-1/fiap-1tscoa/releases/tag/v0.1.0)
@@ -65,7 +65,7 @@ regiões, CIDs, natureza jurídica ou os demais de/paras.
 
 Os requisitos oficiais, a apresentação da Sprint 1 e a transcrição da mentoria
 foram revisados. A proposta completa está em
-`sprint_2_em_andamento/REVISAO_REQUISITOS_E_PROPOSTA_GOLD.md`.
+`docs/decisoes/REVISAO_REQUISITOS_E_PROPOSTA_GOLD.md`.
 
 As fórmulas foram aceitas em 29/07/2026 e implementadas na Gold:
 
@@ -136,6 +136,10 @@ ordenação declarada em cada contrato. Números renderizados foram lidos do DOM
 com Playwright e conferidos contra a Gold, e os estados de erro, ausência
 legítima e contingência foram medidos um a um.
 
+Aquela varredura foi manual e sobre 29 competências. Desde a fatia 6 ela é
+versionada em `tests/reconciliacao/` e reexecutável: a última, de 10/08/2026
+sobre 30 competências, fez 8.403.103 comparações sem divergência.
+
 Cinco defeitos objetivos foram encontrados e corrigidos antes dos commits; os
 detalhes estão no `CHANGELOG.md` da sprint.
 
@@ -154,22 +158,22 @@ Banco `MEDFLOW` provisionado em 31/07/2026: Autonomous AI Database 26ai,
 workload **Lakehouse** (a evolução do Autonomous Data Warehouse no 26ai),
 Always Free, `sa-saopaulo-1`, mTLS obrigatório.
 
-Artefatos de setup versionados em `sprint_2_em_andamento/oracle/`:
+Artefatos de setup versionados em `db/` e `src/medflow/oracle/`:
 
 | Passo | Artefato | Estado |
 |---|---|---|
-| Criar esquema `MEDFLOW` separado do `ADMIN` | `sql/01_criar_usuario_medflow.sql` | executado em 01/08/2026 |
+| Criar esquema `MEDFLOW` separado do `ADMIN` | `db/schema/01_criar_usuario_medflow.sql` | executado em 01/08/2026 |
 | Testar conexão mTLS | `testar_conexao.py` | validado como `MEDFLOW` |
-| Modelo dimensional, 2 dimensões e 7 marts, 175 colunas comentadas | `sql/02_criar_tabelas_gold.sql` | executado; 10 índices secundários |
+| Modelo dimensional, 2 dimensões e 7 marts, 175 colunas comentadas | `db/schema/02_criar_tabelas_gold.sql` | executado; 10 índices secundários |
 | Carga idempotente de 585.296 linhas | `carregar_gold.py` | executada e conferida |
-| Reconciliação de 36 métricas contra o contrato `0.3.0` | `sql/03_validar_carga.sql` | 36/36 `ok`; seis gates vazios |
-| Select AI com cinco perguntas e SQL de referência | `sql/04_select_ai.sql` | bateria original validada; duas novas perguntas aguardam revalidação |
+| Reconciliação de 36 métricas contra o contrato `0.3.0` | `db/schema/03_validar_carga.sql` | 36/36 `ok`; seis gates vazios |
+| Select AI com cinco perguntas e SQL de referência | `db/select_ai/04_select_ai.sql` | bateria original validada; duas novas perguntas aguardam revalidação |
 
 O Resource Principal usa o Dynamic Group `MedFlowADBGenAI` e a policy
 `use generative-ai-family`. O profile `MEDFLOW_GENAI` está habilitado sem chave
 de API externa. Os três `showsql` e `narrate` foram comparados com o SQL
 convencional. Evidências em
-`sprint_2_em_andamento/oracle/VALIDACAO_ORACLE_SELECT_AI.md`.
+`docs/qualidade/VALIDACAO_ORACLE_SELECT_AI.md`.
 
 Riscos conhecidos, registrados para não virarem surpresa:
 
@@ -202,15 +206,12 @@ Decidido incluir junho e executado. O recorte oficial passa a ser
 Zero lacunas de de/para mesmo com CIDs e hospitais novos: as asserções de
 cobertura passaram sem intervenção.
 
-**Ainda pendente do avanço**, porque depende de fatias que não existem:
+**Nada mais pendente do avanço.** O conteúdo das dez fixtures foi regerado na
+fatia 8 (B.4) e o webapp deixou de mostrar 2026-05 no estado de contingência.
 
-- **conteúdo das fixtures** — os 10 snapshots ainda descrevem 2026-05. Os
-  testes herméticos passam porque são internamente consistentes, mas o
-  estado de contingência do webapp mostraria dado velho. Precisa do gerador
-  versionado, fatia 8 / B.4;
-- **revalidação campo a campo** — as 8.257.139 comparações contra a Gold
-  foram feitas no recorte antigo. Precisa dos scripts de reconciliação
-  versionados, fatia 6.
+**Resolvido pela fatia 6:** a revalidação campo a campo foi refeita sobre as 30
+competências — **8.403.103 comparações, zero divergências** — e deixou de ser
+um evento manual: `make reconciliar-completo` a reproduz quando for preciso.
 
 ### 7c. Histórico: como a decisão foi tomada
 
@@ -262,12 +263,12 @@ Próximo marco sugerido: **`v0.3.0` — Oracle e webapp MVP**.
 
 | Entregável | Peso | Status |
 |---|---:|---|
-| Pipeline Bronze/Silver reproduzível | — | validado para 2024-01 a 2026-05 |
+| Pipeline Bronze/Silver reproduzível | — | validado para 2024-01 a 2026-06 |
 | Indicadores hospitalares e territoriais validados | — | concluído |
 | Autonomous AI Database provisionado | — | carregado e reconciliado em 01/08/2026 |
 | Webapp navegável | — | quatro visões concluídas e revisadas em 02/08/2026 |
 | Link público | 10% | **etapa atual** — só existe `api/dev/v1`; publicação a confirmar e testar |
-| Validação dos dados no produto | — | concluída: 8.257.139 comparações, zero divergências |
+| Validação dos dados no produto | — | concluída e reproduzível: 8.403.103 comparações, zero divergências |
 | Oracle Select AI | — | validado tecnicamente; revalidar após o produto |
 | GitHub | 20% | `v0.2.0` publicada; repositório de entrega passou a ser `medflow` |
 | PPT / pitch | 10% | aguarda produto validado |
@@ -287,18 +288,222 @@ está preservada na branch `arquivo/v0-2026-07` e nas tags `v0` e `v0.1.0`.
 | 1 | histórico filtrado publicado como novo `main` |
 | 2 | árvore na estrutura-alvo |
 | 3 | `pyproject.toml`, `cli.py`, `Makefile` e CI |
-| 4 a 10 | pendentes |
+| 4 | Bronze e Silver saíram dos notebooks para o pacote |
+| 5 | parametrização por ambiente e logging estruturado |
+| 5b | recorte avançado para 2026-06, 30 competências |
+| 6 | testes em três níveis e reconciliação versionada |
+| 7 | `db/` como backend e o contrato OpenAPI dos 10 endpoints |
+| 8 | front por funcionalidade, gerador de fixtures e specs por visão |
+| 9 | README por pasta, respondendo o quê / por quê / como |
+| 10 | pendente: tag `v0.3.0` |
 
 **Portão da fatia 4:** os 48 parquets precisam manter o SHA-256 registrado em
 `contracts/INVENTARIO_PRE_REORG.json` depois que Bronze e Silver saírem dos
 notebooks. Conferir com `medflow inventario` e comparar.
 
+### Fatia 6 — testes em três níveis, concluída em 10/08/2026
+
+A suíte saiu de 24 para 155 testes, em três níveis com papéis distintos:
+unidade (`tests/test_indicadores.py`), contrato
+(`tests/test_contratos_camadas.py`) e reconciliação (`tests/reconciliacao/`).
+
+**A reconciliação deixou de ser um script perdido em `/tmp`.** Ela lê do SQL
+versionado o que precisa saber — o mapa entre nome JSON e coluna da Gold, a
+ordenação de cada handler, o teto de paginação e a escala decimal de cada
+número — em vez de guardar cópia dos 150 campos. Roda em dois modos:
+`make reconciliar` para a amostra e `make reconciliar-completo` para a
+varredura inteira.
+
+Varredura completa executada em 10/08/2026, sobre as 30 competências:
+
+| Endpoint | Recortes | Comparações |
+|---|---:|---:|
+| `regioes/resumo` | 30 | 74.400 |
+| `regioes/{id}/serie` | 62 | 42.780 |
+| `fluxos` | 1.890 | 372.396 |
+| `icsap` | 1.860 | 212.040 |
+| `hospitais` | 1.860 | 348.138 |
+| `hospitais/{cnes}/serie` | 655 | 309.456 |
+| `hospitais/{cnes}/especialidades` | 18.292 | 651.936 |
+| `hospitais/{cnes}/cids` | 654 | 6.370.756 |
+| **Total** | **25.303** | **8.403.103** |
+
+**Zero divergências**, em 25.611 requisições e 50 minutos.
+
+**O 429 do ORDS custou uma tentativa frustrada e vale registrar.** A primeira
+varredura completa morreu com três endpoints esgotando as tentativas, porque o
+recuo era por requisição — enquanto uma thread esperava, as outras duas
+continuavam batendo no mesmo teto, que é global. O freio passou a ser do
+cliente inteiro: um 429 em qualquer thread segura todas, o espaçamento mínimo
+sobe 50ms a cada recusa e decai devagar no sucesso. Ele se estabilizou em
+1,27 s entre requisições, absorveu 258 recuos e não perdeu nenhuma chamada.
+
+**Três defeitos apareceram, e nenhum era o que eu procurava:**
+
+1. **Um clone limpo não reproduzia a entrega.** `PERIODO_FINAL_PADRAO` ainda
+   era `2026-05` com um comentário dizendo que a decisão estava em aberto —
+   mas a 5b avançou o recorte e executou. `make bronze silver gold` num clone
+   geraria 30 competências a menos do que está no Oracle. O recorte estava
+   escrito em quatro lugares; agora é uma constante, e um teste confere o
+   padrão contra o `MANIFESTO.json` real da Bronze.
+2. **O `VALIDACAO_TECNICA.md` contradizia os próprios dados.** Os totais eram
+   literais no gerador, três linhas abaixo de um comentário avisando que
+   relatório com número fixo é pior que asserção quebrada. Passou a ser
+   derivado dos metadados, e um teste compara o relatório publicado com o que
+   a validação mediu.
+3. **`qt_municipio` vem de uma dimensão, não do mart.** O comparador teria
+   pulado o campo em silêncio. Campo pulado é campo não validado que parece
+   validado; as dimensões entraram na comparação.
+
+O padrão dos três é o mesmo que a 5b já tinha registrado — *tudo que memoriza
+um total envelhece junto com o recorte* — e valia repetir aqui, porque as duas
+primeiras ocorrências sobreviveram justamente por não terem teste.
+
+### Fatia 7 — o contrato da API, concluída em 11/08/2026
+
+A parte B.1 já estava feita desde a fatia 2: `db/` separado em `schema/`,
+`views/`, `ords/` e `select_ai/`, dizendo pela estrutura que **o backend é o
+banco**. Faltava B.2, o contrato.
+
+**`contracts/openapi.yaml` descreve os 10 endpoints**: caminho, parâmetros com
+formato e teto, envelope, itens campo a campo, e o comportamento de erro. Antes
+disso o contrato existia duas vezes e implícito — no SQL de cada handler e nos
+tipos TypeScript dos clientes do front — e quando os dois divergiam, ninguém era
+avisado; descobria-se na tela.
+
+Um terceiro arquivo só piora isso se ninguém o conferir, então
+`tests/test_openapi.py` o compara com as duas fontes que já existiam: contra o
+SQL (mesmos endpoints, campos, tetos e ordenação) sem tocar a rede, e contra a
+API viva (a resposta real traz exatamente as chaves declaradas, nem uma a mais).
+
+**Três defeitos apareceram ao escrever o contrato**, e os dois primeiros só
+porque tentar descrever a API obriga a olhar cada parâmetro:
+
+1. **`origem` e `regiao` eram opcionais** — e o plano subestimou o efeito.
+   Omitir `origem` em `/fluxos` não devolvia "contexto vazio": devolvia
+   **1.015 fluxos de todas as origens somados** numa página, com o `territory`
+   inteiro nulo. `/icsap` idem, 1.178 linhas de regiões diferentes. Agora são
+   obrigatórios. Ausência de filtro não é filtro vazio.
+
+2. **`cnes` em `/hospitais` é aceito, validado e ignorado.** O `where` do
+   handler nunca usa o valor: com ou sem ele, a resposta é a mesma lista de
+   644 hospitais. Ninguém o envia, então não há defeito visível hoje — mas um
+   parâmetro morto é pior que um parâmetro ausente, porque parece funcionar.
+   Está declarado como `deprecated` no contrato, dizendo a verdade. **Não
+   corrigido**: seria uma linha (`and (p.cnes is null or v.cd_cnes = p.cnes)`),
+   mas muda o comportamento de um endpoint que o plano não listou.
+
+3. **`competence` não estava sendo reconciliado.** As duas séries devolvem esse
+   campo montado por concatenação, e o extrator da fatia 6 só enxerga
+   `'nome' value alias.coluna`. A varredura de 8,3 milhões de comparações não
+   incluía nenhuma dele. Campos derivados agora são declarados e comparados, e
+   um teste pergunta à própria API quais chaves ela devolve para que o terceiro
+   caso não passe despercebido.
+
+**Sobre o código de erro.** Parâmetro inválido devolve **404 com HTML**, não
+400 com JSON. Não é o desejável, é o estrutural: os handlers são consultas SQL
+e uma consulta SQL não escolhe o código HTTP — cada uma valida num CTE e
+termina com `where parametros_validos = 1`, então "reprovado" vira "sem linha"
+e o ORDS traduz para 404. Um 400 exigiria reescrever os oito handlers como
+blocos PL/SQL que atribuem `:status_code`, a maior mudança no backend desde que
+ele foi validado. Decidido manter o 404 e **documentá-lo** em
+`components.responses.ParametroInvalido`, com o motivo.
+
+Verificado após redefinir o módulo no banco: Playwright 31/31 (na época), reconciliação em
+amostra nos 8 endpoints sem divergência, pytest 213/213.
+
+### Fatia 8 / B.4 — gerador de fixtures, concluído em 11/08/2026
+
+`web/scripts/gerar-mocks.ts` regrava os dez snapshots a partir da API ao vivo,
+com `make fixtures`. A competência sai do manifesto da Bronze, não do script.
+O `--conferir` acusa desatualização sem escrever, e recusa fixture órfã de um
+recorte anterior — que continuaria sendo importada e nunca mais atualizada.
+
+**Quatro defeitos apareceram, e três estavam no produto, não nos testes:**
+
+1. **`gold_updated_at` era um literal dentro de `vw_api_metodologia`.** A tela
+   anunciava "Gold atualizada em 1 de ago." enquanto servia dado gerado em 10
+   de ago., e o comentário da própria view prometia que o valor vinha do
+   manifesto. Agora existe a tabela `gold_manifesto`, que `carregar_gold.py`
+   escreve a cada carga e a view lê. O carimbo acompanha a carga porque é
+   escrito por ela;
+2. **duas telas cravavam a competência no texto do snapshot** — "O snapshot
+   preserva JUNDIAI em 05/2026" em `FluxosView` e `HospitalView`, contradizendo
+   os números logo abaixo. Passam a derivar do dado exibido;
+3. **o passo de fixtures da CI nunca poderia passar.** `reancorar_fixtures.py`
+   levantava `FileNotFoundError` num runner limpo, porque `data/` é gitignored.
+   Um portão que nunca fecha não é portão; agora ele detecta a ausência e sai
+   sem erro;
+4. **34 asserções herméticas cravavam `2026-05`**, e 24 delas cravavam também
+   os números do recorte. Passam a derivar tudo da fixture. Uma delas — a de
+   hospital sem internação nova — cobria uma regra de produto que ficou sem
+   dado no recorte novo: virou caso construído, que vale em qualquer recorte.
+
+Duas restrições descobertas ao gerar, que valem registro porque não são
+óbvias: o `limit` do snapshot **tem** de ser o mesmo que o cliente pede, e o
+snapshot de diagnósticos **tem** de vir com `elegivel=1`. Em ambos os casos o
+cliente rejeita a resposta, e a tela cai para um estado de contingência que não
+tem plano B — o snapshot *é* o plano B.
+
+### Fatia 8 / B.3 e B.5 — front por funcionalidade, concluído em 11/08/2026
+
+Os arquivos estavam agrupados **por tipo**: todos os componentes juntos, todas
+as chamadas de API juntas. Com 20 arquivos funciona; o problema aparece quando
+se quer mexer numa visão e os arquivos dela estão espalhados por cinco pastas,
+sem nada indicando quais são.
+
+Agora cada visão é uma pasta com tudo o que lhe pertence — tela, componentes e
+clientes de API. A regra para decidir onde um arquivo mora é a do plano, e é a
+única: **usado por uma visão só, vive dentro dela; usado por duas ou mais, sobe
+para `shared/`.** Ficaram em `lib/api/` os três clientes que o `SourceContext`
+usa, porque ele serve as quatro visões.
+
+`RoutePlaceholder.tsx` saiu: era andaime das primeiras fatias e nada o
+importava havia semanas. Continua no histórico do Git.
+
+**B.5 — um spec por visão.** O `status.spec.ts` tinha 1.670 linhas e 32 testes;
+virou `regional`, `fluxos`, `hospital` e `contrato`, mais `apoio.ts` com os
+snapshots, os valores derivados e o `mockLiveSource`. O motivo é prático:
+quando um teste quebra, o nome do arquivo já diz onde olhar.
+
+| Arquivo | Testes |
+|---|---:|
+| `e2e/regional.spec.ts` | 6 |
+| `e2e/fluxos.spec.ts` | 7 |
+| `e2e/hospital.spec.ts` | 9 |
+| `e2e/contrato.spec.ts` | 10, dos quais 2 são `@live` |
+
+Verificado: `tsc` e `vite build` limpos, Playwright 32/32, pytest 213,
+`make contrato` 42, reconciliação em amostra sem divergência.
+
+### Fatia 9 — READMEs de pasta, concluída em 11/08/2026
+
+Nove pastas ganharam README respondendo **o quê, por quê e como**, e o README
+raiz ganhou o mapa que aponta para todos. O critério para o conteúdo não foi
+descrever a árvore — `ls` já faz isso — mas registrar as decisões que a pasta
+carrega e que ninguém adivinha lendo o código:
+
+- `data/` explica a distinção entre artefato imutável e saída regenerável, que
+  governa a checagem de preservação e já produziu um defeito quando estava
+  implícita;
+- `docs/` explica por que a evidência datada **não** é atualizada, e o
+  contraste com o `VALIDACAO_TECNICA.md`, que é gerado e sempre descreve o agora;
+- `notebooks/` diz o que eles deixaram de ser, para ninguém executá-los
+  achando que são o motor;
+- `scripts/` explica por que o gerador de esperados exige uma conferência
+  independente antes de rodar;
+- `tests/` explica o que cada nível prova que os outros não provam.
+
+Zero links quebrados nos `.md` do repositório.
+
 ## Organização vigente
 
 ```text
 medflow/
-├── src/medflow/       pacote: gold, contratos, icsap, ipca, geografia,
-│   │                  validar, inventario, cli
+├── src/medflow/       pacote: config, gold, contratos, icsap, ipca,
+│   │                  geografia, validar, inventario, cli
+│   ├── bronze/        ingestão, conversão, manifesto e referências
+│   ├── silver/        dimensões, fatos, de/paras e agregados
 │   └── oracle/        conexão mTLS, carga e executor SQL
 ├── db/                o backend é o banco
 │   ├── schema/        usuário, tabelas Gold e validação da carga
@@ -306,12 +511,14 @@ medflow/
 │   ├── ords/          módulos ORDS; o 03 redefine o módulo inteiro
 │   └── select_ai/     perguntas e SQL de referência
 ├── web/
-│   ├── src/api/       um cliente por endpoint, com validação estrita
-│   ├── src/components/ componentes reusados entre as visões
-│   ├── src/routes/    uma rota por visão
-│   ├── src/fixtures/  snapshots de contingência, um por endpoint
-│   └── e2e/           Playwright: 29 herméticos e 2 marcados @live
+│   ├── src/features/  uma pasta por visão: tela, componentes e clientes
+│   ├── src/shared/    o que serve duas ou mais visões
+│   ├── src/lib/api/   clientes de status, metodologia e resumo regional
+│   ├── src/mocks/     snapshots de contingência, um por endpoint
+│   ├── scripts/       gerar-mocks.ts: regrava os snapshots da API ao vivo
+│   └── e2e/           um spec por visão, mais contrato: 30 herméticos e 2 @live
 ├── contracts/
+│   ├── openapi.yaml   o contrato dos 10 endpoints, conferido por teste
 │   ├── dados/         contratos Bronze, Silver e Gold, e o mapeamento
 │   └── INVENTARIO_*   baselines SHA-256 de 29/07 e da fatia 0
 ├── notebooks/         fontes 00, 01 e 02
@@ -321,5 +528,9 @@ medflow/
 │   ├── pesquisa/      desk research
 │   ├── qualidade/     validações, figuras e notebooks executados
 │   └── entregas/      sprint 1
-└── tests/             pytest
+└── tests/             três níveis
+    ├── test_indicadores.py        unidade: as fórmulas nas bordas
+    ├── test_contratos_camadas.py  contrato: cada camada contra seu JSON
+    ├── test_openapi.py            o OpenAPI contra o SQL e contra a API
+    └── reconciliacao/             a API contra a Gold, campo a campo
 ```
