@@ -72,3 +72,12 @@ Thumbs.db
 
 # arquivos de bloqueio do Office (Word/PowerPoint/Excel)
 ~$*
+
+# Configuração das ferramentas de IA usadas no desenvolvimento. Continuam no
+# disco de quem trabalha aqui, mas não fazem parte do que o projeto publica:
+# são instruções para o agente, não para quem avalia ou reusa o MedFlow.
+# A coautoria em si permanece registrada nos trailers dos commits.
+CLAUDE.md
+AGENTS.md
+.ai-memory.toml
+.ai-memory.toml.bak-*
