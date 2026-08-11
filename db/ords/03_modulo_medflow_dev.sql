@@ -825,9 +825,14 @@ begin
                coalesce(p.limite_solicitado, 100) as limite,
                coalesce(p.deslocamento_solicitado, 0) as deslocamento,
                case
-                 when (p.ano_bruto is null or p.ano_solicitado is not null)
+                 -- `origem` e obrigatorio. Sem ele o endpoint devolvia 200 com
+                 -- os fluxos de TODAS as origens somados numa pagina so, e o
+                 -- contexto `territory` inteiro nulo: uma resposta que nenhuma
+                 -- tela sabe usar e que, lida sem cuidado, mistura regioes.
+                 -- Ausencia de filtro nao e filtro vazio.
+                 when p.origem_solicitada is not null
+                  and (p.ano_bruto is null or p.ano_solicitado is not null)
                   and (p.mes_bruto is null or p.mes_solicitado is not null)
-                  and (p.origem_bruta is null or p.origem_solicitada is not null)
                   and (p.destino_bruto is null or p.destino_solicitado is not null)
                   and (p.limite_bruto is null or p.limite_solicitado between 1 and 2000)
                   and (p.deslocamento_bruto is null or p.deslocamento_solicitado >= 0)
@@ -1036,9 +1041,14 @@ begin
                coalesce(p.limite_solicitado, 100) as limite,
                coalesce(p.deslocamento_solicitado, 0) as deslocamento,
                case
-                 when (p.ano_bruto is null or p.ano_solicitado is not null)
+                 -- `regiao` e obrigatorio, pelo mesmo motivo de `origem` em
+                 -- /fluxos: sem ele o endpoint somava os 19 grupos de todas as
+                 -- regioes numa pagina so, com o contexto `region` nulo. ICSAP
+                 -- e indicador populacional de um territorio; sem territorio
+                 -- declarado, o numero nao significa nada.
+                 when p.regiao_solicitada is not null
+                  and (p.ano_bruto is null or p.ano_solicitado is not null)
                   and (p.mes_bruto is null or p.mes_solicitado is not null)
-                  and (p.regiao_bruta is null or p.regiao_solicitada is not null)
                   and (p.limite_bruto is null or p.limite_solicitado between 1 and 2000)
                   and (p.deslocamento_bruto is null or p.deslocamento_solicitado >= 0)
                  then 1

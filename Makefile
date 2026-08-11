@@ -8,7 +8,7 @@ DOTENV  := $(PY) -m dotenv -f .env run --
 # os alvos de frontend rodam dentro de web/, então o .env fica um nível acima
 DOTENV_WEB := ../$(PY) -m dotenv -f ../.env run --
 
-.PHONY: help setup bronze silver gold geografia validar inventario test test-py test-web lint reconciliar reconciliar-completo web-install web-build web-e2e oracle-ping oracle-carregar limpar
+.PHONY: help setup bronze silver gold geografia validar inventario test test-py test-web lint contrato reconciliar reconciliar-completo web-install web-build web-e2e oracle-ping oracle-carregar limpar
 
 help:  ## lista os alvos disponíveis
 	@grep -hE '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) \
@@ -62,6 +62,9 @@ lint:  ## ruff
 
 # A reconciliação precisa do Oracle no ar; sem ORDS_BASE_URL os testes se
 # pulam sozinhos, e é por isso que ela não entra em `make test`.
+contrato:  ## confere o openapi.yaml contra o SQL dos handlers e a API viva
+	$(DOTENV) $(PY) -m pytest tests/test_openapi.py -q
+
 reconciliar:  ## amostra: prova que API, view, banco e Gold ainda fecham
 	$(DOTENV) $(PY) -m pytest tests/reconciliacao -q -s -k TestReconciliacao
 
