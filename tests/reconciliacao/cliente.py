@@ -50,13 +50,18 @@ class Pagina:
 
 
 def base_ords() -> str:
-    """A raiz de `api/dev/v1`, do ambiente. Sem ela não há o que reconciliar."""
+    """A raiz do módulo ORDS, do ambiente. Sem ela não há o que reconciliar."""
     bruta = os.getenv("ORDS_BASE_URL", "").strip().rstrip("/")
     if not bruta:
         raise ErroDeVarredura(
             "ORDS_BASE_URL não definida. Rode via `dotenv -f .env run --`."
         )
-    return f"{bruta}/api/dev/v1"
+    # Por padrão varre o módulo de desenvolvimento, que é onde se trabalha.
+    # `ORDS_API_PATH=api/v1` aponta a mesma varredura para o módulo público:
+    # ele é clone do outro, mas quem serve o link da entrega é ele, e o que
+    # não foi medido lá não está provado lá.
+    caminho = os.getenv("ORDS_API_PATH", "api/dev/v1").strip().strip("/")
+    return f"{bruta}/{caminho}"
 
 
 class ClienteORDS:

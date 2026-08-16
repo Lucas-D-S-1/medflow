@@ -10,7 +10,7 @@ apresentação, e o dado nunca é recalculado fora do banco.
 |---|---|
 | `schema/` | usuário, modelo dimensional e reconciliação da carga |
 | `views/` | nove views de projeção pura, uma por fatia do produto |
-| `ords/` | módulos REST; o `03` redefine o módulo inteiro |
+| `ords/` | módulos REST; o `03` redefine o de trabalho, o `04` clona o público |
 | `select_ai/` | perguntas da demonstração e o SQL de referência |
 
 O contrato do que esses handlers expõem está em
@@ -86,12 +86,39 @@ SQLcl.
 
 | # | Passo | Como | Usuário |
 |---|---|---|---|
-| 1 | Criar o esquema de aplicação | `sql/01_criar_usuario_medflow.sql` | `ADMIN` |
-| 2 | Testar a conexão | `python oracle/testar_conexao.py` | `MEDFLOW` |
-| 3 | Criar o modelo dimensional | `python oracle/executar_sql.py sql/02_criar_tabelas_gold.sql` | `MEDFLOW` |
-| 4 | Carregar a Gold | `python oracle/carregar_gold.py` | `MEDFLOW` |
-| 5 | Reconciliar a carga | `python oracle/executar_sql.py sql/03_validar_carga.sql` | `MEDFLOW` |
-| 6 | Habilitar e demonstrar o Select AI | `sql/04_select_ai.sql` | `ADMIN` + `MEDFLOW` |
+| 1 | Criar o esquema de aplicação | `db/schema/01_criar_usuario_medflow.sql` | `ADMIN` |
+| 2 | Testar a conexão | `make oracle-ping` | `MEDFLOW` |
+| 3 | Criar o modelo dimensional | `executar_sql.py db/schema/02_criar_tabelas_gold.sql` | `MEDFLOW` |
+| 4 | Carregar a Gold | `make oracle-carregar` | `MEDFLOW` |
+| 5 | Reconciliar a carga | `executar_sql.py db/schema/03_validar_carga.sql` | `MEDFLOW` |
+| 6 | Publicar as views | `executar_sql.py db/views/*.sql` | `MEDFLOW` |
+| 7 | Publicar o módulo de trabalho | `executar_sql.py db/ords/03_modulo_medflow_dev.sql` | `MEDFLOW` |
+| 8 | Publicar o módulo público | `make ords-publicar` | `MEDFLOW` |
+| 9 | Habilitar e demonstrar o Select AI | `db/select_ai/04_select_ai.sql` | `ADMIN` + `MEDFLOW` |
+
+### Passos 7 e 8 — dois módulos, uma definição
+
+| Módulo | Caminho | Origem aceita no CORS | Para quê |
+|---|---|---|---|
+| `medflow_dev` | `api/dev/v1/` | `http://localhost:5173` | desenvolvimento, pelo proxy do Vite |
+| `medflow` | `api/v1/` | `https://lucas-d-s-1.github.io` | o site publicado |
+
+O `04` **não redeclara os dez handlers**: ele lê os metadados do ORDS e clona o
+`medflow_dev`, mudando só nome, prefixo e origem. Foi aquela definição — não
+outra parecida — que passou pelas comparações campo a campo contra a Gold, e
+uma cópia manual criaria uma segunda verdade que envelhece calada. No fim do
+bloco há um portão que compara handler a handler, inclusive o SQL byte a byte,
+e recusa a publicação se algo divergir.
+
+A consequência: **`medflow_dev` é a fonte**. Se ele for redefinido, rode o `04`
+de novo. A ordem é sempre 03 e depois 04.
+
+Para provar o módulo público em vez de confiar no clone:
+
+```bash
+make contrato-publico        # o openapi.yaml contra a API que o site consome
+make reconciliar-publico     # amostra campo a campo contra a Gold
+```
 
 ### Passo 2 — teste de conexão
 

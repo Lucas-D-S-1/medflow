@@ -166,6 +166,11 @@ async function principal(): Promise<number> {
     console.error('ORDS_BASE_URL não definida. Rode via `dotenv -f ../.env run --`.')
     return 2
   }
+  // Mesmo padrão da reconciliação: dev por omissão, `ORDS_API_PATH=api/v1`
+  // para gerar os snapshots a partir do módulo público.
+  const caminhoDaApi = (process.env.ORDS_API_PATH ?? 'api/dev/v1')
+    .trim()
+    .replace(/^\/+|\/+$/g, '')
 
   const { iso, ano, mes } = competenciaCorrente()
   const carimbo = carimboDaGold()
@@ -176,7 +181,7 @@ async function principal(): Promise<number> {
 
   const desatualizadas: string[] = []
   for (const fixture of plano) {
-    const corpo = paraSnapshot(await buscar(`${base}/api/dev/v1`, fixture), carimbo)
+    const corpo = paraSnapshot(await buscar(`${base}/${caminhoDaApi}`, fixture), carimbo)
     const conteudo = serializar(corpo)
     const destino = join(DIR_MOCKS, fixture.arquivo)
 
