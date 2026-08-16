@@ -9,6 +9,7 @@ import {
   REGION_CODE_PATTERN,
   type SampleStatus,
 } from './hospitais'
+import { apiUrl } from '../../lib/api/base'
 
 export const SPECIALTY_CONTRACT_VERSION = '0.3.0' as const
 
@@ -238,7 +239,7 @@ export async function fetchSpecialties(
 
   try {
     const response = await fetch(
-      `/api/dev/v1/hospitais/${request.cnes}/especialidades?${params.toString()}`,
+      apiUrl(`/hospitais/${request.cnes}/especialidades?${params.toString()}`),
       { headers: { Accept: 'application/json' }, signal: controller.signal },
     )
     if (!response.ok) throw new Error(`especialidades HTTP ${response.status}`)

@@ -14,7 +14,12 @@ import './shared/components.css'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <BrowserRouter>
+    {/*
+      O site publicado não fica na raiz do domínio, e sim em `/<repositório>/`.
+      O `BASE_URL` é o mesmo `base` do Vite, então o roteador e os assets
+      concordam sobre onde a aplicação começa, em qualquer ambiente.
+    */}
+    <BrowserRouter basename={import.meta.env.BASE_URL}>
       <App />
     </BrowserRouter>
   </StrictMode>,

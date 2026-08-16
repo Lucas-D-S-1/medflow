@@ -1,4 +1,5 @@
 import regionSeriesSnapshot from '../../mocks/regiao-serie-35073.json'
+import { apiUrl } from '../../lib/api/base'
 
 export const REGIONAL_SERIES_CONTRACT_VERSION = '0.3.0' as const
 
@@ -209,7 +210,7 @@ export async function fetchRegiaoSerie(
 
   try {
     const response = await fetch(
-      `/api/dev/v1/regioes/${regionCode}/serie?${params.toString()}`,
+      apiUrl(`/regioes/${regionCode}/serie?${params.toString()}`),
       { headers: { Accept: 'application/json' }, signal: controller.signal },
     )
     if (!response.ok) throw new Error(`série regional HTTP ${response.status}`)

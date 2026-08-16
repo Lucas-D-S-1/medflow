@@ -1,4 +1,5 @@
 import methodologySnapshot from '../../mocks/metodologia.json'
+import { apiUrl } from './base'
 
 export const METHODOLOGY_CONTRACT_VERSION = '0.3.0' as const
 
@@ -99,7 +100,7 @@ export type MethodologyResponse = {
   limitations: string[]
 }
 
-const METHODOLOGY_PATH = '/api/dev/v1/metodologia'
+const METHODOLOGY_PATH = apiUrl('/metodologia')
 const DATA_THROUGH_PATTERN = /^\d{4}-(0[1-9]|1[0-2])$/
 const DATABASE_TIME_PATTERN =
   /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/

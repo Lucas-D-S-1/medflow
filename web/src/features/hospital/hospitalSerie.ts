@@ -11,6 +11,7 @@ import {
   type CapacityStatus,
   type SampleStatus,
 } from './hospitais'
+import { apiUrl } from '../../lib/api/base'
 
 export const HOSPITAL_SERIES_CONTRACT_VERSION = '0.3.0' as const
 
@@ -250,7 +251,7 @@ export async function fetchHospitalSeries(
 
   try {
     const response = await fetch(
-      `/api/dev/v1/hospitais/${cnes}/serie?${params.toString()}`,
+      apiUrl(`/hospitais/${cnes}/serie?${params.toString()}`),
       { headers: { Accept: 'application/json' }, signal: controller.signal },
     )
     if (!response.ok) throw new Error(`serie do hospital HTTP ${response.status}`)

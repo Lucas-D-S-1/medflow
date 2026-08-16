@@ -8,6 +8,7 @@ import {
   isRecord,
   REGION_CODE_PATTERN,
 } from './hospitais'
+import { apiUrl } from '../../lib/api/base'
 
 export const CID_CONTRACT_VERSION = '0.3.0' as const
 
@@ -259,7 +260,7 @@ export async function fetchHospitalCids(
 
   try {
     const response = await fetch(
-      `/api/dev/v1/hospitais/${request.cnes}/cids?${params.toString()}`,
+      apiUrl(`/hospitais/${request.cnes}/cids?${params.toString()}`),
       { headers: { Accept: 'application/json' }, signal: controller.signal },
     )
     if (!response.ok) throw new Error(`cids HTTP ${response.status}`)
