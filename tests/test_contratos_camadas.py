@@ -35,7 +35,23 @@ def _contrato(camada: str) -> dict:
 
 
 def _tem_dados() -> bool:
-    return (Config().base / "data" / "gold" / "qualidade" / "METADADOS.json").is_file()
+    """Os parquets estão no disco desta máquina?
+
+    O guard checava o `METADADOS.json`, que é o vizinho **versionado** dos
+    parquets **gitignored**. Num runner limpo ele existe, o guard deixava
+    passar, e a `TestBaseReal` quebrava no primeiro parquet ausente — a CI
+    ficou vermelha assim, e vermelho permanente é o mesmo que não ter CI.
+    Mesmo defeito que o `reancorar_fixtures.py` já tinha tido: um portão que
+    nunca fecha não é portão.
+
+    Quem decide é o dado que os testes leem, não um arquivo ao lado dele.
+    """
+    base = Config().base
+    return all(
+        (base / tabela["caminho"]).exists()
+        for camada in CAMADAS
+        for tabela in _contrato(camada)["tabelas"]
+    )
 
 
 precisa_de_dados = pytest.mark.skipif(
