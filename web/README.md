@@ -16,8 +16,39 @@ pelos dez endpoints ORDS. Quatro telas, cada uma respondendo uma pergunta:
 npm install && npm run dev     # Vite em 127.0.0.1:5173
 ```
 
-O Vite faz proxy de `/api` para o ORDS, então o navegador nunca recebe host nem
-credencial do Oracle.
+O Vite faz proxy de `/api` para o ORDS, então em desenvolvimento o navegador
+nunca sai da própria origem e CORS não entra na conta.
+
+**O site publicado:** <https://lucas-d-s-1.github.io/medflow/>
+
+## Publicado, o produto é outro ambiente
+
+No GitHub Pages não existe proxy nem servidor: a página é estática e fala
+direto com o Autonomous Database. Três coisas mudam, todas por variável de
+build, e nenhuma delas altera o comportamento local:
+
+| Variável | Local | Publicado |
+|---|---|---|
+| `VITE_API_BASE` | vazia — vale `/api/dev/v1`, relativo, via proxy | URL absoluta do módulo `api/v1` |
+| `VITE_BASE` | vazia — vale `/` | `/medflow/`, que é onde o Pages serve |
+
+Quem autoriza a chamada entre origens é o ORDS, não o front: o módulo `api/v1`
+aceita só `https://lucas-d-s-1.github.io`, e responde 403 a qualquer outra
+origem. Ver [`../db/README.md`](../db/README.md).
+
+O prefixo da API sai de `src/lib/api/base.ts` — **um lugar só**. Antes estava
+escrito à mão em dez arquivos, e o risco não era a repetição: era trocar nove
+e esquecer um, e ter uma tela servindo painéis de dois módulos diferentes sem
+nenhum erro visível.
+
+O `base` do Vite e o `basename` do `BrowserRouter` saem do mesmo valor, para
+roteador e assets concordarem sobre onde a aplicação começa. E como o Pages
+serve arquivos e não conhece as rotas do SPA, um plugin de build copia o
+`index.html` para `404.html`: um link profundo compartilhado responde HTTP 404,
+mas entrega o app, e o roteador abre a visão certa.
+
+O deploy é o workflow `.github/workflows/pages.yml`, a cada push que toque
+`web/`.
 
 ## A organização, e o porquê dela
 
