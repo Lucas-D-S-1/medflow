@@ -8,7 +8,7 @@ DOTENV  := $(PY) -m dotenv -f .env run --
 # os alvos de frontend rodam dentro de web/, então o .env fica um nível acima
 DOTENV_WEB := ../$(PY) -m dotenv -f ../.env run --
 
-.PHONY: fixtures fixtures-conferir fixtures-carimbo help setup bronze silver gold geografia validar inventario test test-py test-web lint contrato contrato-publico reconciliar reconciliar-completo reconciliar-publico web-install web-build web-e2e oracle-ping oracle-carregar ords-publicar limpar
+.PHONY: fixtures fixtures-conferir fixtures-carimbo help setup setup-py pipeline bronze silver gold geografia validar inventario test test-completo test-py test-web test-web-ci test-web-live lint contrato contrato-publico reconciliar reconciliar-completo reconciliar-publico web-install web-browser web-build web-e2e oracle-ping oracle-carregar ords-publicar limpar
 
 help:  ## lista os alvos disponíveis
 	@grep -hE '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) \
@@ -16,15 +16,21 @@ help:  ## lista os alvos disponíveis
 
 # ---------------------------------------------------------------- ambiente
 
-setup: $(VENV)  ## cria o venv e instala o pacote em modo editável, com extras
-$(VENV):
+setup: setup-py web-browser  ## prepara Python, frontend e Chromium para um clone novo
+
+setup-py: $(PY)  ## instala ou atualiza o pacote Python e todos os extras
 ifeq ($(UV),)
-	python3 -m venv $(VENV)
 	$(PY) -m pip install --upgrade pip
 	$(PY) -m pip install -e '.[geografia,notebooks,dev]'
 else
-	uv venv $(VENV)
 	uv pip install --python $(PY) -e '.[geografia,notebooks,dev]'
+endif
+
+$(PY):
+ifeq ($(UV),)
+	python3 -m venv $(VENV)
+else
+	uv venv $(VENV)
 endif
 
 # ------------------------------------------------------------ pipeline
@@ -37,6 +43,8 @@ silver:  ## dimensões, fatos e de/paras
 
 gold:  ## marts e indicadores
 	$(PY) -m medflow.cli gold
+
+pipeline: bronze silver gold  ## materializa Bronze, Silver, Gold e geografia
 
 geografia:  ## regiões, população e malhas
 	$(PY) -m medflow.cli geografia
@@ -58,7 +66,9 @@ fixtures-carimbo:  ## offline: só reancora o carimbo da Gold nos snapshots
 
 # --------------------------------------------------------------- testes
 
-test: test-py test-web  ## suíte completa: Python e frontend
+test: test-py test-web-ci  ## suíte hermética: não exige dados locais, .env ou Oracle
+
+test-completo: test test-web-live contrato reconciliar  ## acrescenta integrações ao vivo
 
 test-py:  ## pytest
 	$(PY) -m pytest -q
@@ -83,13 +93,16 @@ reconciliar-completo:  ## varredura inteira, campo a campo — minutos, sob dema
 web-install:  ## instala as dependências do frontend
 	cd web && npm ci
 
+web-browser: web-install  ## instala o Chromium usado pelos testes Playwright
+	cd web && npx playwright install chromium
+
 web-build:  ## typecheck e build de produção
 	cd web && npm run build
 
-test-web: web-build  ## build mais a suíte Playwright completa, 32 testes
+test-web: web-build  ## build mais a suíte Playwright completa, herméticos e ao vivo
 	cd web && $(DOTENV_WEB) npx playwright test
 
-test-web-ci: web-build  ## só os 29 testes herméticos, sem tocar no Oracle
+test-web-ci: web-build  ## somente testes herméticos, sem tocar no Oracle
 	cd web && ORDS_BASE_URL=http://127.0.0.1:9 npx playwright test --grep-invert @live
 
 test-web-live:  ## só os 2 testes de integração ao vivo contra o Oracle

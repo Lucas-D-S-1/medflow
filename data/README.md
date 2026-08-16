@@ -15,7 +15,7 @@ legado/   contrato anterior e o recorte 2022-2023, para auditoria
 **Como materializar**, num clone limpo:
 
 ```bash
-make bronze silver gold geografia
+make pipeline
 make validar
 ```
 
