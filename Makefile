@@ -8,7 +8,7 @@ DOTENV  := $(PY) -m dotenv -f .env run --
 # os alvos de frontend rodam dentro de web/, então o .env fica um nível acima
 DOTENV_WEB := ../$(PY) -m dotenv -f ../.env run --
 
-.PHONY: fixtures fixtures-conferir fixtures-carimbo help setup bronze silver gold geografia validar inventario test test-py test-web lint contrato reconciliar reconciliar-completo web-install web-build web-e2e oracle-ping oracle-carregar limpar
+.PHONY: fixtures fixtures-conferir fixtures-carimbo help setup bronze silver gold geografia validar inventario test test-py test-web lint contrato contrato-publico reconciliar reconciliar-completo reconciliar-publico web-install web-build web-e2e oracle-ping oracle-carregar ords-publicar limpar
 
 help:  ## lista os alvos disponíveis
 	@grep -hE '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) \
@@ -102,6 +102,20 @@ oracle-ping:  ## confirma a conexão mTLS e mantém o Always Free acordado
 
 oracle-carregar:  ## carga idempotente da Gold no Autonomous Database
 	$(DOTENV) $(PY) src/medflow/oracle/carregar_gold.py
+
+# Sempre depois do 03: o módulo público é clone do de desenvolvimento, e o
+# roteiro recusa publicar se os dois divergirem.
+ords-publicar:  ## clona o módulo validado em api/v1, que serve o link público
+	$(DOTENV) $(PY) src/medflow/oracle/executar_sql.py db/ords/04_modulo_medflow_prod.sql
+
+# Mesma varredura dos alvos acima, apontada ao módulo que serve o site. O que
+# não foi medido em api/v1 não está provado em api/v1.
+reconciliar-publico:  ## amostra contra o módulo público, não o de trabalho
+	ORDS_API_PATH=api/v1 \
+	  $(DOTENV) $(PY) -m pytest tests/reconciliacao -q -s -k TestReconciliacao
+
+contrato-publico:  ## confere o openapi.yaml contra a API que o site consome
+	ORDS_API_PATH=api/v1 $(DOTENV) $(PY) -m pytest tests/test_openapi.py -q
 
 # ---------------------------------------------------------------- limpeza
 
