@@ -48,7 +48,7 @@ posteriores usam uma nova versão; tags públicas existentes não são movidas.
 | `medflow-v0` | legado | Primeira baseline; mantida apenas por rastreabilidade |
 | `v0.1.0` | histórico | Espelhada neste repositório; a publicação original permanece como proveniência histórica |
 | `v0.2.0` | estável | Gold, geografia, contratos e validação integrada |
-| `v0.3.0` | em andamento | contrato 0.3.0, Oracle e webapp MVP concluídos; falta publicar o link |
+| `v0.3.0` | em andamento | escopo cumprido em 16/08/2026; a tag aguarda a UI nova |
 
 A tag legada `medflow-v0` não deve ser apagada nem reutilizada. A `v0.1.0`
 foi espelhada neste repositório em 01/08/2026, preservando o commit histórico
@@ -57,6 +57,12 @@ da entrega e sem apagar a referência ao
 O webapp MVP foi concluído e validado em 02/08/2026, com as quatro visões
 servidas por dez endpoints ORDS e os dados exibidos reconciliados contra a Gold
 em 8.403.103 comparações sem divergência, reproduzíveis com
-`make reconciliar-completo`. A `v0.3.0` será publicada depois que o
-módulo ORDS de produção (`api/v1`) existir e o link público for testado — hoje
-só há o módulo de teste `api/dev/v1`.
+`make reconciliar-completo`.
+
+A condição declarada aqui para a `v0.3.0` — módulo ORDS de produção existindo e
+link público testado — **foi cumprida em 16/08/2026**: `api/v1` publicado e o
+site no ar em <https://lucas-d-s-1.github.io/medflow/>, conferido no navegador
+com as quatro visões ao vivo. A tag continua não publicada por decisão de
+produto, não por pendência técnica: a UI será refeita em duas telas antes da
+apresentação, e tagear um produto que muda na semana seguinte contraria a regra
+acima de que tags não se antecipam a entregas parciais.

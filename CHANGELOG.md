@@ -7,6 +7,23 @@ A versão da release e a versão dos contratos de dados evoluem separadamente.
 
 ### Adicionado
 
+- **link público da entrega**, em <https://lucas-d-s-1.github.io/medflow/>:
+  site estático no GitHub Pages falando direto com o Autonomous Database, sem
+  servidor no meio;
+- módulo ORDS de produção `medflow` em `api/v1`, aceitando só a origem
+  publicada e respondendo 403 às demais. `db/ords/04_modulo_medflow_prod.sql`
+  não redeclara os dez handlers: clona o `medflow_dev` dos metadados do ORDS e
+  recusa publicar se os dois divergirem, comparando o SQL byte a byte;
+- `ORDS_API_PATH`, que aponta reconciliação, teste de contrato e gerador de
+  snapshots para qualquer um dos dois módulos. Contra `api/v1`: 42 checagens do
+  contrato e 31.792 comparações campo a campo, sem divergência;
+- `make ords-publicar`, `make contrato-publico` e `make reconciliar-publico`;
+- `web/src/lib/api/base.ts`: o prefixo da API num lugar só, no lugar dos dez
+  caminhos escritos à mão;
+- `.github/workflows/pages.yml`: build e deploy a cada push que toque `web/`,
+  com um passo final que busca o HTML publicado e o JS que ele referencia —
+  um deploy verde não prova que o link abre.
+
 - `web/`: aplicação React + Vite com as quatro visões do produto
   (`/regional`, `/fluxos`, `/hospital`, `/metodologia`), construída em dez
   fatias verticais — cada fatia entrega view SQL, handler ORDS, snapshot de

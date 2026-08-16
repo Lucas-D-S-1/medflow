@@ -143,9 +143,30 @@ sobre 30 competências, fez 8.403.103 comparações sem divergência.
 Cinco defeitos objetivos foram encontrados e corrigidos antes dos commits; os
 detalhes estão no `CHANGELOG.md` da sprint.
 
-**Ainda falta** confirmar a forma operacional de publicação e testar o link
-público nas condições atuais da conta. Hoje só existe o módulo de teste
-`api/dev/v1`; o módulo de produção `api/v1` não foi criado.
+**Resolvido em 16/08/2026: o link público existe e foi testado.**
+<https://lucas-d-s-1.github.io/medflow/>
+
+O módulo de produção `api/v1` foi criado como clone do `medflow_dev`, lido dos
+metadados do próprio ORDS — não uma cópia manual das 1.900 linhas de handler.
+Aceita só a origem do GitHub Pages e responde 403 às demais. O site é estático
+e fala direto com o Autonomous Database; não há servidor no meio.
+
+Medido no que está publicado, não deduzido do clone:
+
+- 42 checagens do `openapi.yaml` contra `api/v1`, todas passam
+  (`make contrato-publico`);
+- 31.792 comparações campo a campo contra a Gold (`make reconciliar-publico`);
+- controle negativo com `ORDS_API_PATH=api/v9` reprova 32 de 42, o que mostra
+  que a variável morde e as aprovações não vieram de um fallback silencioso;
+- no navegador, pelo link real: as quatro visões com selo **Oracle ao vivo**,
+  sete chamadas, todas em `/api/v1/`, sem erro de console;
+- link profundo compartilhado abre a visão certa — o Pages responde HTTP 404 e
+  serve o `index.html`, e o roteador assume.
+
+**Ressalva honesta:** o 404 do link profundo é o comportamento padrão de SPA no
+GitHub Pages. A página abre e funciona; o código de status é que não é 200.
+Se isso incomodar na apresentação, o caminho é `HashRouter`, ao custo de URLs
+com `#`. Compartilhar a raiz não tem esse problema.
 
 ### 7. Infraestrutura Oracle — concluída
 
@@ -182,9 +203,9 @@ Riscos conhecidos, registrados para não virarem surpresa:
   testados novamente antes da apresentação.
 - **Always Free hiberna por inatividade.** Conectar ao menos uma vez por semana
   e confirmar o estado `Disponível` na véspera da apresentação.
-  Último ping verificado em **08/08/2026**: conexão mTLS ok, os 10 endpoints
-  ORDS em 200 e as 585.296 linhas Gold íntegras. **Próximo limite: 15/08.**
-  A automação do ping ainda não existe e está em aberto.
+  Último ping verificado em **16/08/2026**: conexão mTLS ok como `MEDFLOW`, os
+  10 endpoints de `api/v1` respondendo e a Gold íntegra. **Próximo limite:
+  23/08.** A automação do ping ainda não existe e está em aberto.
 
 ### 7b. Recorte avançado para 2026-06 — concluído em 09/08/2026
 
@@ -267,7 +288,7 @@ Próximo marco sugerido: **`v0.3.0` — Oracle e webapp MVP**.
 | Indicadores hospitalares e territoriais validados | — | concluído |
 | Autonomous AI Database provisionado | — | carregado e reconciliado em 01/08/2026 |
 | Webapp navegável | — | quatro visões concluídas e revisadas em 02/08/2026 |
-| Link público | 10% | **etapa atual** — só existe `api/dev/v1`; publicação a confirmar e testar |
+| Link público | 10% | **concluído em 16/08/2026** — <https://lucas-d-s-1.github.io/medflow/>, servido por `api/v1` |
 | Validação dos dados no produto | — | concluída e reproduzível: 8.403.103 comparações, zero divergências |
 | Oracle Select AI | — | validado tecnicamente; revalidar após o produto |
 | GitHub | 20% | `v0.2.0` publicada; repositório de entrega passou a ser `medflow` |
@@ -298,22 +319,22 @@ está preservada na branch `arquivo/v0-2026-07` e nas tags `v0` e `v0.1.0`.
 | 10 | **bloqueada** — ver abaixo |
 | limpeza | o que se publica: 216 → 205 arquivos, 17,7 → 15,2 MB |
 
-### Fatia 10 — a tag `v0.3.0` está bloqueada por um conflito de critério
+### Fatia 10 — o conflito de critério da tag `v0.3.0` deixou de existir
 
-Dois documentos discordam sobre quando a tag sai, e nenhum dos dois está
-obviamente errado:
+Dois documentos discordavam sobre quando a tag sai: a seção 7 do
+`PLANO_REORGANIZACAO` a colocava como última fatia da reorganização, antes dos
+passos de produto; o `VERSIONAMENTO.md` exigia primeiro o módulo `api/v1` e o
+link público testado.
 
-- a **seção 7 do `PLANO_REORGANIZACAO`** coloca a tag como última fatia da
-  reorganização, antes dos passos de produto — publicar `api/v1`, testar o
-  link, revalidar o Select AI;
-- o **`VERSIONAMENTO.md`** diz que a `v0.3.0` só sai depois que o módulo ORDS
-  de produção existir e o link público for testado.
+**Em 16/08/2026 a condição mais exigente das duas foi cumprida**, então os dois
+critérios agora apontam para o mesmo lugar e não há o que arbitrar.
 
-A reorganização está pronta e o produto não. Tagear agora marcaria um
-repositório organizado que ainda não entrega o link — e a `v0.3.0` foi
-anunciada como "Oracle e webapp MVP", que inclui o consumo público.
-
-Nada foi tageado. A decisão é de produto e precisa ser tomada, não deduzida.
+**Nada foi tageado mesmo assim**, por um motivo novo e diferente do antigo: a
+UI vai ser refeita em duas telas, com outra narrativa e sem o vocabulário
+interno (`Gold`, `mart`, `pipeline`) na interface. Tagear `v0.3.0` hoje marcaria
+um produto que muda na semana seguinte. A decisão continua sendo de produto —
+tagear agora o estado que funciona, ou depois da UI nova — e continua sendo do
+Lucas.
 
 **Portão da fatia 4:** os 48 parquets precisam manter o SHA-256 registrado em
 `contracts/INVENTARIO_PRE_REORG.json` depois que Bronze e Silver saírem dos

@@ -13,9 +13,14 @@ espelhada neste repositório em 01/08/2026. A publicação no repositório
 [original `medflow`](https://github.com/Lucas-D-S-1/medflow) permanece como
 proveniência histórica.
 
-**Foco atual:** publicar o módulo ORDS de produção e testar o link público. O
-webapp e a validação dos dados exibidos foram concluídos em 02/08/2026; falta
-publicar, revalidar o Select AI e produzir a apresentação.
+**O produto está no ar:** <https://lucas-d-s-1.github.io/medflow/>
+
+Site estático no GitHub Pages falando direto com o Autonomous Database pelo
+módulo ORDS público `api/v1`, somente leitura. Publicado e conferido no
+navegador em 16/08/2026.
+
+**Foco atual:** refazer a UI em duas telas e revalidar o Select AI, antes de
+produzir a apresentação.
 
 Proposta metodológica e revisão dos requisitos:
 [`docs/decisoes/REVISAO_REQUISITOS_E_PROPOSTA_GOLD.md`](docs/decisoes/REVISAO_REQUISITOS_E_PROPOSTA_GOLD.md).
@@ -159,8 +164,13 @@ Runbook e evidências:
 ### Webapp — concluído e revisado em 02/08/2026
 
 O produto é uma aplicação React + Vite em `web/`, servida por dez endpoints
-ORDS somente leitura em `api/dev/v1`, **todos `GET`**, sobre nove views de
-projeção pura. Nenhum objeto da Gold é publicado por AutoREST.
+ORDS somente leitura, **todos `GET`**, sobre nove views de projeção pura.
+Nenhum objeto da Gold é publicado por AutoREST.
+
+Os endpoints existem em dois módulos: `api/dev/v1`, que aceita só `localhost` e
+é onde se trabalha, e `api/v1`, que aceita só a origem do site publicado e é
+quem serve o link da entrega. O segundo é clone do primeiro, gerado dos
+metadados do ORDS e recusado se divergir — ver [`db/README.md`](db/README.md).
 
 O contrato dos dez endpoints está em
 [`contracts/openapi.yaml`](contracts/openapi.yaml), conferido por teste contra
