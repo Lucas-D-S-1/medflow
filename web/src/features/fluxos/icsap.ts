@@ -1,4 +1,5 @@
 import icsapSnapshot from '../../mocks/icsap-35073.json'
+import { apiUrl } from '../../lib/api/base'
 
 export const ICSAP_CONTRACT_VERSION = '0.3.0' as const
 
@@ -276,7 +277,7 @@ export async function fetchIcsap(
   const timeout = window.setTimeout(() => controller.abort(), timeoutMs)
 
   try {
-    const response = await fetch(`/api/dev/v1/icsap?${params.toString()}`, {
+    const response = await fetch(apiUrl(`/icsap?${params.toString()}`), {
       headers: { Accept: 'application/json' },
       signal: controller.signal,
     })

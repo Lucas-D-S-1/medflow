@@ -1,4 +1,5 @@
 import flowSnapshot from '../../mocks/fluxos-35073.json'
+import { apiUrl } from '../../lib/api/base'
 
 export const FLOW_CONTRACT_VERSION = '0.3.0' as const
 
@@ -322,7 +323,7 @@ export async function fetchFlows(
   const timeout = window.setTimeout(() => controller.abort(), timeoutMs)
 
   try {
-    const response = await fetch(`/api/dev/v1/fluxos?${params.toString()}`, {
+    const response = await fetch(apiUrl(`/fluxos?${params.toString()}`), {
       headers: { Accept: 'application/json' },
       signal: controller.signal,
     })

@@ -1,4 +1,5 @@
 import regionalSnapshot from '../../mocks/regioes-resumo.json'
+import { apiUrl } from './base'
 
 export const REGIONAL_CONTRACT_VERSION = '0.3.0' as const
 
@@ -68,7 +69,7 @@ export type RegionalSummaryResponse = {
   items: RegionalSummaryItem[]
 }
 
-const REGIONAL_PATH = '/api/dev/v1/regioes/resumo'
+const REGIONAL_PATH = apiUrl('/regioes/resumo')
 const DATA_THROUGH_PATTERN = /^\d{4}-(0[1-9]|1[0-2])$/
 const DATABASE_TIME_PATTERN =
   /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/

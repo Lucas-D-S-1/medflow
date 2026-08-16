@@ -1,4 +1,5 @@
 import statusSnapshot from '../../mocks/status.json'
+import { apiUrl } from './base'
 
 export type StatusResponse = {
   status: 'ok'
@@ -12,7 +13,7 @@ export type PublishedStatusResponse = StatusResponse & {
   data_through: string
 }
 
-const STATUS_PATH = '/api/dev/v1/status'
+const STATUS_PATH = apiUrl('/status')
 export const STATUS_CONTRACT_VERSION = '0.3.0' as const
 
 const DATA_THROUGH_PATTERN = /^\d{4}-(0[1-9]|1[0-2])$/

@@ -1,4 +1,5 @@
 import hospitalSnapshot from '../../mocks/hospitais-35073.json'
+import { apiUrl } from '../../lib/api/base'
 
 export const HOSPITAL_CONTRACT_VERSION = '0.3.0' as const
 
@@ -287,7 +288,7 @@ export async function fetchHospitals(
   const timeout = window.setTimeout(() => controller.abort(), timeoutMs)
 
   try {
-    const response = await fetch(`/api/dev/v1/hospitais?${params.toString()}`, {
+    const response = await fetch(apiUrl(`/hospitais?${params.toString()}`), {
       headers: { Accept: 'application/json' },
       signal: controller.signal,
     })

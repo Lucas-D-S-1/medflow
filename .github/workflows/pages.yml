@@ -1,0 +1,106 @@
+name: Pages
+
+# O link público da entrega. O site é estático: não há servidor entre a página
+# e o Autonomous Database — o navegador fala direto com o módulo ORDS `api/v1`,
+# que é somente leitura e só aceita a origem publicada aqui.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "web/**"
+      - ".github/workflows/pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Uma publicação por vez, e sem cancelar a que já está no ar: um deploy
+# interrompido no meio deixaria o link quebrado, que é justamente o que não
+# pode acontecer com o entregável que vale nota.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  publicar:
+    name: Build e deploy no GitHub Pages
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      # A URL da instância não é credencial — ela vai no bundle e qualquer
+      # visitante a vê. Fica em variável de repositório pelo mesmo motivo que
+      # fica no `.env` e não no Git: o código não deve estar preso a uma
+      # instância. Sem ela, é melhor falhar aqui do que publicar um site que
+      # abre bonito e não traz um número.
+      - name: Conferir a variável ORDS_BASE_URL
+        env:
+          ORDS_BASE_URL: ${{ vars.ORDS_BASE_URL }}
+        run: |
+          if [ -z "$ORDS_BASE_URL" ]; then
+            echo "::error::variável de repositório ORDS_BASE_URL ausente." \
+                 "Defina em Settings > Secrets and variables > Actions > Variables."
+            exit 1
+          fi
+
+      - name: Instalar dependências
+        working-directory: web
+        run: npm ci
+
+      - name: Build
+        working-directory: web
+        env:
+          # O Pages serve o projeto em /<repositório>/, não na raiz do domínio.
+          VITE_BASE: ${{ format('/{0}/', github.event.repository.name) }}
+          # Em produção não existe o proxy do Vite: a URL do módulo público
+          # entra absoluta no bundle.
+          VITE_API_BASE: ${{ vars.ORDS_BASE_URL }}/api/v1
+          # Mantém o guard do vite.config válido; o build não fala com o ORDS.
+          ORDS_BASE_URL: ${{ vars.ORDS_BASE_URL }}
+        run: npm run build
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: web/dist
+
+      - id: deploy
+        uses: actions/deploy-pages@v4
+
+      # O deploy pode terminar verde com o site servindo página em branco:
+      # basta o `base` errado para o bundle não carregar. Aqui se confere o
+      # que o visitante recebe — o HTML publicado e o JS que ele referencia.
+      - name: O link público responde e serve o bundle
+        env:
+          URL: ${{ steps.deploy.outputs.page_url }}
+        run: |
+          set -euo pipefail
+          raiz="${URL%/}"
+          origem=$(printf '%s' "$raiz" | sed -E 's#^(https?://[^/]+).*#\1#')
+          html=$(curl --retry 6 --retry-delay 10 --retry-all-errors -fsS "$raiz/")
+          bundle=$(printf '%s' "$html" \
+            | grep -oE 'src="[^"]+\.js"' | head -1 | cut -d'"' -f2)
+          if [ -z "$bundle" ]; then
+            echo "::error::o HTML publicado não referencia bundle JS algum."
+            exit 1
+          fi
+          case "$bundle" in
+            http*) alvo="$bundle" ;;
+            /*)    alvo="${origem}${bundle}" ;;
+            *)     alvo="$raiz/$bundle" ;;
+          esac
+          echo "HTML ok. Conferindo $alvo"
+          curl --retry 6 --retry-delay 10 --retry-all-errors -fsS -o /dev/null "$alvo"
+          echo "Bundle ok em $raiz/"
