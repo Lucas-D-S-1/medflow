@@ -11,7 +11,7 @@ requires-python = ">=3.12"
 license = { text = "MIT" }
 authors = [{ name = "Lucas" }]
 
-# Fixadas nas versões com que o recorte 2024-01 a 2026-05 foi validado.
+# Fixadas nas versões com que o recorte 2024-01 a 2026-06 foi validado.
 # Trocar uma delas exige reexecutar o pipeline e conferir os SHA-256 dos
 # parquets contra contracts/INVENTARIO_PRE_REORG.json.
 dependencies = [

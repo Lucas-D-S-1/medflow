@@ -7,6 +7,20 @@ A versão da release e a versão dos contratos de dados evoluem separadamente.
 
 ### Adicionado
 
+- `CONTRIBUTING.md`: primeiro uso, fluxo de trabalho, comandos por área e
+  definição de pronto. O ciclo normal de desenvolvimento não depende de
+  credenciais Oracle, e agora isso está escrito em algum lugar;
+- `make pipeline`, que encadeia Bronze, Silver e Gold. A geografia sai junto
+  porque o comando `gold` já a executa — a receita anterior,
+  `make bronze silver gold geografia`, rodava a geração geográfica duas vezes;
+- `make setup-py` e `make web-browser`, e um `make setup` que passou a chamar
+  os dois: venv, instalação editável, `npm ci` e o Chromium do Playwright.
+  Antes, `make setup` num clone novo deixava o frontend e os testes de fora, e
+  reexecutá-lo depois do venv existir não atualizava nada;
+- `make test-completo`, que acrescenta ao `make test` as integrações ao vivo:
+  os dois testes Playwright `@live`, o contrato contra a API e a amostra da
+  reconciliação.
+
 - **link público da entrega**, em <https://lucas-d-s-1.github.io/medflow/>:
   site estático no GitHub Pages falando direto com o Autonomous Database, sem
   servidor no meio;
@@ -60,6 +74,19 @@ A versão da release e a versão dos contratos de dados evoluem separadamente.
 - `src/medflow/oracle/executar_sql.py`: executor SQL/PLSQL pela conexão mTLS existente.
 
 ### Alterado
+
+- `make test` passou a ser hermético: Python mais os testes de frontend que não
+  tocam o Oracle. É a mesma base que a CI executa, então "passou aqui" e
+  "passou lá" voltaram a significar a mesma coisa. O que exige `.env`, wallet
+  ou banco no ar mora em `make test-completo`;
+- `README.md` aponta para o pacote — `src/medflow/bronze/`, `silver/` e
+  `gold.py` — onde ainda nomeava os três notebooks como etapas do pipeline.
+  Eles deixaram de ser o motor na fatia 4; o README ainda dizia que eram;
+- `ARQUITETURA.md` condensado em cinco seções: fluxo end-to-end, decisões,
+  status atual e a construção técnica de cada etapa;
+- `tests/README.md`, `web/README.md` e `data/README.md` acompanham os alvos
+  novos; o comentário de recorte do `pyproject.toml` corrigido de 2026-05 para
+  o 2026-06 que a fatia 5b entregou;
 
 - documentação de retomada alinhada à ordem de fechamento: webapp público,
   validação dos dados do produto, revalidação do Select AI e apresentação;
