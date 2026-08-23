@@ -3,7 +3,7 @@
 As releases seguem a política de [`VERSIONAMENTO.md`](VERSIONAMENTO.md).
 A versão da release e a versão dos contratos de dados evoluem separadamente.
 
-## 0.3.0 — em andamento
+## 0.3.0 — 23/08/2026
 
 ### Adicionado
 

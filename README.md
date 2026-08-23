@@ -5,8 +5,11 @@
 Recorte solicitado: Estado de São Paulo, competências de 2024 a 2026.
 Recorte disponível e validado: **2024-01 a 2026-06 (30 meses)**.
 Versão pública estável:
-[`v0.2.0`](https://github.com/Lucas-D-S-1/fiap-1tscoa/releases/tag/v0.2.0),
-com Silver canônica, Gold, contratos de dados e ativos geográficos.
+[`v0.3.0`](https://github.com/Lucas-D-S-1/medflow/releases/tag/v0.3.0),
+com Oracle carregado, API pública `api/v1`, webapp no ar e Select AI
+revalidado. A
+[`v0.2.0`](https://github.com/Lucas-D-S-1/fiap-1tscoa/releases/tag/v0.2.0)
+trouxe Silver canônica, Gold, contratos de dados e ativos geográficos.
 A [`v0.1.0`](https://github.com/Lucas-D-S-1/fiap-1tscoa/releases/tag/v0.1.0)
 permanece como o primeiro marco público do pipeline Bronze/Silver e foi
 espelhada neste repositório em 01/08/2026. A publicação no repositório
@@ -19,8 +22,10 @@ Site estático no GitHub Pages falando direto com o Autonomous Database pelo
 módulo ORDS público `api/v1`, somente leitura. Publicado e conferido no
 navegador em 16/08/2026.
 
-**Foco atual:** refazer a UI em duas telas e revalidar o Select AI, antes de
-produzir a apresentação.
+**Foco atual:** apresentação e vídeo. O WebApp permanece nas quatro visões, com
+mudanças restritas a texto e acabamento; o Select AI foi revalidado contra o
+produto em 23/08/2026, com evidência em
+[`docs/qualidade/REVALIDACAO_SELECT_AI.md`](docs/qualidade/REVALIDACAO_SELECT_AI.md).
 
 Proposta metodológica e revisão dos requisitos:
 [`docs/decisoes/REVISAO_REQUISITOS_E_PROPOSTA_GOLD.md`](docs/decisoes/REVISAO_REQUISITOS_E_PROPOSTA_GOLD.md).

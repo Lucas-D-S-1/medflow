@@ -48,7 +48,7 @@ posteriores usam uma nova versão; tags públicas existentes não são movidas.
 | `medflow-v0` | legado | Primeira baseline; mantida apenas por rastreabilidade |
 | `v0.1.0` | histórico | Espelhada neste repositório; a publicação original permanece como proveniência histórica |
 | `v0.2.0` | estável | Gold, geografia, contratos e validação integrada |
-| `v0.3.0` | em andamento | escopo cumprido em 16/08/2026; a tag aguarda a UI nova |
+| `v0.3.0` | estável | Oracle carregado, `api/v1` pública, webapp no ar e Select AI revalidado; publicada em 23/08/2026 |
 
 A tag legada `medflow-v0` não deve ser apagada nem reutilizada. A `v0.1.0`
 foi espelhada neste repositório em 01/08/2026, preservando o commit histórico
@@ -62,7 +62,12 @@ em 8.403.103 comparações sem divergência, reproduzíveis com
 A condição declarada aqui para a `v0.3.0` — módulo ORDS de produção existindo e
 link público testado — **foi cumprida em 16/08/2026**: `api/v1` publicado e o
 site no ar em <https://lucas-d-s-1.github.io/medflow/>, conferido no navegador
-com as quatro visões ao vivo. A tag continua não publicada por decisão de
-produto, não por pendência técnica: a UI será refeita em duas telas antes da
-apresentação, e tagear um produto que muda na semana seguinte contraria a regra
-acima de que tags não se antecipam a entregas parciais.
+com as quatro visões ao vivo.
+
+A tag ficou parada depois disso por decisão de produto, não por pendência
+técnica: cogitou-se refazer a UI em duas telas, e tagear um produto que muda na
+semana seguinte contraria a regra acima de que tags não se antecipam a entregas
+parciais. **Em 18/08/2026 essa hipótese foi descartada** — o WebApp permanece
+nas quatro visões, com mudanças restritas a texto e acabamento. Com o Select AI
+revalidado contra o produto em 23/08/2026, o escopo do marco fechou e a
+`v0.3.0` foi publicada nessa data.
