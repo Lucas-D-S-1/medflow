@@ -135,7 +135,7 @@ create table mart_indicador_hospital_mensal (
 );
 
 comment on table mart_indicador_hospital_mensal is
-  'Fato mensal por hospital: pressao estimada sobre a capacidade declarada (IPH), taxa de mortalidade hospitalar (TMH) e custo medio por internacao (CMI). Uma linha por CNES e competencia, 2024-01 a 2026-05. IPH e pressao estimada contra capacidade declarada no CNES, nunca ocupacao real de leito.';
+  'Fato mensal por hospital: pressao estimada sobre a capacidade declarada (IPH), taxa de mortalidade hospitalar (TMH) e custo medio por internacao (CMI). Uma linha por CNES e competencia, 2024-01 a 2026-06. Para leituras anuais, agregue as competencias antes de ranquear: ordenar as linhas mensais direto responde qual mes foi extremo, nao qual hospital. IPH e pressao estimada contra capacidade declarada no CNES, nunca ocupacao real de leito, taxa de ocupacao ou leitos ocupados.';
 comment on column mart_indicador_hospital_mensal.cd_cnes is 'Codigo de sete digitos do estabelecimento no CNES.';
 comment on column mart_indicador_hospital_mensal.nr_ano_competencia is 'Ano da competencia de processamento.';
 comment on column mart_indicador_hospital_mensal.nr_mes_competencia is 'Numero do mes da competencia de processamento.';
@@ -335,7 +335,7 @@ create table mart_indicador_regiao_mensal (
 );
 
 comment on table mart_indicador_regiao_mensal is
-  'Visao executiva mensal por regiao. Medidas de oferta usam o hospital; medidas populacionais usam residencia. O recorte observa hospitais de SP e nao enxerga residentes paulistas internados fora do estado.';
+  'Visao executiva mensal por regiao, uma linha por regiao e competencia, 2024-01 a 2026-06. Medidas de oferta usam o hospital; medidas populacionais usam residencia. O recorte observa hospitais de SP e nao enxerga residentes paulistas internados fora do estado, nem qualquer outra UF. Para leituras anuais, agregue as competencias antes de ranquear. Esta base nao mede ocupacao de leito: se a pergunta pedir taxa de ocupacao, responda com o IPH e diga que e pressao estimada sobre capacidade SUS declarada. Nao ha dado em tempo real; a menor granularidade temporal e a competencia mensal.';
 comment on column mart_indicador_regiao_mensal.cd_regiao_saude is 'Codigo oficial de cinco digitos da regiao de saude.';
 comment on column mart_indicador_regiao_mensal.nm_regiao_saude is 'Nome oficial da regiao de saude.';
 comment on column mart_indicador_regiao_mensal.cd_macrorregiao_saude is 'Codigo oficial da macrorregiao de saude.';
@@ -366,8 +366,8 @@ comment on column mart_indicador_regiao_mensal.tx_icsap_residente_observada_por_
 comment on column mart_indicador_regiao_mensal.pc_tmh is 'TMH da regiao em percentual.';
 comment on column mart_indicador_regiao_mensal.vl_cmi is 'CMI da regiao em reais.';
 comment on column mart_indicador_regiao_mensal.nr_permanencia_media is 'Tempo medio de permanencia em dias nas internacoes realizadas na regiao.';
-comment on column mart_indicador_regiao_mensal.nr_iph_estimado is 'IPH da regiao em razao decimal: pacientes-dia estimados divididos por leitos-dia SUS declarados. Pressao estimada, nao ocupacao real. Para rankings apresentados em percentual, preferir pc_iph_estimado.';
-comment on column mart_indicador_regiao_mensal.pc_iph_estimado is 'IPH da regiao em percentual. Para ranquear regioes em um ano, filtrar nr_ano_competencia, agrupar por nm_regiao_saude e ordenar AVG(pc_iph_estimado) da maior para a menor.';
+comment on column mart_indicador_regiao_mensal.nr_iph_estimado is 'IPH da regiao em razao decimal: pacientes-dia estimados divididos por leitos-dia SUS declarados. Pressao estimada sobre capacidade declarada. Nunca descreva este numero como ocupacao real, taxa de ocupacao, leitos ocupados ou hospital cheio. Para rankings apresentados em percentual, preferir pc_iph_estimado.';
+comment on column mart_indicador_regiao_mensal.pc_iph_estimado is 'IPH da regiao em percentual. Nunca descreva este numero como ocupacao real, taxa de ocupacao, leitos ocupados ou hospital cheio: o denominador e capacidade SUS declarada no CNES, nao censo diario de leitos operacionais. Para ranquear regioes em um ano, filtrar nr_ano_competencia, agrupar por nm_regiao_saude e ordenar AVG(pc_iph_estimado) da maior para a menor.';
 comment on column mart_indicador_regiao_mensal.qt_internacao_media_historica is 'Media de internacoes novas no mesmo mes em 2024 e 2025. Denominador do IS.';
 comment on column mart_indicador_regiao_mensal.qt_ano_historico is 'Quantidade de anos historicos usados na referencia sazonal.';
 comment on column mart_indicador_regiao_mensal.nr_indice_sazonalidade is 'IS: internacoes novas de 2026 divididas pela media do mesmo mes em 2024 e 2025. Preenchido apenas nas competencias de 2026, por isso 310 das 1798 linhas. Acima de 1 indica volume acima do padrao sazonal.';
@@ -484,7 +484,7 @@ create table mart_icsap_regiao_mensal (
 );
 
 comment on table mart_icsap_regiao_mensal is
-  'Detalhamento mensal das internacoes de residentes por grupo da Lista Brasileira de ICSAP da Portaria SAS/MS 221/2008. Inclui zeros para todas as 62 regioes, 29 competencias e 19 grupos.';
+  'Detalhamento mensal das internacoes de residentes por grupo da Lista Brasileira de ICSAP da Portaria SAS/MS 221/2008. Inclui zeros para todas as 62 regioes, 30 competencias e 19 grupos. Uma linha por regiao, competencia e grupo. Para saber o grupo lider de uma regiao num ano, some qt_internacao_icsap por grupo antes de comparar: o maior valor mensal isolado nao e o maior total do ano.';
 comment on column mart_icsap_regiao_mensal.cd_regiao_saude is 'Regiao de saude de residencia, nao a regiao do hospital.';
 comment on column mart_icsap_regiao_mensal.nm_regiao_saude is 'Nome oficial da regiao de saude de residencia.';
 comment on column mart_icsap_regiao_mensal.cd_macrorregiao_saude is 'Codigo oficial da macrorregiao de saude da residencia.';

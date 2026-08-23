@@ -97,94 +97,61 @@ select dbms_cloud_ai.get_profile() as profile_ativo from dual;
 select ai chat em uma frase, o que e o indice de pressao hospitalar;
 
 -- ---------------------------------------------------------------------
--- 4. As cinco perguntas da demonstração
+-- 4. O roteiro da demonstração
 -- ---------------------------------------------------------------------
--- Para cada uma: o SQL de referência validado primeiro, depois o showsql
--- para comparar o que o modelo gerou, depois a resposta narrada.
-
--- --- Pergunta 1: onde a rede está sob mais pressão em 2026?
-
--- SQL de referência:
-select nm_regiao_saude,
-       round(avg(pc_iph_estimado), 1) as pc_iph_medio_2026,
-       sum(qt_internacao_nova)        as qt_internacao_nova
-from   mart_indicador_regiao_mensal
-where  nr_ano_competencia = 2026
-group  by nm_regiao_saude
-order  by pc_iph_medio_2026 desc
-fetch  first 5 rows only;
-
-select ai showsql quais as cinco regioes de saude com maior indice de pressao hospitalar medio em 2026;
-select ai narrate quais as cinco regioes de saude com maior indice de pressao hospitalar medio em 2026;
-
--- --- Pergunta 2: onde a mortalidade se concentra, com amostra confiável?
-
--- SQL de referência:
-select nm_especialidade,
-       round(avg(pc_tmh), 2) as pc_tmh_medio,
-       count(*)              as qt_hospital_mes
-from   mart_indicador_hospital_especialidade_mensal
-where  st_amostra = 'suficiente'
-group  by nm_especialidade
-having count(*) >= 100
-order  by pc_tmh_medio desc
-fetch  first 10 rows only;
-
-select ai showsql quais sao as dez especialidades com maior taxa de mortalidade hospitalar media? Primeiro filtre st_amostra igual a suficiente, depois agrupe por especialidade e mantenha somente grupos com pelo menos 100 linhas hospital-mes;
-select ai narrate quais sao as dez especialidades com maior taxa de mortalidade hospitalar media? Primeiro filtre st_amostra igual a suficiente, depois agrupe por especialidade e mantenha somente grupos com pelo menos 100 linhas hospital-mes;
-
--- --- Pergunta 3: quais diagnósticos internam mais tempo que os pares?
-
--- SQL de referência:
-select ds_cid,
-       count(*)                  as qt_hospital,
-       round(avg(nr_ipr), 2)     as nr_ipr_medio
-from   mart_indicador_hospital_cid_periodo
-where  st_amostra = 'suficiente'
-group  by ds_cid
-having count(*) >= 10
-order  by nr_ipr_medio desc
-fetch  first 10 rows only;
-
-select ai showsql quais sao os dez diagnosticos com maior IPR medio, considerando somente combinacoes hospital-CID com amostra suficiente e pelo menos 10 combinacoes por diagnostico;
-select ai narrate quais sao os dez diagnosticos com maior IPR medio, considerando somente combinacoes hospital-CID com amostra suficiente e pelo menos 10 combinacoes por diagnostico;
-
--- --- Pergunta 4: quais regiões mais dependem de atendimento fora do território?
-
-select nm_regiao_saude,
-       round(avg(pc_evasao_intrastadual_observada), 2) as pc_evasao_observada,
-       sum(qt_evasao_intrastadual_observada)            as qt_evasao_observada
-from   mart_indicador_regiao_mensal
-where  nr_ano_competencia = 2026
-group  by nm_regiao_saude
-order  by pc_evasao_observada desc
-fetch  first 10 rows only;
-
-select ai showsql quais regioes tiveram maior percentual medio de evasao intrastadual observada em 2026? Nao interprete como evasao para fora de Sao Paulo;
-select ai narrate quais regioes tiveram maior percentual medio de evasao intrastadual observada em 2026? Nao interprete como evasao para fora de Sao Paulo;
-
--- --- Pergunta 5: quais grupos ICSAP mais pressionam internações de residentes?
-
-select nm_grupo_icsap,
-       sum(qt_internacao_icsap) as qt_internacao_icsap
-from   mart_icsap_regiao_mensal
-where  nr_ano_competencia = 2026
-group  by nm_grupo_icsap
-order  by qt_internacao_icsap desc
-fetch  first 10 rows only;
-
-select ai showsql quais foram os dez grupos ICSAP com mais internacoes de residentes em 2026;
-select ai narrate quais foram os dez grupos ICSAP com mais internacoes de residentes em 2026;
-
--- ---------------------------------------------------------------------
--- 5. Registro da demonstração
--- ---------------------------------------------------------------------
--- Guarde o SQL gerado por cada showsql. Se o modelo errar a semantica de uma
--- coluna, melhore o COMMENT ON correspondente. Se a pergunta omitir um corte
--- de negocio presente no SQL de referencia, torne esse corte explicito uma
--- unica vez; nao ajuste a frase por tentativa e erro. Comentarios e criterios
--- declarados formam o contrato que o modelo le.
+-- As perguntas saíram deste arquivo. Elas vivem agora em
+-- src/medflow/select_ai/perguntas.py, e o roteiro inteiro é executado por
 --
--- Cuidado conhecido: o IPH nunca deve ser narrado como "ocupação de leito".
--- Se o modelo usar esse termo, ajuste o comentário de nr_iph_estimado e
--- refaça — isso é exatamente o tipo de erro que a banca vai cobrar.
+--     make select-ai-revalidar
+--
+-- Não é organização por organização. Aqui as perguntas eram texto: alguém
+-- rodava, olhava o showsql, achava parecido com o SQL de referência e seguia.
+-- "Achei parecido" não responde a única pergunta que a banca faz, que é como
+-- se sabe que o modelo acertou.
+--
+-- No roteiro executável, cada pergunta com SQL de referência roda as duas
+-- consultas contra este banco e compara as respostas pela sequência ordenada
+-- de rótulos — a lista de regiões, de especialidades, de diagnósticos. É o que
+-- a pergunta de negócio pede, e é o que precisa bater. O comando sai com
+-- código 1 se alguma divergir.
+--
+-- São treze perguntas em cinco blocos, de dificuldade crescente:
+--
+--   A. leitura direta, uma tabela e um corte;
+--   B. junção entre marts e colunas de estado;
+--   C. armadilhas, onde a resposta certa é recusar ou ressalvar;
+--   D. conversação, a pergunta que só existe depois da anterior;
+--   E. a mesma pergunta com e sem os dados na frente, chat contra narrate.
+--
+-- O SQL vindo do modelo é tratado como entrada não confiável: só executa se
+-- for consulta de leitura, e numa transação declarada somente leitura. O
+-- guarda e a varredura de terminologia estão fixados em
+-- tests/test_select_ai.py e rodam sem Oracle.
+--
+-- A evidência datada da última execução fica em
+-- docs/qualidade/REVALIDACAO_SELECT_AI.md, e a leitura do que ela significa,
+-- em docs/qualidade/LEITURA_SELECT_AI.md.
+
+-- ---------------------------------------------------------------------
+-- 5. Quando o modelo erra
+-- ---------------------------------------------------------------------
+-- Os COMMENT ON de 02_criar_tabelas_gold.sql são o contrato que o modelo lê.
+-- Se ele errar a semântica de uma coluna, melhore o comentário correspondente
+-- e reexecute. Se a pergunta omitir um corte de negócio presente no SQL de
+-- referência, torne esse corte explícito uma única vez; não ajuste a frase por
+-- tentativa e erro.
+--
+-- Mas saiba o que o comentário consegue e o que não consegue. Medido na
+-- execução de 23/08/2026, depois de reforçar os comentários das três tabelas
+-- regionais e das duas colunas de IPH:
+--
+--   - o COMMENT ON governa bem a geração de SQL;
+--   - não governa a redação da narrativa. Perguntado por "taxa de ocupação",
+--     o modelo escolheu a coluna certa e narrou o número com o rótulo errado
+--     da pergunta, mesmo com o comentário proibindo o termo nome por nome;
+--   - não obriga a agregar antes de ranquear. Nos marts mensais, o modelo
+--     ordena as linhas mensais e devolve o mês extremo, não a região extrema.
+--
+-- Isso não é motivo para esconder o Select AI: é o motivo pelo qual ele é
+-- demonstração controlada e as telas do produto usam consultas determinísticas
+-- sobre a Gold. Os detalhes estão em docs/qualidade/LEITURA_SELECT_AI.md.

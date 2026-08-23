@@ -1,15 +1,18 @@
 """Revalida o Select AI contra o produto final e grava a evidência datada.
 
-Para cada uma das cinco perguntas da demonstração, executa o SQL de referência
-validado, pede ao Select AI o SQL gerado (`showsql`) e a resposta narrada
-(`narrate`), e grava tudo num documento datado.
+Roda o roteiro de `medflow.select_ai.perguntas` — cinco blocos, em profundidade
+crescente — e escreve `docs/qualidade/REVALIDACAO_SELECT_AI.md`.
+
+Onde há SQL de referência, a conferência é executada, não lida: as duas
+consultas rodam e as respostas são comparadas pela sequência ordenada de
+rótulos. Sai com código 1 se alguma resposta divergir da referência ou se
+algum termo proibido aparecer no que o modelo narrou.
 
 Usa DBMS_CLOUD_AI.GENERATE em vez do atalho `select ai`, que depende do
 translation profile do cliente. O resultado é o mesmo e roda por qualquer
 driver.
 
-    make oracle-ping && .venv/bin/python -m dotenv -f .env run -- \
-        .venv/bin/python scripts/revalidar_select_ai.py
+    make select-ai-revalidar
 """
 
 from __future__ import annotations
@@ -19,195 +22,137 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 RAIZ = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(RAIZ / "src"))
 sys.path.insert(0, str(RAIZ / "src" / "medflow" / "oracle"))
 
 from carregar_gold import conectar  # noqa: E402
 
-PERFIL = "MEDFLOW_GENAI"
-SAIDA = RAIZ / "docs" / "qualidade" / "REVALIDACAO_SELECT_AI.md"
-
-PERGUNTAS = [
-    (
-        "Onde a rede está sob mais pressão em 2026?",
-        "quais as cinco regioes de saude com maior indice de pressao "
-        "hospitalar medio em 2026",
-        """select nm_regiao_saude,
-       round(avg(pc_iph_estimado), 1) as pc_iph_medio_2026,
-       sum(qt_internacao_nova)        as qt_internacao_nova
-from   mart_indicador_regiao_mensal
-where  nr_ano_competencia = 2026
-group  by nm_regiao_saude
-order  by pc_iph_medio_2026 desc
-fetch  first 5 rows only""",
-    ),
-    (
-        "Onde a mortalidade se concentra, com amostra confiável?",
-        "quais sao as dez especialidades com maior taxa de mortalidade "
-        "hospitalar media? Primeiro filtre st_amostra igual a suficiente, "
-        "depois agrupe por especialidade e mantenha somente grupos com pelo "
-        "menos 100 linhas hospital-mes",
-        """select nm_especialidade,
-       round(avg(pc_tmh), 2) as pc_tmh_medio,
-       count(*)              as qt_hospital_mes
-from   mart_indicador_hospital_especialidade_mensal
-where  st_amostra = 'suficiente'
-group  by nm_especialidade
-having count(*) >= 100
-order  by pc_tmh_medio desc
-fetch  first 10 rows only""",
-    ),
-    (
-        "Quais diagnósticos internam mais tempo que os pares?",
-        "quais sao os dez diagnosticos com maior IPR medio, considerando "
-        "somente combinacoes hospital-CID com amostra suficiente e pelo menos "
-        "10 combinacoes por diagnostico",
-        """select ds_cid,
-       count(*)              as qt_hospital,
-       round(avg(nr_ipr), 2) as nr_ipr_medio
-from   mart_indicador_hospital_cid_periodo
-where  st_amostra = 'suficiente'
-group  by ds_cid
-having count(*) >= 10
-order  by nr_ipr_medio desc
-fetch  first 10 rows only""",
-    ),
-    (
-        "Quais regiões mais dependem de atendimento fora do território?",
-        "quais regioes tiveram maior percentual medio de evasao intrastadual "
-        "observada em 2026? Nao interprete como evasao para fora de Sao Paulo",
-        """select nm_regiao_saude,
-       round(avg(pc_evasao_intrastadual_observada), 2) as pc_evasao_observada,
-       sum(qt_evasao_intrastadual_observada)           as qt_evasao_observada
-from   mart_indicador_regiao_mensal
-where  nr_ano_competencia = 2026
-group  by nm_regiao_saude
-order  by pc_evasao_observada desc
-fetch  first 10 rows only""",
-    ),
-    (
-        "Quais grupos ICSAP mais pressionam internações de residentes?",
-        "quais foram os dez grupos ICSAP com mais internacoes de residentes "
-        "em 2026",
-        """select nm_grupo_icsap,
-       sum(qt_internacao_icsap) as qt_internacao_icsap
-from   mart_icsap_regiao_mensal
-where  nr_ano_competencia = 2026
-group  by nm_grupo_icsap
-order  by qt_internacao_icsap desc
-fetch  first 10 rows only""",
-    ),
-]
-
-# Termos que a banca vai cobrar: o IPH é pressão estimada sobre capacidade
-# declarada, nunca ocupação real de leito.
-TERMOS_PROIBIDOS = (
-    "ocupação real",
-    "ocupacao real",
-    "taxa de ocupação",
-    "taxa de ocupacao",
-    "leitos ocupados",
-    "tempo real",
+from medflow.select_ai import perguntas, relatorio  # noqa: E402
+from medflow.select_ai.executar import (  # noqa: E402
+    PERFIL,
+    Resposta,
+    SqlRecusado,
+    comparar,
+    consultar,
+    gerar,
+    guardar,
+    varrer_termos,
 )
 
-
-def tabela(cursor, sql: str) -> str:
-    cursor.execute(sql)
-    colunas = [d[0].lower() for d in cursor.description]
-    linhas = cursor.fetchall()
-    largura = [
-        max(len(c), *(len(str(linha[i])) for linha in linhas)) if linhas else len(c)
-        for i, c in enumerate(colunas)
-    ]
-    formatar = lambda vals: "| " + " | ".join(  # noqa: E731
-        str(v).ljust(largura[i]) for i, v in enumerate(vals)
-    ) + " |"
-    separador = "|" + "|".join("-" * (w + 2) for w in largura) + "|"
-    return "\n".join([formatar(colunas), separador, *(formatar(linha) for linha in linhas)])
+SAIDA = RAIZ / "docs" / "qualidade" / "REVALIDACAO_SELECT_AI.md"
 
 
-def gerar(cursor, prompt: str, acao: str) -> str:
-    saida = cursor.var(str)
-    cursor.execute(
-        """
-        begin
-          :saida := dbms_cloud_ai.generate(
-              prompt       => :prompt,
-              profile_name => :perfil,
-              action       => :acao);
-        end;
-        """,
-        saida=saida,
-        prompt=prompt,
-        perfil=PERFIL,
-        acao=acao,
+def responder(cursor, bloco: str, pergunta) -> Resposta:
+    resposta = Resposta(pergunta=pergunta, bloco=bloco)
+
+    if pergunta.sql_referencia:
+        resposta.colunas_referencia, resposta.linhas_referencia = consultar(
+            cursor, pergunta.sql_referencia.strip()
+        )
+
+    if bloco == perguntas.BLOCO_E:
+        resposta.conversado = gerar(cursor, pergunta.prompt, "chat")
+
+    bruto = gerar(cursor, pergunta.prompt, "showsql")
+    try:
+        resposta.sql_gerado = guardar(bruto)
+    except SqlRecusado as erro:
+        resposta.sql_gerado = bruto.strip()
+        resposta.veredito = "SQL recusado pelo guarda de leitura"
+        resposta.detalhe = str(erro)
+
+    if resposta.sql_gerado and not resposta.veredito:
+        try:
+            resposta.colunas_geradas, resposta.linhas_geradas = consultar(
+                cursor, resposta.sql_gerado
+            )
+        except Exception as erro:  # noqa: BLE001 — o erro do banco é o resultado
+            resposta.veredito = "SQL gerado não executou"
+            resposta.detalhe = str(erro).strip().splitlines()[0]
+        else:
+            if pergunta.sql_referencia:
+                comparar(resposta)
+
+    resposta.narrado = gerar(cursor, pergunta.prompt, "narrate")
+    if pergunta.seguimento:
+        resposta.seguimento_narrado = gerar(cursor, pergunta.seguimento, "narrate")
+
+    # `conversado` sai da varredura: é a resposta do chat, sem os dados.
+    resposta.termos_encontrados = varrer_termos(
+        resposta.narrado, resposta.seguimento_narrado
     )
-    return (saida.getvalue() or "").strip()
+    return resposta
 
 
 def main() -> int:
     agora = datetime.now(UTC).astimezone()
-    partes: list[str] = []
-    alertas: list[str] = []
+    respostas: list[Resposta] = []
 
     with conectar() as conexao, conexao.cursor() as cursor:
         cursor.execute("select sys_context('userenv', 'db_name') from dual")
         banco = cursor.fetchone()[0]
         cursor.callproc("dbms_cloud_ai.set_profile", [PERFIL])
         cursor.execute("select dbms_cloud_ai.get_profile() from dual")
-        perfil_ativo = cursor.fetchone()[0]
+        perfil = cursor.fetchone()[0]
 
-        partes.append(
-            f"# Revalidação do Select AI contra o produto final\n\n"
-            f"Executada em **{agora:%d/%m/%Y às %H:%M}** no banco `{banco}`, "
-            f"perfil `{perfil_ativo}`.\n\n"
-            "Cada pergunta traz primeiro o SQL de referência já validado e seu "
-            "resultado no banco, depois o SQL que o Select AI gerou e a resposta "
-            "narrada. A ordem é essa de propósito: nenhuma pergunta vai ao "
-            "modelo antes de a resposta estar validada em SQL convencional.\n"
-        )
+        # Nada nesta sessão escreve. O guarda de leitura já barra DML vindo do
+        # modelo; declarar a transação somente leitura é o segundo cadeado.
+        cursor.execute("set transaction read only")
 
-        for i, (titulo, prompt, sql) in enumerate(PERGUNTAS, start=1):
-            print(f"[{i}/{len(PERGUNTAS)}] {titulo}", flush=True)
-            resultado = tabela(cursor, sql)
-            gerado = gerar(cursor, prompt, "showsql")
-            narrado = gerar(cursor, prompt, "narrate")
+        roteiro = perguntas.todas()
+        for i, (bloco, pergunta) in enumerate(roteiro, start=1):
+            print(f"[{i}/{len(roteiro)}] {pergunta.id} — {pergunta.titulo}", flush=True)
+            respostas.append(responder(cursor, bloco, pergunta))
 
-            encontrados = [t for t in TERMOS_PROIBIDOS if t in narrado.lower()]
-            if encontrados:
-                alertas.append(f"pergunta {i}: {', '.join(encontrados)}")
-
-            partes.append(
-                f"\n## {i}. {titulo}\n\n"
-                f"**Pergunta ao Select AI**\n\n> {prompt}\n\n"
-                f"**SQL de referência**\n\n```sql\n{sql}\n```\n\n"
-                f"**Resultado no banco**\n\n```\n{resultado}\n```\n\n"
-                f"**SQL gerado pelo Select AI (`showsql`)**\n\n"
-                f"```sql\n{gerado}\n```\n\n"
-                f"**Resposta narrada (`narrate`)**\n\n{narrado}\n"
-            )
-
-    partes.append(
-        "\n## Verificação de terminologia\n\n"
-        "As respostas narradas foram varridas atrás dos termos que a banca "
-        "cobra: o IPH é pressão estimada sobre capacidade SUS declarada, nunca "
-        "ocupação real de leito, e o dado é mensal, nunca tempo real.\n\n"
-    )
-    if alertas:
-        partes.append(
-            "**Termos proibidos encontrados** — corrigir o `COMMENT ON` da "
-            "coluna correspondente e reexecutar:\n\n"
-            + "\n".join(f"- {a}" for a in alertas)
-            + "\n"
-        )
-    else:
-        partes.append("Nenhum termo proibido encontrado nas cinco respostas.\n")
+        conexao.rollback()
 
     SAIDA.parent.mkdir(parents=True, exist_ok=True)
-    SAIDA.write_text("".join(partes), encoding="utf-8")
+    SAIDA.write_text(
+        relatorio.montar(agora, banco, perfil, respostas), encoding="utf-8"
+    )
     print(f"\nEvidência gravada em {SAIDA.relative_to(RAIZ)}")
-    if alertas:
-        print("ATENÇÃO: termos proibidos nas respostas narradas.")
+
+    falhou = [
+        r
+        for r in respostas
+        if (r.conferida and r.veredito not in relatorio.VEREDITOS_OK)
+        or r.termos_encontrados
+    ]
+    marcados = {r.pergunta.id for r in respostas if r.pergunta.limitacao_conhecida}
+
+    # Uma limitação já medida e documentada não derruba a execução; uma falha
+    # nova, sim. E uma limitação que parou de acontecer também é notícia.
+    regressoes = [r for r in falhou if r.pergunta.id not in marcados]
+    conhecidas = [r for r in falhou if r.pergunta.id in marcados]
+    superadas = [
+        r
+        for r in respostas
+        if r.pergunta.id in marcados and r not in falhou and r.conferida
+    ]
+
+    for r in conhecidas:
+        motivo = r.veredito or ", ".join(r.termos_encontrados)
+        print(f"limitação conhecida  {r.pergunta.id}: {motivo}")
+    for r in superadas:
+        print(
+            f"LIMITAÇÃO SUPERADA  {r.pergunta.id}: passou a bater com a "
+            "referência. Remover a marca `limitacao_conhecida` e atualizar "
+            "docs/qualidade/LEITURA_SELECT_AI.md."
+        )
+    for r in regressoes:
+        detalhe = (
+            f"{r.veredito} — {r.detalhe}"
+            if r.veredito
+            else f"termo proibido: {', '.join(r.termos_encontrados)}"
+        )
+        print(f"REGRESSÃO  {r.pergunta.id}: {detalhe}")
+
+    if regressoes:
         return 1
+    print(
+        f"\nSem regressões. {len(conhecidas)} limitação(ões) conhecida(s), "
+        "analisadas em docs/qualidade/LEITURA_SELECT_AI.md."
+    )
     return 0
 
 

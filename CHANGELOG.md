@@ -3,6 +3,46 @@
 As releases seguem a política de [`VERSIONAMENTO.md`](VERSIONAMENTO.md).
 A versão da release e a versão dos contratos de dados evoluem separadamente.
 
+## 0.3.1 — em andamento
+
+### Adicionado
+
+- roteiro de Select AI executável, em `src/medflow/select_ai/`, com treze
+  perguntas em cinco blocos de dificuldade crescente. Oito têm SQL de
+  referência e são conferidas **por execução**: as duas consultas rodam e as
+  respostas são comparadas pela sequência ordenada de rótulos. As outras cinco
+  testam armadilha, conversação e a diferença entre `chat` e `narrate`;
+- `make select-ai-revalidar`, que roda o roteiro e regrava
+  `docs/qualidade/REVALIDACAO_SELECT_AI.md`. Falha em regressão, não em
+  limitação já medida e documentada — e avisa quando uma limitação marcada
+  para de acontecer;
+- `docs/qualidade/LEITURA_SELECT_AI.md`, a leitura do que a evidência mostra e
+  o que fazer antes da banca. Separado da evidência de propósito: aquela é
+  reescrita a cada execução, esta não;
+- `tests/test_select_ai.py`: o guarda que decide se o SQL vindo do modelo pode
+  tocar o banco, e a varredura de terminologia. Rodam sem Oracle.
+
+### Alterado
+
+- `COMMENT ON` das três tabelas regionais e das duas colunas de IPH: passam a
+  declarar o grão, pedir agregação antes do ranking e proibir o vocabulário de
+  ocupação nome por nome. Dois deles ainda diziam `2026-05` e `29
+  competencias`, defasados desde que o recorte avançou;
+- a varredura de terminologia parou de reprovar a resposta certa. Uma boa
+  recusa precisa nomear o que recusa — "as bases **não** fornecem dado em
+  **tempo real**" contém o termo —, então a saída do `chat` saiu da varredura e,
+  dentro do `narrate`, mencionar deixou de ser afirmar.
+
+### Medido
+
+Na execução de 23/08/2026, seis das oito perguntas conferidas devolveram
+exatamente a resposta da referência. As três falhas restantes são limitações do
+modelo, não do roteiro, e estão documentadas: ele não agrega antes de ranquear
+em marts mensais, e aceita o vocabulário errado que vem na pergunta. O
+`COMMENT ON` governa bem a geração de SQL e mal a redação da narrativa — que é
+a razão pela qual o Select AI é demonstração controlada e as telas do produto
+usam consultas determinísticas sobre a Gold.
+
 ## 0.3.0 — 23/08/2026
 
 ### Adicionado

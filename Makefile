@@ -8,7 +8,7 @@ DOTENV  := $(PY) -m dotenv -f .env run --
 # os alvos de frontend rodam dentro de web/, então o .env fica um nível acima
 DOTENV_WEB := ../$(PY) -m dotenv -f ../.env run --
 
-.PHONY: fixtures fixtures-conferir fixtures-carimbo help setup setup-py pipeline bronze silver gold geografia validar inventario test test-completo test-py test-web test-web-ci test-web-live lint contrato contrato-publico reconciliar reconciliar-completo reconciliar-publico web-install web-browser web-build web-e2e oracle-ping oracle-carregar ords-publicar limpar
+.PHONY: fixtures fixtures-conferir fixtures-carimbo help setup setup-py pipeline bronze silver gold geografia validar inventario test test-completo test-py test-web test-web-ci test-web-live lint contrato contrato-publico reconciliar reconciliar-completo reconciliar-publico web-install web-browser web-build web-e2e oracle-ping select-ai-revalidar oracle-carregar ords-publicar limpar
 
 help:  ## lista os alvos disponíveis
 	@grep -hE '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) \
@@ -112,6 +112,9 @@ test-web-live:  ## só os 2 testes de integração ao vivo contra o Oracle
 
 oracle-ping:  ## confirma a conexão mTLS e mantém o Always Free acordado
 	$(DOTENV) $(PY) src/medflow/oracle/testar_conexao.py
+
+select-ai-revalidar:  ## roda o roteiro de Select AI e regrava a evidência datada
+	$(DOTENV) $(PY) scripts/revalidar_select_ai.py
 
 oracle-carregar:  ## carga idempotente da Gold no Autonomous Database
 	$(DOTENV) $(PY) src/medflow/oracle/carregar_gold.py
