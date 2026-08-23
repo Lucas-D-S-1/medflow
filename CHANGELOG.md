@@ -20,10 +20,25 @@ A versão da release e a versão dos contratos de dados evoluem separadamente.
   o que fazer antes da banca. Separado da evidência de propósito: aquela é
   reescrita a cada execução, esta não;
 - `tests/test_select_ai.py`: o guarda que decide se o SQL vindo do modelo pode
-  tocar o banco, e a varredura de terminologia. Rodam sem Oracle.
+  tocar o banco, e a varredura de terminologia. Rodam sem Oracle. Com Oracle,
+  acrescentam a paridade entre as duas implementações da mesma regra, Python e
+  PL/SQL — regra duplicada é regra que diverge em silêncio.
+
+- `db/apex/`: a demonstração de Select AI com cara de produto. O pacote
+  `medflow_select_ai` carrega a regra — guarda de leitura sobre o SQL do
+  modelo, varredura de terminologia sobre a narrativa **e sobre os apelidos de
+  coluna**, que no APEX viram cabeçalho na tela. Uma pergunta faz uma rodada de
+  modelo e grava uma linha; as três regiões da página leem dessa linha, então o
+  relatório e o texto ao lado nunca descrevem consultas diferentes. O
+  `README.md` da pasta traz o roteiro de montagem, e `01_criar_workspace.sql`,
+  o que precisa rodar como ADMIN;
 
 ### Alterado
 
+- `executar_sql.py` passou a reconhecer `create package`, `function`,
+  `procedure`, `trigger` e `type` como blocos terminados por barra, e a ignorar
+  `show`. Antes ele quebrava um pacote no primeiro `;` do corpo e mandava um
+  fragmento ao banco;
 - `COMMENT ON` das três tabelas regionais e das duas colunas de IPH: passam a
   declarar o grão, pedir agregação antes do ranking e proibir o vocabulário de
   ocupação nome por nome. Dois deles ainda diziam `2026-05` e `29

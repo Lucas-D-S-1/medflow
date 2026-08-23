@@ -1,7 +1,7 @@
 """Executa roteiros SQL/PLSQL do MedFlow pela conexão Python mTLS.
 
-Entende os comandos de apresentação usados nos arquivos (`set`, `column` e
-`prompt`), blocos terminados por `/` e o atalho SQLcl `exec`.
+Entende os comandos de apresentação usados nos arquivos (`set`, `column`,
+`prompt` e `show`), blocos terminados por `/` e o atalho SQLcl `exec`.
 """
 
 from __future__ import annotations
@@ -12,7 +12,18 @@ from pathlib import Path
 
 from carregar_gold import conectar
 
-COMANDOS_CLIENTE = ("set ", "column ")
+COMANDOS_CLIENTE = ("set ", "column ", "show ")
+
+# `create package`, `create function` e parentes têm `;` no corpo: o
+# terminador deles é a barra sozinha, como em `begin`. Sem isto, o roteiro
+# quebraria no primeiro `;` de dentro do pacote e mandaria um fragmento ao
+# banco.
+INICIO_PLSQL = re.compile(
+    r"^\s*(begin|declare"
+    r"|create\s+(or\s+replace\s+)?"
+    r"(package|function|procedure|trigger|type)\b)",
+    re.IGNORECASE,
+)
 
 
 def instrucoes(caminho: Path):
@@ -41,7 +52,7 @@ def instrucoes(caminho: Path):
             continue
 
         if not acumulado:
-            plsql = minuscula.startswith(("begin", "declare"))
+            plsql = bool(INICIO_PLSQL.match(limpa))
         acumulado.append(linha)
 
         if "/*" in linha:
