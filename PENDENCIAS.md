@@ -1,6 +1,6 @@
 # PENDÊNCIAS — Challenge Oracle: MedFlow
 
-Atualizado em 11/08/2026, após a fatia 9 e a limpeza para publicação.
+Atualizado em 23/08/2026, após a revalidação do Select AI.
 Entrega da Sprint 2: **01/09/2026**.
 
 ## Concluído nesta revisão
@@ -261,12 +261,17 @@ ContextoBronze(base=BASE, periodo_final=(2026, 5))
 
 A decisão precisa ser tomada e registrada aqui antes da fatia 5.
 
-### 8. Revalidar o Select AI depois do produto
+### 8. Revalidar o Select AI depois do produto — concluído em 23/08/2026
 
-O Select AI já passou pela validação técnica inicial. Depois que o webapp e
-seus dados forem aprovados, repetir as cinco perguntas em SQL convencional,
-`showsql` e `narrate`, confirmando que os resultados continuam coerentes com o
-produto final.
+As cinco perguntas foram repetidas contra o produto final em SQL convencional,
+`showsql` e `narrate`. Os resultados continuam coerentes: os desvios entre o
+SQL gerado e o de referência são de forma, não de semântica, e nenhuma resposta
+narrada tratou o IPH como ocupação real nem o dado como tempo real.
+
+A execução é reproduzível por `scripts/revalidar_select_ai.py`, que grava a
+evidência datada em
+[`docs/qualidade/REVALIDACAO_SELECT_AI.md`](docs/qualidade/REVALIDACAO_SELECT_AI.md)
+e falha se um termo proibido aparecer na narrativa.
 
 ### 9. Produzir a apresentação por último
 
@@ -290,7 +295,7 @@ Próximo marco sugerido: **`v0.3.0` — Oracle e webapp MVP**.
 | Webapp navegável | — | quatro visões concluídas e revisadas em 02/08/2026 |
 | Link público | 10% | **concluído em 16/08/2026** — <https://lucas-d-s-1.github.io/medflow/>, servido por `api/v1` |
 | Validação dos dados no produto | — | concluída e reproduzível: 8.403.103 comparações, zero divergências |
-| Oracle Select AI | — | validado tecnicamente; revalidar após o produto |
+| Oracle Select AI | — | **revalidado contra o produto em 23/08/2026**, evidência em `docs/qualidade/REVALIDACAO_SELECT_AI.md` |
 | GitHub | 20% | `v0.2.0` publicada; repositório de entrega passou a ser `medflow` |
 | PPT / pitch | 10% | aguarda produto validado |
 | Vídeo YouTube | 10% | aguarda produto validado |
@@ -329,12 +334,11 @@ link público testado.
 **Em 16/08/2026 a condição mais exigente das duas foi cumprida**, então os dois
 critérios agora apontam para o mesmo lugar e não há o que arbitrar.
 
-**Nada foi tageado mesmo assim**, por um motivo novo e diferente do antigo: a
-UI vai ser refeita em duas telas, com outra narrativa e sem o vocabulário
-interno (`Gold`, `mart`, `pipeline`) na interface. Tagear `v0.3.0` hoje marcaria
-um produto que muda na semana seguinte. A decisão continua sendo de produto —
-tagear agora o estado que funciona, ou depois da UI nova — e continua sendo do
-Lucas.
+A tag ficou parada por um tempo porque se cogitou refazer a UI em duas telas.
+**Em 18/08/2026 essa hipótese foi descartada**: o WebApp permanece nas quatro
+visões, e mudanças de interface ficam restritas a texto e acabamento de
+apresentação. Com isso o último motivo para segurar a tag deixou de existir e
+`v0.3.0` pode ser marcada.
 
 **Portão da fatia 4:** os 48 parquets precisam manter o SHA-256 registrado em
 `contracts/INVENTARIO_PRE_REORG.json` depois que Bronze e Silver saírem dos
