@@ -72,7 +72,7 @@ As técnicas implementadas abrangem análise exploratória, modelagem dimensiona
 - Repositório: https://github.com/Lucas-D-S-1/medflow
 - WebApp: https://lucas-d-s-1.github.io/medflow/regional?regiao=35163
 - Raiz pública do WebApp: https://lucas-d-s-1.github.io/medflow/
-- Instalação: https://github.com/Lucas-D-S-1/medflow/blob/docs/onboarding-arquitetura-20260816/HOW_TO_INSTALL.md
+- Instalação: https://github.com/Lucas-D-S-1/medflow/blob/main/HOW_TO_INSTALL.md
 
 ### Estado factual registrado
 
@@ -84,9 +84,10 @@ As técnicas implementadas abrangem análise exploratória, modelagem dimensiona
 | WebApp | quatro visões concluídas e revisadas; produto publicado |
 | Link público | concluído em 16/08/2026 e servido pelo módulo ORDS `api/v1` |
 | Validação do produto | 8.403.103 comparações campo a campo, sem divergências |
-| Select AI | três perguntas originais validadas; duas perguntas territoriais ainda aguardam revalidação comparativa |
-| GitHub | versão pública `v0.2.0` registrada; `medflow` é o repositório de entrega |
-| PPT, vídeo e apresentação técnica | permanecem registrados como pendentes nas fontes internas de acompanhamento |
+| Select AI | roteiro de 13 perguntas revalidado em 23/08/2026; oito têm SQL de referência executado, seis coincidiram exatamente e os limites restantes estão documentados |
+| GitHub | versão pública `v0.3.0` registrada; hardening posterior em `v0.3.1 — em andamento` |
+| Disponibilidade | heartbeat diário ativo; `make preflight` confere o produto publicado antes da banca |
+| PPT, vídeo, planilha e ZIP | continuam pendentes; os arquivos finais ainda não estão neste workspace |
 
 O recorte avançou de 29 para 30 competências em 09/08/2026. Os números vigentes já refletem junho de 2026; referências antigas a 2026-05, 585.296 linhas Oracle, 653 hospitais ou 8.257.139 comparações descrevem estados históricos, não o produto atual.
 
@@ -191,7 +192,8 @@ O MedFlow transforma bases públicas administrativas em uma jornada auditável d
 - indicadores calculados e persistidos na Gold;
 - API pública somente leitura;
 - rastreabilidade até fontes, contratos e fórmulas;
-- cinco perguntas controladas de linguagem natural no ambiente Oracle.
+- roteiro controlado de 13 perguntas de linguagem natural no ambiente Oracle,
+  com cinco blocos de dificuldade e oito referências executáveis.
 
 ### Limites do MVP
 
@@ -260,8 +262,8 @@ O princípio arquitetural é a responsabilidade única por etapa: Bronze preserv
 
 | Estado | Elementos |
 |---|---|
-| **Implementado no MVP** | fontes → Bronze → Silver → Gold; dimensões e marts; carga no Oracle 26ai Lakehouse; schema `MEDFLOW`; views; ORDS `api/v1`; WebApp público; snapshots de contingência; Select AI com profile e bateria de cinco perguntas; contratos e reconciliações |
-| **Validação ainda pendente** | comparação final das duas perguntas territoriais novas do Select AI pelo mesmo processo aplicado às três perguntas originais |
+| **Implementado no MVP** | fontes → Bronze → Silver → Gold; dimensões e marts; carga no Oracle 26ai Lakehouse; schema `MEDFLOW`; views; ORDS `api/v1`; WebApp público; snapshots de contingência; Select AI com profile e roteiro revalidável de 13 perguntas; contratos e reconciliações |
+| **Demonstração opcional** | backend PL/SQL e runbook da página APEX; o workspace e a página visual ainda precisam ser montados com acesso `ADMIN` |
 | **Evidência futura, fora da arquitetura implementada** | validação primária com usuários para medir compreensão, utilidade, adoção, tempo, erro e impacto |
 | **Fora do MVP, sem implementação alegada** | tempo real, previsão, machine learning, clustering, decisão automática, prontuário, regulação, censo operacional de leitos e custo contábil completo |
 
@@ -335,7 +337,7 @@ O ORDS publica **10 endpoints**, todos `GET`. O módulo de desenvolvimento é `a
 - contratos e testes verificam OpenAPI, SQL dos handlers e respostas da API;
 - ausência legítima, parâmetro inválido, erro e indisponibilidade permanecem estados distintos.
 
-O Autonomous Always Free pode hibernar por inatividade. O último estado registrado em 16/08/2026 confirmou conexão mTLS, integridade da Gold e os dez endpoints públicos respondendo. Não há automação de keep-alive registrada.
+O Autonomous Always Free pode hibernar por inatividade. O workflow `.github/workflows/heartbeat.yml` consulta diariamente o `/status`, uma linha real dos marts e o GitHub Pages; a chamada ao ORDS executa SQL e mantém a instância ativa. Ele não acorda um banco já parado. Antes da banca, `make preflight` executa doze verificações pelo mesmo caminho público usado pelo avaliador.
 
 ### Contingência
 
@@ -363,17 +365,24 @@ O processo registrado para cada pergunta é:
 
 O encadeamento técnico é **SQL de referência → `showsql` → comparação → `narrate`**. A resposta narrativa não é a fonte da verdade.
 
-### Cinco perguntas registradas
+### Roteiro registrado
 
-1. **Pressão regional:** “Quais as cinco regiões de saúde com maior índice de pressão hospitalar médio em 2026?”
-2. **Mortalidade por especialidade:** “Quais são as dez especialidades com maior taxa de mortalidade hospitalar média? Primeiro filtre st_amostra igual a suficiente, depois agrupe por especialidade e mantenha somente grupos com pelo menos 100 linhas hospital-mês.”
-3. **IPR por diagnóstico:** “Quais são os dez diagnósticos com maior IPR médio, considerando somente combinações hospital-CID com amostra suficiente e pelo menos 10 combinações por diagnóstico?”
-4. **Evasão intrastadual observada:** “Quais regiões tiveram maior percentual médio de evasão intrastadual observada em 2026? Não interprete como evasão para fora de São Paulo.”
-5. **Grupos ICSAP:** “Quais foram os dez grupos ICSAP com mais internações de residentes em 2026?”
+O roteiro atual tem **13 perguntas em cinco blocos**: leitura direta, junções
+entre marts, armadilhas de vocabulário/recorte/tempo real, conversação e a
+comparação entre `chat` e `narrate`. Oito perguntas têm SQL de referência e são
+comparadas por execução, usando a sequência ordenada dos rótulos de negócio.
+As cinco perguntas originais continuam no bloco A; o roteiro ampliado está em
+`src/medflow/select_ai/perguntas.py`.
 
 ### Estado de validação
 
-As três perguntas originais possuem evidência de SQL convencional, `showsql` e `narrate` comparados. As duas perguntas territoriais adicionadas depois da ampliação do profile ainda aguardam revalidação comparativa. Assim, o profile e a bateria de cinco perguntas existem, mas a evidência final não é homogênea entre as cinco.
+Na execução de 23/08/2026, **seis das oito perguntas com referência coincidiram
+exatamente**. As duas divergências repetem uma limitação do modelo: ele ordena
+linhas mensais antes de agregar por território ou hospital. Também foram
+medidos dois limites narrativos: aceitar “ocupação” quando a pergunta usa o
+termo incorreto e perder o contexto no turno seguinte. As recusas de tempo real
+e de um estado fora do recorte funcionaram. Esses resultados sustentam o uso
+do Select AI como demonstração controlada, não como chat público.
 
 ## 12. WebApp
 
@@ -443,7 +452,7 @@ Regras semânticas transversais já incorporadas ao produto incluem denominador 
 | Contrato público `api/v1` | **42 verificações aprovadas** | correspondência do OpenAPI com o módulo público |
 | Reconciliação pública | **31.792 comparações** | amostra do conteúdo publicado contra a Gold |
 | Testes do frontend | DOM conferido com Playwright | valores renderizados confrontados com dados Gold e estados de erro/ausência/contingência |
-| Select AI | 3 perguntas integralmente comparadas | SQL de referência, `showsql` e `narrate`; as 2 perguntas novas ainda não possuem o mesmo fechamento |
+| Select AI | **13 perguntas; 8 com referência; 6 coincidências exatas** | comparação por execução e limites de ranking, narrativa e conversação documentados em 23/08/2026 |
 
 Zero divergência comprova consistência técnica no recorte, nos campos e no método testados. Não comprova completude clínica, impacto, causalidade, adoção ou utilidade para usuários.
 
@@ -453,7 +462,7 @@ Zero divergência comprova consistência técnica no recorte, nos campos e no m�
 |---|---|---|
 | Endpoints ORDS | **10 `GET`** | API somente leitura para saúde, metodologia, regiões, fluxos, ICSAP e hospitais |
 | Visões WebApp | **4** | Regional, Fluxos, Hospital e Metodologia |
-| Perguntas Select AI | **5** | bateria controlada com SQL de referência |
+| Perguntas Select AI | **13** | cinco blocos; oito referências executáveis e limites conhecidos registrados |
 | Origem publicada | `api/v1` | GitHub Pages consumindo diretamente o ORDS público |
 | Contingência | 10 snapshots funcionais | fallback por endpoint sem mistura silenciosa de fonte ou recorte |
 | Link público | publicado e testado | aplicação navegável no GitHub Pages |
@@ -468,7 +477,7 @@ Esta seção registra invariantes factuais, não um processo de revisão.
 | Volumetria principal | 7.284.476 AIHs; 7.150.693 internações novas; 655 hospitais; 645 municípios; 62 regiões; 19 macrorregiões |
 | Oracle | 597.725 linhas; schema `MEDFLOW`; 2 dimensões; 7 marts; views sem recálculo |
 | Validação completa | 8.403.103 comparações; zero divergências |
-| Produto | 10 endpoints `GET`; 4 visões; 5 perguntas Select AI |
+| Produto | 10 endpoints `GET`; 4 visões; roteiro de 13 perguntas Select AI |
 | Origem pública | módulo ORDS `api/v1`; contingência identificada separadamente |
 | Nome | MedFlow é marca, não sigla |
 | Cálculo | indicadores calculados na Gold; frontend apenas apresenta e formata |
@@ -568,8 +577,10 @@ Neste arquivo, `Leandro` nessa dupla com Pedro significa Leandro Lopes; Scutari 
 | estado e histórico de execução | `PENDENCIAS.md` | conclusões, pendências e evolução do recorte; números históricos não substituem o gate vigente |
 | problema, persona, proposta e validação futura | `docs/pesquisa/pesquisa.md` | evidência estrutural, soluções comparáveis, limites das alegações e ausência de validação primária |
 | fórmulas e decisões Gold | `docs/decisoes/REVISAO_REQUISITOS_E_PROPOSTA_GOLD.md` | TMH, IPR, IS, CMI, IPH, fluxos, ICSAP e permanência |
-| evidência Oracle e Select AI | `docs/qualidade/VALIDACAO_ORACLE_SELECT_AI.md` | configuração, três perguntas validadas e ressalva temporal das evidências |
-| cinco perguntas e SQL de referência | `db/select_ai/04_select_ai.sql` | perguntas, SQL convencional e processo `showsql`/`narrate` |
+| evidência Oracle e Select AI | `docs/qualidade/REVALIDACAO_SELECT_AI.md` | execução datada das 13 perguntas e comparações contra a referência |
+| leitura dos limites do Select AI | `docs/qualidade/LEITURA_SELECT_AI.md` | interpretação dos acertos, divergências e roteiro seguro para a banca |
+| roteiro Select AI | `src/medflow/select_ai/perguntas.py` | cinco blocos, prompts, SQL de referência e limitações conhecidas |
+| demonstração APEX opcional | `db/apex/README.md` | backend PL/SQL e montagem do workspace/página |
 | contrato da API | `contracts/openapi.yaml` | rotas, parâmetros, respostas, ordenação e limitações |
 | instalação e mapa do repositório | `HOW_TO_INSTALL.md` | dependências, execução e organização técnica |
 | backend Oracle | `db/README.md` | schema, views, ORDS, módulos, segurança e Select AI |

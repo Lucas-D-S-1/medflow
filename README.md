@@ -22,9 +22,10 @@ Site estático no GitHub Pages falando direto com o Autonomous Database pelo
 módulo ORDS público `api/v1`, somente leitura. Publicado e conferido no
 navegador em 16/08/2026.
 
-**Foco atual:** apresentação e vídeo. O WebApp permanece nas quatro visões, com
-mudanças restritas a texto e acabamento; o Select AI foi revalidado contra o
-produto em 23/08/2026, com evidência em
+**Foco atual:** fechar os artefatos acadêmicos — PPT, vídeo, planilha de
+integrantes e ZIP final. O WebApp permanece nas quatro visões, com mudanças
+restritas a texto e acabamento; o Select AI foi revalidado contra o produto em
+23/08/2026, com evidência em
 [`docs/qualidade/REVALIDACAO_SELECT_AI.md`](docs/qualidade/REVALIDACAO_SELECT_AI.md).
 
 Proposta metodológica e revisão dos requisitos:
@@ -154,7 +155,7 @@ Também são gerados:
 - `mapa_regiao_saude_sp.geojson`;
 - `mapa_regiao_saude_sp.topojson`.
 
-### Oracle e Select AI — validados em 01/08/2026
+### Oracle e Select AI — carga validada e roteiro revalidado
 
 A Gold está carregada no Autonomous AI Database 26ai `MEDFLOW`, workload
 Lakehouse, região São Paulo:
@@ -164,12 +165,17 @@ Lakehouse, região São Paulo:
 - 597.725 linhas carregadas e conferidas;
 - 36/36 métricas Oracle com estado `ok` e seis gates vazios;
 - profile `MEDFLOW_GENAI` usando OCI Generative AI por Resource Principal;
-- três perguntas originais validadas em SQL, `showsql` e `narrate`; duas novas
-  perguntas territoriais aguardam a revalidação pós-produto.
+- roteiro de 13 perguntas em cinco blocos, oito com SQL de referência conferido
+  por execução. Na rodada de 23/08/2026, seis das oito coincidiram exatamente;
+  as divergências e as limitações de narrativa/conversação estão registradas,
+  não escondidas.
 
 Runbook e evidências:
 [`db/README.md`](db/README.md) e
-[`docs/qualidade/VALIDACAO_ORACLE_SELECT_AI.md`](docs/qualidade/VALIDACAO_ORACLE_SELECT_AI.md).
+[`docs/qualidade/REVALIDACAO_SELECT_AI.md`](docs/qualidade/REVALIDACAO_SELECT_AI.md).
+A leitura dos limites medidos está em
+[`docs/qualidade/LEITURA_SELECT_AI.md`](docs/qualidade/LEITURA_SELECT_AI.md), e
+a base versionada da demonstração APEX, em [`db/apex/`](db/apex/README.md).
 
 ### Webapp — concluído e revisado em 02/08/2026
 

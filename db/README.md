@@ -12,6 +12,7 @@ apresentação, e o dado nunca é recalculado fora do banco.
 | `views/` | nove views de projeção pura, uma por fatia do produto |
 | `ords/` | módulos REST; o `03` redefine o de trabalho, o `04` clona o público |
 | `select_ai/` | perguntas da demonstração e o SQL de referência |
+| `apex/` | workspace opcional e pacote PL/SQL da demonstração de Select AI |
 
 O contrato do que esses handlers expõem está em
 [`../contracts/openapi.yaml`](../contracts/openapi.yaml), e
@@ -34,7 +35,7 @@ arquivos de conexão são ignorados pelo Git.
 | Autenticação | mTLS obrigatório, acesso seguro de qualquer lugar |
 | Criado em | 31/07/2026 |
 
-## Estado validado em 01/08/2026
+## Estado validado até 23/08/2026
 
 - conexão mTLS validada como `MEDFLOW`;
 - 2 dimensões, 7 marts, 175 colunas comentadas e 10 índices secundários;
@@ -44,11 +45,15 @@ arquivos de conexão são ignorados pelo Git.
 - seis verificações adicionais de integridade com zero ocorrências;
 - Resource Principal OCI habilitado para o esquema;
 - profile `MEDFLOW_GENAI` ativo com OCI Generative AI em `sa-saopaulo-1`;
-- três perguntas originais validadas em SQL, `showsql` e `narrate`; as duas
-  novas perguntas territoriais aguardam a revalidação planejada do Select AI.
+- roteiro revalidável de 13 perguntas em cinco blocos; oito têm SQL de
+  referência executado e seis coincidiram exatamente na rodada de 23/08/2026;
+- pacote `medflow_select_ai` instalado para a demonstração opcional no APEX;
+- heartbeat diário e `make preflight` conferindo o produto publicado.
 
-As evidências e os rankings obtidos estão em
-[`../docs/qualidade/VALIDACAO_ORACLE_SELECT_AI.md`](../docs/qualidade/VALIDACAO_ORACLE_SELECT_AI.md).
+As evidências atuais estão em
+[`../docs/qualidade/REVALIDACAO_SELECT_AI.md`](../docs/qualidade/REVALIDACAO_SELECT_AI.md),
+e a leitura dos limites medidos, em
+[`../docs/qualidade/LEITURA_SELECT_AI.md`](../docs/qualidade/LEITURA_SELECT_AI.md).
 
 ## Instalação
 
@@ -95,6 +100,7 @@ SQLcl.
 | 7 | Publicar o módulo de trabalho | `executar_sql.py db/ords/03_modulo_medflow_dev.sql` | `MEDFLOW` |
 | 8 | Publicar o módulo público | `make ords-publicar` | `MEDFLOW` |
 | 9 | Habilitar e demonstrar o Select AI | `db/select_ai/04_select_ai.sql` | `ADMIN` + `MEDFLOW` |
+| 10 | Montar a demonstração APEX opcional | `db/apex/README.md` | `ADMIN` + `MEDFLOW` |
 
 ### Passos 7 e 8 — dois módulos, uma definição
 
@@ -164,26 +170,29 @@ os regenera a partir dos metadados, e exige `carregar_gold.py --conferir`
 antes — abençoar o estado do banco sem conferência independente seria só
 carimbar.
 
-### Passo 6 — Select AI
+### Passo 9 — Select AI
 
-`sql/04_select_ai.sql` registra o Dynamic Group, a policy IAM, a habilitação
-do Resource Principal, o profile e as cinco perguntas. A configuração validada
-usa OCI Generative AI na própria região de São Paulo, sem chave de API externa.
-O `showsql` deve ser conferido contra o SQL de referência antes do `narrate`.
+`select_ai/04_select_ai.sql` registra o Dynamic Group, a policy IAM, a
+habilitação do Resource Principal, o profile e a bateria original. O roteiro
+atual vive em `src/medflow/select_ai/` e roda com `make select-ai-revalidar`:
+são 13 perguntas em cinco blocos, oito com comparação por execução contra SQL
+de referência. A configuração usa OCI Generative AI na própria região de São
+Paulo, sem chave de API externa.
+
+A página APEX é uma demonstração opcional, não parte do WebApp público. O
+backend versionado e o roteiro de montagem estão em [`apex/`](apex/README.md).
 
 ## Dois avisos que valem nota
 
-**Select AI foi validado em 01/08/2026, mas continua sendo uma dependência
+**Select AI foi revalidado em 23/08/2026, mas continua sendo uma dependência
 externa do MVP.** Preserve o Dynamic Group `MedFlowADBGenAI`, a policy
-`use generative-ai-family` e o Resource Principal. Antes da apresentação,
-execute novamente o teste de fumaça e as cinco perguntas.
+`use generative-ai-family` e o Resource Principal. Antes da apresentação, rode
+`make select-ai-revalidar` e use perguntas autossuficientes do roteiro aprovado.
 
-**Always Free hiberna por inatividade.** Uma instância Always Free é parada
-automaticamente após alguns dias consecutivos sem conexão e pode ser
-recuperada de volta pela Oracle se ficar longos períodos parada. Reiniciar é
-trivial pelo console, mas não é o tipo de surpresa que se quer no dia da
-apresentação. Conecte ao banco pelo menos uma vez por semana até a entrega, e
-confirme que ele está `Disponível` na véspera.
+**Always Free hiberna por inatividade.** O workflow
+`.github/workflows/heartbeat.yml` executa SQL diariamente para mantê-lo ativo e
+falha de forma visível se ele já estiver parado. Na véspera e no dia da banca,
+rode também `make preflight`; a automação não substitui essa conferência.
 
 ## Por que um esquema separado do ADMIN
 

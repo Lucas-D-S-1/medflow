@@ -32,6 +32,13 @@ A versão da release e a versão dos contratos de dados evoluem separadamente.
   relatório e o texto ao lado nunca descrevem consultas diferentes. O
   `README.md` da pasta traz o roteiro de montagem, e `01_criar_workspace.sql`,
   o que precisa rodar como ADMIN;
+- `.github/workflows/heartbeat.yml`, que consulta diariamente o `/status`, uma
+  linha real dos marts e o GitHub Pages. A chamada ao ORDS executa SQL e evita
+  a hibernação por inatividade do Always Free; se o banco já estiver parado, o
+  workflow falha e imprime o procedimento de reinício;
+- `make preflight`: doze verificações contra o produto publicado, sem `.env`,
+  wallet ou Gold local, mais a lista do que ainda precisa ser conferido à mão
+  antes da banca;
 
 ### Alterado
 
@@ -47,6 +54,9 @@ A versão da release e a versão dos contratos de dados evoluem separadamente.
   recusa precisa nomear o que recusa — "as bases **não** fornecem dado em
   **tempo real**" contém o termo —, então a saída do `chat` saiu da varredura e,
   dentro do `narrate`, mencionar deixou de ser afirmar.
+- documentação corrente e dossiê do time alinhados ao estado pós-`v0.3.0`:
+  roteiro de 13 perguntas, heartbeat ativo, base APEX opcional e pendências
+  restritas aos artefatos acadêmicos e à montagem da demonstração.
 
 ### Medido
 

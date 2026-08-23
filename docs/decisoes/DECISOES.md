@@ -359,26 +359,25 @@ de uma seção única. Lista truncada declara "N de M" e oferece ver todas.
 
 Entrega prevista: 01/09/2026.
 
-Concluído: as quatro visões do webapp, servidas por dez endpoints ORDS, com os
-dados do produto validados contra a Gold em 8.403.103 comparações sem
-divergência — reproduzíveis a qualquer momento com `make reconciliar-completo`,
-desde a fatia 6 da reorganização.
+Concluído: as quatro visões do webapp, servidas por dez endpoints ORDS; dados
+validados contra a Gold em 8.403.103 comparações sem divergência; módulo público
+`api/v1` e link publicados; roteiro de Select AI revalidado em 13 perguntas; e
+heartbeat diário acompanhado por `make preflight`.
 
-Ordem de trabalho restante:
+Ordem de trabalho restante para a entrega acadêmica:
 
-1. publicar o módulo de produção `api/v1` e testar o link público;
-2. revalidar as cinco perguntas do Select AI — três originais e duas novas;
-3. regenerar achados e figuras;
-4. atualizar pitch, vídeo e roteiro da apresentação.
+1. concluir PPT e vídeo com evidências datadas;
+2. completar a planilha oficial com o quinto integrante;
+3. montar e conferir o ZIP único exigido pelo FIAP ON;
+4. opcionalmente montar a página APEX seguindo `db/apex/README.md`;
+5. preparar os cinco integrantes e rodar `make preflight` antes da banca.
 
 A versão pública
-[`v0.2.0`](https://github.com/Lucas-D-S-1/fiap-1tscoa/releases/tag/v0.2.0)
-foi publicada em 29/07/2026 com Silver canônica, Gold, geografia, contratos e
-validação integrada. A `v0.1.0` permanece como marco histórico do pipeline
-Bronze/Silver.
+[`v0.3.0`](https://github.com/Lucas-D-S-1/medflow/releases/tag/v0.3.0)
+foi publicada em 23/08/2026 com o produto de ponta a ponta. A `v0.3.1` reúne o
+hardening posterior e permanece em andamento até o gate final.
 
-A base metodológica, a estrutura de dados e a carga Oracle estão fechadas. O
-produto final será um webapp público sem licença de BI, servido por ORDS com
-snapshot estático de contingência. O profile Select AI já cobre os nove objetos;
-as duas perguntas territoriais serão validadas depois do produto. O próximo
-marco é **`v0.3.0` — Oracle e webapp MVP**.
+A base metodológica, a estrutura de dados, a carga Oracle e o WebApp público
+estão fechados. O profile Select AI cobre os nove objetos, e os limites medidos
+do modelo estão registrados. A página APEX é demonstração opcional; não bloqueia
+o produto nem os critérios da Sprint 2.

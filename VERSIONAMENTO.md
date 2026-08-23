@@ -49,6 +49,7 @@ posteriores usam uma nova versão; tags públicas existentes não são movidas.
 | `v0.1.0` | histórico | Espelhada neste repositório; a publicação original permanece como proveniência histórica |
 | `v0.2.0` | estável | Gold, geografia, contratos e validação integrada |
 | `v0.3.0` | estável | Oracle carregado, `api/v1` pública, webapp no ar e Select AI revalidado; publicada em 23/08/2026 |
+| `v0.3.1` | em andamento | hardening da entrega: roteiro ampliado, base APEX, heartbeat, preflight e documentação final |
 
 A tag legada `medflow-v0` não deve ser apagada nem reutilizada. A `v0.1.0`
 foi espelhada neste repositório em 01/08/2026, preservando o commit histórico

@@ -1,24 +1,42 @@
 # PENDÊNCIAS — Challenge Oracle: MedFlow
 
-Atualizado em 23/08/2026, após a revalidação do Select AI.
+Atualizado em 23/08/2026, após o heartbeat, o preflight e a base APEX.
 Entrega da Sprint 2: **01/09/2026**.
+
+## Estado atual para fechar a entrega
+
+O produto técnico está fechado e publicado: `v0.3.0`, quatro visões no WebApp,
+dez endpoints `api/v1`, 8.403.103 comparações sem divergência, roteiro de Select
+AI revalidado e heartbeat diário ativo. O hardening posterior está no changelog
+de `v0.3.1 — em andamento`.
+
+Falta trabalho de entrega, não de pipeline:
+
+1. concluir PPT e vídeo com evidências atuais;
+2. completar `Informacoes_Finais_Projeto_Integrantes_v1.xlsx` com o quinto
+   integrante;
+3. produzir e conferir o ZIP único do FIAP ON;
+4. opcionalmente montar a página APEX seguindo `db/apex/README.md`;
+5. preparar os cinco integrantes e rodar `make preflight` antes da banca.
+
+Os arquivos finais de PPT, planilha e vídeo ainda não estão neste workspace.
 
 ## Concluído nesta revisão
 
 - Bronze limitada à ingestão, preservação e linhagem.
 - Silver concentrando todos os tratamentos e de/paras.
 - Batch mensal com descoberta remota e cache incremental, limitado a
-  2024–2026 e executado até a última competência comum disponível (2026-05).
-- 7.034.961 registros SIH e 243.085 registros CNES reconciliados.
+  2024–2026 e executado até a última competência comum validada (2026-06).
+- 7.284.476 registros SIH e 251.457 registros CNES reconciliados.
 - 100% dos 15 códigos de especialidade observados mapeados.
 - `N_AIH`, `IDENT` e `COD_IDADE` reincorporados.
 - AIH aprovada separada de internação nova e continuação.
 - `QT_DIARIAS` separado semanticamente de `DIAS_PERM`.
 - região oficial obtida por município para os 645 municípios de São Paulo.
-- nomes e esfera atuais obtidos para os 653 hospitais na API oficial do CNES.
+- nomes e esfera atuais obtidos para os 655 hospitais na API oficial do CNES.
 - natureza jurídica coberta para os 21 códigos observados pela CONCLA/IBGE,
   incluindo `1228`, encontrado na atualização.
-- descrição coberta para os 9.494 códigos CID observados.
+- descrição coberta para os 9.513 códigos CID observados.
 - `MARCA_UTI` coberta por fontes MS/DATASUS e CEM.
 - todos os agregados com `dropna=False` e reconciliação.
 - documentação e metadados automáticos em `data/silver/`.
@@ -29,7 +47,9 @@ Entrega da Sprint 2: **01/09/2026**.
   preservando o repositório original como proveniência histórica;
 - versão pública [`v0.2.0`](https://github.com/Lucas-D-S-1/fiap-1tscoa/releases/tag/v0.2.0)
   publicada com Silver canônica, Gold, geografia, contratos e validação
-  integrada.
+  integrada;
+- versão pública [`v0.3.0`](https://github.com/Lucas-D-S-1/medflow/releases/tag/v0.3.0)
+  publicada com Oracle, API pública, WebApp e Select AI revalidado.
 
 ## Pendências em ordem lógica
 
@@ -39,11 +59,11 @@ Os campos que estavam sem domínio foram pesquisados novamente e incorporados:
 
 - `NAT_JUR`: 21/21 códigos observados, CONCLA/IBGE 2021;
 - `REGSAUDE`: 645/645 municípios, API oficial DEMAS/MS;
-- `DIAG_PRINC`: 9.494/9.494 códigos observados, DATASUS CID-10 2008 e
+- `DIAG_PRINC`: 9.513/9.513 códigos observados, DATASUS CID-10 2008 e
   complementos oficiais do Ministério da Saúde;
 - `MARCA_UTI`: 14/14 códigos observados; os códigos legados 01 e 99 têm
   proveniência explícita;
-- nome e esfera administrativa atuais: 653/653 hospitais, API oficial CNES.
+- nome e esfera administrativa atuais: 655/655 hospitais, API oficial CNES.
 
 Não resta lacuna de de/para nos códigos observados. A única ressalva cadastral
 é temporal: nome e esfera vêm da fotografia **atual** do CNES, não de uma
@@ -54,7 +74,7 @@ foi retroativamente preenchido.
 ### 2. Rever a documentação e os artefatos Silver — concluído
 
 `DICIONARIO.md`, `DOMINIOS.md`, `RELATORIO_QUALIDADE.md` e `METADADOS.json`
-foram regenerados para 2024-01 a 2026-05. A distinção entre cadastro atual e
+foram regenerados para 2024-01 a 2026-06. A distinção entre cadastro atual e
 dado histórico permanece explícita.
 
 Se forem exigidos atributos historicamente vigentes, será necessário localizar
@@ -86,14 +106,14 @@ permanece apenas como reprodução do proxy faturado.
 
 O notebook gera sete marts e reconciliou:
 
-- 6.905.441 internações novas;
-- 32.425.897 pacientes-dia estimados;
-- 310 linhas de IS calculáveis;
-- 30.550 combinações hospital/CID elegíveis para IPR;
-- 142 hospital/mês com capacidade SUS zero preservados e IPH nulo.
-- 6.846.665 internações de residentes paulistas observadas em SP;
-- 906.060 deslocamentos inter-regionais com saída igual à entrada;
-- 953.656 ICSAP distribuídas nos 19 grupos oficiais.
+- 7.150.693 internações novas;
+- 33.593.969 pacientes-dia estimados;
+- 372 linhas de IS calculáveis;
+- 31.452 combinações hospital/CID elegíveis para IPR;
+- 146 hospital/mês sem leito SUS declarado, preservados com IPH nulo;
+- 7.089.959 internações de residentes paulistas observadas em SP;
+- 939.143 deslocamentos inter-regionais com saída igual à entrada;
+- 988.453 ICSAP distribuídas nos 19 grupos oficiais.
 
 ### 5. Estrutura e geografia — concluído
 
@@ -186,9 +206,9 @@ Artefatos de setup versionados em `db/` e `src/medflow/oracle/`:
 | Criar esquema `MEDFLOW` separado do `ADMIN` | `db/schema/01_criar_usuario_medflow.sql` | executado em 01/08/2026 |
 | Testar conexão mTLS | `testar_conexao.py` | validado como `MEDFLOW` |
 | Modelo dimensional, 2 dimensões e 7 marts, 175 colunas comentadas | `db/schema/02_criar_tabelas_gold.sql` | executado; 10 índices secundários |
-| Carga idempotente de 585.296 linhas | `carregar_gold.py` | executada e conferida |
+| Carga idempotente de 597.725 linhas | `carregar_gold.py` | executada e conferida |
 | Reconciliação de 36 métricas contra o contrato `0.3.0` | `db/schema/03_validar_carga.sql` | 36/36 `ok`; seis gates vazios |
-| Select AI com cinco perguntas e SQL de referência | `db/select_ai/04_select_ai.sql` | bateria original validada; duas novas perguntas aguardam revalidação |
+| Select AI com 13 perguntas em cinco blocos | `src/medflow/select_ai/` | oito referências executadas; seis coincidências exatas e limites documentados |
 
 O Resource Principal usa o Dynamic Group `MedFlowADBGenAI` e a policy
 `use generative-ai-family`. O profile `MEDFLOW_GENAI` está habilitado sem chave
@@ -201,11 +221,10 @@ Riscos conhecidos, registrados para não virarem surpresa:
 - **Select AI depende do OCI Generative AI.** A integração está funcionando,
   mas Dynamic Group, policy IAM e Resource Principal devem ser preservados e
   testados novamente antes da apresentação.
-- **Always Free hiberna por inatividade.** Conectar ao menos uma vez por semana
-  e confirmar o estado `Disponível` na véspera da apresentação.
-  Último ping verificado em **16/08/2026**: conexão mTLS ok como `MEDFLOW`, os
-  10 endpoints de `api/v1` respondendo e a Gold íntegra. **Próximo limite:
-  23/08.** A automação do ping ainda não existe e está em aberto.
+- **Always Free hiberna por inatividade.** O heartbeat consulta diariamente o
+  `/status`, uma linha real dos marts e o Pages. Ele impede a hibernação, mas
+  não acorda um banco já parado. Rodar `make preflight` na véspera e no dia da
+  banca continua obrigatório.
 
 ### 7b. Recorte avançado para 2026-06 — concluído em 09/08/2026
 
@@ -263,15 +282,17 @@ A decisão precisa ser tomada e registrada aqui antes da fatia 5.
 
 ### 8. Revalidar o Select AI depois do produto — concluído em 23/08/2026
 
-As cinco perguntas foram repetidas contra o produto final em SQL convencional,
-`showsql` e `narrate`. Os resultados continuam coerentes: os desvios entre o
-SQL gerado e o de referência são de forma, não de semântica, e nenhuma resposta
-narrada tratou o IPH como ocupação real nem o dado como tempo real.
+O roteiro atual tem 13 perguntas em cinco blocos. Oito possuem SQL de
+referência comparado por execução; seis devolveram os mesmos rótulos na mesma
+ordem. Duas divergiram porque o modelo ranqueou linhas mensais antes de agregar.
+Também foram medidos o uso indevido de “ocupação” na narrativa e a perda de
+contexto no turno seguinte. As recusas de tempo real e de um estado fora do
+recorte funcionaram.
 
-A execução é reproduzível por `scripts/revalidar_select_ai.py`, que grava a
-evidência datada em
-[`docs/qualidade/REVALIDACAO_SELECT_AI.md`](docs/qualidade/REVALIDACAO_SELECT_AI.md)
-e falha se um termo proibido aparecer na narrativa.
+A execução é reproduzível por `make select-ai-revalidar`, que regrava
+[`docs/qualidade/REVALIDACAO_SELECT_AI.md`](docs/qualidade/REVALIDACAO_SELECT_AI.md).
+A interpretação e as escolhas seguras para a banca estão em
+[`docs/qualidade/LEITURA_SELECT_AI.md`](docs/qualidade/LEITURA_SELECT_AI.md).
 
 ### 9. Produzir a apresentação por último
 
@@ -283,7 +304,8 @@ aprovação do webapp e da revalidação do Select AI:
 - produzir PPT, vídeo e roteiro da demonstração;
 - ensaiar a defesa dos indicadores hospitalares/territoriais e limitações.
 
-Próximo marco sugerido: **`v0.3.0` — Oracle e webapp MVP**.
+Marco publicado: **`v0.3.0` — Oracle e webapp MVP**. O hardening posterior está
+em **`v0.3.1 — em andamento`**.
 
 ## Entregáveis da Sprint 2
 
@@ -296,10 +318,10 @@ Próximo marco sugerido: **`v0.3.0` — Oracle e webapp MVP**.
 | Link público | 10% | **concluído em 16/08/2026** — <https://lucas-d-s-1.github.io/medflow/>, servido por `api/v1` |
 | Validação dos dados no produto | — | concluída e reproduzível: 8.403.103 comparações, zero divergências |
 | Oracle Select AI | — | **revalidado contra o produto em 23/08/2026**, evidência em `docs/qualidade/REVALIDACAO_SELECT_AI.md` |
-| GitHub | 20% | `v0.2.0` publicada; repositório de entrega passou a ser `medflow` |
-| PPT / pitch | 10% | aguarda produto validado |
-| Vídeo YouTube | 10% | aguarda produto validado |
-| Apresentação técnica | 50% | aguarda produto e Select AI revalidados |
+| GitHub | 20% | `v0.3.0` publicada; hardening de `v0.3.1` em andamento |
+| PPT / pitch | 10% | pendente; arquivo final ainda não está no workspace |
+| Vídeo YouTube | 10% | pendente; link final ainda não está no workspace |
+| Apresentação técnica | 50% | produto pronto; falta preparação dos cinco integrantes |
 
 ## Reorganização em curso
 
@@ -321,7 +343,7 @@ está preservada na branch `arquivo/v0-2026-07` e nas tags `v0` e `v0.1.0`.
 | 7 | `db/` como backend e o contrato OpenAPI dos 10 endpoints |
 | 8 | front por funcionalidade, gerador de fixtures e specs por visão |
 | 9 | README por pasta, respondendo o quê / por quê / como |
-| 10 | **bloqueada** — ver abaixo |
+| 10 | concluída: `v0.3.0` publicada em 23/08/2026 |
 | limpeza | o que se publica: 216 → 205 arquivos, 17,7 → 15,2 MB |
 
 ### Fatia 10 — o conflito de critério da tag `v0.3.0` deixou de existir
@@ -338,7 +360,7 @@ A tag ficou parada por um tempo porque se cogitou refazer a UI em duas telas.
 **Em 18/08/2026 essa hipótese foi descartada**: o WebApp permanece nas quatro
 visões, e mudanças de interface ficam restritas a texto e acabamento de
 apresentação. Com isso o último motivo para segurar a tag deixou de existir e
-`v0.3.0` pode ser marcada.
+`v0.3.0` foi marcada e publicada em 23/08/2026.
 
 **Portão da fatia 4:** os 48 parquets precisam manter o SHA-256 registrado em
 `contracts/INVENTARIO_PRE_REORG.json` depois que Bronze e Silver saírem dos
