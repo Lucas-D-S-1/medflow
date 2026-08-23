@@ -106,14 +106,32 @@ continua de pé pelo snapshot e diz na tela que está em contingência.
 
 ### Preflight da apresentação
 
-1. confirmar o estado `Disponível` no console Oracle;
-2. chamar `/status` e conferir horário, competência e contrato;
-3. abrir as quatro visões em janela anônima;
-4. testar um filtro regional e um par hospital/CID elegível;
-5. simular a contingência e conferir o selo de origem;
-6. testar o link público em outra rede ou dispositivo;
-7. executar o roteiro controlado do Select AI;
-8. guardar screenshots ou um vídeo curto como última contingência visual.
+A parte automatizável roda num comando, `make preflight`, que fala com o
+produto publicado pelo mesmo caminho que o avaliador usa — sem `.env`, wallet
+ou Gold local. São doze verificações: Oracle ao vivo, versão do contrato,
+competência mais recente, os endpoints de cada visão, as 62 regiões carregadas,
+o 404 documentado para parâmetro inválido e o link público abrindo.
+
+O que a máquina não checa continua na mão, e o comando imprime a lista no fim:
+
+1. abrir as quatro visões em janela anônima, sem cache nem login;
+2. testar um filtro regional e um par hospital/CID elegível;
+3. simular a contingência e conferir o selo de origem na tela;
+4. abrir o link em outra rede ou no celular, fora do wi-fi da sala;
+5. executar o roteiro controlado do Select AI uma vez, sem plateia;
+6. guardar screenshots ou um vídeo curto como última contingência visual.
+
+### Manter o banco acordado
+
+O Always Free para sozinho depois de sete dias sem atividade, e entre a entrega
+e a banca há treze dias em que ninguém necessariamente abre o produto. O
+workflow `.github/workflows/heartbeat.yml` roda todo dia às 09h10 UTC, lê o
+`/status` e uma linha real dos marts pelo módulo público, e confere o site no
+Pages. Chamada ao ORDS executa SQL, e SQL conta como atividade.
+
+Ele **impede** o banco de dormir; não o acorda. Se já estiver parado, o
+workflow fica vermelho e o passo final imprime o procedimento: iniciar pelo
+console OCI, esperar cerca de cinco minutos pelo ORDS e reexecutar.
 
 ## 7. Decisões que evitam complexidade sem valor
 

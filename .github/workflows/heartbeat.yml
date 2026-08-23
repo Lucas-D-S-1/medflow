@@ -1,0 +1,134 @@
+# Mantém o Autonomous Database acordado e avisa quando ele não está.
+#
+# O Always Free para sozinho depois de 7 dias sem atividade. Entre a entrega,
+# em 01/09, e a banca, entre 14 e 18/09, há treze dias em que ninguém
+# necessariamente abre o produto — tempo mais que suficiente para o banco
+# dormir e o link público, que vale 10% da nota, responder erro no dia da
+# apresentação.
+#
+# A ARQUITETURA.md descreve este heartbeat desde sempre, e a tabela de riscos
+# conta com ele. Ele não existia.
+#
+# Uma chamada ao ORDS executa SQL no banco, e SQL conta como atividade. Rodar
+# uma vez por dia mantém o contador de ociosidade longe dos 7 dias com folga
+# de sobra para uma execução falhar sem consequência.
+#
+# ATENÇÃO: isto **impede** o banco de dormir; não o acorda. Se ele já estiver
+# parado, este workflow fica vermelho e o passo final diz o que fazer. Acordar
+# exige o console OCI.
+
+name: Heartbeat
+
+on:
+  schedule:
+    # 09:10 UTC, todo dia. Fora da hora cheia de propósito: o agendador do
+    # GitHub atrasa mais quando todo mundo pede o mesmo minuto.
+    - cron: "10 9 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: heartbeat
+  cancel-in-progress: false
+
+jobs:
+  acordar:
+    name: Conferir o Oracle pelo link público
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Conferir se a URL do ORDS está configurada
+        run: |
+          if [ -z "${{ vars.ORDS_BASE_URL }}" ]; then
+            echo "::error::A variável de repositório ORDS_BASE_URL não está definida."
+            echo "Settings -> Secrets and variables -> Actions -> Variables."
+            echo "É a mesma que o workflow de Pages usa para montar VITE_API_BASE."
+            exit 1
+          fi
+
+      - name: Bater no /status
+        id: status
+        run: |
+          set -uo pipefail
+          url="${{ vars.ORDS_BASE_URL }}/api/v1/status"
+
+          # Três tentativas: o ORDS leva alguns minutos para responder logo
+          # depois de o banco iniciar, e uma falha isolada de rede não é
+          # motivo para acordar ninguém.
+          for tentativa in 1 2 3; do
+            codigo=$(curl -sS -m 30 -o resposta.json -w "%{http_code}" "$url" || echo "000")
+            echo "tentativa $tentativa: HTTP $codigo"
+            [ "$codigo" = "200" ] && break
+            [ "$tentativa" -lt 3 ] && sleep 20
+          done
+
+          if [ "$codigo" != "200" ]; then
+            echo "::error::O /status devolveu HTTP $codigo depois de 3 tentativas."
+            cat resposta.json 2>/dev/null || true
+            exit 1
+          fi
+
+          cat resposta.json
+          echo "payload=$(cat resposta.json | tr -d '\n')" >> "$GITHUB_OUTPUT"
+
+      - name: Conferir que a resposta veio do Oracle, e não do que sobrou
+        run: |
+          set -euo pipefail
+          # `source` distingue banco ao vivo de qualquer outra procedência.
+          # Um 200 sozinho não prova que o dado é o certo.
+          origem=$(jq -r '.source' resposta.json)
+          estado=$(jq -r '.status' resposta.json)
+          contrato=$(jq -r '.contract_version' resposta.json)
+          ate=$(jq -r '.data_through' resposta.json)
+
+          echo "status=$estado origem=$origem contrato=$contrato dado_ate=$ate"
+
+          [ "$estado" = "ok" ] || { echo "::error::status=$estado"; exit 1; }
+          [ "$origem" = "oracle-live" ] || { echo "::error::origem=$origem, esperado oracle-live"; exit 1; }
+          [ "$contrato" = "0.3.0" ] || { echo "::error::contrato=$contrato, esperado 0.3.0"; exit 1; }
+          [ "$ate" = "2026-06" ] || { echo "::error::dado até $ate, esperado 2026-06"; exit 1; }
+
+      - name: Ler uma linha de verdade dos marts
+        run: |
+          set -euo pipefail
+          # O /status toca pouca coisa. Ler um mart prova que a carga
+          # continua lá e que a view de projeção responde — e dá ao banco
+          # atividade real, não um ping de cortesia.
+          url="${{ vars.ORDS_BASE_URL }}/api/v1/regioes/resumo?ano=2026&mes=6&limit=1"
+          codigo=$(curl -sS -m 30 -o dado.json -w "%{http_code}" "$url" || echo "000")
+          [ "$codigo" = "200" ] || { echo "::error::regioes/resumo devolveu HTTP $codigo"; exit 1; }
+
+          total=$(jq -r '.pagination.count' dado.json)
+          echo "regioes/resumo: $total região(ões) na competência 2026-06"
+          [ "$total" = "62" ] || { echo "::error::esperava 62 regiões, veio $total"; exit 1; }
+
+      - name: Confirmar que o link público abre
+        run: |
+          set -euo pipefail
+          codigo=$(curl -sS -m 30 -o /dev/null -w "%{http_code}" \
+                   "https://lucas-d-s-1.github.io/medflow/" || echo "000")
+          echo "GitHub Pages: HTTP $codigo"
+          [ "$codigo" = "200" ] || { echo "::error::o site publicado devolveu HTTP $codigo"; exit 1; }
+
+      - name: O que fazer se este workflow ficou vermelho
+        if: failure()
+        run: |
+          cat <<'AJUDA'
+          ::error::O produto não está respondendo como deveria.
+
+          Se o banco parou por ociosidade — o caso mais provável:
+
+            1. console OCI -> Oracle Database -> Autonomous Database
+            2. instância MEDFLOW -> botão Start
+            3. esperar cerca de 5 minutos: o ORDS demora a subir depois do banco
+            4. reexecutar este workflow em Actions -> Heartbeat -> Run workflow
+
+          Se o banco está Disponível mas o /status falha, o ORDS ainda está
+          inicializando. Espere e repita.
+
+          Se o contrato ou a competência vieram diferentes do esperado, alguém
+          recarregou o banco com outro recorte. Aí não é infraestrutura: confira
+          a carga antes da apresentação.
+
+          O passo a passo completo está em db/README.md.
+          AJUDA
+          exit 1
