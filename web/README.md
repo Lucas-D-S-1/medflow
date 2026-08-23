@@ -10,10 +10,11 @@ pelos dez endpoints ORDS. Quatro telas, cada uma respondendo uma pergunta:
 | `/hospital` | O que explica o sinal e onde ele se concentra? |
 | `/metodologia` | Posso confiar no número e quais são seus limites? |
 
-**Como rodar**, com o `.env` da raiz configurado:
+**Como preparar**, a partir da raiz do repositório:
 
 ```bash
-npm install && npm run dev     # Vite em 127.0.0.1:5173
+make setup                     # npm ci e Chromium já estão incluídos
+cd web && npm run dev          # Vite em 127.0.0.1:5173
 ```
 
 O Vite faz proxy de `/api` para o ORDS, então em desenvolvimento o navegador

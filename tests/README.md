@@ -11,10 +11,17 @@ específico, e vale saber qual.
 | reconciliação | `reconciliacao/` | a API devolve exatamente a Gold | Oracle |
 
 ```bash
-make test-py       # tudo que roda sem Oracle
+make test          # Python + frontend, sem dados locais, .env ou Oracle
+make test-py       # somente a parte Python
+make test-completo # acrescenta as integrações ao vivo
 make contrato      # o OpenAPI contra o SQL e contra a API
 make reconciliar   # amostra da reconciliação
 ```
+
+Num clone sem `data/`, os casos que validam os Parquets reais se pulam. Assim
+o mesmo `make test` passa localmente e na CI sem fingir que 11 GB estão
+versionados. Depois de `make pipeline`, esses casos entram automaticamente e
+validam as camadas materializadas.
 
 O que precisa do Oracle **se pula**, não falha, quando `ORDS_BASE_URL` não está
 no ambiente. É deliberado: a CI não tem wallet e não deve ter, e um push não

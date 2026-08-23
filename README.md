@@ -27,6 +27,8 @@ Proposta metodológica e revisão dos requisitos:
 
 Arquitetura detalhada:
 [`ARQUITETURA.md`](ARQUITETURA.md).
+Instalação e mapa do repositório:
+[`HOW_TO_INSTALL.md`](HOW_TO_INSTALL.md).
 Nomenclatura:
 [`contracts/NOMENCLATURA.md`](contracts/NOMENCLATURA.md).
 Contrato da API:
@@ -37,8 +39,10 @@ Mudanças incompatíveis:
 [`CHANGELOG.md`](CHANGELOG.md).
 Política de tags e releases:
 [`VERSIONAMENTO.md`](VERSIONAMENTO.md).
+Como contribuir:
+[`CONTRIBUTING.md`](CONTRIBUTING.md).
 
-## Estado validado em 01/08/2026
+## Pipeline atual
 
 O pipeline possui três camadas com responsabilidades explícitas:
 
@@ -46,21 +50,21 @@ O pipeline possui três camadas com responsabilidades explícitas:
 SIH/RD + CNES/LT + referências oficiais MS/DATASUS/IBGE
                   │
                   ▼
-00_extracao_dados.ipynb
+src/medflow/bronze/
 BRONZE: ingestão fiel, linhagem, manifesto e hashes
                   │
                   ▼
-01_engenharia_dados.ipynb
+src/medflow/silver/
 SILVER: tipos analíticos, de/paras, dimensões, fatos e qualidade
                   │
                   ▼
-02_analise_dados.ipynb
+src/medflow/gold.py + geografia.py
 GOLD: indicadores hospitalares/territoriais, fluxos, ICSAP e geografia
 ```
 
 ### Bronze — não contém regra de negócio
 
-O notebook `00_extracao_dados.ipynb`:
+A etapa Bronze, implementada em `src/medflow/bronze/`:
 
 - preserva DBC em `data/bronze/origem/datasus/`;
 - mantém DBF apenas como cache em `data/bronze/intermediario/dbf/`;
@@ -91,7 +95,7 @@ As colunas adicionais em relação à fonte são somente de linhagem.
 
 ### Silver — dimensões e fatos conformados
 
-O notebook `01_engenharia_dados.ipynb`:
+A etapa Silver, implementada em `src/medflow/silver/`:
 
 - tipa os campos usados analiticamente;
 - documenta e aplica os de/paras;
@@ -115,7 +119,7 @@ Saídas canônicas:
 | `silver/dimensoes/dim_municipio` | 645 | município, região e população IBGE 2022 |
 | 5 outras dimensões | — | tempo, hospital, especialidade, CID e domínios |
 
-O notebook também gera:
+A Silver também gera:
 
 - `DICIONARIO.md`;
 - `qualidade/DOMINIOS.md`;
@@ -125,7 +129,8 @@ O notebook também gera:
 
 ### Gold — índices e consumo
 
-O notebook `02_analise_dados.ipynb` publica:
+A etapa Gold, implementada em `src/medflow/gold.py`, `icsap.py`, `ipca.py` e
+`geografia.py`, publica:
 
 | Mart | Linhas | Indicadores |
 |---|---:|---|
@@ -213,7 +218,7 @@ por endpoint, no [`CHANGELOG.md`](CHANGELOG.md).
 Para rodar o webapp em desenvolvimento, com o `.env` da raiz configurado:
 
 ```bash
-cd web && npm install && npm run dev
+cd web && npm run dev
 ```
 
 O Vite serve em `http://127.0.0.1:5173` e faz proxy de `/api` para o ORDS, de
@@ -292,17 +297,28 @@ Cada pasta tem um README que responde o quê, por quê e como. O mapa:
 
 ## Como executar
 
-O pipeline vive no pacote `medflow`, não nos notebooks. Num clone limpo:
+Pré-requisitos: Git, Make, Python 3.12+ e Node.js 24. `uv` é recomendado; sem
+ele, o Python precisa incluir os módulos `venv` e `pip`. Num clone limpo, o
+primeiro ciclo completo é:
 
 ```bash
-make setup                      # venv e instalação editável
-make bronze silver gold geografia
-make validar                    # validação integrada das três camadas
+git clone https://github.com/Lucas-D-S-1/medflow.git
+cd medflow
+make setup                      # Python, frontend e Chromium do Playwright
+make test                       # não exige .env, wallet, Oracle nem dados locais
 ```
 
-Cada etapa é idempotente: reexecutar o mesmo recorte não duplica registro nem
-reescreve Parquet sem necessidade. A Bronze incorpora automaticamente as
-competências comuns novas de SIH/RD e CNES/LT.
+Para materializar os dados públicos e validar as três camadas:
+
+```bash
+make pipeline                   # Bronze, Silver, Gold e geografia
+make validar
+```
+
+Esse caminho também não exige credenciais. Ele baixa as fontes públicas e
+ocupa cerca de 11 GB. Cada etapa é idempotente: reexecutar o mesmo recorte não
+duplica registro nem reescreve Parquet sem necessidade. A Bronze incorpora
+automaticamente as competências comuns novas de SIH/RD e CNES/LT.
 
 **Trocar o recorte é configuração, não código.** O padrão vive em
 `src/medflow/config.py` e acompanha o que foi entregue; para experimentar
@@ -318,8 +334,9 @@ mas não são mais o motor.
 ### Testes
 
 ```bash
-make test                    # pytest e a suíte do frontend
+make test                    # Python + frontend, hermético e sem credenciais
 make lint                    # ruff
+make test-completo           # acrescenta Oracle e integrações ao vivo
 make reconciliar             # amostra: API contra a Gold, campo a campo
 make reconciliar-completo    # a varredura inteira, sob demanda
 ```
@@ -333,9 +350,11 @@ Os testes estão em três níveis, e cada um prova algo que os outros não prova
 | contrato da API | `tests/test_openapi.py` | o `openapi.yaml` bate com o SQL dos handlers e com a API viva |
 | reconciliação | `tests/reconciliacao/` | o que a API devolve é o que está na Gold — mesmo dígito, mesma ordem |
 
-A reconciliação precisa do Oracle no ar; sem `ORDS_BASE_URL` ela se pula em
-vez de falhar, e é por isso que a CI segue verde sem wallet. O detalhe do
-método está em [`tests/reconciliacao/README.md`](tests/reconciliacao/README.md).
+A suíte padrão é a mesma base hermética usada pela CI. Testes que precisam dos
+Parquets se pulam num clone ainda não materializado; integrações ao vivo ficam
+em alvos explícitos. O detalhe está em
+[`tests/README.md`](tests/README.md) e
+[`tests/reconciliacao/README.md`](tests/reconciliacao/README.md).
 
 Para o Oracle e o webapp, com o `.env` da raiz configurado a partir de
 `.env.example`:
@@ -343,7 +362,7 @@ Para o Oracle e o webapp, com o `.env` da raiz configurado a partir de
 ```bash
 python3 src/medflow/oracle/executar_sql.py db/views/07_vw_api_hospitais.sql
 python3 src/medflow/oracle/executar_sql.py db/ords/03_modulo_medflow_dev.sql
-cd web && npm install && npm run dev
+cd web && npm run dev
 ```
 
 Em `db/views/` há uma view por fatia. Em `db/ords/`, cada
