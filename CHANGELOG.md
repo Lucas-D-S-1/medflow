@@ -57,6 +57,8 @@ A versão da release e a versão dos contratos de dados evoluem separadamente.
 - documentação corrente e dossiê do time alinhados ao estado pós-`v0.3.0`:
   roteiro de 13 perguntas, heartbeat ativo, base APEX opcional e pendências
   restritas aos artefatos acadêmicos e à montagem da demonstração.
+- GitHub Actions oficiais atualizadas para `v7`, removendo o runtime Node 20
+  que o runner já precisava forçar para Node 24.
 
 ### Medido
 
