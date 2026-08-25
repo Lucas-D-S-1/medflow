@@ -35,9 +35,9 @@ disponível e validado: **2024-01 a 2026-06 (30 meses)**.
 Site estático no GitHub Pages falando direto com o Autonomous Database pelo
 módulo ORDS público `api/v1`, somente leitura. Publicado e conferido no
 navegador em 16/08/2026. Versão pública estável:
-[`v0.3.0`](https://github.com/Lucas-D-S-1/medflow/releases/tag/v0.3.0), com
-Oracle carregado, API pública, webapp no ar e Select AI revalidado em
-23/08/2026, com evidência em
+[`v0.3.1`](https://github.com/Lucas-D-S-1/medflow/releases/tag/v0.3.1), com
+Oracle carregado, API pública, WebApp no ar, demonstração APEX, heartbeat,
+preflight e Select AI revalidado em 23/08/2026, com evidência em
 [`docs/qualidade/REVALIDACAO_SELECT_AI.md`](docs/qualidade/REVALIDACAO_SELECT_AI.md).
 
 **O acordo de disponibilidade.** O Autonomous Database é Always Free e para

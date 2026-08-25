@@ -47,9 +47,9 @@ posteriores usam uma nova versão; tags públicas existentes não são movidas.
 |---|---|---|
 | `medflow-v0` | legado | Primeira baseline; mantida apenas por rastreabilidade |
 | `v0.1.0` | histórico | Primeiro marco público do pipeline Bronze/Silver, publicada aqui em 29/07/2026 |
-| `v0.2.0` | estável | Gold, geografia, contratos e validação integrada |
-| `v0.3.0` | estável | Oracle carregado, `api/v1` pública, webapp no ar e Select AI revalidado; publicada em 23/08/2026 |
-| `v0.3.1` | pronta localmente | hardening validado em 25/08/2026; tag e publicação pendentes |
+| `v0.2.0` | histórico | Gold, geografia, contratos e validação integrada |
+| `v0.3.0` | histórico | Oracle carregado, `api/v1` pública, WebApp no ar e Select AI revalidado; publicada em 23/08/2026 |
+| `v0.3.1` | estável | hardening final validado e publicado em 25/08/2026 |
 
 A tag legada `medflow-v0` não deve ser apagada nem reutilizada. A `v0.1.0`
 nasceu neste repositório em 29/07/2026 e foi espelhada no `fiap-1tscoa` em

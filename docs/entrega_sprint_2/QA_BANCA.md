@@ -48,8 +48,8 @@ views de projeção, sem publicar as tabelas Gold diretamente por AutoREST.
 
 ## 8. Como as quatro visões formam uma jornada?
 
-A visão regional localiza o sinal; fluxos explica deslocamentos e ICSAP;
-hospital aprofunda série, especialidade e diagnóstico; metodologia apresenta
+A visão regional localiza o sinal. Fluxos explica deslocamentos e ICSAP.
+Hospital aprofunda série, especialidade e diagnóstico. Metodologia apresenta
 fórmulas, cobertura e limites. O percurso vai do território à hipótese.
 
 ## 9. Quais técnicas analíticas foram implementadas?

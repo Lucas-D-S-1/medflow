@@ -374,8 +374,7 @@ Ordem de trabalho restante para a entrega acadêmica:
 A versão pública
 [`v0.3.0`](https://github.com/Lucas-D-S-1/medflow/releases/tag/v0.3.0)
 foi publicada em 23/08/2026 com o produto de ponta a ponta. A `v0.3.1` reúne o
-hardening posterior, fechado e validado localmente em 25/08/2026. A tag e a
-publicação permanecem pendentes.
+hardening posterior e foi validada e publicada em 25/08/2026.
 
 A base metodológica, a estrutura de dados, a carga Oracle e o WebApp público
 estão fechados. O profile Select AI cobre os nove objetos, e os limites medidos

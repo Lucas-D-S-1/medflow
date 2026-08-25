@@ -89,7 +89,7 @@ As técnicas implementadas abrangem análise exploratória, modelagem dimensiona
 | Link público | concluído em 16/08/2026 e servido pelo módulo ORDS `api/v1` |
 | Validação do produto | 8.403.103 comparações campo a campo, sem divergências |
 | Select AI | roteiro de 13 perguntas revalidado em 23/08/2026; oito têm SQL de referência executado, seis coincidiram exatamente e os limites restantes estão documentados |
-| GitHub | versão pública `v0.3.0` registrada; `v0.3.1` pronta localmente, ainda sem tag ou publicação |
+| GitHub | versão pública `v0.3.1` registrada em 25/08/2026 |
 | Disponibilidade | heartbeat diário ativo; `make preflight` confere o produto publicado antes da banca |
 | Página APEX de Select AI | montada em 25/08/2026; workspace `MEDFLOW_DEMO`, aplicação `100`, página `1`, export versionado em `db/apex/` |
 | PPT | existe e foi regerado em 25/08/2026, com a captura real da página APEX no slide 16; mora no repositório acadêmico `fiap-1tscoa`, que é privado |

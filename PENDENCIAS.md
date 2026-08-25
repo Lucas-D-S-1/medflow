@@ -5,11 +5,10 @@ Entrega da Sprint 2: **01/09/2026**.
 
 ## Estado atual para fechar a entrega
 
-O produto técnico está fechado e publicado: `v0.3.0`, quatro visões no WebApp,
+O produto técnico está fechado e publicado: `v0.3.1`, quatro visões no WebApp,
 dez endpoints `api/v1`, 8.403.103 comparações sem divergência, roteiro de Select
 AI revalidado, heartbeat diário ativo e a página APEX de demonstração montada em
-25/08/2026. O hardening posterior está fechado localmente no changelog da
-`v0.3.1`; a tag e a publicação ainda não foram realizadas.
+25/08/2026. A release reúne o MVP da `v0.3.0` e o hardening final da entrega.
 
 Falta trabalho de entrega, não de pipeline:
 
@@ -51,6 +50,8 @@ da página APEX no slide 16. Ele mora no repositório acadêmico `fiap-1tscoa`, 
   integrada;
 - versão pública [`v0.3.0`](https://github.com/Lucas-D-S-1/medflow/releases/tag/v0.3.0)
   publicada com Oracle, API pública, WebApp e Select AI revalidado.
+- versão pública [`v0.3.1`](https://github.com/Lucas-D-S-1/medflow/releases/tag/v0.3.1)
+  publicada com APEX, heartbeat, preflight e documentação final da entrega.
 
 ## Pendências em ordem lógica
 
@@ -302,8 +303,7 @@ revalidação do Select AI e da montagem da página APEX. A captura real do APEX
 está no slide 16. Restam gravar o vídeo e ensaiar a defesa dos indicadores e
 das limitações.
 
-Marco publicado: **`v0.3.0`, Oracle e webapp MVP**. O hardening posterior está
-fechado localmente na **`v0.3.1`**, ainda sem tag ou publicação.
+Marco publicado: **`v0.3.1`, hardening final da entrega**.
 
 ## Entregáveis da Sprint 2
 
@@ -316,7 +316,7 @@ fechado localmente na **`v0.3.1`**, ainda sem tag ou publicação.
 | Link público | 10% | **concluído em 16/08/2026** — <https://lucas-d-s-1.github.io/medflow/>, servido por `api/v1` |
 | Validação dos dados no produto | — | concluída e reproduzível: 8.403.103 comparações, zero divergências |
 | Oracle Select AI | — | **revalidado contra o produto em 23/08/2026**, evidência em `docs/qualidade/REVALIDACAO_SELECT_AI.md` |
-| GitHub | 20% | `v0.3.0` publicada; `v0.3.1` pronta localmente e ainda não publicada |
+| GitHub | 20% | `v0.3.1` publicada em 25/08/2026 |
 | PPT / pitch | 10% | concluído no repositório acadêmico privado e regerado em 25/08/2026 |
 | Vídeo YouTube | 10% | pendente; link final ainda não está no workspace |
 | Apresentação técnica | 50% | produto pronto; falta preparação dos cinco integrantes |

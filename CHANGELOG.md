@@ -5,7 +5,7 @@ A versão da release e a versão dos contratos de dados evoluem separadamente.
 
 ## 0.3.1 — 25/08/2026
 
-Escopo fechado e validado localmente; tag e publicação ainda não realizadas.
+Publicada em 25/08/2026 depois dos portões de escrita, testes e lint.
 
 ### Adicionado
 
