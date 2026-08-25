@@ -11,19 +11,19 @@ A primeira versão fazia cinco perguntas, todas agregação de uma tabela só, e
 passava nas cinco. O problema é que uma demonstração que só faz perguntas
 fáceis não mede a ferramenta: mede a facilidade das perguntas. E a conferência
 entre o SQL gerado e o de referência era feita a olho, o que responde mal à
-única pergunta que a banca vai fazer — *como você sabe que ele acertou?*
+única pergunta que a banca vai fazer: *como você sabe que ele acertou?*
 
 O roteiro atual tem treze perguntas em cinco blocos de dificuldade crescente,
 oito delas com SQL de referência conferido **por execução**: as duas consultas
 rodam e as respostas são comparadas pela sequência ordenada de rótulos. Os
-outros cinco casos não perguntam por um número — perguntam o que o modelo faz
+outros cinco casos não perguntam por um número. Perguntam o que o modelo faz
 quando a pergunta é uma armadilha, quando depende do turno anterior e quando ele
 não tem os dados na frente.
 
 ## Resultado
 
 **Seis das oito perguntas conferidas devolveram exatamente a resposta da
-referência** — mesmos rótulos, mesma ordem. Isso cobre todo o bloco A e a
+referência**: mesmos rótulos, mesma ordem. Isso cobre todo o bloco A e a
 pergunta de custo do bloco B, inclusive a distinção entre CMI nominal e CMI
 corrigido pelo IPCA, que o modelo resolveu sem recalcular a correção.
 
@@ -34,7 +34,7 @@ que os seis acertos.
 
 É a causa comum de B1 e B2. Os marts são mensais: uma linha por região e
 competência. Perguntado pelas cinco regiões de maior pressão em 2026, o modelo
-ordenou as **linhas mensais** e pegou as cinco primeiras — que colapsam em duas
+ordenou as **linhas mensais** e pegou as cinco primeiras: que colapsam em duas
 regiões, porque uma mesma região ocupa vários dos meses mais extremos. O mesmo
 erro em B2 trocou o hospital do topo.
 
@@ -45,14 +45,14 @@ agregação antes do ranking. **O erro permaneceu.**
 
 A conclusão é a que importa para a arquitetura: comentário de coluna orienta o
 modelo, não o obriga. Texto-para-SQL erra justamente onde a pergunta exige uma
-etapa intermediária que ninguém enunciou — e "primeiro agregue, depois ordene" é
+etapa intermediária que ninguém enunciou. E "primeiro agregue, depois ordene" é
 exatamente esse tipo de etapa.
 
 ### 2. O modelo aceita o vocabulário errado da pergunta
 
 C1 pergunta pela "taxa de ocupação de leitos" de cada região. O MedFlow não mede
 ocupação: mede IPH, pressão estimada sobre a capacidade SUS declarada no CNES.
-O modelo escolheu a coluna certa — usou o IPH — e **narrou o número com o rótulo
+O modelo escolheu a coluna certa (usou o IPH) e **narrou o número com o rótulo
 errado da pergunta**, sem ressalva.
 
 Os comentários de `nr_iph_estimado` e `pc_iph_estimado` foram reescritos para
@@ -64,7 +64,7 @@ Isto é exatamente o erro que a banca cobra, e é a razão pela qual a decisão 
 arquitetura de não expor o Select AI como chat público se sustenta. As telas do
 produto usam consultas determinísticas sobre a Gold; o Select AI é demonstração
 controlada, com o SQL revisado antes da narrativa. Este achado não contradiz
-essa decisão — é a evidência que a justifica.
+essa decisão. É a evidência que a justifica.
 
 ### 3. A conversa não sobrevive ao turno seguinte
 
@@ -94,8 +94,8 @@ do roteiro precisa ser autossuficiente.
 ## Um ajuste no próprio verificador
 
 A varredura de terminologia reprovava a resposta certa. Uma boa recusa precisa
-nomear o que está recusando — "as bases **não** fornecem dados em **tempo
-real**" contém o termo proibido —, e procurar a palavra e pronto transformava o
+nomear o que está recusando ("as bases **não** fornecem dados em **tempo
+real**" contém o termo proibido), e procurar a palavra e pronto transformava o
 acerto em alarme. Duas correções:
 
 - a saída do `chat` saiu da varredura: ali o modelo responde sem os dados, e
@@ -111,7 +111,7 @@ que decide se o SQL vindo do modelo pode tocar o banco.
 
 1. **Não encadear perguntas.** Cada uma autossuficiente, pelo achado 3.
 2. **Não perguntar por "taxa de ocupação"** no roteiro apresentado, e ter a
-   correção na ponta da língua se alguém da banca perguntar assim — o achado 2
+   correção na ponta da língua se alguém da banca perguntar assim: o achado 2
    diz que o modelo vai aceitar o termo.
 3. **Preferir as perguntas do bloco A e a B3**, que passaram na conferência por
    execução, e apresentar B1 e B2 como o que são: o limite honesto da

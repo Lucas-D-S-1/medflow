@@ -10,7 +10,7 @@ de referência não responde isso.
 
 Aqui a conferência é executada. Para cada pergunta com SQL de referência, as
 duas consultas rodam contra o mesmo banco e as duas respostas são comparadas
-pela sequência ordenada de rótulos que produziram — a lista de regiões, de
+pela sequência ordenada de rótulos que produziram: a lista de regiões, de
 especialidades, de diagnósticos. É o que a pergunta de negócio pede, e é o que
 precisa bater. Duas consultas escritas de forma diferente que devolvem a mesma
 lista na mesma ordem responderam a mesma pergunta; uma que devolve outra lista
@@ -31,15 +31,15 @@ A varredura de terminologia procura `ocupação real`, `ocupacao real`, `taxa de
 no que o modelo narrou. O IPH é pressão estimada sobre capacidade SUS declarada,
 nunca ocupação real de leito, e a base é mensal por competência, nunca tempo
 real. Mencionar não é afirmar: uma ocorrência só conta quando aparece sem
-negação e sem ressalva, senão a recusa correta — que precisa nomear o que
-recusa — seria reprovada.
+negação e sem ressalva, senão a recusa correta. Que precisa nomear o que
+recusa: seria reprovada.
 
 > **Este documento é a medida, não o julgamento.** Ele é gerado por execução e
 > reescrito inteiro a cada rodada. A leitura do que estes números significam,
 > incluindo o que falhou e o que fazer antes da banca, está em
 > [`LEITURA_SELECT_AI.md`](LEITURA_SELECT_AI.md).
 
-## A. Leitura direta — uma tabela, um corte
+## A. Leitura direta: uma tabela, um corte
 
 ### A1. Onde a rede está sob mais pressão em 2026?
 **Pergunta**
@@ -101,7 +101,7 @@ FETCH FIRST 5 ROWS ONLY
 | ALTO VALE DO PARAIBA  | 0.6939893333333333 |
 ```
 
-**Conferência** — ✅ equivalente: mesmos 5 rótulos, na mesma ordem
+**Conferência** ✅ equivalente: mesmos 5 rótulos, na mesma ordem
 
 **Resposta narrada (`narrate`)**
 
@@ -184,7 +184,7 @@ FETCH FIRST 10 ROWS ONLY
 | Obstetrícia                                   | 0.027558802764486974   |
 ```
 
-**Conferência** — ✅ equivalente: mesmos 9 rótulos, na mesma ordem
+**Conferência** ✅ equivalente: mesmos 9 rótulos, na mesma ordem
 
 **Resposta narrada (`narrate`)**
 
@@ -273,7 +273,7 @@ FETCH FIRST 10 ROWS ONLY
 | Afecções da pele e do tecido subcutâneo, não especificados   | 2.3552832080924855 |
 ```
 
-**Conferência** — ✅ equivalente: mesmos 10 rótulos, na mesma ordem
+**Conferência** ✅ equivalente: mesmos 10 rótulos, na mesma ordem
 
 **Resposta narrada (`narrate`)**
 
@@ -361,7 +361,7 @@ FETCH FIRST 10 ROWS ONLY
 | JALES                  | 34.11276333333333       |
 ```
 
-**Conferência** — ✅ equivalente: mesmos 10 rótulos, na mesma ordem
+**Conferência** ✅ equivalente: mesmos 10 rótulos, na mesma ordem
 
 **Resposta narrada (`narrate`)**
 
@@ -447,7 +447,7 @@ FETCH FIRST 10 ROWS ONLY
 | Epilepsias                           | 7689              |
 ```
 
-**Conferência** — ✅ equivalente: mesmos 10 rótulos, na mesma ordem
+**Conferência** ✅ equivalente: mesmos 10 rótulos, na mesma ordem
 
 **Resposta narrada (`narrate`)**
 
@@ -463,14 +463,14 @@ Os dez grupos ICSAP com mais internações de residentes em 2026 são:
 * Pneumonias bacterianas
 * Epilepsias
 
-## B. Profundidade analítica — junção entre marts e colunas de estado
+## B. Profundidade analítica: junção entre marts e colunas de estado
 
 ### B1. A pressão coincide com o que a atenção primária poderia ter evitado?
 **Pergunta**
 
 > nas cinco regioes de saude com maior indice de pressao hospitalar medio em 2026, qual foi o grupo ICSAP com mais internacoes de residentes em 2026? Traga uma linha por regiao, com o nome da regiao e o nome do grupo
 
-**O que se espera** — junção entre mart_indicador_regiao_mensal e mart_icsap_regiao_mensal, com o grupo líder por região
+**O que se espera:** junção entre mart_indicador_regiao_mensal e mart_icsap_regiao_mensal, com o grupo líder por região
 
 **SQL de referência**
 
@@ -560,20 +560,20 @@ FETCH FIRST 5 ROWS ONLY
 | LIMEIRA     | Doenças cerebrovasculares |
 ```
 
-**Conferência** — 📌 divergente: ausentes no gerado: FRANCO DA ROCHA, JUNDIAI, SAO JOSE DO RIO PRETO, ALTO VALE DO PARAIBA; presentes só no gerado: —
+**Conferência** 📌 divergente: ausentes no gerado: FRANCO DA ROCHA, JUNDIAI, SAO JOSE DO RIO PRETO, ALTO VALE DO PARAIBA; presentes só no gerado: nenhum
 
 **Resposta narrada (`narrate`)**
 
 As regiões de saúde com maior pressão hospitalar média em 2026 tiveram o mesmo grupo de ICSAP com mais internações de residentes, que é doenças cerebrovasculares. Isso ocorreu em todas as cinco regiões.
 
-> 📌 **Limitação conhecida e aceita** — o modelo ordena as linhas mensais em vez de agregar por região antes de ranquear, e devolve o mês extremo no lugar da região extrema. Reforçar o COMMENT ON do grão nas três tabelas não corrigiu. Analisada em [`LEITURA_SELECT_AI.md`](LEITURA_SELECT_AI.md); não derruba a execução, mas uma falha nova em qualquer outra pergunta derruba.
+> 📌 **Limitação conhecida e aceita:** o modelo ordena as linhas mensais em vez de agregar por região antes de ranquear, e devolve o mês extremo no lugar da região extrema. Reforçar o COMMENT ON do grão nas três tabelas não corrigiu. Analisada em [`LEITURA_SELECT_AI.md`](LEITURA_SELECT_AI.md); não derruba a execução, mas uma falha nova em qualquer outra pergunta derruba.
 
 ### B2. Quais hospitais operaram acima da capacidade que eles mesmos declararam?
 **Pergunta**
 
 > quais os dez hospitais que mais vezes operaram acima da capacidade de leitos SUS declarada em 2026? Traga o nome do hospital, a regiao de saude e em quantos meses isso ocorreu
 
-**O que se espera** — uso da coluna de estado fl_acima_capacidade_declarada, que só o COMMENT ON explica
+**O que se espera:** uso da coluna de estado fl_acima_capacidade_declarada, que só o COMMENT ON explica
 
 **SQL de referência**
 
@@ -644,7 +644,7 @@ FETCH FIRST 10 ROWS ONLY
 | FUNDACAO FACULDADE DE MEDICINAHCFMUSP INST DE PSIQUIATRIA SP | SAO PAULO                      | 5             |
 ```
 
-**Conferência** — 📌 divergente: ausentes no gerado: CENTRO DE REFERENCIA EM MOLESTIAS INFECCIOSAS; presentes só no gerado: FUNDACAO FACULDADE DE MEDICINAHCFMUSP INST DE PSIQUIATRIA SP
+**Conferência** 📌 divergente: ausentes no gerado: CENTRO DE REFERENCIA EM MOLESTIAS INFECCIOSAS; presentes só no gerado: FUNDACAO FACULDADE DE MEDICINAHCFMUSP INST DE PSIQUIATRIA SP
 
 **Resposta narrada (`narrate`)**
 
@@ -660,14 +660,14 @@ Os hospitais que mais vezes operaram acima da capacidade de leitos SUS declarada
 * AME Ambulatorio Medico de Especialidades Jundiai, localizado na região de saúde Jundiai, que operou acima da capacidade por 6 meses
 * Fundacao Faculdade de Medicina HCFMUSP Inst de Psiquiatria SP, localizado na região de saúde Sao Paulo, que operou acima da capacidade por 5 meses
 
-> 📌 **Limitação conhecida e aceita** — mesma causa de B1: sem agregar por hospital antes de ordenar, o topo do ranking troca. Analisada em [`LEITURA_SELECT_AI.md`](LEITURA_SELECT_AI.md); não derruba a execução, mas uma falha nova em qualquer outra pergunta derruba.
+> 📌 **Limitação conhecida e aceita:** mesma causa de B1: sem agregar por hospital antes de ordenar, o topo do ranking troca. Analisada em [`LEITURA_SELECT_AI.md`](LEITURA_SELECT_AI.md); não derruba a execução, mas uma falha nova em qualquer outra pergunta derruba.
 
 ### B3. Onde a inflação come mais o valor aprovado por internação?
 **Pergunta**
 
 > quais as dez regioes com maior diferenca media entre o custo medio por internacao corrigido pelo IPCA e o nominal, considerando 2024 a 2026
 
-**O que se espera** — distinção entre vl_cmi e vl_cmi_real, e não recalcular IPCA
+**O que se espera:** distinção entre vl_cmi e vl_cmi_real, e não recalcular IPCA
 
 **SQL de referência**
 
@@ -735,7 +735,7 @@ FETCH FIRST 10 ROWS ONLY
 | AQUIFERO GUARANI      | 138.58139333333332 |
 ```
 
-**Conferência** — ✅ equivalente: mesmos 10 rótulos, na mesma ordem
+**Conferência** ✅ equivalente: mesmos 10 rótulos, na mesma ordem
 
 **Resposta narrada (`narrate`)**
 
@@ -753,14 +753,14 @@ As regiões com maior diferença média entre o custo médio por internação co
 
 Essas regiões apresentam as maiores variações entre os custos médios de internação, considerando a correção pelo IPCA e os valores nominais, durante o período de 2024 a 2026. Isso pode indicar que essas regiões têm os maiores desvios entre os custos reais e os custos ajustados pela inflação.
 
-## C. Armadilhas — onde a resposta certa é recusar ou ressalvar
+## C. Armadilhas: onde a resposta certa é recusar ou ressalvar
 
 ### C1. A armadilha do IPH: ocupação real de leito
 **Pergunta**
 
 > qual foi a taxa de ocupacao de leitos de cada regiao de saude em 2026
 
-**O que se espera** — o MedFlow não mede ocupação real. A resposta aceitável usa o IPH e diz que é pressão estimada sobre capacidade declarada; a inaceitável chama o número de ocupação real
+**O que se espera:** o MedFlow não mede ocupação real. A resposta aceitável usa o IPH e diz que é pressão estimada sobre capacidade declarada; a inaceitável chama o número de ocupação real
 
 **SQL gerado pelo Select AI**
 
@@ -902,14 +902,14 @@ A taxa de ocupação de leitos de cada região de saúde em 2026 varia. Aqui est
 
 > ⚠️ **Termo proibido, afirmado na narrativa:** `taxa de ocupação`
 
-> 📌 **Limitação conhecida e aceita** — o modelo escolhe a coluna certa, o IPH, e narra o número com o rótulo errado que veio na pergunta. O COMMENT ON governa a geração de SQL, não a redação da narrativa. Analisada em [`LEITURA_SELECT_AI.md`](LEITURA_SELECT_AI.md); não derruba a execução, mas uma falha nova em qualquer outra pergunta derruba.
+> 📌 **Limitação conhecida e aceita:** o modelo escolhe a coluna certa, o IPH, e narra o número com o rótulo errado que veio na pergunta. O COMMENT ON governa a geração de SQL, não a redação da narrativa. Analisada em [`LEITURA_SELECT_AI.md`](LEITURA_SELECT_AI.md); não derruba a execução, mas uma falha nova em qualquer outra pergunta derruba.
 
 ### C2. A armadilha do tempo real
 **Pergunta**
 
 > quantos pacientes estao internados neste momento em Sao Paulo
 
-**O que se espera** — não existe agora nesta base. O dado é mensal por competência, e a resposta precisa dizer isso em vez de devolver a última competência como se fosse o presente
+**O que se espera**. Não existe agora nesta base. O dado é mensal por competência, e a resposta precisa dizer isso em vez de devolver a última competência como se fosse o presente
 
 **SQL gerado pelo Select AI**
 
@@ -940,7 +940,7 @@ Não há informações disponíveis sobre o número de pacientes internados no m
 
 > qual a taxa de mortalidade hospitalar das regioes de saude do Rio de Janeiro em 2026
 
-**O que se espera** — o recorte é São Paulo. A resposta certa é não haver linhas, explicitamente, e não um número inventado ou o de SP rotulado como RJ
+**O que se espera**. O recorte é São Paulo. A resposta certa é não haver linhas, explicitamente, e não um número inventado ou o de SP rotulado como RJ
 
 **SQL gerado pelo Select AI**
 
@@ -969,14 +969,14 @@ regiao_saude | taxa_mortalidade_hospitalar
 
 Não há informações disponíveis sobre a taxa de mortalidade hospitalar das regiões de saúde do Rio de Janeiro em 2026 porque os dados fornecidos são sobre o estado de São Paulo.
 
-## D. Conversação — a pergunta que só existe depois da anterior
+## D. Conversação: a pergunta que só existe depois da anterior
 
 ### D1. Pergunta e seguimento no mesmo contexto
 **Pergunta**
 
 > qual a regiao de saude com maior indice de pressao hospitalar medio em 2026
 
-**O que se espera** — o seguimento não repete indicador, recorte nem tabela. Só se resolve se o perfil mantiver a conversa
+**O que se espera:** o seguimento não repete indicador, recorte nem tabela. Só se resolve se o perfil mantiver a conversa
 
 **SQL gerado pelo Select AI**
 
@@ -1076,16 +1076,16 @@ A população de cada região de saúde em São Paulo para o ano de 2025 é a se
 - LITORAL NORTE: 344383
 - VALE DO PARAIBA/REGIAO SERRANA: 620034
 
-> 📌 **Limitação conhecida e aceita** — pelo DBMS_CLOUD_AI.GENERATE cada chamada se comporta como pergunta isolada, e o seguimento perde o indicador do turno anterior. Analisada em [`LEITURA_SELECT_AI.md`](LEITURA_SELECT_AI.md); não derruba a execução, mas uma falha nova em qualquer outra pergunta derruba.
+> 📌 **Limitação conhecida e aceita:** pelo DBMS_CLOUD_AI.GENERATE cada chamada se comporta como pergunta isolada, e o seguimento perde o indicador do turno anterior. Analisada em [`LEITURA_SELECT_AI.md`](LEITURA_SELECT_AI.md); não derruba a execução, mas uma falha nova em qualquer outra pergunta derruba.
 
-## E. Com e sem os dados na frente — chat contra narrate
+## E. Com e sem os dados na frente: chat contra narrate
 
 ### E1. A mesma pergunta com e sem os dados na frente
 **Pergunta**
 
 > qual a regiao de saude de Sao Paulo com maior pressao hospitalar em 2026
 
-**O que se espera** — chat responde do conhecimento geral do modelo, sem tocar a Gold; narrate responde da base. A distância entre os dois é o argumento de por que o Select AI está ancorado no modelo semântico e não solto
+**O que se espera**. Chat responde do conhecimento geral do modelo, sem tocar a Gold; narrate responde da base. A distância entre os dois é o argumento de por que o Select AI está ancorado no modelo semântico e não solto
 
 **SQL gerado pelo Select AI**
 

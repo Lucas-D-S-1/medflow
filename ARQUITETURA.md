@@ -12,7 +12,13 @@ flowchart LR
     D --> W["Web app<br/>visualização e narrativa"]
 ```
 
-Cada etapa tem uma responsabilidade única. Bronze preserva a origem; Silver organiza e harmoniza; Gold calcula a camada analítica; o Oracle publica o modelo validado; e o web app apresenta os resultados sem recalcular indicadores.
+Cada etapa tem uma responsabilidade única:
+
+- **Bronze** preserva a origem;
+- **Silver** organiza e harmoniza;
+- **Gold** calcula a camada analítica;
+- **Oracle** publica o modelo validado;
+- **web app** apresenta os resultados, sem recalcular indicadores.
 
 ## 2. Principais decisões
 
@@ -107,7 +113,7 @@ continua de pé pelo snapshot e diz na tela que está em contingência.
 ### Preflight da apresentação
 
 A parte automatizável roda num comando, `make preflight`, que fala com o
-produto publicado pelo mesmo caminho que o avaliador usa — sem `.env`, wallet
+produto publicado pelo mesmo caminho que o avaliador usa: sem `.env`, wallet
 ou Gold local. São doze verificações: Oracle ao vivo, versão do contrato,
 competência mais recente, os endpoints de cada visão, as 62 regiões carregadas,
 o 404 documentado para parâmetro inválido e o link público abrindo.

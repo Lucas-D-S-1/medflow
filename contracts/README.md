@@ -22,7 +22,7 @@ delas, porque parece autoridade.
 Cada um congela um estado que uma mudança grande ia atravessar, para que a
 mudança pudesse ser provada em vez de acreditada. O de julho antecede a
 migração de pastas; o da fatia 0 antecede a saída do pipeline dos notebooks, e
-foi o portão da fatia 4 — os parquets tinham de sair com o mesmo hash.
+foi o portão da fatia 4: os parquets tinham de sair com o mesmo hash.
 
 A distinção que a validação faz importa: só o que o pipeline **não regenera**
 entra na conferência. As saídas mudam legitimamente quando o recorte avança, e
@@ -32,6 +32,6 @@ ninguém mais olharia.
 ## O contrato da API descreve o observável
 
 `openapi.yaml` documenta o que a API devolve **hoje**, não o que seria
-desejável — inclusive onde o comportamento é discutível, como o 404 com HTML
+desejável. Inclusive onde o comportamento é discutível, como o 404 com HTML
 em parâmetro inválido. O motivo está no próprio arquivo: um contrato que
 descreve a intenção faz quem o lê parar de conferir.

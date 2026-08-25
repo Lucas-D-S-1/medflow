@@ -17,7 +17,7 @@ A entrega da Sprint 1 não está aqui: ela vive no repositório acadêmico
 `qualidade/VALIDACAO_ORACLE_SELECT_AI.md` descreve o banco em 01/08/2026, com
 as contagens daquele dia. **Não é atualizado**: reescrever evidência a cada
 mudança transforma registro em opinião. Quando o mundo muda, o arquivo ganha um
-aviso dizendo o que mudou e onde ler o estado corrente — que, para o banco, se
+aviso dizendo o que mudou e onde ler o estado corrente: que, para o banco, se
 lê rodando `make oracle-carregar` com `--conferir` e o SQL de reconciliação.
 
 O contraste com `VALIDACAO_TECNICA.md`, na raiz, é proposital: aquele é

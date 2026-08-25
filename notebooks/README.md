@@ -13,7 +13,7 @@ make bronze silver gold geografia
 ```
 
 **Para que servem, então.** Para ler o raciocínio na ordem em que ele acontece,
-com a saída ao lado da explicação — coisa que um pacote não faz bem. É o
+com a saída ao lado da explicação. Coisa que um pacote não faz bem. É o
 formato certo para a defesa da metodologia e para quem chega ao projeto sem
 contexto.
 

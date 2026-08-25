@@ -15,7 +15,7 @@ O gerador de snapshots propriamente dito é `web/scripts/gerar-mocks.ts`
 ## Por que o `atualizar_esperados_sql.py` exige `--conferir` antes
 
 Ele **abençoa o estado do banco**: pega o que o banco devolve e grava como
-esperado. Fazer isso sem uma conferência independente seria só carimbar — por
+esperado. Fazer isso sem uma conferência independente seria só carimbar: por
 isso ele exige que `carregar_gold.py --conferir` tenha passado, que é a garantia
 de que o banco reproduz a Gold linha a linha.
 

@@ -172,7 +172,7 @@ def comparar(resposta: Resposta) -> None:
     if set(ref) == set(gerado):
         resposta.veredito = "mesmo conjunto, outra ordem"
         resposta.detalhe = (
-            "os rótulos são os mesmos, mas a ordenação difere — conferir o "
+            "os rótulos são os mesmos, mas a ordenação difere. Conferir o "
             "critério de desempate"
         )
         return
@@ -181,8 +181,8 @@ def comparar(resposta: Resposta) -> None:
     sobrando = [g for g in gerado if g not in ref][:5]
     resposta.veredito = "divergente"
     resposta.detalhe = (
-        f"ausentes no gerado: {', '.join(faltando) or '—'}; "
-        f"presentes só no gerado: {', '.join(sobrando) or '—'}"
+        f"ausentes no gerado: {', '.join(faltando) or 'nenhum'}; "
+        f"presentes só no gerado: {', '.join(sobrando) or 'nenhum'}"
     )
 
 

@@ -12,7 +12,7 @@ que o resto do projeto aplica.
 
 ## O que já existe e o que falta
 
-O APEX **já vem instalado** no Autonomous Database — 26.1.3 nesta instância.
+O APEX **já vem instalado** no Autonomous Database, 26.1.3 nesta instância.
 Não há o que provisionar nem o que pagar. Faltam duas coisas: um workspace
 apontando para o schema `MEDFLOW`, e a aplicação.
 
@@ -77,7 +77,7 @@ front do MedFlow: garantia que mora na tela vale só naquela tela.
 
 Uma pergunta, uma rodada. Se cada região chamasse o modelo por conta própria,
 o relatório e o texto ao lado poderiam descrever consultas diferentes na mesma
-tela — numa demonstração ao vivo, é o tipo de coisa que ninguém percebe na hora
+tela. Numa demonstração ao vivo, é o tipo de coisa que ninguém percebe na hora
 e não dá para explicar depois.
 
 Para reinstalar depois de mexer no pacote:
@@ -186,11 +186,11 @@ investigação sem esconder o mecanismo que precisa ser defendido tecnicamente.
 
 ## Duas perguntas para testar
 
-Depois de montar, vale rodar estas duas — elas mostram os dois lados:
+Depois de montar, vale rodar estas duas: elas mostram os dois lados:
 
 1. `quais as cinco regioes de saude com maior indice de pressao hospitalar
-   medio em 2026` — deve trazer `LIMEIRA` no topo, sem aviso.
-2. `qual a taxa de ocupacao de leitos de cada regiao em 2026` — é a armadilha.
+   medio em 2026`: deve trazer `LIMEIRA` no topo, sem aviso.
+2. `qual a taxa de ocupacao de leitos de cada regiao em 2026`: é a armadilha.
    O modelo escolhe a coluna certa, o IPH, e apelida a coluna de
    `taxa_ocupacao_leitos`, que vira cabeçalho na tela. O aviso precisa
    aparecer dizendo exatamente isso.
@@ -200,7 +200,7 @@ modelo erra, em vez de torcer para ninguém perguntar.
 
 ## O rastro
 
-Cada pergunta grava uma linha em `select_ai_resposta` — quando, o que foi
+Cada pergunta grava uma linha em `select_ai_resposta`. Quando, o que foi
 perguntado, o SQL, a narrativa e o aviso. Não faz parte do contrato da Gold,
 não entra na carga nem na reconciliação.
 
@@ -211,7 +211,7 @@ select id, momento, pergunta, aviso from select_ai_resposta order by id desc;
 ## Onde a regra é testada
 
 `tests/test_select_ai.py` cobre o guarda de leitura e a varredura das duas
-implementações — Python e PL/SQL — e **compara as duas**. A regra vive em dois
+implementações (Python e PL/SQL) e **compara as duas**. A regra vive em dois
 lugares, e regra duplicada é regra que diverge em silêncio: a divergência
 apareceria como o APEX aceitando o que o roteiro recusa. Os testes de paridade
 pulam sem Oracle, não falham.

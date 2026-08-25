@@ -22,7 +22,7 @@ Site estático no GitHub Pages falando direto com o Autonomous Database pelo
 módulo ORDS público `api/v1`, somente leitura. Publicado e conferido no
 navegador em 16/08/2026.
 
-**Foco atual:** fechar os artefatos acadêmicos — PPT, vídeo, planilha de
+**Foco atual:** fechar os artefatos acadêmicos: PPT, vídeo, planilha de
 integrantes e ZIP final. O WebApp permanece nas quatro visões, com mudanças
 restritas a texto e acabamento; o Select AI foi revalidado contra o produto em
 23/08/2026, com evidência em
@@ -186,11 +186,11 @@ Nenhum objeto da Gold é publicado por AutoREST.
 Os endpoints existem em dois módulos: `api/dev/v1`, que aceita só `localhost` e
 é onde se trabalha, e `api/v1`, que aceita só a origem do site publicado e é
 quem serve o link da entrega. O segundo é clone do primeiro, gerado dos
-metadados do ORDS e recusado se divergir — ver [`db/README.md`](db/README.md).
+metadados do ORDS e recusado se divergir. Ver [`db/README.md`](db/README.md).
 
 O contrato dos dez endpoints está em
 [`contracts/openapi.yaml`](contracts/openapi.yaml), conferido por teste contra
-o SQL dos handlers e contra a API viva — um contrato que ninguém confere vira
+o SQL dos handlers e contra a API viva. Um contrato que ninguém confere vira
 só uma terceira versão da verdade.
 
 | Rota | Pergunta que responde | Endpoints |
@@ -377,7 +377,7 @@ cd web && npm run dev
 ```
 
 Em `db/views/` há uma view por fatia. Em `db/ords/`, cada
-arquivo numerado é uma **redefinição cumulativa do módulo inteiro** — o `03`
+arquivo numerado é uma **redefinição cumulativa do módulo inteiro**: o `03`
 define os dez handlers e é o único que precisa ser reaplicado ao mudar
 qualquer endpoint.
 

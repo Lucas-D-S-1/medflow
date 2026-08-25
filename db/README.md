@@ -110,8 +110,8 @@ SQLcl.
 | `medflow` | `api/v1/` | `https://lucas-d-s-1.github.io` | o site publicado |
 
 O `04` **não redeclara os dez handlers**: ele lê os metadados do ORDS e clona o
-`medflow_dev`, mudando só nome, prefixo e origem. Foi aquela definição — não
-outra parecida — que passou pelas comparações campo a campo contra a Gold, e
+`medflow_dev`, mudando só nome, prefixo e origem. Foi aquela definição: não
+outra parecida. Que passou pelas comparações campo a campo contra a Gold, e
 uma cópia manual criaria uma segunda verdade que envelhece calada. No fim do
 bloco há um portão que compara handler a handler, inclusive o SQL byte a byte,
 e recusa a publicação se algo divergir.
@@ -162,12 +162,12 @@ make oracle-carregar          # ou, sem make:
 `schema/03_validar_carga.sql` compara 36 métricas contra
 `data/gold/qualidade/METADADOS.json`, contrato `0.3.0`. **Toda linha tem de
 sair como `ok`.** Os marts partem do mesmo fato e precisam fechar no mesmo
-total de internações novas — 7.150.693 no recorte atual; se um divergir, a
+total de internações novas, 7.150.693 no recorte atual; se um divergir, a
 carga perdeu dado e o dashboard não deve ser construído sobre essa base.
 
 Os valores esperados do SQL não são digitados à mão: `scripts/atualizar_esperados_sql.py`
 os regenera a partir dos metadados, e exige `carregar_gold.py --conferir`
-antes — abençoar o estado do banco sem conferência independente seria só
+antes: abençoar o estado do banco sem conferência independente seria só
 carimbar.
 
 ### Passo 9 — Select AI
@@ -205,7 +205,7 @@ demonstração ao vivo.
 ## Por que os COMMENT ON importam
 
 O Select AI usa comentário de tabela e de coluna como contexto ao traduzir
-pergunta em SQL — é o que o atributo `"comments": "true"` do profile envia
+pergunta em SQL. É o que o atributo `"comments": "true"` do profile envia
 junto do prompt. Por isso `sql/02_criar_tabelas_gold.sql` comenta as 175
 colunas, e não apenas as chaves. Erros de semântica devem ser corrigidos no
 comentário da coluna. Cortes de negócio ausentes da pergunta devem ser

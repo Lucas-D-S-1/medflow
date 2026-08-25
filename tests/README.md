@@ -29,7 +29,7 @@ pode ficar vermelho porque o Always Free hibernou.
 
 ## Unidade: as bordas, não o caminho feliz
 
-A borda que importa em quase todo indicador do MedFlow é o denominador — região
+A borda que importa em quase todo indicador do MedFlow é o denominador: região
 sem população, hospital sem leito SUS declarado, CID com um caso só. Por isso o
 teste mais detalhado do arquivo é o da função de divisão: ela é o funil por
 onde passam IPH, IPR, IS, TMH, CMI e permanência média, e um `inf` escapando
@@ -38,15 +38,15 @@ dali se propaga por média e soma sem avisar.
 ## Contrato: também o caminho da reprovação
 
 Não basta o validador aceitar o que é válido. Ele é exercitado quebrando uma
-regra de cada vez — coluna a mais, ordem trocada, contagem divergente,
-descrição vazia — porque um validador que só viu o caminho feliz poderia estar
+regra de cada vez: coluna a mais, ordem trocada, contagem divergente,
+descrição vazia: porque um validador que só viu o caminho feliz poderia estar
 retornando sem olhar.
 
 ## Reconciliação: o meio do caminho
 
 Entre um número no parquet e um número na tela há cinco elos: Gold, carga,
 tabela, view e handler. Os testes de contrato provam o primeiro; a Playwright
-prova o último. O meio ficava sem prova — é o `reconciliacao/`, que tem README
+prova o último. O meio ficava sem prova. É o `reconciliacao/`, que tem README
 próprio explicando por que quase nada está escrito lá.
 
 ## Uma regra que atravessa os quatro

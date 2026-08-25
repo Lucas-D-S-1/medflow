@@ -43,7 +43,7 @@ de referência não responde isso.
 
 Aqui a conferência é executada. Para cada pergunta com SQL de referência, as
 duas consultas rodam contra o mesmo banco e as duas respostas são comparadas
-pela sequência ordenada de rótulos que produziram — a lista de regiões, de
+pela sequência ordenada de rótulos que produziram: a lista de regiões, de
 especialidades, de diagnósticos. É o que a pergunta de negócio pede, e é o que
 precisa bater. Duas consultas escritas de forma diferente que devolvem a mesma
 lista na mesma ordem responderam a mesma pergunta; uma que devolve outra lista
@@ -64,8 +64,8 @@ A varredura de terminologia procura {", ".join(f"`{t}`" for t in TERMOS_PROIBIDO
 no que o modelo narrou. O IPH é pressão estimada sobre capacidade SUS declarada,
 nunca ocupação real de leito, e a base é mensal por competência, nunca tempo
 real. Mencionar não é afirmar: uma ocorrência só conta quando aparece sem
-negação e sem ressalva, senão a recusa correta — que precisa nomear o que
-recusa — seria reprovada.
+negação e sem ressalva, senão a recusa correta, que precisa nomear o que
+recusa, seria reprovada.
 
 > **Este documento é a medida, não o julgamento.** Ele é gerado por execução e
 > reescrito inteiro a cada rodada. A leitura do que estes números significam,
@@ -79,7 +79,7 @@ def secao(resposta: Resposta) -> str:
     partes = [f"\n### {p.id}. {p.titulo}\n", f"**Pergunta**\n\n> {p.prompt}\n"]
 
     if p.espera:
-        partes.append(f"\n**O que se espera** — {p.espera}\n")
+        partes.append(f"\n**O que se espera:** {p.espera}\n")
 
     if p.sql_referencia:
         partes.append(
@@ -103,7 +103,7 @@ def secao(resposta: Resposta) -> str:
         ok = resposta.veredito in VEREDITOS_OK
         marca = "✅" if ok else ("📌" if p.limitacao_conhecida else "⚠️")
         partes.append(
-            f"\n**Conferência** — {marca} {resposta.veredito}: {resposta.detalhe}\n"
+            f"\n**Conferência** {marca} {resposta.veredito}: {resposta.detalhe}\n"
         )
 
     if resposta.conversado:
@@ -129,7 +129,7 @@ def secao(resposta: Resposta) -> str:
 
     if p.limitacao_conhecida:
         partes.append(
-            f"\n> 📌 **Limitação conhecida e aceita** — {p.limitacao_conhecida}. "
+            f"\n> 📌 **Limitação conhecida e aceita:** {p.limitacao_conhecida}. "
             "Analisada em [`LEITURA_SELECT_AI.md`](LEITURA_SELECT_AI.md); não "
             "derruba a execução, mas uma falha nova em qualquer outra pergunta "
             "derruba.\n"

@@ -221,11 +221,15 @@ medflow/
 
 ### `src/medflow/` — o motor
 
-Contém a implementação executável. `bronze/` cuida da ingestão e dos
-manifestos; `silver/`, da conformação; `gold.py`, dos marts e indicadores;
-`icsap.py`, `ipca.py` e `geografia.py` concentram regras especializadas;
-`validar.py` aplica os portões de qualidade; `oracle/` reúne conexão, carga e
-execução de SQL; e `cli.py` é a entrada chamada pelo Makefile.
+Contém a implementação executável:
+
+- `bronze/` cuida da ingestão e dos manifestos;
+- `silver/` cuida da conformação;
+- `gold.py` produz os marts e indicadores;
+- `icsap.py`, `ipca.py` e `geografia.py` concentram regras especializadas;
+- `validar.py` aplica os portões de qualidade;
+- `oracle/` reúne conexão, carga e execução de SQL;
+- `cli.py` é a entrada chamada pelo Makefile.
 
 ### `contracts/` — as promessas verificáveis
 
@@ -242,18 +246,26 @@ clone começa pequeno e `make pipeline` materializa o conteúdo necessário.
 
 ### `db/` — backend Oracle
 
-`schema/` cria e valida o modelo dimensional; `views/` projeta os dados que a
-aplicação consome; `ords/` publica endpoints GET; e `select_ai/` mantém a
-demonstração controlada do Select AI. Essa área exige autorização e
-credenciais. O frontend não acessa tabelas diretamente e não recalcula
-indicadores.
+Quatro responsabilidades:
+
+- `schema/` cria e valida o modelo dimensional;
+- `views/` projeta os dados que a aplicação consome;
+- `ords/` publica os endpoints GET;
+- `select_ai/` mantém a demonstração controlada do Select AI.
+
+Essa área exige autorização e credenciais. O frontend não acessa tabelas
+diretamente e não recalcula indicadores.
 
 ### `web/` — produto visual
 
-Aplicação React 19, TypeScript e Vite. `src/features/` separa as telas regional,
-fluxos, hospital e metodologia; `src/lib/api/` concentra os clientes da API;
-`src/mocks/` guarda snapshots de contingência; e `e2e/` contém os testes
-Playwright. `dist/` é build gerado e não deve ser editado manualmente.
+Aplicação React 19, TypeScript e Vite:
+
+- `src/features/` separa as telas regional, fluxos, hospital e metodologia;
+- `src/lib/api/` concentra os clientes da API;
+- `src/mocks/` guarda os snapshots de contingência;
+- `e2e/` contém os testes Playwright.
+
+`dist/` é build gerado e não deve ser editado manualmente.
 
 ### `tests/` — os portões
 

@@ -8,7 +8,7 @@ Entrega da Sprint 2: **01/09/2026**.
 O produto técnico está fechado e publicado: `v0.3.0`, quatro visões no WebApp,
 dez endpoints `api/v1`, 8.403.103 comparações sem divergência, roteiro de Select
 AI revalidado e heartbeat diário ativo. O hardening posterior está no changelog
-de `v0.3.1 — em andamento`.
+de `v0.3.1 em andamento`.
 
 Falta trabalho de entrega, não de pipeline:
 
@@ -167,7 +167,7 @@ detalhes estão no `CHANGELOG.md` da sprint.
 <https://lucas-d-s-1.github.io/medflow/>
 
 O módulo de produção `api/v1` foi criado como clone do `medflow_dev`, lido dos
-metadados do próprio ORDS — não uma cópia manual das 1.900 linhas de handler.
+metadados do próprio ORDS: não uma cópia manual das 1.900 linhas de handler.
 Aceita só a origem do GitHub Pages e responde 403 às demais. O site é estático
 e fala direto com o Autonomous Database; não há servidor no meio.
 
@@ -180,7 +180,7 @@ Medido no que está publicado, não deduzido do clone:
   que a variável morde e as aprovações não vieram de um fallback silencioso;
 - no navegador, pelo link real: as quatro visões com selo **Oracle ao vivo**,
   sete chamadas, todas em `/api/v1/`, sem erro de console;
-- link profundo compartilhado abre a visão certa — o Pages responde HTTP 404 e
+- link profundo compartilhado abre a visão certa, embora o Pages responda HTTP 404 e
   serve o `index.html`, e o roteador assume.
 
 **Ressalva honesta:** o 404 do link profundo é o comportamento padrão de SPA no
@@ -250,7 +250,7 @@ cobertura passaram sem intervenção.
 fatia 8 (B.4) e o webapp deixou de mostrar 2026-05 no estado de contingência.
 
 **Resolvido pela fatia 6:** a revalidação campo a campo foi refeita sobre as 30
-competências — **8.403.103 comparações, zero divergências** — e deixou de ser
+competências (**8.403.103 comparações, zero divergências**) e deixou de ser
 um evento manual: `make reconciliar-completo` a reproduz quando for preciso.
 
 ### 7c. Histórico: como a decisão foi tomada
@@ -304,8 +304,8 @@ aprovação do webapp e da revalidação do Select AI:
 - produzir PPT, vídeo e roteiro da demonstração;
 - ensaiar a defesa dos indicadores hospitalares/territoriais e limitações.
 
-Marco publicado: **`v0.3.0` — Oracle e webapp MVP**. O hardening posterior está
-em **`v0.3.1 — em andamento`**.
+Marco publicado: **`v0.3.0`, Oracle e webapp MVP**. O hardening posterior está
+em **`v0.3.1: em andamento`**.
 
 ## Entregáveis da Sprint 2
 
@@ -373,9 +373,9 @@ unidade (`tests/test_indicadores.py`), contrato
 (`tests/test_contratos_camadas.py`) e reconciliação (`tests/reconciliacao/`).
 
 **A reconciliação deixou de ser um script perdido em `/tmp`.** Ela lê do SQL
-versionado o que precisa saber — o mapa entre nome JSON e coluna da Gold, a
+versionado o que precisa saber: o mapa entre nome JSON e coluna da Gold, a
 ordenação de cada handler, o teto de paginação e a escala decimal de cada
-número — em vez de guardar cópia dos 150 campos. Roda em dois modos:
+número: em vez de guardar cópia dos 150 campos. Roda em dois modos:
 `make reconciliar` para a amostra e `make reconciliar-completo` para a
 varredura inteira.
 
@@ -397,7 +397,7 @@ Varredura completa executada em 10/08/2026, sobre as 30 competências:
 
 **O 429 do ORDS custou uma tentativa frustrada e vale registrar.** A primeira
 varredura completa morreu com três endpoints esgotando as tentativas, porque o
-recuo era por requisição — enquanto uma thread esperava, as outras duas
+recuo era por requisição: enquanto uma thread esperava, as outras duas
 continuavam batendo no mesmo teto, que é global. O freio passou a ser do
 cliente inteiro: um 429 em qualquer thread segura todas, o espaçamento mínimo
 sobe 50ms a cada recusa e decai devagar no sucesso. Ele se estabilizou em
@@ -406,7 +406,7 @@ sobe 50ms a cada recusa e decai devagar no sucesso. Ele se estabilizou em
 **Três defeitos apareceram, e nenhum era o que eu procurava:**
 
 1. **Um clone limpo não reproduzia a entrega.** `PERIODO_FINAL_PADRAO` ainda
-   era `2026-05` com um comentário dizendo que a decisão estava em aberto —
+   era `2026-05` com um comentário dizendo que a decisão estava em aberto,
    mas a 5b avançou o recorte e executou. `make bronze silver gold` num clone
    geraria 30 competências a menos do que está no Oracle. O recorte estava
    escrito em quatro lugares; agora é uma constante, e um teste confere o
@@ -420,8 +420,8 @@ sobe 50ms a cada recusa e decai devagar no sucesso. Ele se estabilizou em
    pulado o campo em silêncio. Campo pulado é campo não validado que parece
    validado; as dimensões entraram na comparação.
 
-O padrão dos três é o mesmo que a 5b já tinha registrado — *tudo que memoriza
-um total envelhece junto com o recorte* — e valia repetir aqui, porque as duas
+O padrão dos três é o mesmo que a 5b já tinha registrado: *tudo que memoriza
+um total envelhece junto com o recorte*: e valia repetir aqui, porque as duas
 primeiras ocorrências sobreviveram justamente por não terem teste.
 
 ### Fatia 7 — o contrato da API, concluída em 11/08/2026
@@ -432,8 +432,8 @@ banco**. Faltava B.2, o contrato.
 
 **`contracts/openapi.yaml` descreve os 10 endpoints**: caminho, parâmetros com
 formato e teto, envelope, itens campo a campo, e o comportamento de erro. Antes
-disso o contrato existia duas vezes e implícito — no SQL de cada handler e nos
-tipos TypeScript dos clientes do front — e quando os dois divergiam, ninguém era
+disso o contrato existia duas vezes e implícito: no SQL de cada handler e nos
+tipos TypeScript dos clientes do front. E quando os dois divergiam, ninguém era
 avisado; descobria-se na tela.
 
 Um terceiro arquivo só piora isso se ninguém o conferir, então
@@ -444,7 +444,7 @@ API viva (a resposta real traz exatamente as chaves declaradas, nem uma a mais).
 **Três defeitos apareceram ao escrever o contrato**, e os dois primeiros só
 porque tentar descrever a API obriga a olhar cada parâmetro:
 
-1. **`origem` e `regiao` eram opcionais** — e o plano subestimou o efeito.
+1. **`origem` e `regiao` eram opcionais**, e o plano subestimou o efeito.
    Omitir `origem` em `/fluxos` não devolvia "contexto vazio": devolvia
    **1.015 fluxos de todas as origens somados** numa página, com o `territory`
    inteiro nulo. `/icsap` idem, 1.178 linhas de regiões diferentes. Agora são
@@ -452,7 +452,7 @@ porque tentar descrever a API obriga a olhar cada parâmetro:
 
 2. **`cnes` em `/hospitais` é aceito, validado e ignorado.** O `where` do
    handler nunca usa o valor: com ou sem ele, a resposta é a mesma lista de
-   644 hospitais. Ninguém o envia, então não há defeito visível hoje — mas um
+   644 hospitais. Ninguém o envia, então não há defeito visível hoje, mas um
    parâmetro morto é pior que um parâmetro ausente, porque parece funcionar.
    Está declarado como `deprecated` no contrato, dizendo a verdade. **Não
    corrigido**: seria uma linha (`and (p.cnes is null or v.cd_cnes = p.cnes)`),
@@ -467,7 +467,7 @@ porque tentar descrever a API obriga a olhar cada parâmetro:
 
 **Sobre o código de erro.** Parâmetro inválido devolve **404 com HTML**, não
 400 com JSON. Não é o desejável, é o estrutural: os handlers são consultas SQL
-e uma consulta SQL não escolhe o código HTTP — cada uma valida num CTE e
+e uma consulta SQL não escolhe o código HTTP: cada uma valida num CTE e
 termina com `where parametros_validos = 1`, então "reprovado" vira "sem linha"
 e o ORDS traduz para 404. Um 400 exigiria reescrever os oito handlers como
 blocos PL/SQL que atribuem `:status_code`, a maior mudança no backend desde que
@@ -482,7 +482,7 @@ amostra nos 8 endpoints sem divergência, pytest 213/213.
 `web/scripts/gerar-mocks.ts` regrava os dez snapshots a partir da API ao vivo,
 com `make fixtures`. A competência sai do manifesto da Bronze, não do script.
 O `--conferir` acusa desatualização sem escrever, e recusa fixture órfã de um
-recorte anterior — que continuaria sendo importada e nunca mais atualizada.
+recorte anterior: que continuaria sendo importada e nunca mais atualizada.
 
 **Quatro defeitos apareceram, e três estavam no produto, não nos testes:**
 
@@ -492,7 +492,7 @@ recorte anterior — que continuaria sendo importada e nunca mais atualizada.
    manifesto. Agora existe a tabela `gold_manifesto`, que `carregar_gold.py`
    escreve a cada carga e a view lê. O carimbo acompanha a carga porque é
    escrito por ela;
-2. **duas telas cravavam a competência no texto do snapshot** — "O snapshot
+2. **duas telas cravavam a competência no texto do snapshot**: "O snapshot
    preserva JUNDIAI em 05/2026" em `FluxosView` e `HospitalView`, contradizendo
    os números logo abaixo. Passam a derivar do dado exibido;
 3. **o passo de fixtures da CI nunca poderia passar.** `reancorar_fixtures.py`
@@ -500,15 +500,15 @@ recorte anterior — que continuaria sendo importada e nunca mais atualizada.
    Um portão que nunca fecha não é portão; agora ele detecta a ausência e sai
    sem erro;
 4. **34 asserções herméticas cravavam `2026-05`**, e 24 delas cravavam também
-   os números do recorte. Passam a derivar tudo da fixture. Uma delas — a de
-   hospital sem internação nova — cobria uma regra de produto que ficou sem
+   os números do recorte. Passam a derivar tudo da fixture. Uma delas, a de
+   hospital sem internação nova, cobria uma regra de produto que ficou sem
    dado no recorte novo: virou caso construído, que vale em qualquer recorte.
 
 Duas restrições descobertas ao gerar, que valem registro porque não são
 óbvias: o `limit` do snapshot **tem** de ser o mesmo que o cliente pede, e o
 snapshot de diagnósticos **tem** de vir com `elegivel=1`. Em ambos os casos o
 cliente rejeita a resposta, e a tela cai para um estado de contingência que não
-tem plano B — o snapshot *é* o plano B.
+tem plano B. O snapshot *é* o plano B.
 
 ### Fatia 8 / B.3 e B.5 — front por funcionalidade, concluído em 11/08/2026
 
@@ -517,7 +517,7 @@ as chamadas de API juntas. Com 20 arquivos funciona; o problema aparece quando
 se quer mexer numa visão e os arquivos dela estão espalhados por cinco pastas,
 sem nada indicando quais são.
 
-Agora cada visão é uma pasta com tudo o que lhe pertence — tela, componentes e
+Agora cada visão é uma pasta com tudo o que lhe pertence: tela, componentes e
 clientes de API. A regra para decidir onde um arquivo mora é a do plano, e é a
 única: **usado por uma visão só, vive dentro dela; usado por duas ou mais, sobe
 para `shared/`.** Ficaram em `lib/api/` os três clientes que o `SourceContext`
@@ -526,7 +526,7 @@ usa, porque ele serve as quatro visões.
 `RoutePlaceholder.tsx` saiu: era andaime das primeiras fatias e nada o
 importava havia semanas. Continua no histórico do Git.
 
-**B.5 — um spec por visão.** O `status.spec.ts` tinha 1.670 linhas e 32 testes;
+**B.5: um spec por visão.** O `status.spec.ts` tinha 1.670 linhas e 32 testes;
 virou `regional`, `fluxos`, `hospital` e `contrato`, mais `apoio.ts` com os
 snapshots, os valores derivados e o `mockLiveSource`. O motivo é prático:
 quando um teste quebra, o nome do arquivo já diz onde olhar.
@@ -545,7 +545,7 @@ Verificado: `tsc` e `vite build` limpos, Playwright 32/32, pytest 213,
 
 Nove pastas ganharam README respondendo **o quê, por quê e como**, e o README
 raiz ganhou o mapa que aponta para todos. O critério para o conteúdo não foi
-descrever a árvore — `ls` já faz isso — mas registrar as decisões que a pasta
+descrever a árvore (`ls` já faz isso) mas registrar as decisões que a pasta
 carrega e que ninguém adivinha lendo o código:
 
 - `data/` explica a distinção entre artefato imutável e saída regenerável, que
@@ -568,7 +568,7 @@ reusa o projeto precisa ver? Saíram a configuração das ferramentas de IA
 (`CLAUDE.md`, `AGENTS.md`, `.ai-memory.toml`, agora no `.gitignore` e ainda no
 disco de quem trabalha aqui), o material de curso da Sprint 1, a evidência da
 v0.1.0, um `requirements-geografia.txt` órfão e uma cópia congelada do
-relatório de validação — que é gerado, e portanto divergia em silêncio.
+relatório de validação. Que é gerado, e portanto divergia em silêncio.
 
 Os três documentos de arquitetura viraram um. Ao fundir apareceu que a tabela
 "estado real versus arquitetura-alvo" dizia *Proposto* para views, endpoints,
@@ -577,7 +577,7 @@ impedir que o desejado pareça entregue estava fazendo o contrário.
 
 **Duas remoções previstas no plano não foram feitas.** `figuras/legado/` e os
 CSVs de 2022-2023 são carregados pela checagem de preservação do `validar.py`,
-que casa artefatos por SHA-256 — removê-los derrubaria 24 dos 38 artefatos
+que casa artefatos por SHA-256: removê-los derrubaria 24 dos 38 artefatos
 exigidos e o portão falharia para sempre. Custam 0,7 MB e provam que a migração
 de julho não perdeu arquivo. Ficam.
 

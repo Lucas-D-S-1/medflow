@@ -60,15 +60,15 @@ servidas por dez endpoints ORDS e os dados exibidos reconciliados contra a Gold
 em 8.403.103 comparações sem divergência, reproduzíveis com
 `make reconciliar-completo`.
 
-A condição declarada aqui para a `v0.3.0` — módulo ORDS de produção existindo e
-link público testado — **foi cumprida em 16/08/2026**: `api/v1` publicado e o
+A condição declarada aqui para a `v0.3.0`: módulo ORDS de produção existindo e
+link público testado. **foi cumprida em 16/08/2026**: `api/v1` publicado e o
 site no ar em <https://lucas-d-s-1.github.io/medflow/>, conferido no navegador
 com as quatro visões ao vivo.
 
 A tag ficou parada depois disso por decisão de produto, não por pendência
 técnica: cogitou-se refazer a UI em duas telas, e tagear um produto que muda na
 semana seguinte contraria a regra acima de que tags não se antecipam a entregas
-parciais. **Em 18/08/2026 essa hipótese foi descartada** — o WebApp permanece
+parciais. **Em 18/08/2026 essa hipótese foi descartada**. O WebApp permanece
 nas quatro visões, com mudanças restritas a texto e acabamento. Com o Select AI
 revalidado contra o produto em 23/08/2026, o escopo do marco fechou e a
 `v0.3.0` foi publicada nessa data.

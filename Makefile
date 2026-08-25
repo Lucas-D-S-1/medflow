@@ -8,7 +8,7 @@ DOTENV  := $(PY) -m dotenv -f .env run --
 # os alvos de frontend rodam dentro de web/, então o .env fica um nível acima
 DOTENV_WEB := ../$(PY) -m dotenv -f ../.env run --
 
-.PHONY: fixtures fixtures-conferir fixtures-carimbo help setup setup-py pipeline bronze silver gold geografia validar inventario test test-completo test-py test-web test-web-ci test-web-live lint contrato contrato-publico reconciliar reconciliar-completo reconciliar-publico web-install web-browser web-build web-e2e oracle-ping apex-verificar preflight select-ai-revalidar oracle-carregar ords-publicar limpar
+.PHONY: fixtures fixtures-conferir fixtures-carimbo help setup setup-py pipeline bronze silver gold geografia validar inventario test test-completo test-py test-web test-web-ci test-web-live lint estilo contrato contrato-publico reconciliar reconciliar-completo reconciliar-publico web-install web-browser web-build web-e2e oracle-ping apex-verificar preflight select-ai-revalidar oracle-carregar ords-publicar limpar
 
 help:  ## lista os alvos disponíveis
 	@grep -hE '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) \
@@ -75,6 +75,9 @@ test-py:  ## pytest
 
 lint:  ## ruff
 	$(PY) -m ruff check src tests
+
+estilo: $(PY)  ## confere a escrita dos documentos (travessão em prosa, frases-clichê)
+	$(PY) scripts/estilo.py $(ARGS)
 
 # A reconciliação precisa do Oracle no ar; sem ORDS_BASE_URL os testes se
 # pulam sozinhos, e é por isso que ela não entra em `make test`.

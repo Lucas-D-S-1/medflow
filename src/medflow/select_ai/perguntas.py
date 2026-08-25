@@ -44,11 +44,11 @@ class Pergunta:
     """
 
 
-BLOCO_A = "A. Leitura direta — uma tabela, um corte"
-BLOCO_B = "B. Profundidade analítica — junção entre marts e colunas de estado"
-BLOCO_C = "C. Armadilhas — onde a resposta certa é recusar ou ressalvar"
-BLOCO_D = "D. Conversação — a pergunta que só existe depois da anterior"
-BLOCO_E = "E. Com e sem os dados na frente — chat contra narrate"
+BLOCO_A = "A. Leitura direta: uma tabela, um corte"
+BLOCO_B = "B. Profundidade analítica: junção entre marts e colunas de estado"
+BLOCO_C = "C. Armadilhas: onde a resposta certa é recusar ou ressalvar"
+BLOCO_D = "D. Conversação: a pergunta que só existe depois da anterior"
+BLOCO_E = "E. Com e sem os dados na frente: chat contra narrate"
 
 ROTEIRO: dict[str, list[Pergunta]] = {
     BLOCO_A: [

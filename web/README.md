@@ -37,7 +37,7 @@ Quem autoriza a chamada entre origens é o ORDS, não o front: o módulo `api/v1
 aceita só `https://lucas-d-s-1.github.io`, e responde 403 a qualquer outra
 origem. Ver [`../db/README.md`](../db/README.md).
 
-O prefixo da API sai de `src/lib/api/base.ts` — **um lugar só**. Antes estava
+O prefixo da API sai de `src/lib/api/base.ts`: **um lugar só**. Antes estava
 escrito à mão em dez arquivos, e o risco não era a repetição: era trocar nove
 e esquecer um, e ter uma tela servindo painéis de dois módulos diferentes sem
 nenhum erro visível.
@@ -63,8 +63,8 @@ src/
 
 A regra de onde um arquivo mora é uma só: **usado por uma visão, vive dentro
 dela; usado por duas ou mais, sobe para `shared/`.** Antes da fatia 8 o
-agrupamento era por tipo — todos os componentes juntos, todas as chamadas
-juntas — e mexer numa visão significava caçar arquivos em cinco pastas.
+agrupamento era por tipo: todos os componentes juntos, todas as chamadas
+juntas: e mexer numa visão significava caçar arquivos em cinco pastas.
 
 ## Três regras que o produto respeita
 
@@ -72,7 +72,7 @@ juntas — e mexer numa visão significava caçar arquivos em cinco pastas.
 com `Intl` e nada mais. Se um número precisa existir, ele nasce na Gold.
 
 **Fontes não se misturam.** Quando o Oracle não responde, a tela vai para o
-snapshot com selo explícito e **recusa trocar de recorte** — meio snapshot com
+snapshot com selo explícito e **recusa trocar de recorte**: meio snapshot com
 meio ao vivo seria pior que nenhum dado.
 
 **Ausência legítima não é falha.** Competência sem hospital publicado, região
@@ -86,10 +86,10 @@ npm run build                 # tsc + vite build
 npx playwright test           # 32 testes
 ```
 
-Um spec por visão, mais `contrato.spec.ts` para o que é transversal — origem do
+Um spec por visão, mais `contrato.spec.ts` para o que é transversal: origem do
 dado, contingência, recusa de resposta fora do contrato e layout. Os dois
 testes marcados `@live` falam com o Oracle de verdade; os outros 30 interceptam
 as rotas e não dependem de rede.
 
 **Os valores esperados saem dos snapshots**, nunca digitados. Regerar os
-snapshots é `make fixtures`, na raiz — ver `scripts/gerar-mocks.ts`.
+snapshots é `make fixtures`, na raiz (ver `scripts/gerar-mocks).ts`.

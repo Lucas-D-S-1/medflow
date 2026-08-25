@@ -2,7 +2,7 @@
 
 **O quê.** As três camadas materializadas, mais o legado preservado para
 auditoria. São cerca de 11 GB, então **o conteúdo é gitignored**: o que está
-versionado aqui são os artefatos pequenos que descrevem o resto — manifesto,
+versionado aqui são os artefatos pequenos que descrevem o resto: manifesto,
 dicionários, metadados de qualidade, geografia e o legado curado.
 
 ```text
@@ -40,7 +40,7 @@ manifesto e invariantes conferidas a cada `make validar`.
 
 `bronze/origem/referencias/` guarda a malha municipal do IBGE, o CSV de regiões
 do Ministério da Saúde, a CID-10 do DATASUS e as respostas das APIs oficiais.
-São 12 MB — a maior parte do repositório — e o pipeline sabe baixá-los sozinho
+São 12 MB (a maior parte do repositório) e o pipeline sabe baixá-los sozinho
 (`bronze/referencias.py`). Versioná-los parece desperdício, e é deliberado.
 
 O motivo é que **URL de órgão público muda**. O IBGE reorganiza o `geoftp`, o
@@ -51,10 +51,10 @@ publicados. A cópia versionada, com o SHA-256 no `MANIFESTO.json`, responde
 essa pergunta anos depois.
 
 12 MB é barato para essa garantia. Se um dia deixar de ser, a saída é publicar
-as referências como *release asset* — não apagá-las.
+as referências como *release asset*: não apagá-las.
 
 ## O manifesto é a fonte do recorte
 
 `bronze/MANIFESTO.json` registra fonte, volumetria, SHA-256 e as competências
 efetivamente disponíveis. É dele que saem a competência do webapp, o padrão do
-`config.py` e os testes — nunca de um número escrito à mão.
+`config.py` e os testes: nunca de um número escrito à mão.

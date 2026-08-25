@@ -171,7 +171,7 @@ Essa é uma estrutura conceitual do produto, não uma ordem obrigatória de apre
 
 ### Proposta de valor
 
-O MedFlow transforma bases públicas administrativas em uma jornada auditável de triagem — **região → hospital → especialidade/diagnóstico → hipótese de investigação** — preservando fonte, amostra, benchmark e limitações.
+O MedFlow transforma bases públicas administrativas em uma jornada auditável de triagem (**região → hospital → especialidade/diagnóstico → hipótese de investigação**), preservando fonte, amostra, benchmark e limitações.
 
 ### Diferenciais defensáveis
 
@@ -285,7 +285,7 @@ A Bronze preserva DBC, usa DBF como cache intermediário, serializa o conteúdo 
 
 A Silver tipa os campos analíticos, documenta e aplica os de/paras, preserva `N_AIH`, `IDENT` e `COD_IDADE`, distingue `QT_DIARIAS` de `DIAS_PERM`, associa município a região e macrorregião oficiais e mantém explícita a natureza atual dos atributos cadastrais de hospital. Agregações usam ausência como categoria quando aplicável e os totais são reconciliados.
 
-Suas saídas centrais são seis dimensões — tempo, hospital, município, especialidade, CID e domínios — e dois fatos: internação e leito mensal.
+Suas saídas centrais são seis dimensões (tempo, hospital, município, especialidade, CID e domínios) e dois fatos: internação e leito mensal.
 
 ### Gold
 

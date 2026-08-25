@@ -69,6 +69,29 @@ contingência, ausência legítima e erro.
 Os alvos de integração dependem de configuração externa e não fazem parte do
 onboarding inicial. A política de acesso ao Oracle será definida separadamente.
 
+## Escrita
+
+Documento de projeto envelhece de duas formas. Envelhece de fato, quando o
+número muda, e envelhece de forma, quando adota os maneirismos de quem escreve
+rápido. Os testes pegam o primeiro caso. Estas regras existem para o segundo, e
+`make estilo` as verifica.
+
+- Sem travessão em prosa corrida. Vírgula, ponto, dois-pontos ou parênteses
+  resolvem todos os casos. Intervalo, célula de tabela, título de seção e
+  rótulo de item de lista continuam livres: ali o travessão é tipografia.
+- Três ou mais trechos separados por ponto e vírgula num parágrafo são uma
+  lista escrita como texto. Vire bullets.
+- Um item de lista com mais de duas linhas ou vira parágrafo ou é cortado.
+- Sem "não apenas X mas Y", "vale notar", "é importante destacar", "em suma".
+- Sem advérbio de reforço: genuinamente, absolutamente, extremamente,
+  realmente, simplesmente. Se o fato precisa do advérbio, o fato está fraco.
+- Seção não abre com frase que resume a seção. Abre pelo conteúdo.
+- Antítese de fecho ("não é X, é Y"), no máximo uma por documento.
+
+Registro datado não se reescreve para caber no presente: o `CHANGELOG.md`, as
+decisões e a evidência de execução ficam isentos, e a lista está no topo de
+`scripts/estilo.py`.
+
 ## Definição de pronto
 
 - o diff tem escopo compreensível;

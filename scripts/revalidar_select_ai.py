@@ -141,7 +141,7 @@ def main() -> int:
         )
     for r in regressoes:
         detalhe = (
-            f"{r.veredito} — {r.detalhe}"
+            f"{r.veredito}: {r.detalhe}"
             if r.veredito
             else f"termo proibido: {', '.join(r.termos_encontrados)}"
         )
