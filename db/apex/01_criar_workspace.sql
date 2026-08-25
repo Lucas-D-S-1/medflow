@@ -11,9 +11,15 @@
 -- Onde rodar: console OCI -> o banco MEDFLOW -> Database Actions -> entrar
 -- como ADMIN -> SQL. Cole este arquivo e execute como script.
 --
--- O que ele faz: cria o workspace MEDFLOW_DEMO apontando para o schema
--- MEDFLOW, e dentro dele um usuário desenvolvedor. Não toca em dado nem em
--- estrutura da Gold.
+-- O que ele faz: cria apenas o workspace MEDFLOW_DEMO apontando para o schema
+-- MEDFLOW. Não toca em dado nem em estrutura da Gold.
+--
+-- IMPORTANTE: esta instância autentica o ambiente de desenvolvimento com
+-- contas do banco. Criar um usuário apenas com APEX_UTIL.CREATE_USER não basta
+-- para entrar no App Builder. Para o primeiro acesso, prefira o formulário
+-- oficial em Database Actions -> Administration -> APEX Workspaces: ele cria
+-- o workspace e configura a conta inicial corretamente. Se usar este script,
+-- configure depois o desenvolvedor pela interface administrativa.
 -- =====================================================================
 
 -- ---------------------------------------------------------------------
@@ -39,34 +45,11 @@ end;
 /
 
 -- ---------------------------------------------------------------------
--- 2. O usuário que entra no App Builder
--- ---------------------------------------------------------------------
--- TROQUE A SENHA ABAIXO antes de rodar. Ela não deve voltar para o Git:
--- este arquivo é versionado, o valor real não é.
-
-begin
-  apex_util.set_security_group_id(
-      apex_util.find_security_group_id('MEDFLOW_DEMO'));
-
-  apex_util.create_user(
-      p_user_name                    => 'MEDFLOW_DEV',
-      p_web_password                 => 'TROQUE_ESTA_SENHA',
-      p_developer_privs              => 'ADMIN:CREATE:DATA_LOADER:EDIT_PUBLIC_'
-                                        || 'REPORTS:HELP:MONITOR:SQL',
-      p_default_schema               => 'MEDFLOW',
-      p_change_password_on_first_use => 'Y');
-
-  commit;
-  dbms_output.put_line('Usuario MEDFLOW_DEV criado. Troque a senha no primeiro acesso.');
-end;
-/
-
--- ---------------------------------------------------------------------
--- 3. Onde entrar depois
+-- 2. Onde entrar depois de configurar a conta na Administração do APEX
 -- ---------------------------------------------------------------------
 -- https://gf68e03b2a30d55-medflow.adb.sa-saopaulo-1.oraclecloudapps.com/ords/apex
 --
 --   workspace: MEDFLOW_DEMO
---   usuário:   MEDFLOW_DEV
+--   usuário:   a conta de banco registrada como desenvolvedor
 --
 -- Os passos de montagem da página estão em db/apex/README.md.

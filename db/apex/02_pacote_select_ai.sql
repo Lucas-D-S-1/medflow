@@ -241,8 +241,6 @@ create or replace package body medflow_select_ai as
       raise_application_error(-20002, 'Escreva uma pergunta.');
     end if;
 
-    dbms_cloud_ai.set_profile(c_perfil);
-
     begin
       l_sql := guardar(dbms_lob.substr(gerar(p_pergunta, 'showsql'), 32000, 1));
     exception
