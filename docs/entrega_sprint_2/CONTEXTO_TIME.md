@@ -87,7 +87,9 @@ As técnicas implementadas abrangem análise exploratória, modelagem dimensiona
 | Select AI | roteiro de 13 perguntas revalidado em 23/08/2026; oito têm SQL de referência executado, seis coincidiram exatamente e os limites restantes estão documentados |
 | GitHub | versão pública `v0.3.0` registrada; hardening posterior em `v0.3.1 — em andamento` |
 | Disponibilidade | heartbeat diário ativo; `make preflight` confere o produto publicado antes da banca |
-| PPT, vídeo, planilha e ZIP | continuam pendentes; os arquivos finais ainda não estão neste workspace |
+| Página APEX de Select AI | montada em 25/08/2026; workspace `MEDFLOW_DEMO`, aplicação `100`, página `1`, export versionado em `db/apex/` |
+| PPT | existe e foi regerado em 25/08/2026, com a captura real da página APEX no slide 16; mora no repositório acadêmico `fiap-1tscoa`, que é privado |
+| Vídeo, planilha de integrantes e ZIP | continuam pendentes; os arquivos finais ainda não estão neste workspace |
 
 O recorte avançou de 29 para 30 competências em 09/08/2026. Os números vigentes já refletem junho de 2026; referências antigas a 2026-05, 585.296 linhas Oracle, 653 hospitais ou 8.257.139 comparações descrevem estados históricos, não o produto atual.
 
@@ -263,7 +265,7 @@ O princípio arquitetural é a responsabilidade única por etapa: Bronze preserv
 | Estado | Elementos |
 |---|---|
 | **Implementado no MVP** | fontes → Bronze → Silver → Gold; dimensões e marts; carga no Oracle 26ai Lakehouse; schema `MEDFLOW`; views; ORDS `api/v1`; WebApp público; snapshots de contingência; Select AI com profile e roteiro revalidável de 13 perguntas; contratos e reconciliações |
-| **Demonstração opcional** | backend PL/SQL e runbook da página APEX; o workspace e a página visual ainda precisam ser montados com acesso `ADMIN` |
+| **Demonstração montada em 25/08/2026** | página APEX de Select AI no ar: workspace `MEDFLOW_DEMO`, aplicação `100`, página `1`, com o export versionado em `db/apex/05_aplicacao_medflow_select_ai.sql` e conferido por `make apex-verificar` |
 | **Evidência futura, fora da arquitetura implementada** | validação primária com usuários para medir compreensão, utilidade, adoção, tempo, erro e impacto |
 | **Fora do MVP, sem implementação alegada** | tempo real, previsão, machine learning, clustering, decisão automática, prontuário, regulação, censo operacional de leitos e custo contábil completo |
 
@@ -580,7 +582,7 @@ Neste arquivo, `Leandro` nessa dupla com Pedro significa Leandro Lopes; Scutari 
 | evidência Oracle e Select AI | `docs/qualidade/REVALIDACAO_SELECT_AI.md` | execução datada das 13 perguntas e comparações contra a referência |
 | leitura dos limites do Select AI | `docs/qualidade/LEITURA_SELECT_AI.md` | interpretação dos acertos, divergências e roteiro seguro para a banca |
 | roteiro Select AI | `src/medflow/select_ai/perguntas.py` | cinco blocos, prompts, SQL de referência e limitações conhecidas |
-| demonstração APEX opcional | `db/apex/README.md` | backend PL/SQL e montagem do workspace/página |
+| demonstração APEX | `db/apex/README.md` | backend PL/SQL, roteiro de montagem e o export da aplicação `100` já montada |
 | contrato da API | `contracts/openapi.yaml` | rotas, parâmetros, respostas, ordenação e limitações |
 | instalação e mapa do repositório | `HOW_TO_INSTALL.md` | dependências, execução e organização técnica |
 | backend Oracle | `db/README.md` | schema, views, ORDS, módulos, segurança e Select AI |

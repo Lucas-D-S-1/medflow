@@ -1,25 +1,26 @@
 # PENDÊNCIAS — Challenge Oracle: MedFlow
 
-Atualizado em 23/08/2026, após o heartbeat, o preflight e a base APEX.
+Atualizado em 25/08/2026, depois que a página APEX foi montada.
 Entrega da Sprint 2: **01/09/2026**.
 
 ## Estado atual para fechar a entrega
 
 O produto técnico está fechado e publicado: `v0.3.0`, quatro visões no WebApp,
 dez endpoints `api/v1`, 8.403.103 comparações sem divergência, roteiro de Select
-AI revalidado e heartbeat diário ativo. O hardening posterior está no changelog
-de `v0.3.1 em andamento`.
+AI revalidado, heartbeat diário ativo e a página APEX de demonstração montada em
+25/08/2026. O hardening posterior está no changelog de `v0.3.1 em andamento`.
 
 Falta trabalho de entrega, não de pipeline:
 
-1. concluir PPT e vídeo com evidências atuais;
+1. gravar o vídeo da demonstração, que inclui a página APEX respondendo;
 2. completar `Informacoes_Finais_Projeto_Integrantes_v1.xlsx` com o quinto
    integrante;
 3. produzir e conferir o ZIP único do FIAP ON;
-4. opcionalmente montar a página APEX seguindo `db/apex/README.md`;
-5. preparar os cinco integrantes e rodar `make preflight` antes da banca.
+4. preparar os cinco integrantes e rodar `make preflight` antes da banca.
 
-Os arquivos finais de PPT, planilha e vídeo ainda não estão neste workspace.
+O PPT deixou de ser pendência: foi regerado em 25/08/2026 com a captura real
+da página APEX no slide 16. Ele mora no repositório acadêmico `fiap-1tscoa`, e
+é por isso que não aparece neste workspace.
 
 ## Concluído nesta revisão
 
