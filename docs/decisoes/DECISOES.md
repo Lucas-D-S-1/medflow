@@ -366,21 +366,21 @@ heartbeat diário acompanhado por `make preflight`.
 
 Ordem de trabalho restante para a entrega acadêmica:
 
-1. concluir PPT e vídeo com evidências datadas;
+1. gravar o vídeo com as evidências já produzidas;
 2. completar a planilha oficial com o quinto integrante;
 3. montar e conferir o ZIP único exigido pelo FIAP ON;
-4. opcionalmente montar a página APEX seguindo `db/apex/README.md`;
-5. preparar os cinco integrantes e rodar `make preflight` antes da banca.
+4. preparar os cinco integrantes e rodar `make preflight` antes da banca.
 
 A versão pública
 [`v0.3.0`](https://github.com/Lucas-D-S-1/medflow/releases/tag/v0.3.0)
 foi publicada em 23/08/2026 com o produto de ponta a ponta. A `v0.3.1` reúne o
-hardening posterior e permanece em andamento até o gate final.
+hardening posterior, fechado e validado localmente em 25/08/2026. A tag e a
+publicação permanecem pendentes.
 
 A base metodológica, a estrutura de dados, a carga Oracle e o WebApp público
 estão fechados. O profile Select AI cobre os nove objetos, e os limites medidos
-do modelo estão registrados. A página APEX é demonstração opcional; não bloqueia
-o produto nem os critérios da Sprint 2.
+do modelo estão registrados. A página APEX foi montada como demonstração e não
+bloqueia o produto nem os critérios da Sprint 2.
 
 ## 12. O legado de 2022-2023 sai do repositório
 
@@ -405,4 +405,3 @@ todos conferidos a cada `make validar`.
 
 `medflow inventario` continua existindo e passou a gravar em
 `contracts/INVENTARIO.json`, que é gitignored.
-

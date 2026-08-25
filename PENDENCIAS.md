@@ -8,7 +8,8 @@ Entrega da Sprint 2: **01/09/2026**.
 O produto técnico está fechado e publicado: `v0.3.0`, quatro visões no WebApp,
 dez endpoints `api/v1`, 8.403.103 comparações sem divergência, roteiro de Select
 AI revalidado, heartbeat diário ativo e a página APEX de demonstração montada em
-25/08/2026. O hardening posterior está no changelog de `v0.3.1 em andamento`.
+25/08/2026. O hardening posterior está fechado localmente no changelog da
+`v0.3.1`; a tag e a publicação ainda não foram realizadas.
 
 Falta trabalho de entrega, não de pipeline:
 
@@ -294,18 +295,15 @@ A execução é reproduzível por `make select-ai-revalidar`, que regrava
 A interpretação e as escolhas seguras para a banca estão em
 [`docs/qualidade/LEITURA_SELECT_AI.md`](docs/qualidade/LEITURA_SELECT_AI.md).
 
-### 9. Produzir a apresentação por último
+### 9. Produzir a apresentação por último — concluída em 25/08/2026
 
-As figuras herdadas são referência visual, não evidência atual. Depois da
-aprovação do webapp e da revalidação do Select AI:
-
-- regenerar as figuras a partir do notebook 02 e das tabelas Gold;
-- revisar todos os números e textos do pitch;
-- produzir PPT, vídeo e roteiro da demonstração;
-- ensaiar a defesa dos indicadores hospitalares/territoriais e limitações.
+O PPT e o roteiro foram regerados depois da aprovação do WebApp, da
+revalidação do Select AI e da montagem da página APEX. A captura real do APEX
+está no slide 16. Restam gravar o vídeo e ensaiar a defesa dos indicadores e
+das limitações.
 
 Marco publicado: **`v0.3.0`, Oracle e webapp MVP**. O hardening posterior está
-em **`v0.3.1: em andamento`**.
+fechado localmente na **`v0.3.1`**, ainda sem tag ou publicação.
 
 ## Entregáveis da Sprint 2
 
@@ -318,8 +316,8 @@ em **`v0.3.1: em andamento`**.
 | Link público | 10% | **concluído em 16/08/2026** — <https://lucas-d-s-1.github.io/medflow/>, servido por `api/v1` |
 | Validação dos dados no produto | — | concluída e reproduzível: 8.403.103 comparações, zero divergências |
 | Oracle Select AI | — | **revalidado contra o produto em 23/08/2026**, evidência em `docs/qualidade/REVALIDACAO_SELECT_AI.md` |
-| GitHub | 20% | `v0.3.0` publicada; hardening de `v0.3.1` em andamento |
-| PPT / pitch | 10% | pendente; arquivo final ainda não está no workspace |
+| GitHub | 20% | `v0.3.0` publicada; `v0.3.1` pronta localmente e ainda não publicada |
+| PPT / pitch | 10% | concluído no repositório acadêmico privado e regerado em 25/08/2026 |
 | Vídeo YouTube | 10% | pendente; link final ainda não está no workspace |
 | Apresentação técnica | 50% | produto pronto; falta preparação dos cinco integrantes |
 

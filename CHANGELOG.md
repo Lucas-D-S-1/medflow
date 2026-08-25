@@ -5,6 +5,8 @@ A versão da release e a versão dos contratos de dados evoluem separadamente.
 
 ## 0.3.1 — 25/08/2026
 
+Escopo fechado e validado localmente; tag e publicação ainda não realizadas.
+
 ### Adicionado
 
 - roteiro de Select AI executável, em `src/medflow/select_ai/`, com treze
@@ -45,6 +47,9 @@ A versão da release e a versão dos contratos de dados evoluem separadamente.
   lista escrita como texto, frase-clichê e advérbio de reforço reprovam. Os
   registros datados ficam isentos, e a lista está no topo do script; as regras
   estão em `CONTRIBUTING.md`, seção Escrita;
+- `docs/entrega_sprint_2/QA_BANCA.md`: vinte perguntas e respostas curtas para
+  alinhar os cinco integrantes sobre produto, dados, Oracle, evidências e
+  limites antes da banca;
 
 ### Alterado
 

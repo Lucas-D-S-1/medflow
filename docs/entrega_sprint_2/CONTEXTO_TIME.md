@@ -4,6 +4,10 @@
 
 Este documento consolida o contexto oficial, de negócio, analítico e técnico do MedFlow para a Sprint 2 do Challenge Oracle. Sua função é registrar o que precisa permanecer coerente entre os entregáveis e oferecer uma visão completa do estado da solução.
 
+Para uma revisão curta em grupo, o
+[`Q&A transversal para a banca`](QA_BANCA.md) condensa este contexto em vinte
+perguntas sem substituir as fontes e os limites registrados aqui.
+
 O dossiê não define formato, narrativa ou execução de vídeo, slides, apresentação ou demonstrações. Não contém roteiro, cronograma de fala, sequência de slides, ordem de cliques, respostas prontas, checklist operacional, divisão adicional de trabalho nem recomendações criativas. Essas decisões pertencem às pessoas responsáveis por cada entregável.
 
 As regras da FIAP são apresentadas como requisitos oficiais. As demais afirmações descrevem o produto, suas evidências, suas limitações e o estado factual registrado nas fontes internas. Em caso de divergência histórica de números, o recorte vigente é **2024-01 a 2026-06, com 30 competências**, conforme `README.md` e `VALIDACAO_TECNICA.md`.
@@ -85,7 +89,7 @@ As técnicas implementadas abrangem análise exploratória, modelagem dimensiona
 | Link público | concluído em 16/08/2026 e servido pelo módulo ORDS `api/v1` |
 | Validação do produto | 8.403.103 comparações campo a campo, sem divergências |
 | Select AI | roteiro de 13 perguntas revalidado em 23/08/2026; oito têm SQL de referência executado, seis coincidiram exatamente e os limites restantes estão documentados |
-| GitHub | versão pública `v0.3.0` registrada; hardening posterior em `v0.3.1 — em andamento` |
+| GitHub | versão pública `v0.3.0` registrada; `v0.3.1` pronta localmente, ainda sem tag ou publicação |
 | Disponibilidade | heartbeat diário ativo; `make preflight` confere o produto publicado antes da banca |
 | Página APEX de Select AI | montada em 25/08/2026; workspace `MEDFLOW_DEMO`, aplicação `100`, página `1`, export versionado em `db/apex/` |
 | PPT | existe e foi regerado em 25/08/2026, com a captura real da página APEX no slide 16; mora no repositório acadêmico `fiap-1tscoa`, que é privado |
