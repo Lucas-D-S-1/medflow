@@ -1,6 +1,6 @@
 # MedFlow: onde investigar primeiro
 
-**Do sinal territorial à hipótese, com fonte, amostra e limite à vista.**
+**Do sinal territorial à hipótese: com fonte, amostra e limite à vista.**
 
 Enterprise Challenge FIAP × Oracle · Sprint 2 · Equipe Ômega Urban Tech
 

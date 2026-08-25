@@ -92,8 +92,10 @@ As técnicas implementadas abrangem análise exploratória, modelagem dimensiona
 | GitHub | versão pública `v0.3.1` registrada em 25/08/2026 |
 | Disponibilidade | heartbeat diário ativo; `make preflight` confere o produto publicado antes da banca |
 | Página APEX de Select AI | montada em 25/08/2026; workspace `MEDFLOW_DEMO`, aplicação `100`, página `1`, export versionado em `db/apex/` |
-| PPT | existe e foi regerado em 25/08/2026, com a captura real da página APEX no slide 16; mora no repositório acadêmico `fiap-1tscoa`, que é privado |
-| Vídeo, planilha de integrantes e ZIP | continuam pendentes; os arquivos finais ainda não estão neste workspace |
+| PPT | fechado em 21 slides e dois blocos de Select AI; foi regerado em 25/08/2026 com a captura real da página APEX no slide 16 e mora no repositório acadêmico privado |
+| Planilha de integrantes | preenchida no template oficial, com os cinco integrantes em ordem alfabética; mora no repositório acadêmico privado |
+| Vídeo | pendente; a URL pública do YouTube ainda não está no workspace e deve entrar no slide 21 |
+| ZIP FIAP ON | montagem automatizada no repositório acadêmico; bloqueada de propósito até o link do vídeo entrar no PPT |
 
 O recorte avançou de 29 para 30 competências em 09/08/2026. Os números vigentes já refletem junho de 2026; referências antigas a 2026-05, 585.296 linhas Oracle, 653 hospitais ou 8.257.139 comparações descrevem estados históricos, não o produto atual.
 

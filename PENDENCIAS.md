@@ -1,6 +1,6 @@
 # PENDÊNCIAS — Challenge Oracle: MedFlow
 
-Atualizado em 25/08/2026, depois que a página APEX foi montada.
+Atualizado em 25/08/2026, depois do fechamento local do PPT e da planilha.
 Entrega da Sprint 2: **01/09/2026**.
 
 ## Estado atual para fechar a entrega
@@ -10,17 +10,20 @@ dez endpoints `api/v1`, 8.403.103 comparações sem divergência, roteiro de Sel
 AI revalidado, heartbeat diário ativo e a página APEX de demonstração montada em
 25/08/2026. A release reúne o MVP da `v0.3.0` e o hardening final da entrega.
 
-Falta trabalho de entrega, não de pipeline:
+Falta trabalho humano e a montagem final da entrega, não trabalho de pipeline:
 
 1. gravar o vídeo da demonstração, que inclui a página APEX respondendo;
-2. completar `Informacoes_Finais_Projeto_Integrantes_v1.xlsx` com o quinto
-   integrante;
-3. produzir e conferir o ZIP único do FIAP ON;
-4. preparar os cinco integrantes e rodar `make preflight` antes da banca.
+2. publicar o vídeo no YouTube e inserir a URL no slide 21;
+3. gerar e conferir o ZIP único do FIAP ON com o script preparado no repositório
+   acadêmico;
+4. fazer três passadas de ensaio com os cinco integrantes e rodar
+   `make preflight` antes da banca.
 
-O PPT deixou de ser pendência: foi regerado em 25/08/2026 com a captura real
-da página APEX no slide 16. Ele mora no repositório acadêmico `fiap-1tscoa`, e
-é por isso que não aparece neste workspace.
+O PPT final tem 21 slides e dois blocos de Select AI. Ele foi regerado em
+25/08/2026 com a captura real da página APEX no slide 16. A planilha oficial
+também foi preenchida com os cinco integrantes em ordem alfabética. Ambos moram
+no repositório acadêmico `fiap-1tscoa`, e é por isso que não aparecem neste
+workspace.
 
 ## Concluído nesta revisão
 
@@ -300,8 +303,9 @@ A interpretação e as escolhas seguras para a banca estão em
 
 O PPT e o roteiro foram regerados depois da aprovação do WebApp, da
 revalidação do Select AI e da montagem da página APEX. A captura real do APEX
-está no slide 16. Restam gravar o vídeo e ensaiar a defesa dos indicadores e
-das limitações.
+está no slide 16, e a planilha oficial contém os cinco integrantes. Restam
+publicar o vídeo, inserir sua URL no slide 21, montar o ZIP e ensaiar a defesa
+dos indicadores e das limitações.
 
 Marco publicado: **`v0.3.1`, hardening final da entrega**.
 
@@ -317,9 +321,11 @@ Marco publicado: **`v0.3.1`, hardening final da entrega**.
 | Validação dos dados no produto | — | concluída e reproduzível: 8.403.103 comparações, zero divergências |
 | Oracle Select AI | — | **revalidado contra o produto em 23/08/2026**, evidência em `docs/qualidade/REVALIDACAO_SELECT_AI.md` |
 | GitHub | 20% | `v0.3.1` publicada em 25/08/2026 |
-| PPT / pitch | 10% | concluído no repositório acadêmico privado e regerado em 25/08/2026 |
+| PPT / pitch | 10% | concluído no repositório acadêmico privado; 21 slides e dois blocos de Select AI |
+| Planilha de integrantes | — | concluída no repositório acadêmico privado, com os cinco integrantes |
 | Vídeo YouTube | 10% | pendente; link final ainda não está no workspace |
-| Apresentação técnica | 50% | produto pronto; falta preparação dos cinco integrantes |
+| ZIP FIAP ON | — | script preparado; bloqueado até a URL do vídeo entrar no PPT |
+| Apresentação técnica | 50% | produto pronto; faltam três passadas de ensaio com os cinco integrantes |
 
 ## Reorganização em curso
 
