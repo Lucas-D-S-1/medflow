@@ -1,15 +1,14 @@
 # `data/` — as camadas, quase todas fora do Git
 
-**O quê.** As três camadas materializadas, mais o legado preservado para
-auditoria. São cerca de 11 GB, então **o conteúdo é gitignored**: o que está
-versionado aqui são os artefatos pequenos que descrevem o resto: manifesto,
-dicionários, metadados de qualidade, geografia e o legado curado.
+**O quê.** As três camadas materializadas. São cerca de 11 GB, então **o
+conteúdo é gitignored**: o que está versionado aqui são os artefatos pequenos
+que descrevem o resto: manifesto, dicionários, metadados de qualidade e
+geografia.
 
 ```text
 bronze/   origem (DBC), intermediário (DBF, cache), parquet e MANIFESTO.json
 silver/   dimensões, fatos e qualidade/
 gold/     marts/, geografia/ e qualidade/
-legado/   contrato anterior e o recorte 2022-2023, para auditoria
 ```
 
 **Como materializar**, num clone limpo:
@@ -22,19 +21,16 @@ make validar
 A Bronze baixa só o que falta no cache, então uma segunda execução é barata.
 Nenhuma etapa duplica registro ou reescreve Parquet sem necessidade.
 
-## O que é imutável e o que não é
+## Tudo aqui é regenerável
 
-A distinção governa a checagem de preservação em `validar.py`, e ela custou um
-defeito para ficar clara:
+Bronze, Silver e Gold mudam legitimamente quando o recorte avança, e as
+garantias que valem para elas são mais fortes que um hash: contratos,
+manifesto e invariantes conferidos a cada `make validar`.
 
-- **imutável** — o legado de 2022-2023 e as figuras de referência. Nunca são
-  regenerados, e um SHA-256 diferente significa perda;
-- **regenerável** — Bronze, Silver e Gold do recorte corrente. Mudam
-  legitimamente quando o recorte avança, e compará-las contra um inventário
-  antigo produziria uma falha permanente que ninguém mais olharia.
-
-As saídas regeneráveis têm garantias mais fortes que um hash: contratos,
-manifesto e invariantes conferidas a cada `make validar`.
+O recorte de 2022-2023 e as figuras daquela fase ficavam em `legado/` e em
+`docs/qualidade/figuras/legado/`, cobertos por uma checagem de preservação por
+SHA-256. Saíram em 25/08/2026: a revisão de requisitos manda regenerar aquele
+recorte, e o histórico do Git preserva a proveniência.
 
 ## Por que 12 MB de referência estão versionados
 

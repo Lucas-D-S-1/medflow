@@ -81,3 +81,6 @@ CLAUDE.md
 AGENTS.md
 .ai-memory.toml
 .ai-memory.toml.bak-*
+
+# Artefato de execução do `medflow inventario`, gerado sob demanda
+contracts/INVENTARIO.json

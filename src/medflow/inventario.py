@@ -57,7 +57,7 @@ if __name__ == "__main__":
     raiz = Path(__file__).parents[2]
     resultado = gerar_inventario(
         raiz,
-        raiz / "contracts" / "INVENTARIO_PRE_MIGRACAO.json",
+        raiz / "contracts" / "INVENTARIO.json",
     )
     print(
         f"{resultado['quantidade_arquivos']} arquivos, "

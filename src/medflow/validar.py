@@ -5,7 +5,6 @@ from __future__ import annotations
 import json
 import re
 from datetime import UTC, datetime
-from hashlib import sha256
 from pathlib import Path
 
 import numpy as np
@@ -13,14 +12,6 @@ import pandas as pd
 import pyarrow.parquet as pq
 
 PADRAO_NOME = re.compile(r"^[a-z][a-z0-9_]*$")
-
-
-def _hash(caminho: Path, bloco: int = 4 * 1024 * 1024) -> str:
-    digest = sha256()
-    with caminho.open("rb") as arquivo:
-        for parte in iter(lambda: arquivo.read(bloco), b""):
-            digest.update(parte)
-    return digest.hexdigest()
 
 
 def _validar_contrato(base: Path, nome: str) -> tuple[int, int]:
@@ -221,60 +212,6 @@ def validar(base: Path, *, publicar: bool = True) -> dict[str, int | str]:
     geometrias_regionais = len(topo["objects"]["regioes_saude"]["geometries"])
     assert geometrias_regionais == 62
 
-    inventario_pre = json.loads(
-        (base / "contracts" / "INVENTARIO_PRE_MIGRACAO.json").read_text()
-    )
-    arquivos_atuais = [
-        caminho
-        for raiz in (base / "data", base / "docs" / "qualidade" / "figuras")
-        for caminho in raiz.rglob("*")
-        if caminho.is_file()
-    ]
-    hashes_atuais = {_hash(caminho) for caminho in arquivos_atuais}
-
-    # O que esta checagem prova: que a migração de julho de 2026 não perdeu
-    # nada que o pipeline NÃO regenera. A distinção importa e antes não
-    # existia.
-    #
-    # Saídas do pipeline — Bronze, Silver, Gold e as referências baixadas —
-    # mudam legitimamente sempre que o recorte avança, e de fato mudaram
-    # quando 2026-06 entrou. Cobri-las aqui só funcionava enquanto o recorte
-    # estava congelado, e faria a validação falhar para sempre depois. Elas já
-    # têm garantias mais fortes: os contratos JSON conferem esquema e
-    # contagem, as 12 reconciliações do manifesto conferem a ingestão e os
-    # invariantes entre camadas conferem que nada se perdeu no caminho.
-    #
-    # O que sobra aqui é o que deve ser imutável de verdade: o legado de
-    # 2022-2023 e as figuras de referência.
-    # Os prefixos são os do inventário de julho, que é anterior à
-    # reorganização — por isso o legado de 2022-2023 aparece como
-    # `data/curados/` e não como `data/legado/`. A comparação é por SHA-256,
-    # então o arquivo é encontrado onde quer que esteja hoje.
-    prefixos_imutaveis = (
-        "data/curados/",
-        "data/processados/",
-        "data/referencias/",
-        "data/_backup_parquets_originais/",
-        "data/legado/",
-        "docs/qualidade/figuras/",
-    )
-    arquivos_imutaveis = (
-        "data/bronze/sih_rd_sp_2022_2023.parquet",
-        "data/bronze/cnes_lt_sp_2022_2023.parquet",
-    )
-
-    def _imutavel(caminho: str) -> bool:
-        if "descartadas/" in caminho:
-            # removidas do caminho principal na reorganização de 08/08/2026;
-            # seguem recuperáveis pelo histórico do Git
-            return False
-        return caminho.startswith(prefixos_imutaveis) or caminho in arquivos_imutaveis
-
-    preservados = [item for item in inventario_pre["arquivos"] if _imutavel(item["caminho"])]
-    assert preservados, "o inventário pré-migração não tem artefato imutável a conferir"
-    ausentes = [item["caminho"] for item in preservados if item["sha256"] not in hashes_atuais]
-    assert not ausentes, f"artefatos pré-migração ausentes: {ausentes[:10]}"
-
     resultado: dict[str, int | str] = {
         "validado_em_utc": datetime.now(UTC).isoformat(),
         "bronze_tabelas": bronze_tabelas,
@@ -283,7 +220,6 @@ def validar(base: Path, *, publicar: bool = True) -> dict[str, int | str]:
         "silver_colunas_documentadas": silver_colunas,
         "gold_tabelas": gold_tabelas,
         "gold_colunas_documentadas": gold_colunas,
-        "artefatos_pre_migracao_preservados": len(preservados),
         # Medidos, nunca memorizados: um relatório com número fixo continua
         # afirmando o recorte antigo depois que o recorte avança, e isso é
         # pior do que uma asserção que quebra — quebra avisa, relatório mente.
@@ -313,7 +249,6 @@ def validar(base: Path, *, publicar: bool = True) -> dict[str, int | str]:
         "- Todas as tabelas e colunas possuem descrição.",
         "- Nomes Silver/Gold aderentes a `snake_case`.",
         "- Nenhum arquivo `.parcial` residual.",
-        f"- {len(preservados)} artefatos de data/figuras pré-migração preservados por SHA-256.",
         f"- {br(silver['linhas_sih_reconciliadas'])} AIHs e "
         f"{br(gold['internacoes_novas_reconciliadas'])} internações novas reconciliadas.",
         "- Fórmulas TMH, IPR, IS, IPH, permanência média, IPCA e taxa populacional por residência recalculadas.",

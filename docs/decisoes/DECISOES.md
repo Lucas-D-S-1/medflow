@@ -381,3 +381,28 @@ A base metodológica, a estrutura de dados, a carga Oracle e o WebApp público
 estão fechados. O profile Select AI cobre os nove objetos, e os limites medidos
 do modelo estão registrados. A página APEX é demonstração opcional; não bloqueia
 o produto nem os critérios da Sprint 2.
+
+## 12. O legado de 2022-2023 sai do repositório
+
+Decidido em 25/08/2026, na preparação da entrega. Supersede o último item da
+seção 8, que registrava o material anterior como isolado em `data/legado/`.
+
+Saíram do controle de versão os 14 arquivos de `data/legado/`, os 10 de
+`docs/qualidade/figuras/legado/` e os dois `contracts/INVENTARIO_PRE_*.json`.
+
+O motivo: a revisão de requisitos manda regenerar o recorte de 2022-2023 em vez
+de conservá-lo, e manter um recorte antigo no repositório público de entrega
+custa dois cliques de confusão para quem avalia. A proveniência não depende
+desses arquivos: continua na tag `v0.1.0`, na tag `pre-reorg`, na branch
+`arquivo/v0-2026-07` e no histórico do Git.
+
+A consequência técnica é que a checagem de preservação por SHA-256 do
+`validar.py` deixou de existir. Ela provava que a migração de julho de 2026 não
+perdeu nada que o pipeline não regenera, e as duas migrações que ela vigiava
+terminaram. O que sobra é regenerável e tem garantias mais fortes que um hash:
+os contratos de camada, o `MANIFESTO.json` e os invariantes entre camadas,
+todos conferidos a cada `make validar`.
+
+`medflow inventario` continua existindo e passou a gravar em
+`contracts/INVENTARIO.json`, que é gitignored.
+

@@ -1,8 +1,7 @@
 # `contracts/` — o que este projeto promete
 
 **O quê.** Os contratos que o resto do repositório tem de honrar: o das três
-camadas de dados, o da API, o de nomenclatura e os inventários que provam que
-nada se perdeu nas migrações.
+camadas de dados, o da API e o de nomenclatura.
 
 **Por quê.** Contrato aqui não é documentação: é coisa que um teste confere. Um
 contrato que ninguém verifica vira só mais uma versão da verdade, e a pior
@@ -14,20 +13,19 @@ delas, porque parece autoridade.
 | `dados/MAPEAMENTO_COLUNAS_ORIGEM_SILVER.csv` | de onde veio cada coluna da Silver | revisão |
 | `openapi.yaml` | os 10 endpoints: parâmetros, envelope, itens e erros | `tests/test_openapi.py` |
 | `NOMENCLATURA.md` | prefixos semânticos e `snake_case` | `validar.py` |
-| `INVENTARIO_PRE_MIGRACAO.json` | SHA-256 do estado de 29/07/2026 | `validar.py` |
-| `INVENTARIO_PRE_REORG.json` | SHA-256 do estado de 08/08/2026, antes da reorganização | `medflow inventario` |
 
-## Os dois inventários são marcos, não backups
+## Os inventários de migração saíram em 25/08/2026
 
-Cada um congela um estado que uma mudança grande ia atravessar, para que a
-mudança pudesse ser provada em vez de acreditada. O de julho antecede a
-migração de pastas; o da fatia 0 antecede a saída do pipeline dos notebooks, e
-foi o portão da fatia 4: os parquets tinham de sair com o mesmo hash.
+`INVENTARIO_PRE_MIGRACAO.json` e `INVENTARIO_PRE_REORG.json` congelavam o
+estado de julho e o da fatia 0 para provar que as migrações daquele período não
+perderam arquivo. As duas migrações terminaram, e a revisão de requisitos manda
+regenerar o recorte de 2022-2023 em vez de conservá-lo, então a conferência de
+preservação por SHA-256 deixou de existir em `validar.py`.
 
-A distinção que a validação faz importa: só o que o pipeline **não regenera**
-entra na conferência. As saídas mudam legitimamente quando o recorte avança, e
-compará-las contra um inventário antigo produziria uma falha permanente que
-ninguém mais olharia.
+`medflow inventario` continua gerando um inventário sob demanda, agora em
+`contracts/INVENTARIO.json`, que é gitignored por ser artefato de execução. A
+proveniência do estado anterior segue no histórico do Git e na tag
+`pre-reorg`.
 
 ## O contrato da API descreve o observável
 

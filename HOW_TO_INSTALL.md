@@ -240,9 +240,9 @@ testes falham quando código, dados, SQL ou API deixam de cumprir o contrato.
 
 ### `data/` — resultados reproduzíveis
 
-Organiza `bronze/`, `silver/`, `gold/` e artefatos legados preservados para
-auditoria. Parquets, DBCs e DBFs pesados estão no `.gitignore`; por isso um
-clone começa pequeno e `make pipeline` materializa o conteúdo necessário.
+Organiza `bronze/`, `silver/` e `gold/`. Parquets, DBCs e DBFs pesados estão
+no `.gitignore`, por isso um clone começa pequeno e `make pipeline` materializa
+o conteúdo necessário.
 
 ### `db/` — backend Oracle
 

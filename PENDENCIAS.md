@@ -330,7 +330,7 @@ está preservada na branch `arquivo/v0-2026-07` e nas tags `v0` e `v0.1.0`.
 
 | Fatia | Estado |
 |---:|---|
-| 0 | congelada: `contracts/INVENTARIO_PRE_REORG.json`, tag `pre-reorg` |
+| 0 | congelada na tag `pre-reorg` |
 | 0b | descrição e topics do repositório corrigidos |
 | 1 | histórico filtrado publicado como novo `main` |
 | 2 | árvore na estrutura-alvo |
@@ -580,6 +580,12 @@ que casa artefatos por SHA-256: removê-los derrubaria 24 dos 38 artefatos
 exigidos e o portão falharia para sempre. Custam 0,7 MB e provam que a migração
 de julho não perdeu arquivo. Ficam.
 
+**Revertido em 25/08/2026.** As duas remoções foram feitas. A revisão de
+requisitos manda regenerar o recorte de 2022-2023 em vez de conservá-lo, e o
+portão de preservação por SHA-256 saiu do `validar.py` junto com os dois
+`INVENTARIO_PRE_*.json`. A proveniência fica no histórico do Git, na tag
+`pre-reorg` e na `v0.1.0`.
+
 Os 12 MB de referências brutas também ficam, e o `data/README.md` agora explica
 por quê: URL de órgão público muda, e sem a cópia versionada com SHA-256 não há
 como saber se o arquivo novo é o que produziu os números publicados.
@@ -607,10 +613,9 @@ medflow/
 │   └── e2e/           um spec por visão, mais contrato: 30 herméticos e 2 @live
 ├── contracts/
 │   ├── openapi.yaml   o contrato dos 10 endpoints, conferido por teste
-│   ├── dados/         contratos Bronze, Silver e Gold, e o mapeamento
-│   └── INVENTARIO_*   baselines SHA-256 de 29/07 e da fatia 0
+│   └── dados/         contratos Bronze, Silver e Gold, e o mapeamento
 ├── notebooks/         fontes 00, 01 e 02
-├── data/              gitignored: bronze, silver, gold, legado
+├── data/              gitignored: bronze, silver e gold
 ├── docs/
 │   ├── decisoes/      DECISOES e a revisão de requisitos
 │   ├── pesquisa/      desk research

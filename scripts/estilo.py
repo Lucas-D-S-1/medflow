@@ -49,7 +49,7 @@ def arquivos_versionados() -> list[Path]:
     saida = subprocess.run(
         ["git", "ls-files", "*.md"], cwd=RAIZ, capture_output=True, text=True, check=True
     ).stdout.split()
-    return [RAIZ / f for f in saida if f not in ISENTOS and not f.startswith("data/legado/")]
+    return [RAIZ / f for f in saida if f not in ISENTOS]
 
 
 def fora_de_bloco_de_codigo(texto: str) -> list[bool]:
