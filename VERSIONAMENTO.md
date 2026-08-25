@@ -46,15 +46,15 @@ posteriores usam uma nova versão; tags públicas existentes não são movidas.
 | Marco | Situação | Observação |
 |---|---|---|
 | `medflow-v0` | legado | Primeira baseline; mantida apenas por rastreabilidade |
-| `v0.1.0` | histórico | Espelhada neste repositório; a publicação original permanece como proveniência histórica |
+| `v0.1.0` | histórico | Primeiro marco público do pipeline Bronze/Silver, publicada aqui em 29/07/2026 |
 | `v0.2.0` | estável | Gold, geografia, contratos e validação integrada |
 | `v0.3.0` | estável | Oracle carregado, `api/v1` pública, webapp no ar e Select AI revalidado; publicada em 23/08/2026 |
 | `v0.3.1` | em andamento | hardening da entrega: roteiro ampliado, base APEX, heartbeat, preflight e documentação final |
 
 A tag legada `medflow-v0` não deve ser apagada nem reutilizada. A `v0.1.0`
-foi espelhada neste repositório em 01/08/2026, preservando o commit histórico
-da entrega e sem apagar a referência ao
-[repositório original `medflow`](https://github.com/Lucas-D-S-1/medflow).
+nasceu neste repositório em 29/07/2026 e foi espelhada no `fiap-1tscoa` em
+01/08/2026. Desde a reorganização de 08/08/2026 este repositório é o de
+entrega, e o `fiap-1tscoa` permanece como arquivo acadêmico privado.
 O webapp MVP foi concluído e validado em 02/08/2026, com as quatro visões
 servidas por dez endpoints ORDS e os dados exibidos reconciliados contra a Gold
 em 8.403.103 comparações sem divergência, reproduzíveis com

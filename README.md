@@ -1,32 +1,52 @@
-# MedFlow — pipeline de dados e webapp
+# MedFlow: onde investigar primeiro
 
-**Enterprise Challenge FIAP × Oracle · Sprint 2 · Equipe Ômega Urban Tech**
+**Do sinal territorial à hipótese, com fonte, amostra e limite à vista.**
 
-Recorte solicitado: Estado de São Paulo, competências de 2024 a 2026.
-Recorte disponível e validado: **2024-01 a 2026-06 (30 meses)**.
-Versão pública estável:
-[`v0.3.0`](https://github.com/Lucas-D-S-1/medflow/releases/tag/v0.3.0),
-com Oracle carregado, API pública `api/v1`, webapp no ar e Select AI
-revalidado. A
-[`v0.2.0`](https://github.com/Lucas-D-S-1/medflow/releases/tag/v0.2.0)
-trouxe Silver canônica, Gold, contratos de dados e ativos geográficos.
-A [`v0.1.0`](https://github.com/Lucas-D-S-1/medflow/releases/tag/v0.1.0)
-permanece como o primeiro marco público do pipeline Bronze/Silver e foi
-espelhada neste repositório em 01/08/2026. A publicação no repositório
-[original `medflow`](https://github.com/Lucas-D-S-1/medflow) permanece como
-proveniência histórica.
+Enterprise Challenge FIAP × Oracle · Sprint 2 · Equipe Ômega Urban Tech
 
-**O produto está no ar:** <https://lucas-d-s-1.github.io/medflow/>
+## O problema, do lado de quem decide
+
+Para saber onde investigar primeiro, o gestor regional precisa cruzar à mão o
+SIH, o CNES, a população e a lista ICSAP, porque cada base foi feita para uma
+finalidade própria e nenhuma responde sozinha à pergunta dele.
+
+A persona é o **gestor ou analista regional de saúde de São Paulo** que recebe
+uma nova competência de dados públicos hospitalares e precisa priorizar o que
+olhar. O MedFlow conduz uma triagem auditável em quatro passos, região →
+hospital → especialidade ou diagnóstico → hipótese, carregando fonte, amostra,
+benchmark e limitação em cada tela. A decisão e a ação continuam com as equipes
+locais.
+
+Recorte solicitado: Estado de São Paulo, competências de 2024 a 2026. Recorte
+disponível e validado: **2024-01 a 2026-06 (30 meses)**.
+
+## Os três formatos de dado, e o papel de cada um
+
+| Formato | Fonte | Papel |
+|---|---|---|
+| Relacional | SIH/RD e as tabelas Gold | fatos, dimensões, indicadores e consultas |
+| JSON | API atual do CNES | cadastro atual do estabelecimento e atributos variáveis |
+| CSV / External Table | regiões de saúde e população IBGE 2022, do Ministério da Saúde | taxas populacionais e integração no Oracle |
+
+## O produto está no ar
+
+<https://lucas-d-s-1.github.io/medflow/>
 
 Site estático no GitHub Pages falando direto com o Autonomous Database pelo
 módulo ORDS público `api/v1`, somente leitura. Publicado e conferido no
-navegador em 16/08/2026.
-
-**Foco atual:** fechar os artefatos acadêmicos: PPT, vídeo, planilha de
-integrantes e ZIP final. O WebApp permanece nas quatro visões, com mudanças
-restritas a texto e acabamento; o Select AI foi revalidado contra o produto em
+navegador em 16/08/2026. Versão pública estável:
+[`v0.3.0`](https://github.com/Lucas-D-S-1/medflow/releases/tag/v0.3.0), com
+Oracle carregado, API pública, webapp no ar e Select AI revalidado em
 23/08/2026, com evidência em
 [`docs/qualidade/REVALIDACAO_SELECT_AI.md`](docs/qualidade/REVALIDACAO_SELECT_AI.md).
+
+**O acordo de disponibilidade.** O Autonomous Database é Always Free e para
+sozinho depois de sete dias sem atividade. Com ele no ar, a entrega é uma só,
+ao vivo contra o Oracle. Sem ele, o webapp cai para dez snapshots de
+contingência, com selo explícito na tela, e recusa misturar as duas origens
+dentro do mesmo recorte.
+
+## Por onde continuar
 
 Proposta metodológica e revisão dos requisitos:
 [`docs/decisoes/REVISAO_REQUISITOS_E_PROPOSTA_GOLD.md`](docs/decisoes/REVISAO_REQUISITOS_E_PROPOSTA_GOLD.md).
