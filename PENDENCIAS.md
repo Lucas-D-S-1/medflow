@@ -42,10 +42,9 @@ Os arquivos finais de PPT, planilha e vídeo ainda não estão neste workspace.
 - documentação e metadados automáticos em `data/silver/`.
 - duas execuções Silver consecutivas com as mesmas reconciliações, sem
   arquivos `.parcial` residuais.
-- versão pública [`v0.1.0`](https://github.com/Lucas-D-S-1/fiap-1tscoa/releases/tag/v0.1.0)
-  espelhada neste repositório como primeiro marco do pipeline Bronze/Silver,
-  preservando o repositório original como proveniência histórica;
-- versão pública [`v0.2.0`](https://github.com/Lucas-D-S-1/fiap-1tscoa/releases/tag/v0.2.0)
+- versão pública [`v0.1.0`](https://github.com/Lucas-D-S-1/medflow/releases/tag/v0.1.0)
+  publicada como primeiro marco do pipeline Bronze/Silver;
+- versão pública [`v0.2.0`](https://github.com/Lucas-D-S-1/medflow/releases/tag/v0.2.0)
   publicada com Silver canônica, Gold, geografia, contratos e validação
   integrada;
 - versão pública [`v0.3.0`](https://github.com/Lucas-D-S-1/medflow/releases/tag/v0.3.0)

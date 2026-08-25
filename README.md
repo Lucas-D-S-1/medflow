@@ -8,9 +8,9 @@ Versão pública estável:
 [`v0.3.0`](https://github.com/Lucas-D-S-1/medflow/releases/tag/v0.3.0),
 com Oracle carregado, API pública `api/v1`, webapp no ar e Select AI
 revalidado. A
-[`v0.2.0`](https://github.com/Lucas-D-S-1/fiap-1tscoa/releases/tag/v0.2.0)
+[`v0.2.0`](https://github.com/Lucas-D-S-1/medflow/releases/tag/v0.2.0)
 trouxe Silver canônica, Gold, contratos de dados e ativos geográficos.
-A [`v0.1.0`](https://github.com/Lucas-D-S-1/fiap-1tscoa/releases/tag/v0.1.0)
+A [`v0.1.0`](https://github.com/Lucas-D-S-1/medflow/releases/tag/v0.1.0)
 permanece como o primeiro marco público do pipeline Bronze/Silver e foi
 espelhada neste repositório em 01/08/2026. A publicação no repositório
 [original `medflow`](https://github.com/Lucas-D-S-1/medflow) permanece como
