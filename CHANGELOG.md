@@ -3,7 +3,7 @@
 As releases seguem a política de [`VERSIONAMENTO.md`](VERSIONAMENTO.md).
 A versão da release e a versão dos contratos de dados evoluem separadamente.
 
-## 0.3.1 — em andamento
+## 0.3.1 — 25/08/2026
 
 ### Adicionado
 
@@ -40,6 +40,12 @@ A versão da release e a versão dos contratos de dados evoluem separadamente.
   wallet ou Gold local, mais a lista do que ainda precisa ser conferido à mão
   antes da banca;
 
+- `make estilo` e `scripts/estilo.py`: a escrita dos documentos versionados
+  passa a ser conferida no build. Travessão em prosa corrida, parágrafo que é
+  lista escrita como texto, frase-clichê e advérbio de reforço reprovam. Os
+  registros datados ficam isentos, e a lista está no topo do script; as regras
+  estão em `CONTRIBUTING.md`, seção Escrita;
+
 ### Alterado
 
 - `executar_sql.py` passou a reconhecer `create package`, `function`,
@@ -59,6 +65,37 @@ A versão da release e a versão dos contratos de dados evoluem separadamente.
   restritas aos artefatos acadêmicos e à montagem da demonstração.
 - GitHub Actions oficiais atualizadas para `v7`, removendo o runtime Node 20
   que o runner já precisava forçar para Node 24.
+- passada de escrita em 24 documentos: 153 travessões de prosa viraram vírgula,
+  ponto, dois-pontos ou parênteses, e quatro parágrafos que eram lista escrita
+  como texto viraram bullets. Os geradores do Select AI foram corrigidos junto,
+  para a evidência não voltar com o vício a cada `make select-ai-revalidar`;
+- abertura do `README.md` reescrita: slogan "Onde investigar primeiro", o
+  problema dito do lado do gestor, a persona regional, os três formatos de dado
+  e o acordo entre Oracle ao vivo e os dez snapshots de contingência. Saiu o
+  "Foco atual", que anunciava obra inacabada a uma semana da entrega;
+- quatro links de release apontavam para o `fiap-1tscoa`, que é privado, e
+  devolviam 404 para quem não é o dono. Passam a apontar para as tags deste
+  repositório, que respondem 200 sem autenticação;
+- `VERSIONAMENTO.md` dizia que a `v0.1.0` foi "espelhada neste repositório" e
+  que a "publicação original" era o `medflow`. O texto foi escrito de dentro do
+  `fiap-1tscoa` e inverteu de sentido na migração de 08/08: o original é este
+  repositório;
+- `db/views/` pulava do `07` para o `09`. Renumerado. Não faltava arquivo: a
+  rota `hospitais/:cnes/serie` é servida por SQL embutido no módulo ORDS;
+- `CONTEXTO_TIME.md` e `PENDENCIAS.md` alinhados ao estado real: a página APEX
+  foi montada em 25/08 e o PPT existe, os dois ainda descritos como pendentes.
+
+### Removido
+
+- o recorte de 2022-2023 em `data/legado/` e `docs/qualidade/figuras/legado/`,
+  mais os dois `contracts/INVENTARIO_PRE_*.json`. A revisão de requisitos manda
+  regenerar aquele recorte, e a proveniência segue nas tags `v0.1.0` e
+  `pre-reorg`, na branch `arquivo/v0-2026-07` e no histórico do Git. Registrado
+  em `docs/decisoes/DECISOES.md`, seção 12;
+- junto com eles, a checagem de preservação por SHA-256 do `validar.py`, que
+  existia para provar que a migração de julho não perdeu arquivo e que exigia
+  justamente o legado. O que fica é mais forte que um hash: contratos de
+  camada, `MANIFESTO.json` e invariantes entre camadas.
 
 ### Medido
 
