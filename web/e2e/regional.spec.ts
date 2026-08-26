@@ -66,6 +66,9 @@ test('renderiza a competência e a versão do contrato recebidas do Oracle', asy
   await expect(page.getByTestId('regional-map-svg')).toHaveCount(1)
   await expect(page.locator('.regional-map-shape')).toHaveCount(62)
   await expect(page.getByTestId('regional-selected-name')).toHaveText('JUNDIAI')
+  await expect(page.getByLabel('Rede Regional de Atenção à Saúde')).toContainText(
+    'Rede regional 16 — Bragança e Jundiaí',
+  )
   await expect(page.getByTestId('regional-admissions')).toHaveText(
     pt(regiaoDestacada.new_admissions as number),
   )
@@ -100,6 +103,10 @@ test('renderiza a competência e a versão do contrato recebidas do Oracle', asy
   await expect(page.getByTestId('coverage-stay-days')).toHaveText(
     pt(coberturaMetodologia.stay_days),
   )
+  await expect(
+    page.getByRole('heading', { name: 'Por que Oracle neste MVP?' }),
+  ).toBeVisible()
+  await expect(page.locator('.database-decision')).toContainText('25 / 25')
   await expect(page.getByTestId('gold-updated-at')).toContainText('2026')
   await expect(page.getByTestId('formula-cmi')).toContainText('fator de correcao IPCA')
   await expect(page.getByTestId('formula-iph')).toContainText('Pressao estimada sobre capacidade declarada, nao ocupacao fisica real.')
@@ -108,6 +115,9 @@ test('renderiza a competência e a versão do contrato recebidas do Oracle', asy
   await expect(page.getByTestId('definition-billed_daily')).toContainText('QT_DIARIAS')
   await expect(page.getByTestId('state-benchmark_zero')).toContainText('IPR fica nulo')
   await expect(page.getByTestId('state-iph_denominator_zero')).toContainText('nao imputa capacidade')
+  await expect(page.getByTestId('territorial-hierarchy')).toContainText(
+    'Rede Regional de Atenção à Saúde (RRAS)',
+  )
 })
 test('filtra a competência sem abandonar o mapa espacial e o tamanho da amostra', async ({ page }) => {
   await page.route('**/api/dev/v1/status', async (route) => {
@@ -316,7 +326,7 @@ test('declara o ranking truncado, permite ver tudo e mantém metodologia colaps�
   await page.getByRole('link', { name: 'Metodologia' }).click()
   await expect(page).toHaveURL(/\/metodologia$/)
   const details = page.locator('.methodology-details details')
-  await expect(details).toHaveCount(5)
+  await expect(details).toHaveCount(6)
   await expect(details.first()).not.toHaveAttribute('open', '')
   await details.first().locator('summary').click()
   const detailHeight = await details.first().locator('.detail-scroll').evaluate(

@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import { useLocation } from 'react-router-dom'
-import { askOracleSelectAi, AssistantRequestError } from '../../lib/api/assistente'
+import { askOracleSelectAi, type AssistantContext } from '../../lib/api/assistente'
 import { useSource } from '../../shared/SourceContext'
+import { formatRegionalNetwork } from '../../shared/territory'
 import './AssistantWidget.css'
 
 type RouteKey = 'regional' | 'fluxos' | 'hospital' | 'metodologia'
 type Answer = {
   text: string
-  source: 'Consulta MedFlow' | 'Oracle Select AI'
   sql?: string | null
   warning?: string | null
 }
@@ -18,6 +18,7 @@ const SESSION_KEY = 'medflow-select-ai-questions'
 const quickQuestions: Record<RouteKey, string[]> = {
   regional: [
     'O que é IPH?',
+    'O que é uma rede regional?',
     'Quais regiões devo investigar?',
     'Como interpretar o mapa?',
   ],
@@ -43,6 +44,13 @@ const routeNames: Record<RouteKey, string> = {
   fluxos: 'fluxos assistenciais',
   hospital: 'visão hospitalar',
   metodologia: 'metodologia',
+}
+
+const routeAnalysis: Record<RouteKey, string> = {
+  regional: 'pressão hospitalar regional e tendência',
+  fluxos: 'fluxos assistenciais, evasão e ICSAP',
+  hospital: 'hospitais, permanência, perfil clínico e IPR',
+  metodologia: 'fontes, fórmulas, cobertura e limitações',
 }
 
 function routeKey(pathname: string): RouteKey {
@@ -117,14 +125,29 @@ export default function AssistantWidget() {
   function localAnswer(rawQuestion: string): Answer | null {
     const normalized = normalize(rawQuestion)
     const methodology = sourceData?.methodology
+    const pedidoExplicacao =
+      /o que (e|é)|que significa|explique|defina|como interpretar|pra que serve/.test(
+        normalized,
+      )
 
-    if (/\biph\b|pressao hospitalar/.test(normalized)) {
+    if (pedidoExplicacao && /(\biph\b|pressao hospitalar)/.test(normalized)) {
       const regionalContext = selectedRegion
         ? ` Na competência selecionada, ${selectedRegion.region_name} apresenta IPH estimado de ${selectedRegion.iph_percent.toLocaleString('pt-BR', { maximumFractionDigits: 1 })}%.`
         : ''
       return {
-        source: 'Consulta MedFlow',
         text: `IPH é o Índice de Pressão Hospitalar: pacientes-dia estimados divididos pela capacidade mensal de leitos SUS declarados no CNES.${regionalContext} É um sinal para priorizar investigação, não uma taxa de ocupação real.`,
+      }
+    }
+
+    if (
+      pedidoExplicacao &&
+      /(\brras\b|rede regional|macrorregiao|macro regiao)/.test(normalized)
+    ) {
+      const network = selectedRegion
+        ? ` A região selecionada pertence à ${formatRegionalNetwork(selectedRegion.macroregion_name)}.`
+        : ''
+      return {
+        text: `Rede Regional de Atenção à Saúde (RRAS) é um agrupamento de uma ou mais Regiões de Saúde criado para articular serviços e fluxos assistenciais de diferentes complexidades.${network} Não é uma zona da cidade nem uma coordenadoria municipal.`,
       }
     }
 
@@ -134,7 +157,6 @@ export default function AssistantWidget() {
         .sort((left, right) => right.iph_percent - left.iph_percent)
         .slice(0, 3)
       return {
-        source: 'Consulta MedFlow',
         text: leaders?.length
           ? `Comece por ${leaders.map((item) => `${item.region_name} (${item.iph_percent.toLocaleString('pt-BR', { maximumFractionDigits: 1 })}%)`).join(', ')}. O ranking aponta sinais mais altos de IPH na competência; ele serve para triagem, não para concluir causa ou qualidade.`
           : 'Comece pelas regiões com maior IPH, confirme tamanho da amostra e tendência mensal e só então aprofunde fluxos e hospitais.',
@@ -143,42 +165,39 @@ export default function AssistantWidget() {
 
     if (/interpretar.*mapa|mapa.*interpretar|cores.*mapa/.test(normalized)) {
       return {
-        source: 'Consulta MedFlow',
         text: 'Os tons mais escuros indicam IPH estimado mais alto na competência escolhida. Selecione uma região para ver valor, amostra e tendência; compare também internações e leitos declarados antes de priorizar uma análise.',
       }
     }
 
     if (/evasao|saem da regiao|fora da regiao/.test(normalized)) {
       return {
-        source: 'Consulta MedFlow',
         text: 'Evasão observada é a parcela de internações de residentes atendida em outra região de saúde de São Paulo. Ela mostra deslocamento assistencial intrastadual observado; não prova falta de oferta e não mede saídas para outros estados.',
       }
     }
 
-    if (/\bicsap\b|atencao primaria/.test(normalized)) {
+    if (pedidoExplicacao && /(\bicsap\b|atencao primaria)/.test(normalized)) {
       return {
-        source: 'Consulta MedFlow',
         text: 'ICSAP são Internações por Condições Sensíveis à Atenção Primária, conforme a Portaria SAS/MS 221/2008. O indicador ajuda a examinar acesso e efetividade territorial da atenção básica, mas não classifica um caso individual como evitável.',
       }
     }
 
     if (/ipr.*indisponivel|amostra insuficiente|benchmark.*zero/.test(normalized)) {
       return {
-        source: 'Consulta MedFlow',
         text: 'O IPR fica indisponível quando a combinação não alcança os cortes mínimos de volume, hospitais comparáveis ou meses observados, ou quando o benchmark é zero. O MedFlow prefere mostrar “amostra insuficiente” a publicar uma comparação instável.',
       }
     }
 
-    if (/\bipr\b|performance relativa/.test(normalized)) {
+    if (
+      (pedidoExplicacao && /(\bipr\b|performance relativa)/.test(normalized)) ||
+      (/\bipr\b/.test(normalized) && /acima de 1|ruim|bom|qualidade/.test(normalized))
+    ) {
       return {
-        source: 'Consulta MedFlow',
         text: 'IPR é o Índice de Performance Relativa: compara a permanência observada do hospital com um benchmark de pares no mesmo recorte clínico. Valor acima de 1 sugere permanência maior que a referência; não é nota de qualidade nem medida de desfecho.',
       }
     }
 
     if (/comparar hospitais|comparacao.*hospital|hospital.*comparar/.test(normalized)) {
       return {
-        source: 'Consulta MedFlow',
         text: 'Compare hospitais na mesma competência e região, confirme volume de internações e use IPR, permanência e perfil clínico em conjunto. Diferenças de complexidade e amostras pequenas impedem tratar um único indicador como ranking de qualidade.',
       }
     }
@@ -186,8 +205,16 @@ export default function AssistantWidget() {
     if (/fonte|de onde.*dados|datasus|ibge|cnes|sih/.test(normalized)) {
       const sources = methodology?.sources.map((item) => item.label).join(', ')
       return {
-        source: 'Consulta MedFlow',
         text: `Os indicadores combinam ${sources || 'SIH/SUS, CNES, IBGE e referências oficiais do Ministério da Saúde'}. A Bronze preserva a origem, a Silver padroniza os fatos e a Gold no Oracle publica somente métricas reconciliadas para o site.`,
+      }
+    }
+
+    if (/mes.*mais recente|ultimo mes|ate quando.*dados|dados.*ate quando|competencia.*mais recente/.test(normalized)) {
+      const competence = sourceData?.status.data_through
+      return {
+        text: competence
+          ? `Os dados publicados vão até ${competence.slice(5, 7)}/${competence.slice(0, 4)}, considerando a competência de processamento mais recente disponível na Gold.`
+          : 'A competência mais recente aparece no estado da fonte assim que a Gold termina de carregar.',
       }
     }
 
@@ -197,15 +224,13 @@ export default function AssistantWidget() {
         ? ` A competência publicada agora é ${competence.slice(5, 7)}/${competence.slice(0, 4)}.`
         : ''
       return {
-        source: 'Consulta MedFlow',
         text: `Os arquivos mensais do DATASUS passam por fechamento, disponibilização e validação antes da carga. Por isso o produto adota M-2 como corte operacional seguro e exibe explicitamente a competência, sem chamar o dado de tempo real.${suffix}`,
       }
     }
 
     if (/oracle|autonomous|banco|arquitetura/.test(normalized)) {
       return {
-        source: 'Consulta MedFlow',
-        text: 'O Oracle Autonomous Database concentra a Gold, as views de contrato, a API ORDS e o Select AI. A escolha reduz componentes operacionais, mantém cálculo e auditoria perto dos dados e cabe no Always Free para o volume atual da demonstração.',
+        text: 'O Oracle Autonomous Database concentra a Gold, as views de contrato, a API ORDS e o Select AI. Na matriz de decisão deste MVP, ele evita uma API própria, mantém auditoria perto dos dados e acomoda o volume atual no ambiente Always Free já provisionado.',
       }
     }
 
@@ -228,30 +253,39 @@ export default function AssistantWidget() {
 
     if (usage >= SESSION_LIMIT) {
       setAnswer({
-        source: 'Consulta MedFlow',
-        text: 'O limite de 5 perguntas livres nesta sessão foi atingido. As sugestões continuam disponíveis e não consomem Select AI.',
+        text: 'Vamos continuar pelas sugestões abaixo. Escolha uma delas para explorar os indicadores.',
       })
       return
     }
 
     setIsLoading(true)
     try {
-      const response = await askOracleSelectAi(cleanQuestion)
+      const params = new URLSearchParams(location.search)
+      const context: AssistantContext = {
+        route: currentRoute,
+        competence: sourceData?.status.data_through ?? null,
+        region_code: selectedRegion?.region_code ?? params.get('regiao'),
+        region_name: selectedRegion?.region_name ?? null,
+        macroregion_code: selectedRegion?.macroregion_code ?? null,
+        macroregion_name: selectedRegion?.macroregion_name ?? null,
+        macroregion_label: selectedRegion
+          ? formatRegionalNetwork(selectedRegion.macroregion_name)
+          : null,
+        hospital_cnes: params.get('hospital'),
+        active_analysis: routeAnalysis[currentRoute],
+      }
+      const response = await askOracleSelectAi(cleanQuestion, context)
       const nextUsage = usage + 1
       window.sessionStorage.setItem(SESSION_KEY, String(nextUsage))
       setUsage(nextUsage)
       setAnswer({
-        source: 'Oracle Select AI',
         text: response.narrative,
         sql: response.sql,
         warning: response.warning,
       })
-    } catch (error) {
+    } catch {
       setAnswer({
-        source: 'Consulta MedFlow',
-        text: error instanceof AssistantRequestError
-          ? `${error.message} Você ainda pode usar as perguntas sugeridas.`
-          : 'O assistente não respondeu agora. Você ainda pode usar as perguntas sugeridas.',
+        text: 'Não consegui responder essa pergunta agora. Tente uma das sugestões.',
       })
     } finally {
       setIsLoading(false)
@@ -264,13 +298,13 @@ export default function AssistantWidget() {
   }
 
   return (
-    <aside className="assistant-widget" aria-label="Assistente MedFlow">
+    <aside className="assistant-widget" aria-label="FlowIA, assistente do MedFlow">
       {isOpen ? (
         <section className="assistant-panel" id="medflow-assistant-panel" aria-live="polite">
           <header className="assistant-header">
             <AssistantRobot compact />
             <div>
-              <span className="assistant-eyebrow">ORACLE SELECT AI</span>
+              <span className="assistant-eyebrow">FLOWIA · ORACLE SELECT AI</span>
               <h2>Posso ajudar?</h2>
               <p>Contexto: {routeNames[currentRoute]}</p>
             </div>
@@ -308,9 +342,7 @@ export default function AssistantWidget() {
                   </div>
                 ) : answer ? (
                   <article className="assistant-answer">
-                    <span className={answer.source === 'Oracle Select AI' ? 'ai-source' : ''}>
-                      {answer.source}
-                    </span>
+                    <span>FlowIA</span>
                     <p>{answer.text}</p>
                     {answer.warning && <p className="assistant-warning">{answer.warning}</p>}
                     {answer.sql && (
@@ -341,9 +373,7 @@ export default function AssistantWidget() {
                 →
               </button>
             </div>
-            <small>
-              Sugestões não usam IA · perguntas livres: {usage}/{SESSION_LIMIT}
-            </small>
+            <small>FlowIA · inteligência sobre a Gold Oracle</small>
           </form>
         </section>
       ) : null}
@@ -358,7 +388,7 @@ export default function AssistantWidget() {
         >
           <AssistantRobot />
           <span>
-            <small>Assistente MedFlow</small>
+            <small>FlowIA</small>
             <strong>Posso ajudar?</strong>
           </span>
         </button>

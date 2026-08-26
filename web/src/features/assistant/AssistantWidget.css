@@ -179,7 +179,6 @@
   letter-spacing: .06em;
   text-transform: uppercase;
 }
-.assistant-answer > span.ai-source { color: #8b342c; background: #fde8e6; }
 .assistant-answer > p { margin: .58rem 0 0; color: var(--color-text); font-size: .8rem; line-height: 1.5; }
 .assistant-answer .assistant-warning { padding: .55rem; color: var(--color-warning-text); border-radius: var(--radius-sm); background: var(--color-warning-bg); }
 .assistant-answer details { margin-top: .65rem; color: var(--color-text-muted); font-size: .7rem; }

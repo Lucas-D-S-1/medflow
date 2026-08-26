@@ -138,8 +138,8 @@ comment on table mart_indicador_hospital_mensal is
   'Fato mensal por hospital: pressao estimada sobre a capacidade declarada (IPH), taxa de mortalidade hospitalar (TMH) e custo medio por internacao (CMI). Uma linha por CNES e competencia, 2024-01 a 2026-06. Para leituras anuais, agregue as competencias antes de ranquear: ordenar as linhas mensais direto responde qual mes foi extremo, nao qual hospital. IPH e pressao estimada contra capacidade declarada no CNES, nunca ocupacao real de leito, taxa de ocupacao ou leitos ocupados.';
 comment on column mart_indicador_hospital_mensal.cd_cnes is 'Codigo de sete digitos do estabelecimento no CNES.';
 comment on column mart_indicador_hospital_mensal.nr_ano_competencia is 'Ano da competencia de processamento.';
-comment on column mart_indicador_hospital_mensal.nr_mes_competencia is 'Numero do mes da competencia de processamento.';
-comment on column mart_indicador_hospital_mensal.cd_competencia is 'Competencia no formato AAAAMM.';
+comment on column mart_indicador_hospital_mensal.nr_mes_competencia is 'Componente de mes (1 a 12), nao ordena competencias entre anos. Nunca use MAX desta coluna para achar o dado mais recente; use MAX(CD_COMPETENCIA).';
+comment on column mart_indicador_hospital_mensal.cd_competencia is 'Competencia AAAAMM e chave cronologica. Para o dado mais recente, use MAX(CD_COMPETENCIA) e filtre por ela.';
 comment on column mart_indicador_hospital_mensal.qt_leito_sus is 'Quantidade mensal de leitos disponiveis ao SUS declarada no CNES. Denominador do IPH.';
 comment on column mart_indicador_hospital_mensal.qt_leito_total is 'Quantidade mensal total de leitos declarada no CNES, SUS e nao SUS.';
 comment on column mart_indicador_hospital_mensal.qt_tipo_leito is 'Quantidade de tipos de leito distintos observados no mes.';
@@ -216,8 +216,8 @@ comment on column mart_indicador_hospital_especialidade_mensal.nm_regiao_saude i
 comment on column mart_indicador_hospital_especialidade_mensal.cd_macrorregiao_saude is 'Codigo oficial da macrorregiao de saude.';
 comment on column mart_indicador_hospital_especialidade_mensal.nm_macrorregiao_saude is 'Nome oficial da macrorregiao de saude.';
 comment on column mart_indicador_hospital_especialidade_mensal.nr_ano_competencia is 'Ano da competencia de processamento.';
-comment on column mart_indicador_hospital_especialidade_mensal.nr_mes_competencia is 'Numero do mes da competencia de processamento.';
-comment on column mart_indicador_hospital_especialidade_mensal.cd_competencia is 'Competencia no formato AAAAMM.';
+comment on column mart_indicador_hospital_especialidade_mensal.nr_mes_competencia is 'Componente de mes (1 a 12), nao ordena competencias entre anos. Nunca use MAX desta coluna para achar o dado mais recente; use MAX(CD_COMPETENCIA).';
+comment on column mart_indicador_hospital_especialidade_mensal.cd_competencia is 'Competencia AAAAMM e chave cronologica. Para o dado mais recente, use MAX(CD_COMPETENCIA) e filtre por ela.';
 comment on column mart_indicador_hospital_especialidade_mensal.qt_internacao_nova is 'Quantidade de internacoes novas, identificadas por AIH normal.';
 comment on column mart_indicador_hospital_especialidade_mensal.qt_obito is 'Quantidade de obitos em internacoes novas.';
 comment on column mart_indicador_hospital_especialidade_mensal.qt_dia_permanencia_soma is 'Soma dos dias de permanencia das internacoes novas.';
@@ -341,8 +341,8 @@ comment on column mart_indicador_regiao_mensal.nm_regiao_saude is 'Nome oficial 
 comment on column mart_indicador_regiao_mensal.cd_macrorregiao_saude is 'Codigo oficial da macrorregiao de saude.';
 comment on column mart_indicador_regiao_mensal.nm_macrorregiao_saude is 'Nome oficial da macrorregiao de saude.';
 comment on column mart_indicador_regiao_mensal.nr_ano_competencia is 'Ano da competencia de processamento.';
-comment on column mart_indicador_regiao_mensal.nr_mes_competencia is 'Numero do mes da competencia de processamento.';
-comment on column mart_indicador_regiao_mensal.cd_competencia is 'Competencia no formato AAAAMM.';
+comment on column mart_indicador_regiao_mensal.nr_mes_competencia is 'Componente de mes (1 a 12), nao ordena competencias entre anos. Nunca use MAX desta coluna para achar o dado mais recente; use MAX(CD_COMPETENCIA).';
+comment on column mart_indicador_regiao_mensal.cd_competencia is 'Competencia AAAAMM e chave cronologica. Para o dado mais recente, use MAX(CD_COMPETENCIA) e filtre por ela.';
 comment on column mart_indicador_regiao_mensal.qt_internacao_nova is 'Quantidade de internacoes novas realizadas pelos hospitais da regiao de atendimento.';
 comment on column mart_indicador_regiao_mensal.qt_obito is 'Quantidade de obitos em internacoes novas na regiao.';
 comment on column mart_indicador_regiao_mensal.qt_dia_permanencia_soma is 'Soma dos dias de permanencia das internacoes novas na regiao.';
@@ -445,8 +445,8 @@ comment on table mart_fluxo_assistencial_regiao_mensal is
 comment on column mart_fluxo_assistencial_regiao_mensal.cd_origem_residencia is 'Codigo da regiao de saude de residencia ou FORA_SP para residentes de outra UF.';
 comment on column mart_fluxo_assistencial_regiao_mensal.cd_regiao_saude_atendimento is 'Regiao de saude do hospital que realizou a internacao.';
 comment on column mart_fluxo_assistencial_regiao_mensal.nr_ano_competencia is 'Ano da competencia de processamento.';
-comment on column mart_fluxo_assistencial_regiao_mensal.nr_mes_competencia is 'Numero do mes da competencia de processamento.';
-comment on column mart_fluxo_assistencial_regiao_mensal.cd_competencia is 'Competencia de processamento no formato AAAAMM.';
+comment on column mart_fluxo_assistencial_regiao_mensal.nr_mes_competencia is 'Componente de mes (1 a 12), nao ordena competencias entre anos. Nunca use MAX desta coluna para achar o dado mais recente; use MAX(CD_COMPETENCIA).';
+comment on column mart_fluxo_assistencial_regiao_mensal.cd_competencia is 'Competencia AAAAMM e chave cronologica. Para o dado mais recente, use MAX(CD_COMPETENCIA) e filtre por ela.';
 comment on column mart_fluxo_assistencial_regiao_mensal.st_fluxo_assistencial is 'Classificacao: intrarregional, interregional_sp ou entrada_outro_estado.';
 comment on column mart_fluxo_assistencial_regiao_mensal.qt_internacao_nova is 'Quantidade de internacoes novas no par origem e destino.';
 comment on column mart_fluxo_assistencial_regiao_mensal.nm_origem_residencia is 'Nome da regiao de residencia ou Fora do estado de Sao Paulo.';
@@ -491,8 +491,8 @@ comment on column mart_icsap_regiao_mensal.cd_macrorregiao_saude is 'Codigo ofic
 comment on column mart_icsap_regiao_mensal.nm_macrorregiao_saude is 'Nome oficial da macrorregiao de saude da residencia.';
 comment on column mart_icsap_regiao_mensal.qt_populacao_ibge_2022 is 'Populacao residente da regiao no Censo IBGE 2022, denominador das taxas.';
 comment on column mart_icsap_regiao_mensal.nr_ano_competencia is 'Ano da competencia de processamento.';
-comment on column mart_icsap_regiao_mensal.nr_mes_competencia is 'Numero do mes da competencia de processamento.';
-comment on column mart_icsap_regiao_mensal.cd_competencia is 'Competencia de processamento no formato AAAAMM.';
+comment on column mart_icsap_regiao_mensal.nr_mes_competencia is 'Componente de mes (1 a 12), nao ordena competencias entre anos. Nunca use MAX desta coluna para achar o dado mais recente; use MAX(CD_COMPETENCIA).';
+comment on column mart_icsap_regiao_mensal.cd_competencia is 'Competencia AAAAMM e chave cronologica. Para o dado mais recente, use MAX(CD_COMPETENCIA) e filtre por ela.';
 comment on column mart_icsap_regiao_mensal.cd_grupo_icsap is 'Codigo ordinal de dois digitos do grupo oficial ICSAP.';
 comment on column mart_icsap_regiao_mensal.nm_grupo_icsap is 'Nome do grupo oficial da Lista Brasileira de ICSAP.';
 comment on column mart_icsap_regiao_mensal.qt_internacao_icsap is 'Internacoes novas de residentes no grupo, observadas em hospitais de SP.';

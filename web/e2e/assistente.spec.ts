@@ -6,7 +6,7 @@
  */
 
 import { expect, test } from '@playwright/test'
-import { mockLiveSource, pt, regiaoDestacada } from './apoio'
+import { mockLiveSource, pt, regiaoDestacada, snapshotCompetencia } from './apoio'
 
 test.beforeEach(async ({ page }) => {
   await mockLiveSource(page)
@@ -24,10 +24,28 @@ test('responde o conceito de IPH com o recorte exibido sem chamar a IA', async (
   await page.getByRole('button', { name: 'O que é IPH?' }).click()
 
   const panel = page.locator('#medflow-assistant-panel')
-  await expect(panel).toContainText('Consulta MedFlow')
+  await expect(panel).toContainText('FlowIA')
   await expect(panel).toContainText(regiaoDestacada.region_name as string)
   await expect(panel).toContainText(`${pt(regiaoDestacada.iph_percent as number, 1)}%`)
   await expect(panel).toContainText('não uma taxa de ocupação real')
+  expect(calls).toBe(0)
+})
+
+test('explica a rede regional com o alias e sem confundir com território municipal', async ({ page }) => {
+  let calls = 0
+  await page.route('**/api/dev/v1/assistente/perguntar', async (route) => {
+    calls += 1
+    await route.abort()
+  })
+
+  await page.goto('/regional?regiao=35073')
+  await page.getByRole('button', { name: /Posso ajudar/ }).click()
+  await page.getByRole('button', { name: 'O que é uma rede regional?' }).click()
+
+  const panel = page.locator('#medflow-assistant-panel')
+  await expect(panel).toContainText('Rede Regional de Atenção à Saúde')
+  await expect(panel).toContainText('Rede regional 16 — Bragança e Jundiaí')
+  await expect(panel).toContainText('Não é uma zona da cidade')
   expect(calls).toBe(0)
 })
 
@@ -50,6 +68,17 @@ test('envia somente pergunta livre ao Oracle Select AI e mostra SQL auditável',
     expect(route.request().method()).toBe('POST')
     expect(route.request().postDataJSON()).toEqual({
       question: 'Quais sinais merecem uma análise conjunta?',
+      context: {
+        route: 'regional',
+        competence: snapshotCompetencia,
+        region_code: '35073',
+        region_name: 'JUNDIAI',
+        macroregion_code: '3527',
+        macroregion_name: 'RRAS16',
+        macroregion_label: 'Rede regional 16 — Bragança e Jundiaí',
+        hospital_cnes: null,
+        active_analysis: 'pressão hospitalar regional e tendência',
+      },
     })
     await route.fulfill({
       contentType: 'application/json',
@@ -72,11 +101,44 @@ test('envia somente pergunta livre ao Oracle Select AI e mostra SQL auditável',
   await page.getByRole('button', { name: 'Enviar pergunta' }).click()
 
   const panel = page.locator('#medflow-assistant-panel')
-  await expect(panel).toContainText('Oracle Select AI')
+  await expect(panel).toContainText('FlowIA')
   await expect(panel).toContainText('Pressão e evasão devem ser lidas')
   await panel.getByText('Ver SQL gerado e validado').click()
   await expect(panel.locator('pre')).toContainText('select nm_regiao_saude')
-  await expect(panel).toContainText('perguntas livres: 1/5')
+  await expect(panel).toContainText('inteligência sobre a Gold Oracle')
+})
+
+test('não confunde pergunta analítica sobre pressão com pedido de definição', async ({ page }) => {
+  let calls = 0
+  await page.route('**/api/dev/v1/assistente/perguntar', async (route) => {
+    calls += 1
+    expect(route.request().postDataJSON().question).toBe(
+      'onde a pressão hospitalar cresceu mais?',
+    )
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        status: 'ok',
+        source: 'oracle-select-ai',
+        response_id: 43,
+        narrative: 'Vale das Cachoeiras teve a maior variação no recorte.',
+        sql: 'select nm_regiao_saude from mart_indicador_regiao_mensal',
+        warning: null,
+      }),
+    })
+  })
+
+  await page.goto('/regional')
+  await page.getByRole('button', { name: /Posso ajudar/ }).click()
+  await page.getByLabel('Faça outra pergunta').fill(
+    'onde a pressão hospitalar cresceu mais?',
+  )
+  await page.getByRole('button', { name: 'Enviar pergunta' }).click()
+
+  await expect(page.locator('#medflow-assistant-panel')).toContainText(
+    'Vale das Cachoeiras',
+  )
+  expect(calls).toBe(1)
 })
 
 test('mantém os atalhos úteis quando o Select AI está indisponível', async ({ page }) => {
@@ -90,7 +152,7 @@ test('mantém os atalhos úteis quando o Select AI está indisponível', async (
   await page.getByRole('button', { name: 'Enviar pergunta' }).click()
 
   await expect(page.locator('#medflow-assistant-panel')).toContainText(
-    'Você ainda pode usar as perguntas sugeridas',
+    'Tente uma das sugestões',
   )
   await page.getByRole('button', { name: 'O que é IPH?' }).click()
   await expect(page.locator('#medflow-assistant-panel')).toContainText(

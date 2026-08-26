@@ -5,6 +5,43 @@ import { useSource } from '../../shared/SourceContext'
 import { formatInteger, formatPeriod } from '../../shared/format'
 import './MetodologiaView.css'
 
+const databaseDecision = [
+  {
+    option: 'Oracle Autonomous Database 26ai',
+    status: 'Escolha do MVP',
+    gold: 5,
+    serving: 5,
+    language: 5,
+    operation: 5,
+    cost: 5,
+    rationale: 'Gold, views, ORDS e Select AI no mesmo plano de dados.',
+  },
+  {
+    option: 'PostgreSQL gerenciado + API própria',
+    status: 'Alternativa avaliada',
+    gold: 4,
+    serving: 3,
+    language: 2,
+    operation: 3,
+    cost: 4,
+    rationale: 'Bom encaixe relacional, mas acrescentaria backend e integração de IA.',
+  },
+  {
+    option: 'Warehouse analítico + aplicação separada',
+    status: 'Alternativa avaliada',
+    gold: 4,
+    serving: 2,
+    language: 3,
+    operation: 3,
+    cost: 3,
+    rationale: 'Forte para análise, com mais componentes para servir o produto.',
+  },
+]
+
+function scoreTotal(option: (typeof databaseDecision)[number]) {
+  return option.gold + option.serving + option.language + option.operation + option.cost
+}
+
 export default function MetodologiaView() {
   const { sourceState } = useSource()
   const data =
@@ -50,7 +87,98 @@ export default function MetodologiaView() {
             possui rolagem interna quando o detalhe é longo.
           </MethodNote>
 
+          <section className="database-decision" aria-labelledby="database-decision-title">
+            <div className="view-intro">
+              <div>
+                <p className="section-kicker">DECISÃO DE ARQUITETURA</p>
+                <h2 id="database-decision-title">Por que Oracle neste MVP?</h2>
+                <p>
+                  A escolha considera o produto construído, o prazo do challenge e o ambiente
+                  disponível. A pontuação vai de 1 a 5 e mede aderência a este cenário — não a
+                  qualidade universal de cada tecnologia.
+                </p>
+              </div>
+              <span className="decision-badge">25 / 25</span>
+            </div>
+
+            <div className="decision-summary">
+              <article>
+                <strong>Menos componentes</strong>
+                <span>Gold, serving e linguagem natural na mesma plataforma.</span>
+              </article>
+              <article>
+                <strong>Governança próxima ao dado</strong>
+                <span>Views, SQL somente leitura, auditoria e limites no banco.</span>
+              </article>
+              <article>
+                <strong>Custo compatível</strong>
+                <span>O volume atual cabe no ambiente Always Free já provisionado.</span>
+              </article>
+            </div>
+
+            <div className="decision-table-wrap">
+              <table className="decision-table">
+                <thead>
+                  <tr>
+                    <th>Tecnologia</th>
+                    <th>Gold</th>
+                    <th>Serving</th>
+                    <th>Linguagem natural</th>
+                    <th>Operação</th>
+                    <th>Custo do MVP</th>
+                    <th>Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {databaseDecision.map((option) => (
+                    <tr key={option.option} className={option.status === 'Escolha do MVP' ? 'selected' : undefined}>
+                      <th scope="row">
+                        <strong>{option.option}</strong>
+                        <span>{option.status}</span>
+                        <small>{option.rationale}</small>
+                      </th>
+                      <td data-label="Gold">{option.gold}</td>
+                      <td data-label="Serving">{option.serving}</td>
+                      <td data-label="Linguagem natural">{option.language}</td>
+                      <td data-label="Operação">{option.operation}</td>
+                      <td data-label="Custo do MVP">{option.cost}</td>
+                      <td data-label="Total"><strong>{scoreTotal(option)} / 25</strong></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+
           <div className="methodology-details">
+            <details data-testid="territorial-hierarchy">
+              <summary>Territórios e redes assistenciais <span>3 conceitos</span></summary>
+              <div className="detail-scroll detail-list">
+                <article>
+                  <h3>Município</h3>
+                  <p>
+                    Unidade administrativa usada para localizar residência, população e
+                    estabelecimentos. Zona, distrito, subprefeitura e coordenadoria municipal
+                    pertencem a outra hierarquia e não são sinônimos de RRAS.
+                  </p>
+                </article>
+                <article>
+                  <h3>Região de Saúde</h3>
+                  <p>
+                    Agrupamento oficial de municípios vizinhos usado como território principal
+                    das análises regionais, dos fluxos e dos benchmarks do MedFlow.
+                  </p>
+                </article>
+                <article>
+                  <h3>Rede Regional de Atenção à Saúde (RRAS)</h3>
+                  <p>
+                    Reúne uma ou mais Regiões de Saúde para articular serviços de diferentes
+                    complexidades. Na interface, “Rede regional 16 — Bragança e Jundiaí” é um
+                    rótulo amigável; RRAS 16 continua sendo o identificador oficial.
+                  </p>
+                </article>
+              </div>
+            </details>
             <details>
               <summary>Fórmulas e interpretações <span>{data.formulas.length}</span></summary>
               <div className="detail-scroll detail-list">

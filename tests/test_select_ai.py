@@ -13,9 +13,34 @@ from pathlib import Path
 
 import pytest
 
-from medflow.select_ai.executar import SqlRecusado, guardar, varrer_termos
+from medflow.select_ai.executar import (
+    SqlRecusado,
+    conferir_lideres_narrados,
+    guardar,
+    varrer_termos,
+)
 
 RAIZ = Path(__file__).resolve().parent.parent
+
+
+def test_prompt_governado_documenta_o_glossario_das_visoes():
+    pacote = (RAIZ / "db" / "apex" / "02_pacote_select_ai.sql").read_text(
+        encoding="utf-8"
+    )
+
+    for conceito in (
+        "Glossario territorial",
+        "RRAS significa Rede Regional de Atencao a Saude",
+        "Glossario analitico",
+        "IPH e pressao estimada",
+        "TMH e mortalidade hospitalar observada",
+        "IPR compara",
+        "CMI e valor medio aprovado",
+        "evasao e deslocamento",
+        "intrastadual observado",
+        "ICSAP e sinal territorial",
+    ):
+        assert conceito in pacote
 
 
 class TestGuardaDeLeitura:
@@ -83,6 +108,57 @@ class TestVarreduraDeTerminologia:
 
     def test_texto_vazio_nao_reprova(self):
         assert varrer_termos("", None) == ()
+
+
+class TestOrdemDaNarrativa:
+    ESPERADOS = [
+        "JOSE BONIFACIO",
+        "PONTAL DO PARANAPANEMA",
+        "ALTA PAULISTA",
+        "HORIZONTE VERDE",
+        "VALE DAS CACHOEIRAS",
+    ]
+
+    def test_aprova_lideres_no_inicio_e_na_ordem(self):
+        narrativa = (
+            "José Bonifácio lidera, seguido por Pontal do Paranapanema e "
+            "Alta Paulista. Depois aparece Horizonte Verde."
+        )
+        ok, detalhe = conferir_lideres_narrados(narrativa, self.ESPERADOS)
+
+        assert ok
+        assert "ordem correta" in detalhe
+
+    def test_reprova_lideres_escondidos_em_lista_fora_de_ordem(self):
+        narrativa = (
+            "Horizonte Verde aparece primeiro. Depois: José Bonifácio, "
+            "Pontal do Paranapanema e Alta Paulista."
+        )
+        ok, detalhe = conferir_lideres_narrados(narrativa, self.ESPERADOS)
+
+        assert not ok
+        assert "HORIZONTE VERDE" in detalhe
+
+    def test_reprova_intruso_do_sql_gerado_antes_dos_lideres(self):
+        narrativa = (
+            "Mananciais lidera. Depois vêm José Bonifácio, Pontal do "
+            "Paranapanema e Alta Paulista."
+        )
+        ok, detalhe = conferir_lideres_narrados(
+            narrativa,
+            self.ESPERADOS,
+            candidatos=["MANANCIAIS"],
+        )
+
+        assert not ok
+        assert "MANANCIAIS" in detalhe
+
+    def test_reprova_quando_falta_um_lider(self):
+        narrativa = "José Bonifácio lidera, seguido por Pontal do Paranapanema."
+        ok, detalhe = conferir_lideres_narrados(narrativa, self.ESPERADOS)
+
+        assert not ok
+        assert "ALTA PAULISTA" in detalhe
 
 
 class TestParidadeComOPlSql:

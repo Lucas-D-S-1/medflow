@@ -25,6 +25,7 @@ import {
   formatPercent,
   formatPeriod,
 } from '../../shared/format'
+import { formatRegionalNetwork } from '../../shared/territory'
 import './FluxosView.css'
 
 type FlowState =
@@ -332,7 +333,7 @@ export default function FluxosView() {
                   <p className="section-kicker">TERRITÓRIO SELECIONADO</p>
                   <h2 data-testid="flow-region-name">{data.territory.region_name}</h2>
                   <p>
-                    {data.territory.macroregion_name} · competência{' '}
+                    {formatRegionalNetwork(data.territory.macroregion_name)} · competência{' '}
                     {formatPeriod(data.data_through)}
                   </p>
                 </div>

@@ -19,6 +19,7 @@ import {
   formatPercent,
   formatPeriod,
 } from '../../shared/format'
+import { formatRegionalNetwork } from '../../shared/territory'
 import './RegionalView.css'
 
 const RANKING_PREVIEW_SIZE = 8
@@ -212,15 +213,16 @@ export default function RegionalView() {
                 />
               </label>
               <label>
-                Macrorregião
+                Rede regional
                 <select
+                  aria-label="Rede Regional de Atenção à Saúde"
                   value={selectedMacroregion}
                   onChange={(event) => updateParam('macrorregiao', event.target.value)}
                 >
-                  <option value="">Todas as macrorregiões</option>
+                  <option value="">Todas as redes regionais</option>
                   {macroregions.map((item) => (
                     <option key={item.macroregion_code} value={item.macroregion_code}>
-                      {item.macroregion_name}
+                      {formatRegionalNetwork(item.macroregion_name)}
                     </option>
                   ))}
                 </select>
@@ -288,7 +290,7 @@ export default function RegionalView() {
                       {selectedItem.region_name}
                     </h3>
                     <p>
-                      {selectedItem.macroregion_name} · {formatInteger(selectedItem.municipality_count)} municípios
+                      {formatRegionalNetwork(selectedItem.macroregion_name)} · {formatInteger(selectedItem.municipality_count)} municípios
                     </p>
                     <div className="selected-metrics">
                       <MetricCard

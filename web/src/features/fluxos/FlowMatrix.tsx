@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { FlowResponse, FlowType } from './fluxos'
 import { formatInteger, formatPercent } from '../../shared/format'
+import { formatRegionalNetwork } from '../../shared/territory'
 
 const PREVIEW_SIZE = 8
 
@@ -44,7 +45,7 @@ export default function FlowMatrix({ data }: { data: FlowResponse }) {
                 <td data-label="Origem">{item.origin_region_name}</td>
                 <td data-label="Destino">
                   <strong>{item.destination_region_name}</strong>
-                  <small>{item.destination_macroregion_name}</small>
+                  <small>{formatRegionalNetwork(item.destination_macroregion_name)}</small>
                 </td>
                 <td data-label="Tipo">{FLOW_LABELS[item.flow_type]}</td>
                 <td data-label="Internações">

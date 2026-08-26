@@ -45,11 +45,27 @@ begin
         id           number generated always as identity primary key,
         momento      timestamp with local time zone default systimestamp not null,
         pergunta     varchar2(4000) not null,
+        contexto     varchar2(1000),
         sql_gerado   clob,
         narrativa    clob,
         aviso        varchar2(4000),
         recusa       varchar2(400)
       )]';
+  end if;
+end;
+/
+
+-- Migração idempotente para instalações anteriores ao assistente contextual.
+declare
+  ja_existe number;
+begin
+  select count(*) into ja_existe
+  from   user_tab_columns
+  where  table_name = 'SELECT_AI_RESPOSTA'
+  and    column_name = 'CONTEXTO';
+
+  if ja_existe = 0 then
+    execute immediate 'alter table select_ai_resposta add contexto varchar2(1000)';
   end if;
 end;
 /
@@ -99,7 +115,10 @@ create or replace package medflow_select_ai as
 
   -- Faz UMA rodada auditada (duas geracoes), grava a linha e devolve o id.
   -- É o que o processo do APEX chama no submit da página.
-  function responder(p_pergunta in varchar2) return number;
+  function responder(
+    p_pergunta in varchar2,
+    p_contexto in varchar2 default null
+  ) return number;
 
   -- Contrato pequeno usado pelo handler POST do assistente web. O SQL fica
   -- visível para auditoria, mas só depois de passar por GUARDAR.
@@ -311,7 +330,10 @@ create or replace package body medflow_select_ai as
       raise;
   end consumir_cota;
 
-  function responder(p_pergunta in varchar2) return number is
+  function responder(
+    p_pergunta in varchar2,
+    p_contexto in varchar2 default null
+  ) return number is
     l_id        number;
     l_sql       varchar2(32767);
     l_narrativa clob;
@@ -320,6 +342,8 @@ create or replace package body medflow_select_ai as
     l_no_texto  varchar2(4000);
     l_no_sql    varchar2(4000);
     l_pergunta  varchar2(4000) := trim(p_pergunta);
+    l_contexto  varchar2(1000) := trim(p_contexto);
+    l_prompt    varchar2(4000);
   begin
     if l_pergunta is null then
       raise_application_error(-20002, 'Escreva uma pergunta.');
@@ -329,16 +353,65 @@ create or replace package body medflow_select_ai as
       raise_application_error(-20004, 'A pergunta deve ter no maximo 300 caracteres.');
     end if;
 
+    if length(l_contexto) > 1000 then
+      raise_application_error(-20008, 'O contexto deve ter no maximo 1000 caracteres.');
+    end if;
+
+    l_prompt := case
+      when l_contexto is null then l_pergunta
+      -- O contexto resolve termos deiticos, mas nao pode virar filtro
+      -- universal: perguntas de ranking ("quem mais manda paciente pra fora")
+      -- pediam um comparativo entre regioes e voltavam restritas a regiao da
+      -- tela, com uma linha so. Os dois regimes precisam ficar explicitos.
+      else 'Contexto atual exibido no MedFlow: ' || l_contexto || chr(10)
+           || 'Pergunta do usuario: ' || l_pergunta || chr(10)
+           || 'Regras de interpretacao:' || chr(10)
+           || '1. Use o contexto para resolver termos deiticos: aqui, agora, '
+           || 'esse, esta regiao, esse hospital, piorou.' || chr(10)
+           || '2. Se a pergunta for comparacao, ranking ou superlativo (quem '
+           || 'mais, quais, o maior, o pior, os primeiros), NAO restrinja '
+           || 'a regiao nem ao hospital do contexto: percorra todo o escopo '
+           || 'disponivel e ordene. Nesse caso o contexto serve apenas para '
+           || 'citar onde o local atual aparece no resultado.' || chr(10)
+           || '3. Perguntas como ate onde vao os dados, ate quando ha dados, '
+           || 'qual o mes mais recente ou qual a ultima competencia pedem '
+           || 'cobertura temporal: use MAX(CD_COMPETENCIA), que e AAAAMM, e '
+           || 'nunca MAX(NR_MES_COMPETENCIA) sozinho. Responda o mes e o ano.'
+           || chr(10)
+           || '4. Nunca afirme que nao ha dados quando a consulta retornou '
+           || 'linhas: descreva as linhas obtidas.' || chr(10)
+           || '5. Quando a consulta estiver ordenada e limitada, narre somente '
+           || 'as primeiras linhas exatamente na ordem retornada: comece pela '
+           || 'primeira linha, nao reordene e nao acrescente linhas de fora do '
+           || 'resultado.' || chr(10)
+           || '6. Ao falar de variacao ou tendencia, cite os valores e as '
+           || 'competencias comparadas, nao apenas subiu ou desceu.' || chr(10)
+           || '7. Explicite brevemente a interpretacao adotada. Se ainda '
+           || 'faltar um recorte essencial, peca esclarecimento em vez de '
+           || 'inventar.' || chr(10)
+           || '8. Glossario territorial: municipio e a unidade administrativa; '
+           || 'Regiao de Saude agrupa municipios e e o grao regional principal; '
+           || 'RRAS significa Rede Regional de Atencao a Saude e agrupa uma ou '
+           || 'mais Regioes de Saude. RRAS nao e zona, subprefeitura nem '
+           || 'coordenadoria municipal.' || chr(10)
+           || '9. Glossario analitico: IPH e pressao estimada sobre capacidade '
+           || 'SUS declarada; TMH e mortalidade hospitalar observada; IPR compara '
+           || 'permanencia com pares; CMI e valor medio aprovado, nao custo total; '
+           || 'IS compara o mes com anos anteriores; evasao e deslocamento '
+           || 'intrastadual observado; ICSAP e sinal territorial, nao '
+           || 'evitabilidade individual.'
+    end;
+
     consumir_cota;
 
     begin
-      l_sql := guardar(dbms_lob.substr(gerar(l_pergunta, 'showsql'), 32000, 1));
+      l_sql := guardar(dbms_lob.substr(gerar(l_prompt, 'showsql'), 32000, 1));
     exception
       when others then
         l_recusa := substr(sqlerrm, 1, 400);
     end;
 
-    l_narrativa := gerar(l_pergunta, 'narrate');
+    l_narrativa := gerar(l_prompt, 'narrate');
 
     if l_narrativa is null or dbms_lob.getlength(l_narrativa) = 0 then
       raise_application_error(-20005, 'O modelo nao devolveu narrativa.');
@@ -361,8 +434,10 @@ create or replace package body medflow_select_ai as
                          else '' end;
     end if;
 
-    insert into select_ai_resposta (pergunta, sql_gerado, narrativa, aviso, recusa)
-    values (l_pergunta, l_sql, l_narrativa, l_aviso, l_recusa)
+    insert into select_ai_resposta (
+      pergunta, contexto, sql_gerado, narrativa, aviso, recusa
+    )
+    values (l_pergunta, l_contexto, l_sql, l_narrativa, l_aviso, l_recusa)
     returning id into l_id;
 
     return l_id;

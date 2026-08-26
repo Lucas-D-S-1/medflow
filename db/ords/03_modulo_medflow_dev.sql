@@ -1889,7 +1889,9 @@ begin
     p_source      => q'~
       declare
         l_body     json_object_t;
+        l_context  json_object_t;
         l_question varchar2(4000);
+        l_context_text varchar2(1000);
         l_id       number;
         l_json     clob;
         l_status   pls_integer := 200;
@@ -1906,16 +1908,56 @@ begin
             l_offset := l_offset + 30000;
           end loop;
         end;
+
+        function contexto(p_chave in varchar2) return varchar2 is
+        begin
+          if l_context is not null and l_context.has(p_chave) then
+            return substr(l_context.get_string(p_chave), 1, 200);
+          end if;
+          return null;
+        exception
+          when others then
+            return null;
+        end;
+
+        -- CD_COMPETENCIA e AAAAMM na Gold. O site exibe 2026-06, e o modelo
+        -- copiava esse formato para o filtro, devolvendo zero linha. Normaliza
+        -- aqui, para nao depender de quem chama o endpoint.
+        function competencia_aaaamm return varchar2 is
+          l_valor varchar2(200) := contexto('competence');
+        begin
+          if l_valor is null then
+            return null;
+          end if;
+          l_valor := replace(replace(trim(l_valor), '-'), '/');
+          if regexp_like(l_valor, '^[0-9]{6}$') then
+            return l_valor;
+          end if;
+          return null;
+        end;
       begin
         begin
           l_body := json_object_t.parse(:body_text);
           l_question := l_body.get_string('question');
+          if l_body.has('context') then
+            l_context := l_body.get_object('context');
+            l_context_text := 'tela=' || nvl(contexto('route'), 'nao informada')
+              || '; competencia=' || nvl(competencia_aaaamm, 'nao informada')
+              || ' (formato AAAAMM, igual ao da coluna CD_COMPETENCIA)'
+              || '; regiao=' || nvl(contexto('region_name'), 'nao informada')
+              || '; codigo_regiao=' || nvl(contexto('region_code'), 'nao informado')
+              || '; rede_regional=' || nvl(contexto('macroregion_label'), 'nao informada')
+              || '; rras=' || nvl(contexto('macroregion_name'), 'nao informada')
+              || '; codigo_rede=' || nvl(contexto('macroregion_code'), 'nao informado')
+              || '; hospital_cnes=' || nvl(contexto('hospital_cnes'), 'nao informado')
+              || '; analise_ativa=' || nvl(contexto('active_analysis'), 'nao informada');
+          end if;
         exception
           when others then
             raise_application_error(-20007, 'Envie JSON com o campo question.');
         end;
 
-        l_id := medflow_select_ai.responder(l_question);
+        l_id := medflow_select_ai.responder(l_question, l_context_text);
         l_json := medflow_select_ai.json_da_resposta(l_id);
         :status_code := 200;
         responder_json(l_json);
@@ -1924,7 +1966,7 @@ begin
           if sqlcode = -20003 then
             l_status := 429;
             l_message := 'O limite diario da demonstracao foi atingido.';
-          elsif sqlcode in (-20002, -20004, -20007) then
+          elsif sqlcode in (-20002, -20004, -20007, -20008) then
             l_status := 400;
             l_message := substr(sqlerrm, instr(sqlerrm, ':') + 2);
           else

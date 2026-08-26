@@ -135,8 +135,20 @@ paths:
                   type: string
                   minLength: 1
                   maxLength: 300
+                context:
+                  $ref: "#/components/schemas/AssistantContext"
             example:
               question: Quais regiões combinam pressão e evasão elevadas?
+              context:
+                route: regional
+                competence: 2026-06
+                region_code: "35073"
+                region_name: JUNDIAI
+                macroregion_code: "3527"
+                macroregion_name: RRAS16
+                macroregion_label: Rede regional 16 — Bragança e Jundiaí
+                hospital_cnes: null
+                active_analysis: pressão hospitalar regional e tendência
       responses:
         "200":
           description: Rodada concluída e registrada na auditoria.
@@ -597,6 +609,23 @@ components:
       schema: { type: integer, minimum: 0, default: 0 }
 
   schemas:
+    AssistantContext:
+      type: object
+      required: [route, competence, region_code, region_name, macroregion_code, macroregion_name, macroregion_label, hospital_cnes, active_analysis]
+      additionalProperties: false
+      properties:
+        route: { type: string, enum: [regional, fluxos, hospital, metodologia] }
+        competence: { type: [string, "null"], pattern: "^[0-9]{4}-[0-9]{2}$" }
+        region_code: { type: [string, "null"], pattern: "^[0-9]{5}$" }
+        region_name: { type: [string, "null"] }
+        macroregion_code: { type: [string, "null"] }
+        macroregion_name: { type: [string, "null"] }
+        macroregion_label:
+          type: [string, "null"]
+          description: Rótulo amigável da RRAS, sem substituir o identificador oficial.
+        hospital_cnes: { type: [string, "null"], pattern: "^[0-9]{7}$" }
+        active_analysis: { type: string, minLength: 1, maxLength: 200 }
+
     AssistantResponse:
       type: object
       required: [status, source, response_id, narrative, sql, warning]

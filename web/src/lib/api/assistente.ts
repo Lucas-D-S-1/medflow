@@ -9,6 +9,18 @@ export type AssistantResponse = {
   warning: string | null
 }
 
+export type AssistantContext = {
+  route: 'regional' | 'fluxos' | 'hospital' | 'metodologia'
+  competence: string | null
+  region_code: string | null
+  region_name: string | null
+  macroregion_code: string | null
+  macroregion_name: string | null
+  macroregion_label: string | null
+  hospital_cnes: string | null
+  active_analysis: string
+}
+
 const ASSISTANT_PATH = apiUrl('/assistente/perguntar')
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -40,6 +52,7 @@ export class AssistantRequestError extends Error {
 
 export async function askOracleSelectAi(
   question: string,
+  context: AssistantContext,
   timeoutMs = 20_000,
 ): Promise<AssistantResponse> {
   const controller = new AbortController()
@@ -52,7 +65,7 @@ export async function askOracleSelectAi(
         Accept: 'application/json',
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ question }),
+      body: JSON.stringify({ question, context }),
       signal: controller.signal,
     })
 

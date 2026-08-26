@@ -12,6 +12,7 @@ consulta de leitura, e roda numa transação declarada somente leitura.
 from __future__ import annotations
 
 import re
+import unicodedata
 from dataclasses import dataclass
 
 import oracledb
@@ -134,6 +135,54 @@ def rotulos(colunas: list[str], linhas: list[tuple], nome: str) -> list[str] | N
             return None
         i = textuais[0]
     return [str(linha[i]).strip().upper() for linha in linhas]
+
+
+def normalizar_texto(texto: object) -> str:
+    """Normaliza acentos, caixa e espaços para conferir uma narrativa."""
+    valor = unicodedata.normalize("NFD", str(texto or ""))
+    valor = "".join(c for c in valor if unicodedata.category(c) != "Mn")
+    return re.sub(r"\s+", " ", valor.lower()).strip()
+
+
+def conferir_lideres_narrados(
+    narrativa: str,
+    esperados: list[str],
+    candidatos: list[str] | None = None,
+    limite: int = 3,
+) -> tuple[bool, str]:
+    """Confere se a narrativa começa pelos líderes corretos, na ordem.
+
+    Só procurar os líderes em qualquer ponto do texto gera falso positivo: uma
+    resposta pode listar dezenas de itens numa ordem errada e ainda conter os
+    nomes certos no fim. Aqui os primeiros rótulos reconhecíveis na narrativa
+    precisam ser exatamente os primeiros da referência.
+    """
+    alvo = list(dict.fromkeys(esperados))[:limite]
+    if not alvo:
+        return True, "referência sem rótulos para conferir"
+
+    universo = list(dict.fromkeys([*esperados, *(candidatos or [])]))
+    texto = normalizar_texto(narrativa)
+    encontrados = []
+    for rotulo in universo:
+        posicao = texto.find(normalizar_texto(rotulo))
+        if posicao >= 0:
+            encontrados.append((posicao, -len(normalizar_texto(rotulo)), rotulo))
+    mencionados = [rotulo for _, _, rotulo in sorted(encontrados)]
+
+    faltantes = [rotulo for rotulo in alvo if rotulo not in mencionados]
+    if faltantes:
+        return False, "líderes ausentes na narrativa: " + ", ".join(faltantes)
+
+    narrados = mencionados[: len(alvo)]
+    if narrados != alvo:
+        return False, (
+            "primeiros rótulos narrados: "
+            + ", ".join(narrados)
+            + "; esperado: "
+            + ", ".join(alvo)
+        )
+    return True, f"primeiros {len(alvo)} rótulos narrados na ordem correta"
 
 
 def comparar(resposta: Resposta) -> None:
