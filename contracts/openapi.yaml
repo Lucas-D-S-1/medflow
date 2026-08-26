@@ -13,8 +13,9 @@ info:
   version: 0.3.0
   summary: Indicadores hospitalares e territoriais do SUS em São Paulo, 2024-01 a 2026-06.
   description: |
-    Dez endpoints somente leitura, todos `GET`, servidos por Oracle REST Data
-    Services (ORDS) diretamente do Autonomous Database. **Não existe servidor
+    Dez endpoints analíticos somente leitura (`GET`) e uma fronteira governada
+    do assistente (`POST`) são servidos por Oracle REST Data Services (ORDS)
+    diretamente do Autonomous Database. **Não existe servidor
     de aplicação entre a tela e o banco** — o backend é o banco, e `db/` é o
     código de servidor do produto.
 
@@ -59,6 +60,8 @@ tags:
     description: Regiões de saúde, séries mensais, fluxos e ICSAP.
   - name: hospital
     description: Hospitais, séries, especialidades e diagnósticos.
+  - name: assistente
+    description: Linguagem natural governada, com limite, guarda de SQL e auditoria.
 
 paths:
   /status:
@@ -102,6 +105,62 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/MetodologiaEnvelope" }
+
+  /assistente/perguntar:
+    post:
+      tags: [assistente]
+      operationId: perguntarAoSelectAi
+      summary: Faz uma pergunta livre ao Oracle Select AI.
+      description: |
+        A interface resolve localmente as perguntas conceituais conhecidas e
+        envia para esta rota somente perguntas livres. O pacote limita a 300
+        caracteres e 50 perguntas por dia. Cada pergunta livre usa duas
+        gerações (`showsql` e `narrate`) da mesma rodada auditada, e a rota só
+        devolve SQL que passou pelo guarda de leitura — no máximo 100 gerações
+        por dia por este endpoint.
+
+        O SQL é evidência para o usuário; esta rota não o executa. O Select AI
+        continua sendo dependência externa, portanto indisponibilidade vira
+        503 e o cliente preserva os atalhos determinísticos.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [question]
+              additionalProperties: false
+              properties:
+                question:
+                  type: string
+                  minLength: 1
+                  maxLength: 300
+            example:
+              question: Quais regiões combinam pressão e evasão elevadas?
+      responses:
+        "200":
+          description: Rodada concluída e registrada na auditoria.
+          headers:
+            Cache-Control:
+              schema: { type: string, const: no-store }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AssistantResponse" }
+        "400":
+          description: JSON ausente, inválido ou pergunta fora do tamanho aceito.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AssistantError" }
+        "429":
+          description: Limite diário de 50 perguntas atingido.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AssistantError" }
+        "503":
+          description: Select AI ou serviço Generative AI indisponível.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AssistantError" }
 
   /regioes/resumo:
     get:
@@ -538,6 +597,32 @@ components:
       schema: { type: integer, minimum: 0, default: 0 }
 
   schemas:
+    AssistantResponse:
+      type: object
+      required: [status, source, response_id, narrative, sql, warning]
+      additionalProperties: false
+      properties:
+        status: { type: string, const: ok }
+        source: { type: string, const: oracle-select-ai }
+        response_id:
+          type: integer
+          minimum: 1
+          description: Identificador da rodada em `SELECT_AI_RESPOSTA`.
+        narrative: { type: string, minLength: 1 }
+        sql:
+          type: [string, "null"]
+          description: Consulta gerada e aprovada pelo guarda, nunca executada por esta rota.
+        warning:
+          type: [string, "null"]
+          description: Aviso quando a varredura encontra terminologia não sustentada.
+    AssistantError:
+      type: object
+      required: [status, message]
+      additionalProperties: false
+      properties:
+        status: { type: string, const: error }
+        message: { type: string, minLength: 1 }
+
     Status:
       type: string
       enum: [ok]

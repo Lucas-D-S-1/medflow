@@ -1869,6 +1869,79 @@ begin
     ~'
   );
 
+  -- O decimo primeiro handler nao publica uma tabela: ele e a fronteira
+  -- controlada do assistente. O pacote limita tamanho e volume, gera SQL,
+  -- recusa qualquer comando que nao seja leitura e guarda a rodada inteira.
+  ords.define_template(
+    p_module_name => 'medflow_dev',
+    p_pattern     => 'assistente/perguntar',
+    p_etag_type   => 'NONE',
+    p_comments    => 'Pergunta livre do assistente, com Select AI governado e auditado.'
+  );
+
+  ords.define_handler(
+    p_module_name => 'medflow_dev',
+    p_pattern     => 'assistente/perguntar',
+    p_method      => 'POST',
+    p_source_type => ords.source_type_plsql,
+    p_mimes_allowed => 'application/json',
+    p_comments    => 'No maximo 300 caracteres, cinco chamadas por sessao no cliente e 50 perguntas por dia no banco.',
+    p_source      => q'~
+      declare
+        l_body     json_object_t;
+        l_question varchar2(4000);
+        l_id       number;
+        l_json     clob;
+        l_status   pls_integer := 200;
+        l_message  varchar2(4000);
+
+        procedure responder_json(p_json in clob) is
+          l_offset pls_integer := 1;
+        begin
+          owa_util.mime_header('application/json', false, 'UTF-8');
+          htp.p('Cache-Control: no-store');
+          owa_util.http_header_close;
+          while l_offset <= dbms_lob.getlength(p_json) loop
+            htp.prn(dbms_lob.substr(p_json, 30000, l_offset));
+            l_offset := l_offset + 30000;
+          end loop;
+        end;
+      begin
+        begin
+          l_body := json_object_t.parse(:body_text);
+          l_question := l_body.get_string('question');
+        exception
+          when others then
+            raise_application_error(-20007, 'Envie JSON com o campo question.');
+        end;
+
+        l_id := medflow_select_ai.responder(l_question);
+        l_json := medflow_select_ai.json_da_resposta(l_id);
+        :status_code := 200;
+        responder_json(l_json);
+      exception
+        when others then
+          if sqlcode = -20003 then
+            l_status := 429;
+            l_message := 'O limite diario da demonstracao foi atingido.';
+          elsif sqlcode in (-20002, -20004, -20007) then
+            l_status := 400;
+            l_message := substr(sqlerrm, instr(sqlerrm, ':') + 2);
+          else
+            l_status := 503;
+            l_message := 'O Oracle Select AI nao respondeu agora.';
+          end if;
+
+          :status_code := l_status;
+          l_json := json_object(
+            'status' value 'error',
+            'message' value l_message
+          );
+          responder_json(l_json);
+      end;
+    ~'
+  );
+
   commit;
 end;
 /

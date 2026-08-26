@@ -12,7 +12,7 @@ apresentação, e o dado nunca é recalculado fora do banco.
 | `views/` | nove views de projeção pura, uma por fatia do produto |
 | `ords/` | módulos REST; o `03` redefine o de trabalho, o `04` clona o público |
 | `select_ai/` | perguntas da demonstração e o SQL de referência |
-| `apex/` | workspace opcional e pacote PL/SQL da demonstração de Select AI |
+| `apex/` | pacote PL/SQL governado, compartilhado pelo assistente web, e workspace opcional |
 
 O contrato do que esses handlers expõem está em
 [`../contracts/openapi.yaml`](../contracts/openapi.yaml), e
@@ -47,7 +47,7 @@ arquivos de conexão são ignorados pelo Git.
 - profile `MEDFLOW_GENAI` ativo com OCI Generative AI em `sa-saopaulo-1`;
 - roteiro revalidável de 13 perguntas em cinco blocos; oito têm SQL de
   referência executado e seis coincidiram exatamente na rodada de 23/08/2026;
-- pacote `medflow_select_ai` instalado para a demonstração opcional no APEX;
+- pacote `medflow_select_ai` instalado para o assistente web e a demonstração opcional no APEX;
 - heartbeat diário e `make preflight` conferindo o produto publicado.
 
 As evidências atuais estão em
@@ -97,19 +97,19 @@ SQLcl.
 | 4 | Carregar a Gold | `make oracle-carregar` | `MEDFLOW` |
 | 5 | Reconciliar a carga | `executar_sql.py db/schema/03_validar_carga.sql` | `MEDFLOW` |
 | 6 | Publicar as views | `executar_sql.py db/views/*.sql` | `MEDFLOW` |
-| 7 | Publicar o módulo de trabalho | `executar_sql.py db/ords/03_modulo_medflow_dev.sql` | `MEDFLOW` |
-| 8 | Publicar o módulo público | `make ords-publicar` | `MEDFLOW` |
-| 9 | Habilitar e demonstrar o Select AI | `db/select_ai/04_select_ai.sql` | `ADMIN` + `MEDFLOW` |
+| 7 | Habilitar o Select AI e instalar o pacote governado | `db/select_ai/04_select_ai.sql` + `db/apex/02_pacote_select_ai.sql` | `ADMIN` + `MEDFLOW` |
+| 8 | Publicar o módulo de trabalho | `executar_sql.py db/ords/03_modulo_medflow_dev.sql` | `MEDFLOW` |
+| 9 | Publicar o módulo público | `make ords-publicar` | `MEDFLOW` |
 | 10 | Montar a demonstração APEX opcional | `db/apex/README.md` | `ADMIN` + `MEDFLOW` |
 
-### Passos 7 e 8 — dois módulos, uma definição
+### Passos 8 e 9 — dois módulos, uma definição
 
 | Módulo | Caminho | Origem aceita no CORS | Para quê |
 |---|---|---|---|
 | `medflow_dev` | `api/dev/v1/` | `http://localhost:5173` | desenvolvimento, pelo proxy do Vite |
 | `medflow` | `api/v1/` | `https://lucas-d-s-1.github.io` | o site publicado |
 
-O `04` **não redeclara os dez handlers**: ele lê os metadados do ORDS e clona o
+O `04` **não redeclara os handlers**: ele lê os metadados do ORDS e clona o
 `medflow_dev`, mudando só nome, prefixo e origem. Foi aquela definição: não
 outra parecida. Que passou pelas comparações campo a campo contra a Gold, e
 uma cópia manual criaria uma segunda verdade que envelhece calada. No fim do
@@ -179,8 +179,9 @@ são 13 perguntas em cinco blocos, oito com comparação por execução contra S
 de referência. A configuração usa OCI Generative AI na própria região de São
 Paulo, sem chave de API externa.
 
-A página APEX é uma demonstração opcional, não parte do WebApp público. O
-backend versionado e o roteiro de montagem estão em [`apex/`](apex/README.md).
+A página APEX continua sendo uma demonstração opcional. O pacote versionado em
+[`apex/`](apex/README.md), porém, agora é também o backend do assistente web:
+limita a pergunta, guarda a rodada e recusa SQL que não seja de leitura.
 
 ## Dois avisos que valem nota
 

@@ -1,6 +1,6 @@
 -- Modulo ORDS de producao: `medflow`, em `api/v1/`.
 --
--- Este arquivo NAO redeclara os dez handlers. Ele clona o modulo `medflow_dev`
+-- Este arquivo NAO redeclara os handlers. Ele clona o modulo `medflow_dev`
 -- lendo os metadados do proprio ORDS, e muda so as tres coisas que distinguem
 -- producao de desenvolvimento: o nome do modulo, o prefixo da URI e a origem
 -- permitida no CORS.
@@ -156,10 +156,10 @@ begin
     join user_ords_modules m on m.id = tpl.module_id
    where m.name = c_prod;
 
-  if v_handlers != 10 then
+  if v_handlers != 11 then
     raise_application_error(
       -20002,
-      'Esperados 10 handlers em producao, encontrados ' || v_handlers || '.'
+      'Esperados 11 handlers em producao, encontrados ' || v_handlers || '.'
     );
   end if;
 end;

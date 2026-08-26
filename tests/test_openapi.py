@@ -1,6 +1,6 @@
 """O contrato OpenAPI não pode ser uma terceira versão da verdade.
 
-Antes deste arquivo, o contrato dos 10 endpoints existia duas vezes e de forma
+Antes deste arquivo, o contrato dos endpoints existia duas vezes e de forma
 implícita: no SQL de cada handler e nos tipos TypeScript de `web/src/api/`.
 Quando os dois divergiam, ninguém era avisado — descobria-se na tela.
 
@@ -123,9 +123,13 @@ class TestContraOSQL:
 
     def test_os_caminhos_cobrem_todos_os_handlers(self, spec, handlers):
         declarados = set(spec["paths"])
-        # `status` e `metodologia` não são coleções e não entram em
+        # `status`, `metodologia` e o POST do assistente não são coleções e não entram em
         # `contratos_dos_handlers`; entram aqui à mão porque existem na API.
-        esperados = {_para_openapi(p) for p in handlers} | {"/status", "/metodologia"}
+        esperados = {_para_openapi(p) for p in handlers} | {
+            "/status",
+            "/metodologia",
+            "/assistente/perguntar",
+        }
         assert declarados == esperados, (
             f"só no OpenAPI: {sorted(declarados - esperados)}; "
             f"só no ORDS: {sorted(esperados - declarados)}"
@@ -190,6 +194,16 @@ class TestContraOSQL:
                 faltando.append(f"{padrao}: esperava citar `{nome_json}`")
         assert not faltando, "\n".join(faltando)
 
+    def test_o_assistente_e_post_governado_no_sql_e_no_contrato(self, spec):
+        operacao = spec["paths"]["/assistente/perguntar"]
+        assert set(operacao) == {"post"}
+        sql = (BASE / "db" / "ords" / "03_modulo_medflow_dev.sql").read_text(
+            encoding="utf-8"
+        )
+        assert "p_pattern     => 'assistente/perguntar'" in sql
+        assert "p_method      => 'POST'" in sql
+        assert "medflow_select_ai.responder" in sql
+
 
 @pytest.fixture(scope="module")
 def cliente() -> ClienteORDS:
@@ -221,7 +235,17 @@ class TestContraAAPIViva:
     }
 
     def test_toda_rota_declarada_tem_uma_chamada_de_prova(self, spec):
-        assert set(spec["paths"]) == set(self.CHAMADAS)
+        assert set(spec["paths"]) == set(self.CHAMADAS) | {"/assistente/perguntar"}
+
+    def test_assistente_recusa_pergunta_vazia_sem_consumir_select_ai(self, cliente):
+        resposta = cliente._sessao.post(
+            f"{cliente.base}/assistente/perguntar",
+            json={"question": ""},
+            timeout=cliente.tempo_limite,
+        )
+        assert resposta.status_code == 400
+        assert resposta.headers["Content-Type"].startswith("application/json")
+        assert resposta.json() == {"status": "error", "message": "Escreva uma pergunta."}
 
     @pytest.mark.parametrize("rota", sorted(CHAMADAS), ids=lambda r: r)
     def test_a_resposta_traz_as_chaves_obrigatorias(self, spec, cliente, rota):

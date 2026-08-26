@@ -7,7 +7,8 @@
 -- pelo mesmo motivo que nenhum indicador é calculado no front: se a garantia
 -- mora na tela, ela vale só naquela tela.
 --
--- Uma pergunta gera **uma** rodada de modelo, gravada numa linha. As regiões
+-- Uma pergunta gera **uma** rodada auditada, gravada numa linha. A rodada tem
+-- duas geracoes do modelo (`showsql` e `narrate`); as regiões
 -- leem dessa linha, pelo id. Se cada região chamasse o modelo por conta
 -- própria, o relatório e o texto ao lado poderiam descrever consultas
 -- diferentes na mesma tela — numa demonstração ao vivo, é o tipo de coisa que
@@ -56,14 +57,54 @@ end;
 comment on table select_ai_resposta is
   'Rastro da demonstracao de Select AI: uma linha por pergunta feita na pagina APEX. Nao faz parte do contrato da Gold e nao entra na carga nem na reconciliacao.';
 
+-- A cota precisa contar tentativas, não só respostas concluídas. Se o serviço
+-- externo falhar antes do INSERT da auditoria, repetir sem limite também
+-- consome GenAI. Uma linha por dia permite incremento atômico e barato.
+declare
+  ja_existe number;
+begin
+  select count(*) into ja_existe
+  from   user_tables
+  where  table_name = 'SELECT_AI_COTA';
+
+  if ja_existe = 0 then
+    execute immediate q'[
+      create table select_ai_cota (
+        dia       date primary key,
+        perguntas number(3) default 0 not null,
+        constraint ck_select_ai_cota_nao_negativa check (perguntas >= 0)
+      )]';
+  end if;
+end;
+/
+
+merge into select_ai_cota c
+using (
+  select trunc(current_date) as dia, count(*) as perguntas
+    from select_ai_resposta
+   where momento >= cast(trunc(current_date) as timestamp with local time zone)
+) r
+on (c.dia = r.dia)
+when matched then update set c.perguntas = greatest(c.perguntas, r.perguntas)
+when not matched then insert (dia, perguntas) values (r.dia, r.perguntas);
+
+comment on table select_ai_cota is
+  'Cota atomica do assistente: tentativas por dia, inclusive quando o servico GenAI falha.';
+
 create or replace package medflow_select_ai as
 
   -- Perfil criado por db/select_ai/04_select_ai.sql.
   c_perfil constant varchar2(30) := 'MEDFLOW_GENAI';
+  c_limite_perguntas_dia constant pls_integer := 50;
 
-  -- Faz UMA rodada de modelo, grava a linha e devolve o id.
+  -- Faz UMA rodada auditada (duas geracoes), grava a linha e devolve o id.
   -- É o que o processo do APEX chama no submit da página.
   function responder(p_pergunta in varchar2) return number;
+
+  -- Contrato pequeno usado pelo handler POST do assistente web. O SQL fica
+  -- visível para auditoria, mas só depois de passar por GUARDAR.
+  function json_da_resposta(p_id in number) return clob;
+  function perguntas_hoje return pls_integer;
 
   -- As três regiões da página leem daqui, pelo id. Nenhuma chama o modelo.
   --
@@ -228,6 +269,48 @@ create or replace package body medflow_select_ai as
                action       => p_acao);
   end;
 
+  function perguntas_hoje return pls_integer is
+    l_total pls_integer;
+  begin
+    select coalesce(max(perguntas), 0)
+      into l_total
+      from select_ai_cota
+     where dia = trunc(current_date);
+    return l_total;
+  end perguntas_hoje;
+
+  procedure consumir_cota is
+    pragma autonomous_transaction;
+  begin
+    update select_ai_cota
+       set perguntas = perguntas + 1
+     where dia = trunc(current_date)
+       and perguntas < c_limite_perguntas_dia;
+
+    if sql%rowcount = 0 then
+      begin
+        insert into select_ai_cota (dia, perguntas)
+        values (trunc(current_date), 1);
+      exception
+        when dup_val_on_index then
+          update select_ai_cota
+             set perguntas = perguntas + 1
+           where dia = trunc(current_date)
+             and perguntas < c_limite_perguntas_dia;
+
+          if sql%rowcount = 0 then
+            raise_application_error(-20003, 'O limite diario da demonstracao foi atingido.');
+          end if;
+      end;
+    end if;
+
+    commit;
+  exception
+    when others then
+      rollback;
+      raise;
+  end consumir_cota;
+
   function responder(p_pergunta in varchar2) return number is
     l_id        number;
     l_sql       varchar2(32767);
@@ -236,19 +319,30 @@ create or replace package body medflow_select_ai as
     l_aviso     varchar2(4000);
     l_no_texto  varchar2(4000);
     l_no_sql    varchar2(4000);
+    l_pergunta  varchar2(4000) := trim(p_pergunta);
   begin
-    if p_pergunta is null then
+    if l_pergunta is null then
       raise_application_error(-20002, 'Escreva uma pergunta.');
     end if;
 
+    if length(l_pergunta) > 300 then
+      raise_application_error(-20004, 'A pergunta deve ter no maximo 300 caracteres.');
+    end if;
+
+    consumir_cota;
+
     begin
-      l_sql := guardar(dbms_lob.substr(gerar(p_pergunta, 'showsql'), 32000, 1));
+      l_sql := guardar(dbms_lob.substr(gerar(l_pergunta, 'showsql'), 32000, 1));
     exception
       when others then
         l_recusa := substr(sqlerrm, 1, 400);
     end;
 
-    l_narrativa := gerar(p_pergunta, 'narrate');
+    l_narrativa := gerar(l_pergunta, 'narrate');
+
+    if l_narrativa is null or dbms_lob.getlength(l_narrativa) = 0 then
+      raise_application_error(-20005, 'O modelo nao devolveu narrativa.');
+    end if;
 
     l_no_texto := termos_afirmados(l_narrativa);
     l_no_sql   := termos_no_sql(l_sql);
@@ -268,11 +362,32 @@ create or replace package body medflow_select_ai as
     end if;
 
     insert into select_ai_resposta (pergunta, sql_gerado, narrativa, aviso, recusa)
-    values (substr(p_pergunta, 1, 4000), l_sql, l_narrativa, l_aviso, l_recusa)
+    values (l_pergunta, l_sql, l_narrativa, l_aviso, l_recusa)
     returning id into l_id;
 
     return l_id;
   end responder;
+
+  function json_da_resposta(p_id in number) return clob is
+    l_json clob;
+  begin
+    select json_object(
+             'status' value 'ok',
+             'source' value 'oracle-select-ai',
+             'response_id' value id,
+             'narrative' value narrativa,
+             'sql' value sql_gerado,
+             'warning' value aviso
+             null on null returning clob
+           )
+      into l_json
+      from select_ai_resposta
+     where id = p_id;
+    return l_json;
+  exception
+    when no_data_found then
+      raise_application_error(-20006, 'Resposta nao encontrada.');
+  end json_da_resposta;
 
   function sql_da_resposta(p_id in number) return varchar2 is
     l_sql    varchar2(32767);

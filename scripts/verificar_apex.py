@@ -50,7 +50,20 @@ def main() -> int:
             where table_name = 'SELECT_AI_RESPOSTA'
             """,
         )
+        tabela_cota = escalar(
+            cursor,
+            """
+            select count(*)
+            from user_tables
+            where table_name = 'SELECT_AI_COTA'
+            """,
+        )
         respostas = escalar(cursor, "select count(*) from select_ai_resposta") if tabela else 0
+        cota_hoje = (
+            escalar(cursor, "select medflow_select_ai.perguntas_hoje from dual")
+            if pacote == 2 and tabela_cota
+            else 0
+        )
 
         try:
             workspace = escalar(
@@ -67,11 +80,12 @@ def main() -> int:
 
     print(f"Oracle: conectado como {esquema} em {horario}")
     print(f"APEX: versão {versao_apex}")
-    print(f"Backend Select AI: {pacote}/2 objetos válidos")
+    print(f"Backend Select AI: {pacote + tabela + tabela_cota}/4 objetos válidos")
     print(f"Rastro de respostas: tabela {'pronta' if tabela else 'ausente'} · {respostas} linhas")
+    print(f"Cota diária: tabela {'pronta' if tabela_cota else 'ausente'} · {cota_hoje}/50")
     print(f"Workspace MEDFLOW_DEMO: {workspace_texto}")
 
-    if pacote != 2 or not tabela:
+    if pacote != 2 or not tabela or not tabela_cota:
         print("Diagnóstico: reinstale db/apex/02_pacote_select_ai.sql como MEDFLOW.")
         return 1
     print("Diagnóstico: backend pronto; o restante da montagem acontece no App Builder.")

@@ -1209,7 +1209,7 @@ wwv_flow_imp_page.create_page_plug(
 ,p_location=>null
 ,p_plug_source=>wwv_flow_string.join(wwv_flow_t_varchar2(
 '<p><strong>ID da resposta:</strong> &P1_ID.</p>',
-unistr('<p>Uma pergunta gera uma \00FAnica rodada do modelo. Narrativa, tabela, aviso e SQL leem a mesma resposta, e cada pergunta fica registrada em <code>SELECT_AI_RESPOSTA</code>.</p>')))
+unistr('<p>Uma pergunta gera uma rodada auditada, com duas gera\00E7\00F5es: SQL e narrativa. Tabela, aviso e SQL leem a mesma resposta, e cada pergunta fica registrada em <code>SELECT_AI_RESPOSTA</code>.</p>')))
 ,p_attributes=>wwv_flow_t_plugin_attributes(wwv_flow_t_varchar2(
   'expand_shortcuts', 'N',
   'output_as', 'HTML')).to_clob

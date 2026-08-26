@@ -197,18 +197,19 @@ A leitura dos limites medidos está em
 [`docs/qualidade/LEITURA_SELECT_AI.md`](docs/qualidade/LEITURA_SELECT_AI.md), e
 a base versionada da demonstração APEX, em [`db/apex/`](db/apex/README.md).
 
-### Webapp — concluído e revisado em 02/08/2026
+### Webapp — concluído e revisado em 26/08/2026
 
 O produto é uma aplicação React + Vite em `web/`, servida por dez endpoints
-ORDS somente leitura, **todos `GET`**, sobre nove views de projeção pura.
-Nenhum objeto da Gold é publicado por AutoREST.
+ORDS analíticos somente leitura (`GET`) sobre nove views de projeção pura e um
+`POST` governado para perguntas livres do assistente. Nenhum objeto da Gold é
+publicado por AutoREST.
 
 Os endpoints existem em dois módulos: `api/dev/v1`, que aceita só `localhost` e
 é onde se trabalha, e `api/v1`, que aceita só a origem do site publicado e é
 quem serve o link da entrega. O segundo é clone do primeiro, gerado dos
 metadados do ORDS e recusado se divergir. Ver [`db/README.md`](db/README.md).
 
-O contrato dos dez endpoints está em
+O contrato das onze operações está em
 [`contracts/openapi.yaml`](contracts/openapi.yaml), conferido por teste contra
 o SQL dos handlers e contra a API viva. Um contrato que ninguém confere vira
 só uma terceira versão da verdade.
@@ -219,6 +220,7 @@ só uma terceira versão da verdade.
 | `/fluxos` | A população é atendida no próprio território, e quais condições sensíveis puxam a demanda? | `fluxos`, `icsap` |
 | `/hospital` | O que explica o sinal e onde ele se concentra? | `hospitais`, `.../serie`, `.../especialidades`, `.../cids` |
 | `/metodologia` | Posso confiar no número e quais são seus limites? | `status`, `metodologia` |
+| assistente flutuante | O que este indicador significa e o que devo investigar? | respostas locais; fallback `POST assistente/perguntar` |
 
 Regras que o produto respeita, detalhadas em
 [`DECISOES.md`](docs/decisoes/DECISOES.md), seção 10:
@@ -232,6 +234,9 @@ Regras que o produto respeita, detalhadas em
 - endpoints da mesma rota falham de forma independente;
 - IPH não é apresentado como ocupação real, ICSAP não é apresentada como
   evitabilidade individual e IPR não é apresentado como qualidade ou desfecho;
+- perguntas conceituais do assistente são determinísticas e não consomem IA;
+  perguntas livres têm limite de cinco por sessão no cliente e 50 por dia no
+  banco, com SQL guardado, auditado e nunca executado pela rota web;
 - nenhuma seção passa de metade da altura da página, sem rolagem horizontal em
   1280x800 nem em 390x844.
 

@@ -11,7 +11,7 @@ delas, porque parece autoridade.
 |---|---|---|
 | `dados/bronze.json`, `silver.json`, `gold.json` | esquema, linhas e descrição de cada coluna | `tests/test_contratos_camadas.py` |
 | `dados/MAPEAMENTO_COLUNAS_ORIGEM_SILVER.csv` | de onde veio cada coluna da Silver | revisão |
-| `openapi.yaml` | os 10 endpoints: parâmetros, envelope, itens e erros | `tests/test_openapi.py` |
+| `openapi.yaml` | os 10 GET analíticos e o POST governado do assistente: parâmetros, envelope, itens e erros | `tests/test_openapi.py` |
 | `NOMENCLATURA.md` | prefixos semânticos e `snake_case` | `validar.py` |
 
 ## Os inventários de migração saíram em 25/08/2026
