@@ -399,7 +399,12 @@ create or replace package body medflow_select_ai as
            || 'permanencia com pares; CMI e valor medio aprovado, nao custo total; '
            || 'IS compara o mes com anos anteriores; evasao e deslocamento '
            || 'intrastadual observado; ICSAP e sinal territorial, nao '
-           || 'evitabilidade individual.'
+           || 'evitabilidade individual. TMH = obitos / internacoes novas x 100; '
+           || 'IS = internacoes novas de 2026 / media do mesmo mes em 2024 e 2025; '
+           || 'CMI nominal e real usam o valor SIH aprovado por internacao.' || chr(10)
+           || '10. Para perguntas definicionais (o que e, que significa, explique) '
+           || 'sobre um indicador, responda a definicao e a formula do glossario; '
+           || 'nao faca ranking nem liste regioes, a menos que isso seja pedido.'
     end;
 
     consumir_cota;

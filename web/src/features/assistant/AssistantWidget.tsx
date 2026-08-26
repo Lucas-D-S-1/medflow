@@ -139,6 +139,27 @@ export default function AssistantWidget() {
       }
     }
 
+    if (pedidoExplicacao && /(\btmh\b|mortalidade hospitalar)/.test(normalized)) {
+      return {
+        text: 'TMH é a Taxa de Mortalidade Hospitalar: óbitos divididos por internações novas, multiplicados por 100. É mortalidade observada, sem ajuste de risco clínico; serve para triagem de variação e não mede causalmente a qualidade do hospital.',
+      }
+    }
+
+    if (pedidoExplicacao && /(\bcmi\b|custo medio|valor medio)/.test(normalized)) {
+      return {
+        text: 'CMI é o Custo Médio da Internação. O CMI nominal divide o valor SIH aprovado das internações novas pelo número de internações; o CMI real aplica o fator de correção IPCA da competência. São valores administrativos aprovados, não o custo econômico total do atendimento.',
+      }
+    }
+
+    if (
+      pedidoExplicacao &&
+      /(\bis\b|indice sazonal|comparacao sazonal|sazonalidade)/.test(normalized)
+    ) {
+      return {
+        text: 'IS é o Índice Sazonal: compara as internações novas de 2026 com a média do mesmo mês em 2024 e 2025. É uma comparação histórica de sazonalidade, não uma previsão definitiva.',
+      }
+    }
+
     if (
       pedidoExplicacao &&
       /(\brras\b|rede regional|macrorregiao|macro regiao)/.test(normalized)

@@ -49,6 +49,31 @@ test('explica a rede regional com o alias e sem confundir com território munici
   expect(calls).toBe(0)
 })
 
+test('explica TMH, CMI e IS localmente sem chamar a IA', async ({ page }) => {
+  let calls = 0
+  await page.route('**/api/dev/v1/assistente/perguntar', async (route) => {
+    calls += 1
+    await route.abort()
+  })
+
+  await page.goto('/regional')
+  await page.getByRole('button', { name: /Posso ajudar/ }).click()
+
+  const casos = [
+    ['O que é TMH?', 'Taxa de Mortalidade Hospitalar'],
+    ['O que é CMI?', 'Custo Médio da Internação'],
+    ['O que é IS?', 'Índice Sazonal'],
+  ] as const
+
+  for (const [pergunta, explicacao] of casos) {
+    await page.getByLabel('Faça outra pergunta').fill(pergunta)
+    await page.getByRole('button', { name: 'Enviar pergunta' }).click()
+    await expect(page.locator('#medflow-assistant-panel')).toContainText(explicacao)
+  }
+
+  expect(calls).toBe(0)
+})
+
 test('troca as sugestões junto com a rota', async ({ page }) => {
   await page.goto('/regional')
   await page.getByRole('button', { name: /Posso ajudar/ }).click()
