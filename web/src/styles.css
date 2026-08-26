@@ -39,17 +39,16 @@ p { line-height: 1.6; }
   gap: var(--space-4);
   padding: var(--space-3) clamp(1.25rem, 5vw, 5.5rem);
   background: var(--color-nav-bg);
-  border-bottom: var(--border-subtle);
+  border-bottom: 1px solid var(--color-nav-border);
+  box-shadow: 0 .75rem 2.5rem rgba(26, 41, 72, .13);
   backdrop-filter: blur(.75rem);
 }
-.brand { display: inline-flex; align-items: center; gap: var(--space-3); color: var(--color-heading); text-decoration: none; font: 700 1.2rem/1 var(--font-heading); }
-.brand-mark { position: relative; width: 1.8rem; height: 1.8rem; display: grid; place-items: center; border: .1rem solid var(--color-accent); border-radius: var(--radius-sm); transform: rotate(45deg); }
-.brand-mark span { position: absolute; width: .18rem; height: .7rem; border-radius: var(--radius-pill); background: var(--color-accent); transform: rotate(-45deg); }
-.brand-mark span:first-child { transform: rotate(-45deg) translate(-.3rem, -.1rem); opacity: .45; }
-.brand-mark span:last-child { transform: rotate(-45deg) translate(.3rem, .1rem); opacity: .7; }
+.brand { display: inline-flex; align-items: center; gap: var(--space-3); color: var(--color-nav-text-active); text-decoration: none; font: 700 1.2rem/1 var(--font-heading); }
+.brand-symbol { width: 2.15rem; height: 2.15rem; flex: 0 0 auto; filter: drop-shadow(0 .25rem .55rem rgba(0, 0, 0, .16)); }
 .topbar nav { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: clamp(.75rem, 2.5vw, 1.8rem); }
-.topbar nav a { color: var(--color-text-muted); text-decoration: none; font-size: var(--font-size-sm); font-weight: 700; }
-.topbar nav a.active { color: var(--color-accent-strong); text-decoration: underline; text-underline-offset: .35rem; }
+.topbar nav a { color: var(--color-nav-text); text-decoration: none; font-size: var(--font-size-sm); font-weight: 700; transition: color .18s ease; }
+.topbar nav a:hover { color: var(--color-nav-text-active); }
+.topbar nav a.active { color: var(--color-nav-text-active); text-decoration: underline; text-decoration-color: var(--color-accent); text-decoration-thickness: .15rem; text-underline-offset: .4rem; }
 
 .page-main { width: min(74rem, calc(100% - 3rem)); margin: 0 auto; padding-bottom: var(--space-8); }
 .view-header { max-width: 52rem; padding: clamp(3.5rem, 8vw, 6.5rem) 0 var(--space-6); }

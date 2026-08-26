@@ -1,7 +1,8 @@
 # `web/` — o produto
 
 **O quê.** A aplicação React + Vite com as quatro visões do MedFlow, servida
-pelos dez endpoints ORDS. Quatro telas, cada uma respondendo uma pergunta:
+por dez endpoints analíticos `GET` e pelo `POST` governado do assistente.
+Quatro telas, cada uma respondendo uma pergunta:
 
 | Rota | Pergunta |
 |---|---|
@@ -55,7 +56,7 @@ O deploy é o workflow `.github/workflows/pages.yml`, a cada push que toque
 
 ```text
 src/
-├── features/     uma pasta por visão: tela, componentes e clientes dela
+├── features/     uma pasta por visão e o assistente contextual
 ├── shared/       o que serve duas ou mais visões
 ├── lib/api/      status, metodologia e resumo regional — usados pelo contexto
 └── mocks/        os dez snapshots de contingência
@@ -83,13 +84,13 @@ motivo, em vez de exibir zero ou uma tela de erro.
 
 ```bash
 npm run build                 # tsc + vite build
-npx playwright test           # 32 testes
+npx playwright test           # 36 testes
 ```
 
 Um spec por visão, mais `contrato.spec.ts` para o que é transversal: origem do
 dado, contingência, recusa de resposta fora do contrato e layout. Os dois
-testes marcados `@live` falam com o Oracle de verdade; os outros 30 interceptam
+testes marcados `@live` falam com o Oracle de verdade; os outros 34 interceptam
 as rotas e não dependem de rede.
 
 **Os valores esperados saem dos snapshots**, nunca digitados. Regerar os
-snapshots é `make fixtures`, na raiz (ver `scripts/gerar-mocks).ts`.
+snapshots é `make fixtures`, na raiz (ver `scripts/gerar-mocks.ts`).
