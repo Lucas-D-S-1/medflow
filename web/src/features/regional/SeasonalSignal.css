@@ -97,8 +97,13 @@
   transition: border-color .18s ease, background-color .18s ease;
 }
 
-.seasonal-highlights button:hover {
+.seasonal-highlights button:hover:not(:disabled) {
   border-color: var(--color-border-strong);
+}
+
+.seasonal-highlights button:disabled {
+  opacity: .55;
+  cursor: not-allowed;
 }
 
 .seasonal-highlights button[aria-current='true'] {

@@ -7,6 +7,7 @@ type SeasonalSignalProps = {
   items: RegionalSummaryItem[]
   selected: RegionalSummaryItem
   competence: string
+  locked: boolean
   onSelect: (regionCode: string) => void
 }
 
@@ -36,6 +37,7 @@ export default function SeasonalSignal({
   items,
   selected,
   competence,
+  locked,
   onSelect,
 }: SeasonalSignalProps) {
   const above = useMemo(
@@ -111,6 +113,10 @@ export default function SeasonalSignal({
               <li key={item.region_code}>
                 <button
                   type="button"
+                  // Com o recorte travado a troca de território não tem
+                  // efeito. Um botão que parece clicável e não faz nada é
+                  // pior do que um botão desabilitado.
+                  disabled={locked}
                   onClick={() => onSelect(item.region_code)}
                   aria-current={item.region_code === selected.region_code ? 'true' : undefined}
                 >

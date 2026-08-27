@@ -184,6 +184,7 @@ export default function RegionalView() {
                   items={visibleItems}
                   selected={selectedItem}
                   competence={selectedCompetence}
+                  locked={sourceState.kind === 'fallback'}
                   onSelect={setSharedRegion}
                 />
 

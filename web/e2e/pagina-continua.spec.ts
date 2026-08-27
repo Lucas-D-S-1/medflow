@@ -86,8 +86,11 @@ test('leva ao território escolhido no destaque sazonal', async ({ page }) => {
     )[0] as Record<string, string | number>
   const nome = maisAcima.region_name as string
 
-  await expect(page.getByTestId('seasonal-basis')).toBeVisible()
-  await page.locator('.seasonal-highlights button', { hasText: nome }).click()
+  // Espera o contexto estar destravado: em fallback a troca de território não
+  // tem efeito, e clicar cedo demais media o nada.
+  const chip = page.locator('.seasonal-highlights button', { hasText: nome })
+  await expect(chip).toBeEnabled()
+  await chip.click()
 
   await expect(page.getByTestId('regional-selected-name')).toHaveText(nome)
   await expect(page.getByTestId('seasonal-headline')).toContainText(
