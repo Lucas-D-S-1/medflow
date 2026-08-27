@@ -348,7 +348,12 @@ export default function AssistantWidget() {
 
             <div className="assistant-suggestions" aria-label="Perguntas sugeridas">
               {quickQuestions[currentRoute].map((suggestion) => (
-                <button type="button" key={suggestion} onClick={() => void ask(suggestion)}>
+                <button
+                  type="button"
+                  key={suggestion}
+                  disabled={!sourceData || isLoading}
+                  onClick={() => void ask(suggestion)}
+                >
                   {suggestion}
                 </button>
               ))}

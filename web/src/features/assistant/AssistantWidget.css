@@ -148,7 +148,8 @@
   font-size: .72rem;
   font-weight: 700;
 }
-.assistant-suggestions button:hover { border-color: var(--color-accent); background: #edf8f5; }
+.assistant-suggestions button:hover:not(:disabled) { border-color: var(--color-accent); background: #edf8f5; }
+.assistant-suggestions button:disabled { cursor: not-allowed; opacity: .5; }
 
 .assistant-conversation { display: grid; gap: .65rem; margin-top: 1rem; }
 .assistant-question {

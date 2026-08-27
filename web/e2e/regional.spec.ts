@@ -251,6 +251,19 @@ test('renderiza a série regional persistida com competência, amostra e denomin
       `${pt(serieRegionalAtual.new_admissions as number)} internações`,
   )
 
+  const currentPoint = page.getByTestId(`regional-series-point-${snapshotCompetencia}`)
+  await currentPoint.hover()
+  const tooltip = page.getByRole('tooltip')
+  await expect(tooltip).toContainText(`${snapshotCompetenciaBR} · TMH observado`)
+  await expect(tooltip).toContainText(`${pt(serieRegionalAtual.tmh_percent as number, 1)}%`)
+  await expect(tooltip).toContainText(
+    `${pt(serieRegionalAtual.deaths as number)} óbitos · ` +
+      `${pt(serieRegionalAtual.new_admissions as number)} internações`,
+  )
+  await currentPoint.focus()
+  await currentPoint.press('Escape')
+  await expect(tooltip).not.toBeVisible()
+
   const details = page.locator('.series-values-details')
   await expect(details.locator('summary')).toContainText(
     `6 de ${paginacao(regionalSeriesSnapshot).count}`,

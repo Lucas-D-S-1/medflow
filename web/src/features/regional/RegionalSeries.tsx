@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type {
   RegionalSeriesItem,
   RegionalSeriesResponse,
@@ -99,6 +99,8 @@ export default function RegionalSeries({
 }) {
   const [indicatorId, setIndicatorId] = useState<IndicatorId>('iph')
   const [showAllRows, setShowAllRows] = useState(false)
+  const [tooltipCompetence, setTooltipCompetence] = useState<string | null>(null)
+  const tooltipCloseTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const indicator = INDICATORS[indicatorId]
   const chronologicalItems = useMemo(
     () => [...data.items].sort((left, right) => left.competence.localeCompare(right.competence)),
@@ -113,12 +115,62 @@ export default function RegionalSeries({
   const minimum = numericValues.length ? Math.min(...numericValues) : 0
   const maximum = numericValues.length ? Math.max(...numericValues) : 0
   const path = chartPath(values, minimum, maximum)
+  const chartPoints = chronologicalItems
+    .map((item, index) => {
+      const value = values[index]
+      if (value === null) return null
+      const range = maximum - minimum || 1
+      const x = CHART_LEFT +
+        (index / Math.max(values.length - 1, 1)) *
+        (CHART_WIDTH - CHART_LEFT - CHART_RIGHT)
+      const y = CHART_TOP +
+        (1 - (value - minimum) / range) *
+        (CHART_HEIGHT - CHART_TOP - CHART_BOTTOM)
+      return { item, value, x, y }
+    })
+    .filter((point): point is {
+      item: RegionalSeriesItem
+      value: number
+      x: number
+      y: number
+    } => point !== null)
+  const tooltipPoint = chartPoints.find(
+    (point) => point.item.competence === tooltipCompetence,
+  )
   const descendingItems = [...chronologicalItems].reverse()
   const tableItems = showAllRows
     ? descendingItems
     : descendingItems.slice(0, TABLE_PREVIEW_SIZE)
   const firstCompetence = chronologicalItems[0]?.competence
   const lastCompetence = chronologicalItems.at(-1)?.competence
+
+  useEffect(() => () => {
+    if (tooltipCloseTimer.current !== null) clearTimeout(tooltipCloseTimer.current)
+  }, [])
+
+  function cancelTooltipClose() {
+    if (tooltipCloseTimer.current === null) return
+    clearTimeout(tooltipCloseTimer.current)
+    tooltipCloseTimer.current = null
+  }
+
+  function showTooltip(competence: string) {
+    cancelTooltipClose()
+    setTooltipCompetence(competence)
+  }
+
+  function hideTooltip() {
+    cancelTooltipClose()
+    setTooltipCompetence(null)
+  }
+
+  function scheduleTooltipClose() {
+    cancelTooltipClose()
+    tooltipCloseTimer.current = setTimeout(() => {
+      setTooltipCompetence(null)
+      tooltipCloseTimer.current = null
+    }, 160)
+  }
 
   return (
     <section className="regional-series-panel" aria-labelledby="regional-series-title">
@@ -163,38 +215,72 @@ export default function RegionalSeries({
 
       {numericValues.length > 0 ? (
         <div className="series-chart" data-testid="regional-series-chart">
-          <svg
-            viewBox={`0 0 ${CHART_WIDTH} ${CHART_HEIGHT}`}
-            aria-labelledby="regional-series-chart-title regional-series-chart-description"
-          >
-            <title id="regional-series-chart-title">{indicator.label} ao longo do tempo</title>
-            <desc id="regional-series-chart-description">
-              Série de {formatPeriod(firstCompetence!)} a {formatPeriod(lastCompetence!)}; mínimo {indicator.format(minimum)} e máximo {indicator.format(maximum)}.
-            </desc>
-            <line className="series-grid-line" x1={CHART_LEFT} x2={CHART_WIDTH - CHART_RIGHT} y1={CHART_TOP} y2={CHART_TOP} />
-            <line className="series-grid-line" x1={CHART_LEFT} x2={CHART_WIDTH - CHART_RIGHT} y1={CHART_HEIGHT - CHART_BOTTOM} y2={CHART_HEIGHT - CHART_BOTTOM} />
-            <text className="series-axis-label" x={CHART_LEFT - 8} y={CHART_TOP + 4} textAnchor="end">{indicator.format(maximum)}</text>
-            <text className="series-axis-label" x={CHART_LEFT - 8} y={CHART_HEIGHT - CHART_BOTTOM + 4} textAnchor="end">{indicator.format(minimum)}</text>
-            <path className="series-line" d={path} />
-            {chronologicalItems.map((item, index) => {
-              const value = values[index]
-              if (value === null) return null
-              const range = maximum - minimum || 1
-              const x = CHART_LEFT + (index / Math.max(values.length - 1, 1)) * (CHART_WIDTH - CHART_LEFT - CHART_RIGHT)
-              const y = CHART_TOP + (1 - (value - minimum) / range) * (CHART_HEIGHT - CHART_TOP - CHART_BOTTOM)
-              return (
-                <circle
+          <div className="series-chart-canvas">
+            <svg
+              viewBox={`0 0 ${CHART_WIDTH} ${CHART_HEIGHT}`}
+              aria-labelledby="regional-series-chart-title regional-series-chart-description"
+            >
+              <title id="regional-series-chart-title">{indicator.label} ao longo do tempo</title>
+              <desc id="regional-series-chart-description">
+                Série de {formatPeriod(firstCompetence!)} a {formatPeriod(lastCompetence!)}; mínimo {indicator.format(minimum)} e máximo {indicator.format(maximum)}. Passe o cursor ou use Tab nos pontos para consultar cada mês.
+              </desc>
+              <line className="series-grid-line" x1={CHART_LEFT} x2={CHART_WIDTH - CHART_RIGHT} y1={CHART_TOP} y2={CHART_TOP} />
+              <line className="series-grid-line" x1={CHART_LEFT} x2={CHART_WIDTH - CHART_RIGHT} y1={CHART_HEIGHT - CHART_BOTTOM} y2={CHART_HEIGHT - CHART_BOTTOM} />
+              <text className="series-axis-label" x={CHART_LEFT - 8} y={CHART_TOP + 4} textAnchor="end">{indicator.format(maximum)}</text>
+              <text className="series-axis-label" x={CHART_LEFT - 8} y={CHART_HEIGHT - CHART_BOTTOM + 4} textAnchor="end">{indicator.format(minimum)}</text>
+              <path className="series-line" d={path} />
+              {chartPoints.map(({ item, value, x, y }) => (
+                <g
                   key={item.competence}
-                  className={item.competence === selectedItem?.competence ? 'series-point selected' : 'series-point'}
-                  cx={x}
-                  cy={y}
-                  r={item.competence === selectedItem?.competence ? 6 : 3.5}
-                />
-              )
-            })}
-            <text className="series-axis-label" x={CHART_LEFT} y={CHART_HEIGHT - 12}>{formatPeriod(firstCompetence!)}</text>
-            <text className="series-axis-label" x={CHART_WIDTH - CHART_RIGHT} y={CHART_HEIGHT - 12} textAnchor="end">{formatPeriod(lastCompetence!)}</text>
-          </svg>
+                  className="series-data-point"
+                  data-testid={`regional-series-point-${item.competence}`}
+                  role="img"
+                  tabIndex={0}
+                  aria-label={`${formatPeriod(item.competence)} · ${indicator.label}: ${indicator.format(value)}. ${indicator.detail(item)}`}
+                  aria-describedby={tooltipCompetence === item.competence ? 'regional-series-tooltip' : undefined}
+                  onMouseEnter={() => showTooltip(item.competence)}
+                  onMouseLeave={scheduleTooltipClose}
+                  onFocus={() => showTooltip(item.competence)}
+                  onBlur={scheduleTooltipClose}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Escape') hideTooltip()
+                  }}
+                >
+                  <circle className="series-point-hit" cx={x} cy={y} r={13} />
+                  <circle
+                    className={item.competence === selectedItem?.competence ? 'series-point selected' : 'series-point'}
+                    cx={x}
+                    cy={y}
+                    r={item.competence === selectedItem?.competence ? 6 : 3.5}
+                  />
+                </g>
+              ))}
+              <text className="series-axis-label" x={CHART_LEFT} y={CHART_HEIGHT - 12}>{formatPeriod(firstCompetence!)}</text>
+              <text className="series-axis-label" x={CHART_WIDTH - CHART_RIGHT} y={CHART_HEIGHT - 12} textAnchor="end">{formatPeriod(lastCompetence!)}</text>
+            </svg>
+            {tooltipPoint && (
+              <div
+                id="regional-series-tooltip"
+                role="tooltip"
+                className={[
+                  'series-tooltip',
+                  tooltipPoint.x < 150 ? 'align-start' : tooltipPoint.x > 610 ? 'align-end' : '',
+                  tooltipPoint.y < 95 ? 'place-below' : 'place-above',
+                ].filter(Boolean).join(' ')}
+                style={{
+                  left: `${(tooltipPoint.x / CHART_WIDTH) * 100}%`,
+                  top: `${(tooltipPoint.y / CHART_HEIGHT) * 100}%`,
+                }}
+                onMouseEnter={cancelTooltipClose}
+                onMouseLeave={hideTooltip}
+                data-testid="regional-series-tooltip"
+              >
+                <span>{formatPeriod(tooltipPoint.item.competence)} · {indicator.label}</span>
+                <strong>{indicator.format(tooltipPoint.value)}</strong>
+                <small>{indicator.detail(tooltipPoint.item)}</small>
+              </div>
+            )}
+          </div>
           <p>{indicator.note}</p>
         </div>
       ) : (

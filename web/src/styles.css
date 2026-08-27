@@ -15,17 +15,25 @@ body {
   background: radial-gradient(circle at 88% 14%, var(--color-page-glow), transparent 24rem), var(--color-page);
 }
 button, input, select, a { font: inherit; }
-button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible, summary:focus-visible, [role='button']:focus-visible {
+button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible, summary:focus-visible, [role='button']:focus-visible, [role='img']:focus-visible {
   outline: var(--focus-outline);
   outline-offset: .2rem;
 }
 
-h1, h2, h3 { color: var(--color-heading); font-family: var(--font-heading); letter-spacing: -.035em; }
+h1, h2, h3 {
+  color: var(--color-heading);
+  font-family: var(--font-heading);
+  letter-spacing: -.035em;
+  hyphens: none;
+  overflow-wrap: normal;
+  text-wrap: balance;
+  word-break: normal;
+}
 h1, h2 { margin: 0; }
-h1 { font-size: clamp(2.4rem, 5vw, 4.5rem); line-height: 1.03; }
+h1 { font-size: clamp(2.35rem, 4vw, 3.3rem); line-height: 1.08; }
 h2 { font-size: clamp(1.5rem, 3vw, 2.1rem); }
 h3 { margin: 0; font-size: var(--font-size-lg); }
-p { line-height: 1.6; }
+p { line-height: 1.6; text-wrap: pretty; }
 
 .app-shell { min-height: 100vh; }
 .topbar {
@@ -51,9 +59,9 @@ p { line-height: 1.6; }
 .topbar nav a.active { color: var(--color-nav-text-active); text-decoration: underline; text-decoration-color: var(--color-accent); text-decoration-thickness: .15rem; text-underline-offset: .4rem; }
 
 .page-main { width: min(74rem, calc(100% - 3rem)); margin: 0 auto; padding-bottom: var(--space-8); }
-.view-header { max-width: 52rem; padding: clamp(3.5rem, 8vw, 6.5rem) 0 var(--space-6); }
+.view-header { max-width: 74rem; padding: clamp(3.5rem, 8vw, 6.5rem) 0 var(--space-6); }
 .view-header.compact { padding-bottom: var(--space-5); }
-.view-header > p:last-child { max-width: 48rem; margin: var(--space-4) 0 0; color: var(--color-text-muted); font-size: var(--font-size-md); }
+.view-header > p:last-child { max-width: 62rem; margin: var(--space-4) 0 0; color: var(--color-text-muted); font-size: var(--font-size-md); }
 .section-kicker { margin: 0 0 var(--space-2); color: var(--color-accent-strong); font-size: var(--font-size-xs); font-weight: 700; letter-spacing: .16em; }
 .route-placeholder { margin-top: var(--space-5); padding: var(--space-5); border: var(--border-dashed); border-radius: var(--radius-lg); color: var(--color-text-muted); background: var(--color-surface-soft); }
 
