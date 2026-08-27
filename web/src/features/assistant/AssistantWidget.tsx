@@ -235,7 +235,7 @@ export default function AssistantWidget() {
       return {
         text: competence
           ? `Os dados publicados vão até ${competence.slice(5, 7)}/${competence.slice(0, 4)}, considerando a competência de processamento mais recente disponível na Gold.`
-          : 'A competência mais recente aparece no estado da fonte assim que a Gold termina de carregar.',
+          : 'A competência mais recente aparece na barra de contexto assim que os dados terminam de carregar.',
       }
     }
 
@@ -364,7 +364,7 @@ export default function AssistantWidget() {
                 <p className="assistant-question">{askedQuestion}</p>
                 {isLoading ? (
                   <div className="assistant-thinking" role="status">
-                    <span /> Consultando a Gold com Select AI…
+                    <span /> Consultando os dados…
                   </div>
                 ) : answer ? (
                   <article className="assistant-answer">
@@ -399,7 +399,7 @@ export default function AssistantWidget() {
                 →
               </button>
             </div>
-            <small>FlowIA · inteligência sobre a Gold Oracle</small>
+            <small>FlowIA · assistente da análise</small>
           </form>
         </section>
       ) : null}

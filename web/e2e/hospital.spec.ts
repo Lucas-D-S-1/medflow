@@ -385,7 +385,7 @@ test('isola falha da série sem derrubar a lista de hospitais', async ({ page })
   await expect(page.getByTestId('hospital-count')).toHaveText(
     `8 de ${paginacao(hospitalListSnapshot).count} hospitais`,
   )
-  await expect(page.getByTestId('source-badge')).toHaveText('Oracle ao vivo')
+  await expect(page.getByTestId('source-badge')).toHaveCount(0)
 })
 test('trocar a região limpa o hospital selecionado da URL', async ({ page }) => {
   await mockLiveSource(page)

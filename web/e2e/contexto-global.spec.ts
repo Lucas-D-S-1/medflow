@@ -96,7 +96,7 @@ test('trava o contexto global inteiro no fallback de snapshot', async ({ page })
 
   await page.goto('/regional?macrorregiao=3529&regiao=35073&busca=local&elegiveis=0')
 
-  await expect(page.getByTestId('source-badge')).toContainText('Contingência')
+  await expect(page.getByTestId('source-badge')).toHaveCount(0)
   await expect(page.getByTestId('global-competence')).toBeDisabled()
   await expect(page.getByTestId('global-macroregion')).toBeDisabled()
   await expect(page.getByTestId('global-region')).toBeDisabled()

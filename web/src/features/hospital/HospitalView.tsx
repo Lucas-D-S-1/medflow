@@ -29,7 +29,6 @@ import HospitalSeries from './HospitalSeries'
 import HospitalTable from './HospitalTable'
 import SpecialtyTable from './SpecialtyTable'
 import MethodNote from '../../shared/MethodNote'
-import SourcePanel from '../../shared/SourcePanel'
 import StatePanel from '../../shared/StatePanel'
 import { COMPETENCE_PATTERN, useSource } from '../../shared/SourceContext'
 import { formatPeriod } from '../../shared/format'
@@ -292,8 +291,6 @@ export default function HospitalView() {
         </p>
       </header>
 
-      <SourcePanel />
-
       {sourceState.kind === 'loading' && (
         <StatePanel kind="loading" title="Carregando hospitais" testId="hospital-loading">
           Buscando competência, regiões e hospitais com produção.
@@ -310,7 +307,7 @@ export default function HospitalView() {
           title="Visão hospitalar indisponível"
           testId="hospital-source-error"
         >
-          Nem a API nem o snapshot local puderam sustentar esta tela.
+          Não foi possível carregar esta tela. Tente novamente.
         </StatePanel>
       )}
 
@@ -337,14 +334,7 @@ export default function HospitalView() {
               </label>
             </div>
             <small>
-              {isFallback
-                ? // Derivado do snapshot, não escrito à mão: o texto anunciava
-                  // 05/2026 depois que o recorte avançou, contradizendo os
-                  // números logo abaixo dele.
-                  `O snapshot preserva os hospitais de ${list?.region.region_name ?? 'a região'} ` +
-                  `em ${formatPeriod(selectedCompetence)}; tente novamente para consultar ` +
-                  'outro recorte sem misturar fontes.'
-                : `Competência ${formatPeriod(selectedCompetence)} e região compartilhada permanecem no contexto; esta busca local limpa o hospital selecionado.`}
+              Esta busca local limpa o hospital selecionado.
             </small>
           </section>
 

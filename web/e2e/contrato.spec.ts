@@ -24,18 +24,22 @@ import {
 test('@live renderiza os números reais do Oracle pelo proxy relativo', async ({ page }) => {
   await page.goto('/')
 
-  await expect(page.getByTestId('source-badge')).toHaveText('Oracle ao vivo', { timeout: 15_000 })
+  await expect(page.getByTestId('regional-count')).toHaveText('62 de 62 regiões', {
+    timeout: 15_000,
+  })
+  await expect(page.getByTestId('regional-selected-name')).toHaveText('JUNDIAI')
+  // A origem do dado saiu da área analítica: só a Metodologia presta contas.
+  await expect(page.getByTestId('source-badge')).toHaveCount(0)
+  await page.getByRole('link', { name: 'Metodologia' }).click()
+  await expect(page.getByTestId('source-badge')).toHaveText('Oracle ao vivo')
   // Derivado do manifesto da Bronze, não memorizado: quando o DATASUS publica
   // uma competência nova e o pipeline avança, este teste tem de acompanhar a
   // realidade em vez de falhar por estar velho.
   await expect(page.getByTestId('data-through')).toHaveText(ultimaCompetenciaBR)
-  await expect(page.getByTestId('regional-count')).toHaveText('62 de 62 regiões')
-  await expect(page.getByTestId('regional-selected-name')).toHaveText('JUNDIAI')
   // Estruturais e invariantes: o total de internações novas na Metodologia
   // tem de bater com o que a Silver reconciliou, e a checagem cruzada de
   // pacientes-dia entre marts tem de fechar em zero, em qualquer recorte.
   await expect(page.getByTestId('fallback-note')).toHaveCount(0)
-  await page.getByRole('link', { name: 'Metodologia' }).click()
   await expect(page.getByTestId('coverage-regions')).toHaveText('62')
   await expect(page.getByTestId('coverage-admissions')).toHaveText(internacoesNovasBR)
   await expect(page.getByTestId('reconciliation-patient_days_cross_mart')).toContainText('diferença: 0')
@@ -47,22 +51,21 @@ test('usa somente o snapshot quando o Oracle falha', async ({ page }) => {
 
   await page.goto('/')
 
+  // A visão analítica não anuncia a origem; o contexto trava no recorte servido.
+  await expect(page.getByTestId('source-badge')).toHaveCount(0)
+  await expect(page.getByTestId('global-competence')).toBeDisabled()
+  await expect(page.getByTestId('global-macroregion')).toBeDisabled()
+  await expect(page.getByTestId('global-region')).toBeDisabled()
+  await expect(page.getByTestId('regional-series-current')).toContainText(
+    `${pt(serieRegionalAtual.iph_percent as number, 1)}%`,
+  )
+  await page.getByRole('link', { name: 'Metodologia' }).click()
   await expect(page.getByTestId('source-badge')).toContainText(
     `Contingência — snapshot até ${snapshotCompetencia}`,
   )
   await expect(page.getByTestId('data-through')).toHaveText(snapshotCompetenciaBR)
   await expect(page.getByTestId('contract-version')).toHaveText('v0.3.0')
   await expect(page.getByTestId('fallback-note')).toContainText('nenhuma fonte foi misturada')
-  await expect(page.getByTestId('global-competence')).toBeDisabled()
-  await expect(page.getByTestId('global-macroregion')).toBeDisabled()
-  await expect(page.getByTestId('global-region')).toBeDisabled()
-  await expect(page.getByTestId('regional-series-source')).toHaveText(
-    'Snapshot de contingência',
-  )
-  await expect(page.getByTestId('regional-series-current')).toContainText(
-    `${pt(serieRegionalAtual.iph_percent as number, 1)}%`,
-  )
-  await page.getByRole('link', { name: 'Metodologia' }).click()
   await expect(page.getByTestId('coverage-regions')).toHaveText('62')
   await expect(page.getByTestId('coverage-admissions')).toHaveText(
     pt(coberturaMetodologia.new_admissions),
@@ -82,7 +85,7 @@ test('distingue ausência legítima de indisponibilidade do Oracle', async ({ pa
     })
   })
 
-  await page.goto('/')
+  await page.goto('/metodologia')
 
   await expect(page.getByTestId('empty-state')).toContainText(
     'Nenhuma competência publicada',
@@ -105,7 +108,7 @@ test('não descreve contrato inválido como indisponibilidade do Oracle', async 
     })
   })
 
-  await page.goto('/')
+  await page.goto('/metodologia')
 
   await expect(page.getByTestId('source-badge')).toContainText('Contingência')
   await expect(page.getByTestId('fallback-note')).toContainText(
@@ -137,7 +140,7 @@ test('@live não mistura metodologia snapshot com status Oracle ao vivo', async 
     })
   })
 
-  await page.goto('/')
+  await page.goto('/metodologia')
 
   await expect(page.getByTestId('source-badge')).toContainText(
     `Contingência — snapshot até ${snapshotCompetencia}`,
@@ -145,7 +148,6 @@ test('@live não mistura metodologia snapshot com status Oracle ao vivo', async 
   await expect(page.getByTestId('fallback-note')).toContainText(
     'O Oracle respondeu, mas o conteúdo não corresponde ao contrato da API',
   )
-  await page.getByRole('link', { name: 'Metodologia' }).click()
   await expect(page.getByTestId('coverage-regions')).toHaveText('62')
   await expect(page.getByTestId('coverage-admissions')).toHaveText(
     pt(coberturaMetodologia.new_admissions),
@@ -176,7 +178,7 @@ test('rejeita snapshot, competência, versão e horário inválidos na resposta 
       ...invalidField,
     }
 
-    await page.goto('/')
+    await page.goto('/metodologia')
 
     await expect(page.getByTestId('source-badge')).toContainText('Contingência')
     await expect(page.getByTestId('fallback-note')).toContainText(
@@ -192,7 +194,7 @@ test('mantém a geração do snapshot verificável na metadata da Gold', async (
 
   expect(statusSnapshot.database_time).toBe(goldMetadata.gerado_em_utc)
 
-  await page.goto('/')
+  await page.goto('/metodologia')
 
   await expect(page.getByTestId('data-through')).toHaveText(snapshotCompetenciaBR)
   await expect(page.getByTestId('contract-version')).toHaveText('v0.3.0')

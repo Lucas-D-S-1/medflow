@@ -130,7 +130,7 @@ test('envia somente pergunta livre ao Oracle Select AI e mostra SQL auditável',
   await expect(panel).toContainText('Pressão e evasão devem ser lidas')
   await panel.getByText('Ver SQL gerado e validado').click()
   await expect(panel.locator('pre')).toContainText('select nm_regiao_saude')
-  await expect(panel).toContainText('inteligência sobre a Gold Oracle')
+  await expect(panel).toContainText('assistente da análise')
 })
 
 test('não confunde pergunta analítica sobre pressão com pedido de definição', async ({ page }) => {

@@ -16,7 +16,6 @@ import FlowMatrix from './FlowMatrix'
 import IcsapPanel from './IcsapPanel'
 import MethodNote from '../../shared/MethodNote'
 import MetricCard from '../../shared/MetricCard'
-import SourcePanel from '../../shared/SourcePanel'
 import StatePanel from '../../shared/StatePanel'
 import { COMPETENCE_PATTERN, useSource } from '../../shared/SourceContext'
 import {
@@ -190,8 +189,6 @@ export default function FluxosView() {
         </p>
       </header>
 
-      <SourcePanel />
-
       {sourceState.kind === 'loading' && (
         <StatePanel kind="loading" title="Carregando fluxos" testId="flows-loading">
           Buscando competência, regiões e pares origem–destino agregados.
@@ -204,7 +201,7 @@ export default function FluxosView() {
       )}
       {sourceState.kind === 'error' && (
         <StatePanel kind="error" title="Visão de fluxos indisponível" testId="flows-source-error">
-          Nem a API nem o snapshot local puderam sustentar esta tela.
+          Não foi possível carregar esta tela. Tente novamente.
         </StatePanel>
       )}
 
@@ -233,17 +230,6 @@ export default function FluxosView() {
                 </select>
               </label>
             </div>
-            <small>
-              {isFallback
-                ? // Região e competência saem do próprio snapshot. Cravá-las
-                  // aqui fazia a tela anunciar um recorte que o snapshot já
-                  // não continha: o texto dizia 05/2026 enquanto os números
-                  // eram de 06/2026.
-                  `O snapshot preserva ${data?.territory.region_name ?? 'a região'} em ` +
-                  `${formatPeriod(selectedCompetence)}; tente novamente para consultar ` +
-                  'outro recorte sem misturar fontes.'
-                : 'Competência e região permanecem na URL; trocar o período não apaga macrorregião, região ou hospital.'}
-            </small>
           </section>
 
           {flowState.kind === 'loading' && (
@@ -280,11 +266,6 @@ export default function FluxosView() {
                     {formatPeriod(data.data_through)}
                   </p>
                 </div>
-                <strong className="regional-source" data-testid="flow-source">
-                  {data.source === 'oracle-live'
-                    ? 'Oracle ao vivo'
-                    : 'Snapshot de contingência'}
-                </strong>
               </div>
 
               <section className="flow-metrics" aria-label="Indicadores territoriais de fluxo">

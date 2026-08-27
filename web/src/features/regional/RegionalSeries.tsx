@@ -36,7 +36,7 @@ const INDICATORS: Record<IndicatorId, IndicatorConfig> = {
     format: formatInteger,
     detail: (item) =>
       `${formatInteger(item.hospitals_with_admissions)} hospitais com produção`,
-    note: 'Amostra mensal de internações novas persistida na Gold.',
+    note: 'Amostra mensal de internações novas.',
   },
   tmh: {
     label: 'TMH observado',
@@ -182,9 +182,6 @@ export default function RegionalSeries({
             {formatInteger(data.pagination.count)} competências · ordem cronológica explícita na visualização
           </p>
         </div>
-        <strong data-testid="regional-series-source">
-          {data.source === 'oracle-live' ? 'Oracle ao vivo' : 'Snapshot de contingência'}
-        </strong>
       </div>
 
       <div className="series-indicator-selector" role="radiogroup" aria-label="Indicador da série">

@@ -56,11 +56,11 @@ test('renderiza a competência e a versão do contrato recebidas do Oracle', asy
 
   await page.goto('/')
 
-  await expect(page.getByTestId('source-badge')).toHaveText('Oracle ao vivo')
-  await expect(page.getByTestId('data-through')).toHaveText(snapshotCompetenciaBR)
-  await expect(page.getByTestId('contract-version')).toHaveText('v0.3.0')
+  // Contrato e origem prestam contas apenas em Metodologia.
+  await expect(page.getByTestId('source-badge')).toHaveCount(0)
+  await expect(page.getByTestId('data-through')).toHaveCount(0)
+  await expect(page.getByTestId('contract-version')).toHaveCount(0)
   await expect(page.getByTestId('regional-data-through')).toContainText(snapshotCompetenciaBR)
-  await expect(page.getByTestId('regional-source')).toHaveText('Oracle ao vivo')
   await expect(page.getByTestId('regional-count')).toHaveText('62 de 62 regiões')
   await expect(page.getByTestId('global-competence')).toHaveValue(snapshotCompetencia)
   await expect(page.getByTestId('regional-map-svg')).toHaveCount(1)
@@ -231,7 +231,6 @@ test('renderiza a série regional persistida com competência, amostra e denomin
   await page.goto(`/regional?competencia=${snapshotCompetencia}&regiao=35073`)
 
   await expect(page.getByRole('heading', { name: 'Série de JUNDIAI' })).toBeVisible()
-  await expect(page.getByTestId('regional-series-source')).toHaveText('Oracle ao vivo')
   await expect(page.getByTestId('regional-series-chart')).toBeVisible()
   await expect(page.getByTestId('regional-series-current')).toContainText(`${snapshotCompetenciaBR} · IPH estimado`)
   await expect(page.getByTestId('regional-series-current')).toContainText(

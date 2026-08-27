@@ -62,7 +62,6 @@ test('renderiza fluxos persistidos, expande todos os destinos e preserva filtros
     `/fluxos?competencia=${snapshotCompetencia}&macrorregiao=3527&regiao=35073&hospital=0008028`,
   )
 
-  await expect(page.getByTestId('flow-source')).toHaveText('Oracle ao vivo')
   await expect(page.getByTestId('flow-region-name')).toHaveText('JUNDIAI')
   await expect(page.getByTestId('flow-own-care')).toHaveText(`${pt(territorioFluxo.own_care_percent, 1)}%`)
   await expect(page.getByTestId('flow-evasion')).toHaveText(`${pt(territorioFluxo.observed_evasion_percent, 1)}%`)
@@ -106,14 +105,12 @@ test('mantém a visão de fluxos no snapshot sem misturar fontes', async ({ page
 
   await page.goto('/fluxos?competencia=2025-04&regiao=35011')
 
-  await expect(page.getByTestId('flow-source')).toHaveText('Snapshot de contingência')
   await expect(page.getByTestId('flow-region-name')).toHaveText('JUNDIAI')
   await expect(page.getByTestId('flow-own-care')).toHaveText(`${pt(territorioFluxo.own_care_percent, 1)}%`)
   await expect(page.getByTestId('global-competence')).toHaveValue(snapshotCompetencia)
   await expect(page.getByTestId('global-competence')).toBeDisabled()
   await expect(page.getByTestId('global-region')).toBeDisabled()
   await expect(page.getByTestId('flow-destination')).toBeDisabled()
-  await expect(page.getByText(`O snapshot preserva JUNDIAI em ${snapshotCompetenciaBR}`)).toBeVisible()
 })
 test('renderiza a composição ICSAP persistida, expande os 19 grupos e mantém a nota populacional', async ({
   page,
@@ -218,7 +215,7 @@ test('isola falha da ICSAP sem derrubar a matriz de fluxos', async ({ page }) =>
     `8 de ${paginacao(flowSnapshot).count} destinos`,
   )
   await expect(page.getByTestId('flow-own-care')).toHaveText(`${pt(territorioFluxo.own_care_percent, 1)}%`)
-  await expect(page.getByTestId('source-badge')).toHaveText('Oracle ao vivo')
+  await expect(page.getByTestId('source-badge')).toHaveCount(0)
   await expect(page.getByText('Snapshot de contingência')).toHaveCount(0)
 })
 test('distingue competência sem ICSAP publicada de falha do endpoint', async ({ page }) => {
@@ -353,7 +350,7 @@ test('distingue competência sem fluxo publicado de falha do endpoint', async ({
   await expect(page.getByTestId('flow-absent-competence')).toContainText('12/2023')
   await expect(page.getByTestId('flow-absent-competence')).toContainText(snapshotCompetenciaBR)
   await expect(page.getByTestId('flow-error')).toHaveCount(0)
-  await expect(page.getByTestId('source-badge')).toHaveText('Oracle ao vivo')
+  await expect(page.getByTestId('source-badge')).toHaveCount(0)
 })
 test('isola erro do endpoint de fluxos sem substituir por snapshot', async ({ page }) => {
   await mockLiveSource(page)
@@ -373,8 +370,7 @@ test('isola erro do endpoint de fluxos sem substituir por snapshot', async ({ pa
 
   await page.goto(`/fluxos?competencia=${snapshotCompetencia}&regiao=35073`)
 
-  await expect(page.getByTestId('source-badge')).toHaveText('Oracle ao vivo')
+  await expect(page.getByTestId('source-badge')).toHaveCount(0)
   await expect(page.getByTestId('flow-error')).toContainText('Fluxos indisponíveis')
-  await expect(page.getByTestId('flow-source')).toHaveCount(0)
   await expect(page.getByText('Snapshot de contingência')).toHaveCount(0)
 })

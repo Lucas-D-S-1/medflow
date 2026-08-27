@@ -187,10 +187,10 @@ export default function GlobalContextBar() {
         </div>
         <small id="global-context-help" className="global-context-help">
           {isFallback
-            ? `Snapshot travado em ${formatPeriod(sharedCompetence)}; tente novamente para consultar outro recorte.`
+            ? `Recorte fixo em ${formatPeriod(sharedCompetence)}; tente novamente para consultar outro período.`
             : regionalLoadState === 'loading'
               ? 'Carregando a competência compartilhada; os filtros locais permanecem na URL.'
-              : 'A troca preserva filtros locais. A busca rápida usa regiões/RRAS carregados e nome ou alias hospitalar do contrato.'}
+              : 'A troca preserva filtros locais. A busca rápida aceita região, rede regional e hospital por nome ou alias.'}
         </small>
         <small id="global-search-help" className="global-context-help">
           Município, coordenadoria e zona não são inventados: ficam fora da busca rápida enquanto o contrato público não fornecer esses nomes.

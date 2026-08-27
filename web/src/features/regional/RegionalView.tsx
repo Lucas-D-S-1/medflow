@@ -4,11 +4,9 @@ import {
   getRegiaoSerieSnapshot,
   type RegionalSeriesResponse,
 } from './regioesSerie'
-import MethodNote from '../../shared/MethodNote'
 import MetricCard from '../../shared/MetricCard'
 import RegionalMap from './RegionalMap'
 import RegionalSeries from './RegionalSeries'
-import SourcePanel from '../../shared/SourcePanel'
 import StatePanel from '../../shared/StatePanel'
 import { useSource } from '../../shared/SourceContext'
 import {
@@ -125,26 +123,17 @@ export default function RegionalView() {
         </p>
       </header>
 
-      <SourcePanel />
-
       <div className="regional-workspace">
         <div className="view-intro">
           <div>
             <p className="section-kicker">MAPA E RESUMO</p>
-            <h2 id="regional-title">Sinais regionais persistidos na Gold</h2>
+            <h2 id="regional-title">Sinais regionais</h2>
             {regionalData && (
               <p data-testid="regional-data-through">
-                Competência {formatPeriod(regionalData.data_through)} · sem recálculo no cliente
+                Competência {formatPeriod(regionalData.data_through)}
               </p>
             )}
           </div>
-          <strong className="regional-source" data-testid="regional-source">
-            {regionalData?.source === 'oracle-live'
-              ? 'Oracle ao vivo'
-              : regionalData?.source === 'snapshot'
-                ? 'Snapshot de contingência'
-                : 'Aguardando fonte'}
-          </strong>
         </div>
 
         {sourceState.kind === 'loading' && (
@@ -169,7 +158,7 @@ export default function RegionalView() {
         )}
         {sourceState.kind === 'error' && (
           <StatePanel kind="error" title="Visão regional indisponível" testId="regional-error">
-            Nem a API nem o snapshot local puderam sustentar esta tela.
+            Não foi possível carregar esta tela. Tente novamente.
           </StatePanel>
         )}
 
@@ -276,12 +265,6 @@ export default function RegionalView() {
                   </section>
                 </div>
 
-                <MethodNote>
-                  IPH é pressão estimada sobre capacidade SUS declarada, não ocupação física real.
-                  O numerador e o denominador exibidos foram lidos da Gold; nenhum indicador é
-                  recalculado no navegador.
-                </MethodNote>
-
                 {seriesState.kind === 'loading' && (
                   <StatePanel kind="loading" title="Carregando série regional" testId="regional-series-loading">
                     Buscando as competências da região selecionada.
@@ -293,8 +276,8 @@ export default function RegionalView() {
                   </StatePanel>
                 )}
                 {seriesState.kind === 'snapshot-missing' && (
-                  <StatePanel kind="empty" title="Série fora do snapshot de contingência" testId="regional-series-snapshot-missing">
-                    O snapshot preserva a série de JUNDIAI; tente novamente para consultar outra região sem misturar fontes.
+                  <StatePanel kind="empty" title="Série indisponível para esta região" testId="regional-series-snapshot-missing">
+                    Não foi possível carregar a série histórica agora. Tente novamente.
                   </StatePanel>
                 )}
                 {seriesState.kind === 'error' && (

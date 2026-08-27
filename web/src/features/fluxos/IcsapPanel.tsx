@@ -21,7 +21,7 @@ export default function IcsapPanel({ data }: { data: IcsapResponse }) {
           <h2 id="icsap-title">{data.region.region_name} — composição das ICSAP</h2>
           <p>
             Grupos da Portaria 221/2008 em ordem decrescente de internações; a
-            participação e a taxa por 10 mil habitantes vêm persistidas da Gold.
+            participação e a taxa por 10 mil habitantes acompanham cada grupo.
           </p>
         </div>
         <strong data-testid="icsap-count">
