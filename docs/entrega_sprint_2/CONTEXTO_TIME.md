@@ -88,8 +88,8 @@ As técnicas implementadas abrangem análise exploratória, modelagem dimensiona
 | WebApp | quatro visões concluídas e revisadas; produto publicado |
 | Link público | concluído em 16/08/2026 e servido pelo módulo ORDS `api/v1` |
 | Validação do produto | 8.403.103 comparações campo a campo, sem divergências |
-| Select AI | roteiro de 13 perguntas revalidado em 23/08/2026; oito têm SQL de referência executado, seis coincidiram exatamente e os limites restantes estão documentados |
-| GitHub | versão pública `v0.3.1` registrada em 25/08/2026 |
+| FlowIA e Select AI | FlowIA contextual publicada no WebApp; conceitos simples são determinísticos, perguntas analíticas usam o `POST /assistente/perguntar` governado e a F12 temporal foi aprovada por inteiro em 26/08/2026 |
+| GitHub | versão pública `v0.4.0` registrada em 27/08/2026 |
 | Disponibilidade | heartbeat diário ativo; `make preflight` confere o produto publicado antes da banca |
 | Página APEX de Select AI | montada em 25/08/2026; workspace `MEDFLOW_DEMO`, aplicação `100`, página `1`, export versionado em `db/apex/` |
 | PPT | fechado em 21 slides e dois blocos de Select AI; foi regerado em 25/08/2026 com a captura real da página APEX no slide 16 e mora no repositório acadêmico privado |

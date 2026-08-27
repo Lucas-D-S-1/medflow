@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "medflow"
-version = "0.3.0.dev0"
+version = "0.4.0"
 description = "Pipeline Bronze/Silver/Gold e indicadores hospitalares do SUS para o Estado de São Paulo"
 readme = "README.md"
 requires-python = ">=3.12"

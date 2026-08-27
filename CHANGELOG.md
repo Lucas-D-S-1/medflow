@@ -3,6 +3,56 @@
 As releases seguem a política de [`VERSIONAMENTO.md`](VERSIONAMENTO.md).
 A versão da release e a versão dos contratos de dados evoluem separadamente.
 
+## 0.4.0 — 27/08/2026
+
+Publicada em 27/08/2026 como o primeiro marco em que a FlowIA faz parte do
+produto público e recebe o contexto da investigação em andamento.
+
+### Adicionado
+
+- **FlowIA no WebApp**: assistente contextual acessível em todas as quatro
+  visões, com rota, competência, região, hospital e análise ativa enviados
+  separadamente da pergunta. Conceitos simples são respondidos de forma
+  determinística; perguntas analíticas seguem para o Select AI governado;
+- `POST /assistente/perguntar` no módulo ORDS público e no contrato OpenAPI,
+  com guarda de somente leitura, auditoria da resposta, tratamento explícito
+  de cota e falha de inferência e contexto territorial controlado;
+- identidade visual da **FlowIA**, unificando no mesmo nome as respostas
+  locais, governadas e produzidas pelo Select AI;
+- avaliador de vinte perguntas humanas, curtas e deliberadamente vagas, com
+  consultas de referência e conferência separada de SQL, dados e narrativa;
+- território municipal de São Paulo com quatro camadas oficiais do GeoSampa:
+  distrito, subprefeitura, Coordenadoria Regional de Saúde e Supervisão
+  Técnica de Saúde;
+- aliases pesquisáveis de hospitais e busca por nome oficial, nome popular,
+  CNES e território. O caso público de aceite é “Ermelino Matarazzo” → Hospital
+  Municipal Prof. Dr. Alípio Corrêa Netto, CNES `2082829`.
+
+### Alterado
+
+- `/hospitais` passou a expor, sem misturar conceitos, Região de Saúde SUS e
+  os recortes territoriais municipais do estabelecimento;
+- o profile e o pacote PL/SQL do Select AI receberam semântica temporal em
+  `AAAAMM`, glossário governado e guardas para ranking, comparação mensal,
+  ordenação e limite;
+- a pergunta F12, “quem piorou de uns meses pra cá?”, passou a usar intenção
+  governada: interpreta “uns meses” como três competências, compara o IPH no
+  mesmo grão e narra exatamente os dados auditados, sem nova inferência;
+- a interface recebeu a identidade azul-marinho, azul e verde da apresentação,
+  mantendo fonte, amostra, origem e limites próximos aos números.
+
+### Medido
+
+- F12 aprovada por inteiro: SQL equivalente à referência, mesmos cinco rótulos
+  na mesma ordem e narrativa com os três primeiros rótulos na ordem correta;
+- suíte Python hermética: 194 testes aprovados e 69 integrações puladas;
+- Playwright: 38 testes herméticos e 2 testes ao vivo aprovados;
+- contrato de desenvolvimento e público: 46 verificações aprovadas em cada;
+- reconciliação amostral de desenvolvimento e pública: 8 endpoints e 30.988
+  comparações em cada módulo, sem divergência;
+- pacote Oracle válido em 4 de 4 objetos e preflight público aprovado em 12 de
+  12 verificações.
+
 ## 0.3.1 — 25/08/2026
 
 Publicada em 25/08/2026 depois dos portões de escrita, testes e lint.

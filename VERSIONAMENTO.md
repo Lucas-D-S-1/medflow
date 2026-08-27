@@ -49,7 +49,8 @@ posteriores usam uma nova versão; tags públicas existentes não são movidas.
 | `v0.1.0` | histórico | Primeiro marco público do pipeline Bronze/Silver, publicada aqui em 29/07/2026 |
 | `v0.2.0` | histórico | Gold, geografia, contratos e validação integrada |
 | `v0.3.0` | histórico | Oracle carregado, `api/v1` pública, WebApp no ar e Select AI revalidado; publicada em 23/08/2026 |
-| `v0.3.1` | estável | hardening final validado e publicado em 25/08/2026 |
+| `v0.3.1` | histórico | hardening da entrega publicado em 25/08/2026 |
+| `v0.4.0` | estável | FlowIA contextual, Select AI no WebApp, território municipal e busca por aliases; publicada em 27/08/2026 |
 
 A tag legada `medflow-v0` não deve ser apagada nem reutilizada. A `v0.1.0`
 nasceu neste repositório em 29/07/2026 e foi espelhada no `fiap-1tscoa` em
@@ -72,3 +73,9 @@ parciais. **Em 18/08/2026 essa hipótese foi descartada**. O WebApp permanece
 nas quatro visões, com mudanças restritas a texto e acabamento. Com o Select AI
 revalidado contra o produto em 23/08/2026, o escopo do marco fechou e a
 `v0.3.0` foi publicada nessa data.
+
+A `v0.4.0` é um marco `MINOR` porque inclui uma função pública nova: a FlowIA
+contextual no WebApp, servida por um `POST` governado no ORDS. O mesmo marco
+fecha a dimensão territorial municipal e a busca hospitalar por aliases. O
+contrato de dados permanece em `0.3.0`: a versão da entrega avançou, mas o
+esquema canônico das camadas não sofreu uma ruptura incompatível.

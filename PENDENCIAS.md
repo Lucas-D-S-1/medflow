@@ -1,14 +1,15 @@
 # PENDÊNCIAS — Challenge Oracle: MedFlow
 
-Atualizado em 25/08/2026, depois do fechamento local do PPT e da planilha.
+Atualizado em 27/08/2026, depois da publicação da FlowIA e do território municipal.
 Entrega da Sprint 2: **01/09/2026**.
 
 ## Estado atual para fechar a entrega
 
-O produto técnico está fechado e publicado: `v0.3.1`, quatro visões no WebApp,
-dez endpoints `api/v1`, 8.403.103 comparações sem divergência, roteiro de Select
-AI revalidado, heartbeat diário ativo e a página APEX de demonstração montada em
-25/08/2026. A release reúne o MVP da `v0.3.0` e o hardening final da entrega.
+O produto técnico está fechado e publicado: `v0.4.0`, quatro visões no WebApp,
+dez endpoints `GET` e o `POST /assistente/perguntar` em `api/v1`, FlowIA
+contextual, busca hospitalar por alias, território municipal, 8.403.103
+comparações sem divergência no gate completo, heartbeat diário ativo e a página
+APEX de demonstração montada em 25/08/2026.
 
 Falta trabalho humano e a montagem final da entrega, não trabalho de pipeline:
 
@@ -55,6 +56,9 @@ workspace.
   publicada com Oracle, API pública, WebApp e Select AI revalidado.
 - versão pública [`v0.3.1`](https://github.com/Lucas-D-S-1/medflow/releases/tag/v0.3.1)
   publicada com APEX, heartbeat, preflight e documentação final da entrega.
+- versão pública [`v0.4.0`](https://github.com/Lucas-D-S-1/medflow/releases/tag/v0.4.0)
+  publicada com FlowIA contextual, Select AI governado no WebApp, território
+  municipal e busca hospitalar por aliases.
 
 ## Pendências em ordem lógica
 
@@ -320,7 +324,7 @@ Marco publicado: **`v0.3.1`, hardening final da entrega**.
 | Link público | 10% | **concluído em 16/08/2026** — <https://lucas-d-s-1.github.io/medflow/>, servido por `api/v1` |
 | Validação dos dados no produto | — | concluída e reproduzível: 8.403.103 comparações, zero divergências |
 | Oracle Select AI | — | **revalidado contra o produto em 23/08/2026**, evidência em `docs/qualidade/REVALIDACAO_SELECT_AI.md` |
-| GitHub | 20% | `v0.3.1` publicada em 25/08/2026 |
+| GitHub | 20% | `v0.4.0` publicada em 27/08/2026 |
 | PPT / pitch | 10% | concluído no repositório acadêmico privado; 21 slides e dois blocos de Select AI |
 | Planilha de integrantes | — | concluída no repositório acadêmico privado, com os cinco integrantes |
 | Vídeo YouTube | 10% | pendente; link final ainda não está no workspace |
