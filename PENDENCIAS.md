@@ -1,15 +1,33 @@
 # PENDÊNCIAS — Challenge Oracle: MedFlow
 
-Atualizado em 27/08/2026, depois da publicação da FlowIA e do território municipal.
+Atualizado em 27/08/2026, depois da página analítica contínua.
 Entrega da Sprint 2: **01/09/2026**.
 
 ## Estado atual para fechar a entrega
 
-O produto técnico está fechado e publicado: `v0.4.0`, quatro visões no WebApp,
-dez endpoints `GET` e o `POST /assistente/perguntar` em `api/v1`, FlowIA
-contextual, busca hospitalar por alias, território municipal, 8.403.103
-comparações sem divergência no gate completo, heartbeat diário ativo e a página
-APEX de demonstração montada em 25/08/2026.
+O produto técnico está fechado e publicado: `v0.4.0`, dez endpoints `GET` e o
+`POST /assistente/perguntar` em `api/v1`, FlowIA contextual, busca hospitalar
+por alias, território municipal, 8.403.103 comparações sem divergência no gate
+completo, heartbeat diário ativo e a página APEX de demonstração montada em
+25/08/2026.
+
+Depois da `v0.4.0`, o WebApp deixou de ser quatro visões e passou a ser **duas
+páginas**: uma análise contínua com três etapas ancoradas — território, fluxos
+e hospital — e a Metodologia. As mudanças não tocaram cálculo nem contrato,
+então a reconciliação não precisou ser repetida. O que entrou:
+
+- competência e território em contexto global, com barra persistente e recorte
+  inteiro preservado na URL;
+- a prestação de contas sobre origem e contrato concentrada em Metodologia; a
+  área analítica não interrompe mais a leitura para provar o dado;
+- os títulos interrogativos removidos das seções: a disposição dos dados é que
+  provoca a pergunta;
+- a etapa territorial abrindo pelo comportamento sazonal do mês, promovendo um
+  índice que já vinha calculado da Gold — comparação com o observado, não
+  previsão.
+
+Portões: build Vite aprovado, `tsc` limpo, Playwright **48/48** em três
+execuções seguidas, sem rolagem horizontal em 1280 px e 390 px.
 
 Falta trabalho humano e a montagem final da entrega, não trabalho de pipeline:
 

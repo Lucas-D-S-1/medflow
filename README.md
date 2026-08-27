@@ -217,13 +217,27 @@ O contrato das onze operações está em
 o SQL dos handlers e contra a API viva. Um contrato que ninguém confere vira
 só uma terceira versão da verdade.
 
-| Rota | Pergunta que responde | Endpoints |
+O produto tem duas páginas. A análise é contínua: território, fluxos e hospital
+são etapas ancoradas da mesma investigação, e descer a página é estreitar o
+recorte. Competência e território ficam numa barra de contexto que acompanha a
+investigação inteira, e a URL preserva o recorte para abrir e compartilhar.
+
+| Endereço | O que entrega | Endpoints |
 |---|---|---|
-| `/regional` | Onde está o sinal e como ele evolui? | `regioes/resumo`, `regioes/{id}/serie` |
-| `/fluxos` | A população é atendida no próprio território, e quais condições sensíveis puxam a demanda? | `fluxos`, `icsap` |
-| `/hospital` | O que explica o sinal e onde ele se concentra? | `hospitais`, `.../serie`, `.../especialidades`, `.../cids` |
+| `/#regional` | comportamento sazonal do mês, mapa, ranking e série regional | `regioes/resumo`, `regioes/{id}/serie` |
+| `/#fluxos` | residência, destino e condições sensíveis à atenção primária | `fluxos`, `icsap` |
+| `/#hospital` | hospitais da região, série, especialidades e diagnósticos | `hospitais`, `.../serie`, `.../especialidades`, `.../cids` |
 | `/metodologia` | Posso confiar no número e quais são seus limites? | `status`, `metodologia` |
-| assistente flutuante | O que este indicador significa e o que devo investigar? | respostas locais; fallback `POST assistente/perguntar` |
+| assistente flutuante | acompanha a etapa visível e o recorte ativo | respostas locais; fallback `POST assistente/perguntar` |
+
+Os caminhos antigos `/regional`, `/fluxos` e `/hospital` continuam válidos: são
+reescritos para as âncoras equivalentes com o recorte intacto, antes do app
+montar.
+
+A prestação de contas sobre origem, contrato e cobertura vive só em
+Metodologia. A área analítica não interrompe a leitura para provar o dado; as
+notas que restringem a leitura de um indicador continuam ao lado do número que
+elas limitam.
 
 Regras que o produto respeita, detalhadas em
 [`DECISOES.md`](docs/decisoes/DECISOES.md), seção 10:
@@ -326,7 +340,7 @@ Cada pasta tem um README que responde o quê, por quê e como. O mapa:
 |---|---|---|
 | `src/medflow/` | o pipeline: Bronze, Silver, Gold e a carga do Oracle | [ler](src/medflow/README.md) |
 | `db/` | **o backend**: schema, views de projeção e módulos ORDS | [ler](db/README.md) |
-| `web/` | o produto: quatro visões em React + Vite | [ler](web/README.md) |
+| `web/` | o produto: página analítica contínua e Metodologia, em React + Vite | [ler](web/README.md) |
 | `contracts/` | o que o projeto promete, e quem confere cada promessa | [ler](contracts/README.md) |
 | `tests/` | três níveis, três garantias diferentes | [ler](tests/README.md) |
 | `data/` | as camadas materializadas; quase tudo fora do Git | [ler](data/README.md) |

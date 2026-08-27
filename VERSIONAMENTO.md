@@ -69,10 +69,18 @@ com as quatro visões ao vivo.
 A tag ficou parada depois disso por decisão de produto, não por pendência
 técnica: cogitou-se refazer a UI em duas telas, e tagear um produto que muda na
 semana seguinte contraria a regra acima de que tags não se antecipam a entregas
-parciais. **Em 18/08/2026 essa hipótese foi descartada**. O WebApp permanece
-nas quatro visões, com mudanças restritas a texto e acabamento. Com o Select AI
-revalidado contra o produto em 23/08/2026, o escopo do marco fechou e a
-`v0.3.0` foi publicada nessa data.
+parciais. **Em 18/08/2026 essa hipótese foi descartada**, sob o argumento de
+prazo: refazer a UI custaria repetir a reconciliação a poucos dias da entrega.
+O WebApp permaneceu nas quatro visões, com mudanças restritas a texto e
+acabamento. Com o Select AI revalidado contra o produto em 23/08/2026, o escopo
+do marco fechou e a `v0.3.0` foi publicada nessa data.
+
+Esse congelamento previa exceção — "salvo nova decisão explícita" — e ela veio
+**em 27/08/2026**, depois da `v0.4.0` publicada e dos portões verdes, quando o
+motivo de prazo expirou. As quatro visões viraram **duas páginas**: uma análise
+contínua com três etapas ancoradas e a Metodologia. A reconciliação não
+precisou ser repetida: a mudança move componentes e apaga texto, sem tocar em
+cálculo nem em contrato.
 
 A `v0.4.0` é um marco `MINOR` porque inclui uma função pública nova: a FlowIA
 contextual no WebApp, servida por um `POST` governado no ORDS. O mesmo marco

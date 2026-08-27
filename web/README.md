@@ -1,15 +1,25 @@
 # `web/` — o produto
 
-**O quê.** A aplicação React + Vite com as quatro visões do MedFlow, servida
-por dez endpoints analíticos `GET` e pelo `POST` governado do assistente.
-Quatro telas, cada uma respondendo uma pergunta:
+**O quê.** A aplicação React + Vite do MedFlow, servida por dez endpoints
+analíticos `GET` e pelo `POST` governado do assistente.
 
-| Rota | Pergunta |
+São **duas páginas**. A análise é uma investigação contínua, com três etapas
+ancoradas no mesmo endereço; descer a página é estreitar o recorte. Metodologia
+é separada porque responde a outra pergunta, feita em outro momento.
+
+| Endereço | O que entrega |
 |---|---|
-| `/regional` | Onde está o sinal e como ele evolui? |
-| `/fluxos` | A população é atendida no próprio território, e o que puxa a demanda? |
-| `/hospital` | O que explica o sinal e onde ele se concentra? |
+| `/#regional` | comportamento sazonal do mês, mapa, ranking e série regional |
+| `/#fluxos` | residência, destino e condições sensíveis à atenção primária |
+| `/#hospital` | hospitais da região, série, especialidades e diagnósticos |
 | `/metodologia` | Posso confiar no número e quais são seus limites? |
+
+Competência e território ficam numa barra de contexto que acompanha a
+investigação inteira; os filtros locais permanecem locais. Tudo na URL, para
+abrir e compartilhar o recorte. Os caminhos antigos `/regional`, `/fluxos` e
+`/hospital` são reescritos para as âncoras equivalentes, com o recorte intacto,
+antes do app montar — um só escritor da URL, para não competir com a
+normalização do contexto.
 
 **Como preparar**, a partir da raiz do repositório:
 
