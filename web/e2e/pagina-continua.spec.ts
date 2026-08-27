@@ -75,9 +75,19 @@ test('leva ao território escolhido no destaque sazonal', async ({ page }) => {
   await mockLiveSource(page)
   await page.goto(`/?competencia=${snapshotCompetencia}&regiao=35073`)
 
-  const destaque = page.locator('.seasonal-highlights button').first()
-  const nome = (await destaque.locator('span').innerText()).trim()
-  await destaque.click()
+  // O alvo sai dos dados, não da ordem do DOM: a lista reordena quando a
+  // competência termina de carregar, e ler o nome de um chip para clicar nele
+  // logo depois deixava o teste dependendo dessa janela.
+  const maisAcima = itens(regionalSnapshot)
+    .filter((item) => item.seasonality_status === 'calculado')
+    .sort(
+      (left, right) =>
+        (right.seasonality_index as number) - (left.seasonality_index as number),
+    )[0] as Record<string, string | number>
+  const nome = maisAcima.region_name as string
+
+  await expect(page.getByTestId('seasonal-basis')).toBeVisible()
+  await page.locator('.seasonal-highlights button', { hasText: nome }).click()
 
   await expect(page.getByTestId('regional-selected-name')).toHaveText(nome)
   await expect(page.getByTestId('seasonal-headline')).toContainText(
