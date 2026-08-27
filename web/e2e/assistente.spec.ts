@@ -74,7 +74,7 @@ test('explica TMH, CMI e IS localmente sem chamar a IA', async ({ page }) => {
   expect(calls).toBe(0)
 })
 
-test('troca as sugestões junto com a rota', async ({ page }) => {
+test('troca as sugestões junto com a etapa visível', async ({ page }) => {
   await page.goto('/regional')
   await page.getByRole('button', { name: /Posso ajudar/ }).click()
   await expect(page.getByRole('button', { name: 'O que é IPH?' })).toBeVisible()

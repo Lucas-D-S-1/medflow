@@ -1,14 +1,22 @@
-import { Navigate, NavLink, Route, Routes, useLocation } from 'react-router-dom'
+import { Link, Navigate, NavLink, Route, Routes, useLocation } from 'react-router-dom'
 import { SourceProvider } from './shared/SourceContext'
+import AnalisePage from './features/analise/AnalisePage'
 import AssistantWidget from './features/assistant/AssistantWidget'
-import FluxosView from './features/fluxos/FluxosView'
-import HospitalView from './features/hospital/HospitalView'
 import MetodologiaView from './features/metodologia/MetodologiaView'
-import RegionalView from './features/regional/RegionalView'
 import GlobalContextBar from './shared/GlobalContextBar'
+import { useActiveSection } from './shared/useActiveSection'
+
+const SECTIONS = [
+  { id: 'regional', label: 'Regional' },
+  { id: 'fluxos', label: 'Fluxos' },
+  { id: 'hospital', label: 'Hospital' },
+]
+const SECTION_IDS = SECTIONS.map((section) => section.id)
 
 function Shell() {
   const location = useLocation()
+  const onAnalysis = location.pathname === '/'
+  const activeSection = useActiveSection(SECTION_IDS, onAnalysis, location.hash)
   const routeWithContext = (pathname: string) => ({
     pathname,
     search: location.search,
@@ -18,10 +26,10 @@ function Shell() {
     <div className="app-shell">
       <div className="site-chrome">
         <header className="topbar">
-          <NavLink
+          <Link
             className="brand"
-            to={routeWithContext('/regional')}
-            aria-label="MedFlow, visão regional"
+            to={{ pathname: '/', search: location.search }}
+            aria-label="MedFlow, início da análise"
           >
             <svg className="brand-symbol" viewBox="0 0 48 48" aria-hidden="true">
               <defs>
@@ -51,11 +59,25 @@ function Shell() {
               />
             </svg>
             <span>MedFlow</span>
-          </NavLink>
-          <nav aria-label="Navegação principal">
-            <NavLink to={routeWithContext('/regional')}>Regional</NavLink>
-            <NavLink to={routeWithContext('/fluxos')}>Fluxos</NavLink>
-            <NavLink to={routeWithContext('/hospital')}>Hospital</NavLink>
+          </Link>
+          {/*
+            O direcionador não troca de tela: ele diz onde você está na mesma
+            investigação e rola até a etapa escolhida.
+          */}
+          <nav aria-label="Etapas da análise">
+            {SECTIONS.map((section) => (
+              <Link
+                key={section.id}
+                to={{ pathname: '/', search: location.search, hash: `#${section.id}` }}
+                className={onAnalysis && activeSection === section.id ? 'active' : undefined}
+                aria-current={
+                  onAnalysis && activeSection === section.id ? 'true' : undefined
+                }
+                data-testid={`anchor-${section.id}`}
+              >
+                {section.label}
+              </Link>
+            ))}
             <NavLink to={routeWithContext('/metodologia')}>Metodologia</NavLink>
           </nav>
         </header>
@@ -63,17 +85,16 @@ function Shell() {
       </div>
 
       <Routes>
-        <Route
-          path="/"
-          element={<Navigate to={{ pathname: '/regional', search: location.search }} replace />}
-        />
-        <Route path="/regional" element={<RegionalView />} />
-        <Route path="/fluxos" element={<FluxosView />} />
-        <Route path="/hospital" element={<HospitalView />} />
+        <Route path="/" element={<AnalisePage />} />
         <Route path="/metodologia" element={<MetodologiaView />} />
+        {/*
+          Os caminhos antigos (/regional, /fluxos, /hospital) são reescritos
+          para âncoras em main.tsx, antes do app montar. Aqui resta apenas a
+          rede de segurança para qualquer outro endereço.
+        */}
         <Route
           path="*"
-          element={<Navigate to={{ pathname: '/regional', search: location.search }} replace />}
+          element={<Navigate to={{ pathname: '/', search: location.search }} replace />}
         />
       </Routes>
       <AssistantWidget />

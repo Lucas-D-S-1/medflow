@@ -113,20 +113,15 @@ export default function RegionalView() {
   }, [selectedItem?.region_code, sourceState.kind])
 
   return (
-    <main className="page-main regional-page">
-      <header className="view-header">
-        <p className="section-kicker">VISÃO EXECUTIVA REGIONAL</p>
-        <h1>Onde devo investigar primeiro?</h1>
-        <p>
-          Compare sinais agregados, veja a amostra e aprofunde uma região sem perder o
-          contexto temporal da URL.
-        </p>
-      </header>
-
+    <section
+      id="regional"
+      className="analysis-section regional-page"
+      aria-labelledby="regional-title"
+    >
       <div className="regional-workspace">
         <div className="view-intro">
           <div>
-            <p className="section-kicker">MAPA E RESUMO</p>
+            <p className="section-kicker">TERRITÓRIO</p>
             <h2 id="regional-title">Sinais regionais</h2>
             {regionalData && (
               <p data-testid="regional-data-through">
@@ -328,6 +323,6 @@ export default function RegionalView() {
           </>
         )}
       </div>
-    </main>
+    </section>
   )
 }

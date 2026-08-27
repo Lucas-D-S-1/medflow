@@ -7,7 +7,7 @@ import {
   useState,
   type ReactNode,
 } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useLocation, useSearchParams } from 'react-router-dom'
 import {
   fetchMethodology,
   getMethodologySnapshot,
@@ -74,6 +74,11 @@ function isContractError(error: unknown) {
 
 export function SourceProvider({ children }: { children: ReactNode }) {
   const [searchParams, setSearchParams] = useSearchParams()
+  const { pathname } = useLocation()
+  // Endereços fora das duas páginas reais são transitórios: a rede de
+  // segurança do roteador ainda vai reescrevê-los. Normalizar a URL nesse
+  // intervalo faz a escrita ser desfeita pelo redirecionamento seguinte.
+  const onCanonicalRoute = pathname === '/' || pathname === '/metodologia'
   const setSearchParamsRef = useRef(setSearchParams)
   setSearchParamsRef.current = setSearchParams
   const [sourceState, setSourceState] = useState<SourceState>({ kind: 'loading' })
@@ -231,6 +236,7 @@ export function SourceProvider({ children }: { children: ReactNode }) {
   // antiga nem disparar uma nova carga por causa da própria normalização.
   useEffect(() => {
     if (
+      !onCanonicalRoute ||
       sourceState.kind !== 'live' ||
       !sourceData ||
       (COMPETENCE_PATTERN.test(requestedCompetence) &&
@@ -287,6 +293,7 @@ export function SourceProvider({ children }: { children: ReactNode }) {
       { replace: true },
     )
   }, [
+    onCanonicalRoute,
     requestedCompetence,
     setSearchParams,
     sharedMacroregionCode,

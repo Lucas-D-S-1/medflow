@@ -179,15 +179,17 @@ export default function FluxosView() {
   const icsap = icsapState.kind === 'ready' ? icsapState.data : null
 
   return (
-    <main className="page-main flows-page">
-      <header className="view-header">
-        <p className="section-kicker">VISÃO FLUXOS E ATENÇÃO PRIMÁRIA</p>
-        <h1>A população é atendida no próprio território?</h1>
-        <p>
-          Acompanhe o deslocamento entre regiões de residência e atendimento sem
-          confundir fluxo observado com acesso fora do estado.
-        </p>
-      </header>
+    <section
+      id="fluxos"
+      className="analysis-section flows-page"
+      aria-labelledby="flow-controls-title"
+    >
+      <div className="view-intro">
+        <div>
+          <p className="section-kicker">FLUXOS</p>
+          <h2 id="flow-controls-title">Residência e destino do atendimento</h2>
+        </div>
+      </div>
 
       {sourceState.kind === 'loading' && (
         <StatePanel kind="loading" title="Carregando fluxos" testId="flows-loading">
@@ -207,10 +209,10 @@ export default function FluxosView() {
 
       {sourceData && (
         <>
-          <section className="flow-controls" aria-labelledby="flow-controls-title">
+          <section className="flow-controls" aria-labelledby="flow-filters-title">
             <div>
               <p className="section-kicker">RECORTE TERRITORIAL</p>
-              <h2 id="flow-controls-title">Residência e destino do atendimento</h2>
+              <h3 id="flow-filters-title">Recorte de destino</h3>
             </div>
             <div className="flow-toolbar">
               <label>
@@ -380,6 +382,6 @@ export default function FluxosView() {
           )}
         </>
       )}
-    </main>
+    </section>
   )
 }

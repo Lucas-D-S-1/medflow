@@ -84,7 +84,7 @@ test('sincroniza competência e território entre URL, barra global e rotas', as
 
   await page.getByTestId('global-search').fill('Ermelino Matarazzo')
   await page.getByTestId('global-search').press('Enter')
-  await expect(page).toHaveURL(/\/hospital\?/)
+  await expect(page).toHaveURL(/#hospital$/)
   await expect(page).toHaveURL(/busca=Ermelino\+Matarazzo|busca=Ermelino%20Matarazzo/)
   await expect(page).not.toHaveURL(/hospital=3012212/)
 })
@@ -154,8 +154,13 @@ test('normaliza URL territorial incoerente sem perder parâmetros locais', async
       '&busca=local&elegiveis=0',
   )
   await expect(page.getByTestId('global-region')).toHaveValue('35073')
+  // O select já mostra 35073 antes da normalização, porque a RRAS inválida não
+  // casa com região nenhuma. Quem precisa ser esperado é a remoção do
+  // parâmetro da URL, não o valor exibido.
+  await expect
+    .poll(() => new URL(page.url()).searchParams.get('macrorregiao'))
+    .toBeNull()
   const safeUrl = new URL(page.url())
-  expect(safeUrl.searchParams.get('macrorregiao')).toBeNull()
   expect(safeUrl.searchParams.get('regiao')).toBe('35073')
   expect(safeUrl.searchParams.get('busca')).toBe('local')
   expect(safeUrl.searchParams.get('elegiveis')).toBe('0')

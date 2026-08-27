@@ -12,6 +12,30 @@ import './styles/tokens.css'
 import './styles.css'
 import './shared/components.css'
 
+/*
+ * As três visões viraram âncoras de uma página só. Os links já compartilhados
+ * continuam válidos, mas o endereço é reescrito ANTES do app montar: fazer isso
+ * com um redirecionamento do roteador criaria um segundo escritor da URL,
+ * competindo com a normalização de competência e território e desfazendo-a com
+ * um `search` capturado antes dela.
+ */
+function rewriteLegacyPath() {
+  const base = import.meta.env.BASE_URL.replace(/\/$/, '')
+  const path = window.location.pathname.startsWith(base)
+    ? window.location.pathname.slice(base.length)
+    : window.location.pathname
+  const section = path.replace(/^\/+|\/+$/g, '')
+  if (!['regional', 'fluxos', 'hospital'].includes(section)) return
+
+  window.history.replaceState(
+    window.history.state,
+    '',
+    `${base}/${window.location.search}#${section}`,
+  )
+}
+
+rewriteLegacyPath()
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     {/*

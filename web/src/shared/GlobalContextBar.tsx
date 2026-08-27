@@ -107,7 +107,9 @@ export default function GlobalContextBar() {
     const params = new URLSearchParams(window.location.search)
     params.set('busca', clean)
     params.delete('hospital')
-    navigate({ pathname: '/hospital', search: `?${params.toString()}` })
+    // A busca hospitalar leva à etapa de hospitais da mesma página, não a uma
+    // tela separada.
+    navigate({ pathname: '/', search: `?${params.toString()}`, hash: '#hospital' })
     setLookupMessage('Busca encaminhada para hospitais por nome ou alias publicado.')
   }
 

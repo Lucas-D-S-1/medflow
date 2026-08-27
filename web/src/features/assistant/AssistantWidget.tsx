@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import { useLocation } from 'react-router-dom'
+import { useActiveSection } from '../../shared/useActiveSection'
 import { askOracleSelectAi, type AssistantContext } from '../../lib/api/assistente'
 import { useSource } from '../../shared/SourceContext'
 import { formatRegionalNetwork } from '../../shared/territory'
@@ -53,11 +54,10 @@ const routeAnalysis: Record<RouteKey, string> = {
   metodologia: 'fontes, fórmulas, cobertura e limitações',
 }
 
-function routeKey(pathname: string): RouteKey {
-  if (pathname.startsWith('/fluxos')) return 'fluxos'
-  if (pathname.startsWith('/hospital')) return 'hospital'
-  if (pathname.startsWith('/metodologia')) return 'metodologia'
-  return 'regional'
+const ANALYSIS_SECTIONS = ['regional', 'fluxos', 'hospital']
+
+function isRouteKey(value: string): value is RouteKey {
+  return value === 'regional' || value === 'fluxos' || value === 'hospital'
 }
 
 function normalize(value: string) {
@@ -97,7 +97,18 @@ export default function AssistantWidget() {
   const [isLoading, setIsLoading] = useState(false)
   const [usage, setUsage] = useState(sessionUsage)
   const inputRef = useRef<HTMLInputElement>(null)
-  const currentRoute = routeKey(location.pathname)
+  // A FlowIA acompanha a etapa visível, não a rota: na página contínua as
+  // três seções dividem o mesmo endereço.
+  const activeSection = useActiveSection(
+    ANALYSIS_SECTIONS,
+    location.pathname === '/',
+    location.hash,
+  )
+  const currentRoute: RouteKey = location.pathname.startsWith('/metodologia')
+    ? 'metodologia'
+    : isRouteKey(activeSection)
+      ? activeSection
+      : 'regional'
   const sourceData =
     sourceState.kind === 'live' || sourceState.kind === 'fallback'
       ? sourceState.data
@@ -120,7 +131,7 @@ export default function AssistantWidget() {
     setAskedQuestion(null)
     setAnswer(null)
     setQuestion('')
-  }, [location.pathname])
+  }, [currentRoute])
 
   function localAnswer(rawQuestion: string): Answer | null {
     const normalized = normalize(rawQuestion)

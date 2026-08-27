@@ -281,15 +281,17 @@ export default function HospitalView() {
   }
 
   return (
-    <main className="page-main hospital-page">
-      <header className="view-header">
-        <p className="section-kicker">VISÃO HOSPITAL E PARES</p>
-        <h1>O que explica o sinal da região e onde ele se concentra?</h1>
-        <p>
-          Abra os hospitais da região, veja a evolução de cada um e compare com pares
-          elegíveis sem confundir volume com desempenho.
-        </p>
-      </header>
+    <section
+      id="hospital"
+      className="analysis-section hospital-page"
+      aria-labelledby="hospital-section-title"
+    >
+      <div className="view-intro">
+        <div>
+          <p className="section-kicker">HOSPITAL</p>
+          <h2 id="hospital-section-title">Hospitais da região</h2>
+        </div>
+      </div>
 
       {sourceState.kind === 'loading' && (
         <StatePanel kind="loading" title="Carregando hospitais" testId="hospital-loading">
@@ -476,6 +478,6 @@ export default function HospitalView() {
             ))}
         </>
       )}
-    </main>
+    </section>
   )
 }
