@@ -53,7 +53,9 @@ test('usa somente o snapshot quando o Oracle falha', async ({ page }) => {
   await expect(page.getByTestId('data-through')).toHaveText(snapshotCompetenciaBR)
   await expect(page.getByTestId('contract-version')).toHaveText('v0.3.0')
   await expect(page.getByTestId('fallback-note')).toContainText('nenhuma fonte foi misturada')
-  await expect(page.getByTestId('regional-competence')).toBeDisabled()
+  await expect(page.getByTestId('global-competence')).toBeDisabled()
+  await expect(page.getByTestId('global-macroregion')).toBeDisabled()
+  await expect(page.getByTestId('global-region')).toBeDisabled()
   await expect(page.getByTestId('regional-series-source')).toHaveText(
     'Snapshot de contingência',
   )
@@ -225,8 +227,8 @@ test('preserva filtros na URL e ignora resposta atrasada de outra competência',
   await page.goto(`/regional?competencia=${snapshotCompetencia}&macrorregiao=3527&regiao=35073`)
   await expect(page.getByTestId('regional-selected-name')).toHaveText('JUNDIAI')
 
-  await page.getByTestId('regional-competence').fill('2025-04')
-  await page.getByTestId('regional-competence').fill('2025-05')
+  await page.getByTestId('global-competence').fill('2025-04')
+  await page.getByTestId('global-competence').fill('2025-05')
 
   await expect(page.getByTestId('regional-data-through')).toContainText('05/2025')
   await expect(page).toHaveURL(/competencia=2025-05/)

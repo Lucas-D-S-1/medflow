@@ -403,7 +403,7 @@ test('trocar a região limpa o hospital selecionado da URL', async ({ page }) =>
   await page.goto(`/hospital?competencia=${snapshotCompetencia}&regiao=35073&hospital=3012212`)
   await expect(page.getByTestId('hospital-select-3012212')).toHaveText('Selecionado')
 
-  await page.getByTestId('hospital-region').selectOption('35011')
+  await page.getByTestId('global-region').selectOption('35011')
   await expect(page).not.toHaveURL(/hospital=/)
   await expect(page).toHaveURL(/regiao=35011/)
   await expect(page).toHaveURL(new RegExp(`competencia=${snapshotCompetencia}`))

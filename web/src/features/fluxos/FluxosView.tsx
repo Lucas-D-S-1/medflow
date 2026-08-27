@@ -18,7 +18,7 @@ import MethodNote from '../../shared/MethodNote'
 import MetricCard from '../../shared/MetricCard'
 import SourcePanel from '../../shared/SourcePanel'
 import StatePanel from '../../shared/StatePanel'
-import { useSource } from '../../shared/SourceContext'
+import { COMPETENCE_PATTERN, useSource } from '../../shared/SourceContext'
 import {
   formatDecimal,
   formatInteger,
@@ -36,11 +36,8 @@ type IcsapState =
   | { kind: 'idle' | 'loading' | 'error' | 'absent' }
   | { kind: 'ready'; data: IcsapResponse }
 
-const COMPETENCE_PATTERN = /^(\d{4})-(0[1-9]|1[0-2])$/
-const REGION_CODE_PATTERN = /^\d{5}$/
-
 export default function FluxosView() {
-  const { sourceState } = useSource()
+  const { sourceState, sharedCompetence, sharedRegionCode } = useSource()
   const [searchParams, setSearchParams] = useSearchParams()
   const [flowState, setFlowState] = useState<FlowState>({ kind: 'idle' })
   const [icsapState, setIcsapState] = useState<IcsapState>({ kind: 'idle' })
@@ -61,31 +58,12 @@ export default function FluxosView() {
     [sourceData],
   )
 
-  const urlCompetence = searchParams.get('competencia') ?? ''
-  const urlOrigin = searchParams.get('regiao') ?? ''
   const urlDestination = searchParams.get('destino') ?? ''
-  const defaultOrigin =
-    regions.find((region) => region.region_code === '35073')?.region_code ??
-    regions[0]?.region_code ??
-    ''
-  const selectedCompetence = isFallback
-    ? flowState.kind === 'ready'
-      ? flowState.data.data_through
-      : sourceData?.status.data_through ?? ''
-    : COMPETENCE_PATTERN.test(urlCompetence)
-      ? urlCompetence
-      : sourceData?.status.data_through ?? ''
-  const selectedOrigin = isFallback
-    ? flowState.kind === 'ready'
-      ? flowState.data.territory.region_code
-      : defaultOrigin
-    : REGION_CODE_PATTERN.test(urlOrigin) &&
-        regions.some((region) => region.region_code === urlOrigin)
-      ? urlOrigin
-      : defaultOrigin
+  const selectedCompetence = sharedCompetence
+  const selectedOrigin = sharedRegionCode
   const selectedDestination =
     !isFallback &&
-    REGION_CODE_PATTERN.test(urlDestination) &&
+    /^\d{5}$/.test(urlDestination) &&
     regions.some((region) => region.region_code === urlDestination)
       ? urlDestination
       : ''
@@ -198,15 +176,6 @@ export default function FluxosView() {
     })
   }
 
-  function selectOrigin(value: string) {
-    setSearchParams((current) => {
-      const next = new URLSearchParams(current)
-      next.set('regiao', value)
-      next.delete('destino')
-      return next
-    })
-  }
-
   const data = flowState.kind === 'ready' ? flowState.data : null
   const icsap = icsapState.kind === 'ready' ? icsapState.data : null
 
@@ -247,32 +216,6 @@ export default function FluxosView() {
               <h2 id="flow-controls-title">Residência e destino do atendimento</h2>
             </div>
             <div className="flow-toolbar">
-              <label>
-                Competência
-                <input
-                  type="month"
-                  value={selectedCompetence}
-                  max={sourceData.status.data_through}
-                  disabled={isFallback}
-                  data-testid="flow-competence"
-                  onChange={(event) => updateParam('competencia', event.target.value)}
-                />
-              </label>
-              <label>
-                Região de residência
-                <select
-                  value={selectedOrigin}
-                  disabled={isFallback}
-                  data-testid="flow-origin"
-                  onChange={(event) => selectOrigin(event.target.value)}
-                >
-                  {regions.map((region) => (
-                    <option key={region.region_code} value={region.region_code}>
-                      {region.region_name}
-                    </option>
-                  ))}
-                </select>
-              </label>
               <label>
                 Destino
                 <select

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import {
   fetchHospitals,
@@ -31,7 +31,7 @@ import SpecialtyTable from './SpecialtyTable'
 import MethodNote from '../../shared/MethodNote'
 import SourcePanel from '../../shared/SourcePanel'
 import StatePanel from '../../shared/StatePanel'
-import { useSource } from '../../shared/SourceContext'
+import { COMPETENCE_PATTERN, useSource } from '../../shared/SourceContext'
 import { formatPeriod } from '../../shared/format'
 import './HospitalView.css'
 
@@ -51,12 +51,10 @@ type CidState =
   | { kind: 'idle' | 'loading' | 'error' | 'absent' }
   | { kind: 'ready'; data: CidResponse }
 
-const COMPETENCE_PATTERN = /^(\d{4})-(0[1-9]|1[0-2])$/
-const REGION_CODE_PATTERN = /^\d{5}$/
 const CNES_PATTERN = /^\d{7}$/
 
 export default function HospitalView() {
-  const { sourceState } = useSource()
+  const { sourceState, sharedCompetence, sharedRegionCode } = useSource()
   const [searchParams, setSearchParams] = useSearchParams()
   const [listState, setListState] = useState<ListState>({ kind: 'idle' })
   const [seriesState, setSeriesState] = useState<SeriesState>({ kind: 'idle' })
@@ -72,44 +70,15 @@ export default function HospitalView() {
       ? sourceState.data
       : null
   const isFallback = sourceState.kind === 'fallback'
-  const regions = useMemo(
-    () =>
-      sourceData
-        ? [...sourceData.regions.items].sort((left, right) =>
-            left.region_name.localeCompare(right.region_name, 'pt-BR'),
-          )
-        : [],
-    [sourceData],
-  )
 
-  const urlCompetence = searchParams.get('competencia') ?? ''
-  const urlRegion = searchParams.get('regiao') ?? ''
   const urlHospital = searchParams.get('hospital') ?? ''
   const urlSearch = searchParams.get('busca') ?? ''
   const apiSearch = urlSearch.trim()
   // O recorte de elegíveis vive na URL como os demais filtros, e vem ligado por
   // padrão: sem ele a lista abre em diagnósticos que não têm IPR calculável.
   const eligibleOnly = (searchParams.get('elegiveis') ?? '1') !== '0'
-  const defaultRegion =
-    regions.find((region) => region.region_code === '35073')?.region_code ??
-    regions[0]?.region_code ??
-    ''
-
-  const selectedCompetence = isFallback
-    ? listState.kind === 'ready'
-      ? listState.data.data_through
-      : sourceData?.status.data_through ?? ''
-    : COMPETENCE_PATTERN.test(urlCompetence)
-      ? urlCompetence
-      : sourceData?.status.data_through ?? ''
-  const selectedRegion = isFallback
-    ? listState.kind === 'ready'
-      ? listState.data.region.region_code
-      : defaultRegion
-    : REGION_CODE_PATTERN.test(urlRegion) &&
-        regions.some((region) => region.region_code === urlRegion)
-      ? urlRegion
-      : defaultRegion
+  const selectedCompetence = sharedCompetence
+  const selectedRegion = sharedRegionCode
 
   const list = listState.kind === 'ready' ? listState.data : null
   // Um CNES só vale como selecionado se estiver na lista carregada. Assim a URL
@@ -300,17 +269,6 @@ export default function HospitalView() {
     })
   }
 
-  function selectRegion(value: string) {
-    setSearchParams((current) => {
-      const next = new URLSearchParams(current)
-      next.set('regiao', value)
-      // O hospital anterior é de outra região: mantê-lo na URL faria a tela
-      // prometer um detalhe que não pertence a este recorte.
-      next.delete('hospital')
-      return next
-    })
-  }
-
   function updateHospitalSearch(value: string) {
     setSearchParams((current) => {
       const next = new URLSearchParams(current)
@@ -360,36 +318,10 @@ export default function HospitalView() {
         <>
           <section className="hospital-controls" aria-labelledby="hospital-controls-title">
             <div>
-              <p className="section-kicker">RECORTE</p>
-              <h2 id="hospital-controls-title">Competência e região</h2>
+              <p className="section-kicker">FILTROS LOCAIS</p>
+              <h2 id="hospital-controls-title">Busca hospitalar</h2>
             </div>
             <div className="hospital-toolbar">
-              <label>
-                Competência
-                <input
-                  type="month"
-                  value={selectedCompetence}
-                  max={sourceData.status.data_through}
-                  disabled={isFallback}
-                  data-testid="hospital-competence"
-                  onChange={(event) => updateParam('competencia', event.target.value)}
-                />
-              </label>
-              <label>
-                Região de saúde
-                <select
-                  value={selectedRegion}
-                  disabled={isFallback}
-                  data-testid="hospital-region"
-                  onChange={(event) => selectRegion(event.target.value)}
-                >
-                  {regions.map((region) => (
-                    <option key={region.region_code} value={region.region_code}>
-                      {region.region_name}
-                    </option>
-                  ))}
-                </select>
-              </label>
               <label>
                 Buscar hospital
                 <input
@@ -412,7 +344,7 @@ export default function HospitalView() {
                   `O snapshot preserva os hospitais de ${list?.region.region_name ?? 'a região'} ` +
                   `em ${formatPeriod(selectedCompetence)}; tente novamente para consultar ` +
                   'outro recorte sem misturar fontes.'
-                : 'Competência, região, busca e hospital permanecem na URL; trocar a busca ou a região limpa o hospital selecionado.'}
+                : `Competência ${formatPeriod(selectedCompetence)} e região compartilhada permanecem no contexto; esta busca local limpa o hospital selecionado.`}
             </small>
           </section>
 

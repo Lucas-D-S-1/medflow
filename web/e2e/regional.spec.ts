@@ -62,7 +62,7 @@ test('renderiza a competência e a versão do contrato recebidas do Oracle', asy
   await expect(page.getByTestId('regional-data-through')).toContainText(snapshotCompetenciaBR)
   await expect(page.getByTestId('regional-source')).toHaveText('Oracle ao vivo')
   await expect(page.getByTestId('regional-count')).toHaveText('62 de 62 regiões')
-  await expect(page.getByTestId('regional-competence')).toHaveValue(snapshotCompetencia)
+  await expect(page.getByTestId('global-competence')).toHaveValue(snapshotCompetencia)
   await expect(page.getByTestId('regional-map-svg')).toHaveCount(1)
   await expect(page.locator('.regional-map-shape')).toHaveCount(62)
   await expect(page.getByTestId('regional-selected-name')).toHaveText('JUNDIAI')
@@ -165,8 +165,8 @@ test('filtra a competência sem abandonar o mapa espacial e o tamanho da amostra
   })
 
   await page.goto('/')
-  await expect(page.getByTestId('regional-competence')).toHaveValue(snapshotCompetencia)
-  await page.getByTestId('regional-competence').fill('2025-05')
+  await expect(page.getByTestId('global-competence')).toHaveValue(snapshotCompetencia)
+  await page.getByTestId('global-competence').fill('2025-05')
 
   await expect.poll(() => requestedCompetence).toBe('2025-05')
   await expect(page.getByTestId('regional-data-through')).toHaveText(/05\/2025/)

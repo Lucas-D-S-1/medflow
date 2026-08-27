@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
 import {
   fetchRegiaoSerie,
   getRegiaoSerieSnapshot,
@@ -29,8 +28,15 @@ type SeriesState =
   | { kind: 'ready'; data: RegionalSeriesResponse }
 
 export default function RegionalView() {
-  const { sourceState, regionalLoadState, loadRegionalCompetence } = useSource()
-  const [searchParams, setSearchParams] = useSearchParams()
+  const {
+    sourceState,
+    regionalLoadState,
+    sharedCompetence,
+    sharedRegionCode,
+    sharedRegionParam,
+    sharedMacroregionCode,
+    setSharedRegion,
+  } = useSource()
   const [showAllRanking, setShowAllRanking] = useState(false)
   const [seriesState, setSeriesState] = useState<SeriesState>({ kind: 'idle' })
   const seriesRequest = useRef<AbortController | null>(null)
@@ -42,24 +48,9 @@ export default function RegionalView() {
     sourceData && (regionalLoadState === 'ready' || regionalLoadState === 'empty')
       ? sourceData.regions
       : null
-  const isFallback = sourceState.kind === 'fallback'
-  const selectedMacroregion = searchParams.get('macrorregiao') ?? ''
-  const selectedRegionFromUrl = searchParams.get('regiao') ?? ''
-  const selectedCompetence = isFallback
-    ? regionalData?.data_through ?? ''
-    : searchParams.get('competencia') ?? regionalData?.data_through ?? ''
-
-  const macroregions = useMemo(() => {
-    if (!regionalData) return []
-    return regionalData.items
-      .filter(
-        (item, index, items) =>
-          items.findIndex(
-            (candidate) => candidate.macroregion_code === item.macroregion_code,
-          ) === index,
-      )
-      .sort((a, b) => a.macroregion_name.localeCompare(b.macroregion_name, 'pt-BR'))
-  }, [regionalData])
+  const selectedMacroregion = sharedMacroregionCode
+  const selectedRegionFromUrl = sharedRegionParam
+  const selectedCompetence = sharedCompetence
 
   const visibleItems = useMemo(() => {
     if (!regionalData) return []
@@ -79,7 +70,7 @@ export default function RegionalView() {
     [visibleItems],
   )
   const selectedItem =
-    rankedItems.find((item) => item.region_code === selectedRegionFromUrl) ??
+    rankedItems.find((item) => item.region_code === sharedRegionCode) ??
     rankedItems[0] ??
     null
   const rankingItems = showAllRanking
@@ -122,21 +113,6 @@ export default function RegionalView() {
 
     return () => controller.abort()
   }, [selectedItem?.region_code, sourceState.kind])
-
-  function updateParam(name: string, value: string) {
-    setSearchParams((current) => {
-      const next = new URLSearchParams(current)
-      if (value) next.set(name, value)
-      else next.delete(name)
-      return next
-    })
-  }
-
-  function selectCompetence(competence: string) {
-    if (!competence || isFallback) return
-    updateParam('competencia', competence)
-    void loadRegionalCompetence(competence)
-  }
 
   return (
     <main className="page-main regional-page">
@@ -199,56 +175,13 @@ export default function RegionalView() {
 
         {regionalData && (
           <>
-            <div className="regional-toolbar">
-              <label>
-                Competência
-                <input
-                  type="month"
-                  data-testid="regional-competence"
-                  value={selectedCompetence}
-                  max={sourceData?.status.data_through}
-                  disabled={isFallback}
-                  onChange={(event) => selectCompetence(event.target.value)}
-                  aria-describedby="regional-competence-help"
-                />
-              </label>
-              <label>
-                Rede regional
-                <select
-                  aria-label="Rede Regional de Atenção à Saúde"
-                  value={selectedMacroregion}
-                  onChange={(event) => updateParam('macrorregiao', event.target.value)}
-                >
-                  <option value="">Todas as redes regionais</option>
-                  {macroregions.map((item) => (
-                    <option key={item.macroregion_code} value={item.macroregion_code}>
-                      {formatRegionalNetwork(item.macroregion_name)}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label>
-                Região de saúde
-                <select
-                  value={selectedItem?.region_code ?? ''}
-                  onChange={(event) => updateParam('regiao', event.target.value)}
-                >
-                  {rankedItems.map((item) => (
-                    <option key={item.region_code} value={item.region_code}>
-                      {item.region_name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <strong className="regional-count" data-testid="regional-count">
+            <p className="regional-context-note" data-testid="regional-context-note">
+              {formatPeriod(selectedCompetence)} ·{' '}
+              <span data-testid="regional-count">
                 {formatInteger(visibleItems.length)} de {formatInteger(regionalData.pagination.count)} regiões
-              </strong>
-              <small id="regional-competence-help">
-                {isFallback
-                  ? 'O snapshot é uma fotografia única; tente novamente para consultar outra competência sem misturar fontes.'
-                  : `Máximo publicado: ${formatPeriod(sourceData?.status.data_through ?? regionalData.data_through)}. Trocar o período preserva macrorregião e região na URL.`}
-              </small>
-            </div>
+              </span>{' '}
+              no território compartilhado.
+            </p>
 
             {visibleItems.length === 0 && (
               <StatePanel kind="empty" title="Nenhuma região no recorte" testId="regional-no-items">
@@ -278,7 +211,7 @@ export default function RegionalView() {
                       items={regionalData.items}
                       selectedRegionCode={selectedItem.region_code}
                       selectedMacroregionCode={selectedMacroregion}
-                      onSelect={(code) => updateParam('regiao', code)}
+                      onSelect={setSharedRegion}
                       formatInteger={formatInteger}
                       formatPercent={formatPercent}
                     />
@@ -386,7 +319,7 @@ export default function RegionalView() {
                   <ol className={showAllRanking ? 'ranking-list expanded' : 'ranking-list'}>
                     {rankingItems.map((item) => (
                       <li key={item.region_code}>
-                        <button type="button" onClick={() => updateParam('regiao', item.region_code)}>
+                        <button type="button" onClick={() => setSharedRegion(item.region_code)}>
                           <span>{item.region_name}</span>
                           <strong>{formatPercent(item.iph_percent)}</strong>
                           <small data-testid={`regional-ranking-sample-${item.region_code}`}>
