@@ -162,6 +162,27 @@ export async function mockLiveSource(page: Page) {
       }),
     })
   })
+  // Sem esta rota o resumo regional vaza para o proxy. Em uma máquina com
+  // acesso ao Oracle a suíte passa contra dados reais sem ninguém perceber; no
+  // CI, sem rede, a mesma chamada falha e o app cai em contingência — e o teste
+  // mede o produto travado em vez do produto ao vivo. Um teste registrado
+  // depois deste continua vencendo, porque o Playwright confere as rotas na
+  // ordem inversa do registro.
+  await page.route('**/api/dev/v1/regioes/resumo**', async (route) => {
+    const url = new URL(route.request().url())
+    const year = Number(url.searchParams.get('ano'))
+    const month = Number(url.searchParams.get('mes'))
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        ...regionalSnapshot,
+        source: 'oracle-live',
+        database_time: '2026-08-01T12:00:00-03:00',
+        data_through: `${year}-${String(month).padStart(2, '0')}`,
+        filters: { year, month, macroregion_code: null, region_code: null },
+      }),
+    })
+  })
   await page.route('**/api/dev/v1/hospitais**', async (route) => {
     const url = new URL(route.request().url())
     const year = Number(url.searchParams.get('ano'))
