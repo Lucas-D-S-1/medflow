@@ -7,6 +7,7 @@ import {
 import MetricCard from '../../shared/MetricCard'
 import RegionalMap from './RegionalMap'
 import RegionalSeries from './RegionalSeries'
+import SeasonalSignal from './SeasonalSignal'
 import StatePanel from '../../shared/StatePanel'
 import { useSource } from '../../shared/SourceContext'
 import {
@@ -123,11 +124,6 @@ export default function RegionalView() {
           <div>
             <p className="section-kicker">TERRITÓRIO</p>
             <h2 id="regional-title">Sinais regionais</h2>
-            {regionalData && (
-              <p data-testid="regional-data-through">
-                Competência {formatPeriod(regionalData.data_through)}
-              </p>
-            )}
           </div>
         </div>
 
@@ -159,7 +155,11 @@ export default function RegionalView() {
 
         {regionalData && (
           <>
-            <p className="regional-context-note" data-testid="regional-context-note">
+            <p
+              className="regional-context-note"
+              data-testid="regional-context-note"
+              data-competence={regionalData.data_through}
+            >
               {formatPeriod(selectedCompetence)} ·{' '}
               <span data-testid="regional-count">
                 {formatInteger(visibleItems.length)} de {formatInteger(regionalData.pagination.count)} regiões
@@ -180,6 +180,13 @@ export default function RegionalView() {
                     A região preservada na URL não existe neste recorte; exibindo {selectedItem.region_name} sem apagar o filtro compartilhável.
                   </p>
                 )}
+                <SeasonalSignal
+                  items={visibleItems}
+                  selected={selectedItem}
+                  competence={selectedCompetence}
+                  onSelect={setSharedRegion}
+                />
+
                 <div className="regional-layout">
                   <section className="map-panel" aria-labelledby="map-title">
                     <div className="block-heading">

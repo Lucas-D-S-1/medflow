@@ -232,7 +232,7 @@ test('preserva filtros na URL e ignora resposta atrasada de outra competência',
   await page.getByTestId('global-competence').fill('2025-04')
   await page.getByTestId('global-competence').fill('2025-05')
 
-  await expect(page.getByTestId('regional-data-through')).toContainText('05/2025')
+  await expect(page.getByTestId('regional-context-note')).toContainText('05/2025')
   await expect(page).toHaveURL(/competencia=2025-05/)
   await expect(page).toHaveURL(/macrorregiao=3527/)
   await expect(page).toHaveURL(/regiao=35073/)
