@@ -21,6 +21,8 @@ dependencies = [
     "oracledb==4.0.2",
     "python-dotenv[cli]==1.2.2",
     "requests==2.34.2",
+    # Silver: atribuição ponto-em-polígono dos hospitais ao distrito municipal.
+    "shapely>=2.0,<3",
     # Bronze: descompressão DBC do DATASUS e leitura do DBF resultante.
     "datasus-dbc==0.1.3",
     "dbfread==2.0.7",

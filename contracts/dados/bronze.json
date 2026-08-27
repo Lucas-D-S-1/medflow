@@ -1,7 +1,7 @@
 {
   "camada": "bronze",
   "versao_contrato": "0.3.0",
-  "gerado_em_utc": "2026-08-10T00:15:41.902237+00:00",
+  "gerado_em_utc": "2026-08-27T00:03:08.834082+00:00",
   "principios": [
     "Arquivos de origem são imutáveis e preservados no formato recebido.",
     "DBF é cache técnico intermediário; Parquet é serialização fiel e reproduzível.",
@@ -1113,6 +1113,34 @@
       "caminho": "data/bronze/origem/referencias/ms_cnes_estabelecimentos_atuais_raw.json",
       "descricao": "Respostas atuais da API CNES para os hospitais observados.",
       "fonte": "https://apidadosabertos.saude.gov.br/cnes/estabelecimentos/{cnes}",
+      "formato": "json"
+    },
+    {
+      "nome": "geosampa_distrito_municipal",
+      "caminho": "data/bronze/origem/referencias/geosampa_distrito_municipal_raw.json",
+      "descricao": "GeoJSON bruto dos 96 distritos municipais do GeoSampa.",
+      "fonte": "https://wfs.geosampa.prefeitura.sp.gov.br/geoserver/geoportal/wfs",
+      "formato": "json"
+    },
+    {
+      "nome": "geosampa_subprefeitura",
+      "caminho": "data/bronze/origem/referencias/geosampa_subprefeitura_raw.json",
+      "descricao": "GeoJSON bruto das subprefeituras do GeoSampa.",
+      "fonte": "https://wfs.geosampa.prefeitura.sp.gov.br/geoserver/geoportal/wfs",
+      "formato": "json"
+    },
+    {
+      "nome": "geosampa_coordenadoria_regional_saude",
+      "caminho": "data/bronze/origem/referencias/geosampa_coordenadoria_regional_saude_raw.json",
+      "descricao": "GeoJSON bruto das Coordenadorias Regionais de Saúde do GeoSampa.",
+      "fonte": "https://wfs.geosampa.prefeitura.sp.gov.br/geoserver/geoportal/wfs",
+      "formato": "json"
+    },
+    {
+      "nome": "geosampa_supervisao_tecnica_saude",
+      "caminho": "data/bronze/origem/referencias/geosampa_supervisao_tecnica_saude_raw.json",
+      "descricao": "GeoJSON bruto das Supervisões Técnicas de Saúde do GeoSampa.",
+      "fonte": "https://wfs.geosampa.prefeitura.sp.gov.br/geoserver/geoportal/wfs",
       "formato": "json"
     }
   ]

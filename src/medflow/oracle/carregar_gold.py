@@ -1,8 +1,8 @@
-"""Carrega a camada Gold do MedFlow no Autonomous AI Lakehouse.
+"""Carrega as dimensões publicadas e a camada Gold no Autonomous AI Lakehouse.
 
-Executa em ordem de dependência: dimensões de geografia primeiro, marts
-depois. A carga é idempotente — cada tabela é esvaziada antes de receber os
-dados, em ordem inversa das chaves estrangeiras.
+Executa em ordem de dependência: dimensões de geografia e território primeiro,
+marts depois. A carga é idempotente — cada tabela é esvaziada antes de receber
+os dados, em ordem inversa das chaves estrangeiras.
 
 Uso, a partir de `sprint_2_em_andamento/`:
 
@@ -30,6 +30,7 @@ import pandas as pd
 # src/medflow/oracle/carregar_gold.py -> a raiz do repositório é três níveis acima
 RAIZ = Path(__file__).resolve().parents[3]
 GOLD = RAIZ / "data" / "gold"
+SILVER = RAIZ / "data" / "silver"
 
 VARIAVEIS_OBRIGATORIAS = (
     "ORACLE_USER",
@@ -43,6 +44,9 @@ VARIAVEIS_OBRIGATORIAS = (
 TABELAS: tuple[tuple[str, Path], ...] = (
     ("dim_geografia_regiao", GOLD / "geografia" / "dim_geografia_regiao.csv"),
     ("dim_geografia_municipio", GOLD / "geografia" / "dim_geografia_municipio.csv"),
+    ("dim_territorio_municipal", SILVER / "dimensoes" / "dim_territorio_municipal.parquet"),
+    ("dim_hospital_territorio_atual", SILVER / "dimensoes" / "dim_hospital_territorio_atual.parquet"),
+    ("dim_hospital_alias", SILVER / "dimensoes" / "dim_hospital_alias.parquet"),
     ("mart_indicador_hospital_mensal", GOLD / "marts" / "mart_indicador_hospital_mensal.parquet"),
     ("mart_indicador_hospital_especialidade_mensal", GOLD / "marts" / "mart_indicador_hospital_especialidade_mensal.parquet"),
     ("mart_indicador_hospital_cid_periodo", GOLD / "marts" / "mart_indicador_hospital_cid_periodo.parquet"),
@@ -89,10 +93,7 @@ def conectar() -> oracledb.Connection:
 
 def ler(caminho: Path) -> pd.DataFrame:
     if not caminho.is_file():
-        raise RuntimeError(
-            f"Arquivo da Gold não encontrado: {caminho}\n"
-            "Gere a Gold rodando notebooks/02_analise_dados.ipynb antes da carga."
-        )
+        raise RuntimeError(f"Arquivo de carga não encontrado: {caminho}\nGere as camadas antes da carga.")
     if caminho.suffix == ".csv":
         quadro = pd.read_csv(caminho, dtype=str, keep_default_na=False)
         for coluna in quadro.columns:
@@ -143,7 +144,7 @@ def _apagar_com_retentativa(
 def esvaziar(conexao: oracledb.Connection) -> None:
     """Apaga o conteúdo na ordem inversa das dependências.
 
-    Cada tabela é apagada e confirmada em separado. Fazer as nove numa
+    Cada tabela é apagada e confirmada em separado. Fazer todas numa
     transação só segurava lock sobre 585 mil linhas do início ao fim da
     operação, e isso colidia com o ORDS servindo a API ao vivo — foi o que
     produziu o ORA-12860 em 09/08/2026. Confirmar por tabela encurta a janela

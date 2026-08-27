@@ -85,6 +85,8 @@ export default function HospitalView() {
   const urlCompetence = searchParams.get('competencia') ?? ''
   const urlRegion = searchParams.get('regiao') ?? ''
   const urlHospital = searchParams.get('hospital') ?? ''
+  const urlSearch = searchParams.get('busca') ?? ''
+  const apiSearch = urlSearch.trim()
   // O recorte de elegíveis vive na URL como os demais filtros, e vem ligado por
   // padrão: sem ele a lista abre em diagnósticos que não têm IPR calculável.
   const eligibleOnly = (searchParams.get('elegiveis') ?? '1') !== '0'
@@ -146,6 +148,7 @@ export default function HospitalView() {
         year: Number(match[1]),
         month: Number(match[2]),
         regionCode: selectedRegion,
+        search: apiSearch.length >= 2 ? apiSearch : undefined,
       },
       { signal: controller.signal },
     )
@@ -160,7 +163,7 @@ export default function HospitalView() {
       })
 
     return () => controller.abort()
-  }, [selectedCompetence, selectedRegion, sourceState.kind])
+  }, [selectedCompetence, selectedRegion, sourceState.kind, apiSearch])
 
   // A série é do hospital inteiro, não da competência: trocar o mês não a
   // refaz. Ela só depende do CNES selecionado.
@@ -308,6 +311,18 @@ export default function HospitalView() {
     })
   }
 
+  function updateHospitalSearch(value: string) {
+    setSearchParams((current) => {
+      const next = new URLSearchParams(current)
+      if (value) next.set('busca', value)
+      else next.delete('busca')
+      // A busca muda o conjunto da lista: o detalhe anterior não deve parecer
+      // pertencer ao resultado novo enquanto a API responde.
+      next.delete('hospital')
+      return next
+    })
+  }
+
   return (
     <main className="page-main hospital-page">
       <header className="view-header">
@@ -375,6 +390,19 @@ export default function HospitalView() {
                   ))}
                 </select>
               </label>
+              <label>
+                Buscar hospital
+                <input
+                  type="search"
+                  value={urlSearch}
+                  minLength={2}
+                  maxLength={120}
+                  placeholder="Nome ou alias"
+                  disabled={isFallback}
+                  data-testid="hospital-search"
+                  onChange={(event) => updateHospitalSearch(event.target.value)}
+                />
+              </label>
             </div>
             <small>
               {isFallback
@@ -384,7 +412,7 @@ export default function HospitalView() {
                   `O snapshot preserva os hospitais de ${list?.region.region_name ?? 'a região'} ` +
                   `em ${formatPeriod(selectedCompetence)}; tente novamente para consultar ` +
                   'outro recorte sem misturar fontes.'
-                : 'Competência, região e hospital permanecem na URL; trocar a região limpa o hospital, que era de outro recorte.'}
+                : 'Competência, região, busca e hospital permanecem na URL; trocar a busca ou a região limpa o hospital selecionado.'}
             </small>
           </section>
 

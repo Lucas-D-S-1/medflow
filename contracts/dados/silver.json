@@ -1,7 +1,7 @@
 {
   "camada": "silver",
   "versao_contrato": "0.3.0",
-  "gerado_em_utc": "2026-08-10T01:04:16.253709+00:00",
+  "gerado_em_utc": "2026-08-27T00:12:50.372559+00:00",
   "principios": [
     "Dados tipados, conformados, reconciliados e prontos para reuso.",
     "Somente dimensões e fatos; indicadores e benchmarks pertencem à Gold.",
@@ -243,6 +243,171 @@
       ]
     },
     {
+      "nome": "dim_hospital_alias",
+      "caminho": "data/silver/dimensoes/dim_hospital_alias.parquet",
+      "descricao": "Aliases governados para pesquisa de hospitais.",
+      "grao": "uma linha por alias e CNES",
+      "chave_primaria_logica": [
+        "cd_cnes",
+        "nm_alias_normalizado"
+      ],
+      "linhas": 2,
+      "colunas": [
+        {
+          "nome": "cd_cnes",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Código de sete dígitos do estabelecimento no CNES."
+        },
+        {
+          "nome": "nm_alias",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Nome alternativo governado aceito na busca do hospital."
+        },
+        {
+          "nome": "nm_alias_normalizado",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Alias normalizado para comparação sem acentos e pontuação."
+        },
+        {
+          "nome": "tp_alias",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Tipo do alias: popular, oficial, histórico ou sigla."
+        },
+        {
+          "nome": "fl_alias_preferencial",
+          "tipo": "int64",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Indica alias preferencial dentro do seu tipo."
+        },
+        {
+          "nome": "ds_fonte_alias",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Fonte que sustenta o alias hospitalar."
+        },
+        {
+          "nome": "dt_referencia_fonte",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Data de referência da edição territorial ou cadastral usada."
+        }
+      ]
+    },
+    {
+      "nome": "dim_hospital_territorio_atual",
+      "caminho": "data/silver/dimensoes/dim_hospital_territorio_atual.parquet",
+      "descricao": "Atribuição cadastral atual dos hospitais de São Paulo ao território municipal.",
+      "grao": "uma linha por CNES dentro do município de São Paulo",
+      "chave_primaria_logica": [
+        "cd_cnes"
+      ],
+      "linhas": 107,
+      "colunas": [
+        {
+          "nome": "cd_cnes",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Código de sete dígitos do estabelecimento no CNES."
+        },
+        {
+          "nome": "cd_municipio_ibge_7",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Código oficial de sete dígitos do município no IBGE."
+        },
+        {
+          "nome": "cd_distrito_sp",
+          "tipo": "object",
+          "aceita_nulo": true,
+          "nulos": 6,
+          "descricao": "Código do distrito municipal de São Paulo na camada oficial do GeoSampa."
+        },
+        {
+          "nome": "id_subprefeitura_sp",
+          "tipo": "object",
+          "aceita_nulo": true,
+          "nulos": 6,
+          "descricao": "Identificador canônico da subprefeitura municipal no GeoSampa."
+        },
+        {
+          "nome": "id_crs_sms_sp",
+          "tipo": "object",
+          "aceita_nulo": true,
+          "nulos": 6,
+          "descricao": "Identificador da Coordenadoria Regional de Saúde municipal no GeoSampa."
+        },
+        {
+          "nome": "id_sts_sms_sp",
+          "tipo": "object",
+          "aceita_nulo": true,
+          "nulos": 6,
+          "descricao": "Identificador da Supervisão Técnica de Saúde municipal no GeoSampa."
+        },
+        {
+          "nome": "nm_bairro_cnes_atual",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Bairro informado pela fotografia atual do cadastro CNES."
+        },
+        {
+          "nome": "vl_latitude_cnes_atual",
+          "tipo": "float64",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Latitude informada pela fotografia atual do cadastro CNES."
+        },
+        {
+          "nome": "vl_longitude_cnes_atual",
+          "tipo": "float64",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Longitude informada pela fotografia atual do cadastro CNES."
+        },
+        {
+          "nome": "tp_metodo_atribuicao",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Método usado para atribuir o hospital ao território municipal."
+        },
+        {
+          "nome": "fl_atribuicao_ambigua",
+          "tipo": "int64",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Indica hospital sem atribuição territorial única no ponto cadastral."
+        },
+        {
+          "nome": "ds_fonte_territorio",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Fonte e sistema de referência usados na atribuição territorial."
+        },
+        {
+          "nome": "dt_referencia_fonte",
+          "tipo": "object",
+          "aceita_nulo": true,
+          "nulos": 6,
+          "descricao": "Data de referência da edição territorial ou cadastral usada."
+        }
+      ]
+    },
+    {
       "nome": "dim_municipio",
       "caminho": "data/silver/dimensoes/dim_municipio.parquet",
       "descricao": "Municípios paulistas e sua hierarquia regional.",
@@ -335,6 +500,117 @@
           "aceita_nulo": false,
           "nulos": 0,
           "descricao": "Fonte e ano de referência da população municipal."
+        }
+      ]
+    },
+    {
+      "nome": "dim_territorio_municipal",
+      "caminho": "data/silver/dimensoes/dim_territorio_municipal.parquet",
+      "descricao": "Hierarquia municipal de São Paulo por distrito, subprefeitura, CRS e STS.",
+      "grao": "uma linha por distrito municipal",
+      "chave_primaria_logica": [
+        "cd_municipio_ibge_7",
+        "cd_distrito_sp"
+      ],
+      "linhas": 96,
+      "colunas": [
+        {
+          "nome": "cd_municipio_ibge_7",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Código oficial de sete dígitos do município no IBGE."
+        },
+        {
+          "nome": "cd_distrito_sp",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Código do distrito municipal de São Paulo na camada oficial do GeoSampa."
+        },
+        {
+          "nome": "nm_distrito",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Nome oficial do distrito municipal de São Paulo."
+        },
+        {
+          "nome": "id_subprefeitura_sp",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Identificador canônico da subprefeitura municipal no GeoSampa."
+        },
+        {
+          "nome": "nm_subprefeitura",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Nome oficial da subprefeitura municipal."
+        },
+        {
+          "nome": "id_crs_sms_sp",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Identificador da Coordenadoria Regional de Saúde municipal no GeoSampa."
+        },
+        {
+          "nome": "nm_crs_sms",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Nome da Coordenadoria Regional de Saúde municipal."
+        },
+        {
+          "nome": "id_sts_sms_sp",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Identificador da Supervisão Técnica de Saúde municipal no GeoSampa."
+        },
+        {
+          "nome": "nm_sts_sms",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Nome da Supervisão Técnica de Saúde municipal."
+        },
+        {
+          "nome": "nm_regiao_municipal_5",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Região municipal ampla informada pelo GeoSampa; não é Região de Saúde do SUS."
+        },
+        {
+          "nome": "nm_regiao_municipal_8",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Subdivisão regional municipal informada pelo GeoSampa; não é Região de Saúde do SUS."
+        },
+        {
+          "nome": "nm_zona_popular",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Rótulo municipal amigável para busca; não é chave espacial nem sinônimo de Região de Saúde."
+        },
+        {
+          "nome": "ds_fonte_territorio",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Fonte e sistema de referência usados na atribuição territorial."
+        },
+        {
+          "nome": "dt_referencia_fonte",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Data de referência da edição territorial ou cadastral usada."
         }
       ]
     },

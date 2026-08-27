@@ -1,6 +1,6 @@
 # Validação técnica integrada — MedFlow 0.3.0
 
-Executada em `2026-08-25T20:47:24.150768+00:00`.
+Executada em `2026-08-27T00:32:58.039247+00:00`.
 
 ## Resultado
 
@@ -18,5 +18,5 @@ Executada em `2026-08-25T20:47:24.150768+00:00`.
 ## Cobertura documental
 
 - Bronze: 2 tabelas, 148 colunas.
-- Silver: 8 tabelas, 128 colunas.
+- Silver: 11 tabelas, 162 colunas.
 - Gold: 9 tabelas, 175 colunas.

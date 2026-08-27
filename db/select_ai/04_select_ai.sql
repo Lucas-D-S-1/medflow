@@ -62,7 +62,7 @@ begin
   end if;
   dbms_cloud_ai.create_profile(
       profile_name => 'MEDFLOW_GENAI',
-      description  => 'Select AI sobre os nove objetos Gold do MedFlow',
+      description  => 'Select AI sobre os doze objetos analíticos do MedFlow',
       attributes   => '{"provider": "oci",
                         "credential_name": "OCI$RESOURCE_PRINCIPAL",
                         "region": "sa-saopaulo-1",
@@ -78,7 +78,10 @@ begin
                           {"owner": "MEDFLOW", "name": "mart_fluxo_assistencial_regiao_mensal"},
                           {"owner": "MEDFLOW", "name": "mart_icsap_regiao_mensal"},
                           {"owner": "MEDFLOW", "name": "dim_geografia_regiao"},
-                          {"owner": "MEDFLOW", "name": "dim_geografia_municipio"}
+                          {"owner": "MEDFLOW", "name": "dim_geografia_municipio"},
+                          {"owner": "MEDFLOW", "name": "dim_territorio_municipal"},
+                          {"owner": "MEDFLOW", "name": "dim_hospital_territorio_atual"},
+                          {"owner": "MEDFLOW", "name": "dim_hospital_alias"}
                         ]}'
     );
   dbms_output.put_line('Profile MEDFLOW_GENAI sincronizado com o contrato 0.3.0.');

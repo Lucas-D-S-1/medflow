@@ -1,6 +1,6 @@
 # Dicionário da camada Bronze — MedFlow
 
-Contrato de esquema `0.3.0`, gerado automaticamente em `2026-08-10T00:15:41.902237+00:00`.
+Contrato de esquema `0.3.0`, gerado automaticamente em `2026-08-27T00:03:08.834082+00:00`.
 
 ## Responsabilidade da camada
 
@@ -236,4 +236,36 @@ Respostas atuais da API CNES para os hospitais observados.
 
 - Caminho: `data/bronze/origem/referencias/ms_cnes_estabelecimentos_atuais_raw.json`
 - Fonte: https://apidadosabertos.saude.gov.br/cnes/estabelecimentos/{cnes}
+- Formato: `json`
+
+### `geosampa_distrito_municipal`
+
+GeoJSON bruto dos 96 distritos municipais do GeoSampa.
+
+- Caminho: `data/bronze/origem/referencias/geosampa_distrito_municipal_raw.json`
+- Fonte: https://wfs.geosampa.prefeitura.sp.gov.br/geoserver/geoportal/wfs
+- Formato: `json`
+
+### `geosampa_subprefeitura`
+
+GeoJSON bruto das subprefeituras do GeoSampa.
+
+- Caminho: `data/bronze/origem/referencias/geosampa_subprefeitura_raw.json`
+- Fonte: https://wfs.geosampa.prefeitura.sp.gov.br/geoserver/geoportal/wfs
+- Formato: `json`
+
+### `geosampa_coordenadoria_regional_saude`
+
+GeoJSON bruto das Coordenadorias Regionais de Saúde do GeoSampa.
+
+- Caminho: `data/bronze/origem/referencias/geosampa_coordenadoria_regional_saude_raw.json`
+- Fonte: https://wfs.geosampa.prefeitura.sp.gov.br/geoserver/geoportal/wfs
+- Formato: `json`
+
+### `geosampa_supervisao_tecnica_saude`
+
+GeoJSON bruto das Supervisões Técnicas de Saúde do GeoSampa.
+
+- Caminho: `data/bronze/origem/referencias/geosampa_supervisao_tecnica_saude_raw.json`
+- Fonte: https://wfs.geosampa.prefeitura.sp.gov.br/geoserver/geoportal/wfs
 - Formato: `json`

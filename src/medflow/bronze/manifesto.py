@@ -21,6 +21,7 @@ from medflow.bronze.referencias import (
     URL_CID10,
     URL_CNES_MODELO,
     URL_CONCLA,
+    URL_GEOSAMPA_WFS,
     URL_IBGE,
     URL_MALHA_IBGE,
     URL_REGIOES,
@@ -63,6 +64,7 @@ def _reconciliar(
         "estabelecimentos_cnes_atuais": len(ref.cnes_atual_payload["registros"]),
         "arquivos_pacote_cid10": len(ref.arquivos_cid),
         "arquivos_malha_municipal_ibge": len(ref.arquivos_malha),
+        **ref.territorio_features,
     }
     total_competencias = len(contexto.competencias)
     validacoes = {
@@ -80,6 +82,14 @@ def _reconciliar(
         ),
         "arquivos_pacote_cid10": checks["arquivos_pacote_cid10"] == 6,
         "arquivos_malha_municipal_ibge": checks["arquivos_malha_municipal_ibge"] == 5,
+        "geosampa_distrito_municipal": checks["geosampa_distrito_municipal"] == 96,
+        "geosampa_subprefeitura": checks["geosampa_subprefeitura"] == 32,
+        "geosampa_coordenadoria_regional_saude": (
+            checks["geosampa_coordenadoria_regional_saude"] == 5
+        ),
+        "geosampa_supervisao_tecnica_saude": (
+            checks["geosampa_supervisao_tecnica_saude"] == 26
+        ),
     }
     return checks, validacoes
 
@@ -133,6 +143,7 @@ def gerar(
             "DATASUS_CID10": URL_CID10,
             "IBGE_CONCLA_natureza_juridica": URL_CONCLA,
             "IBGE_IPCA_tabela_1737_variavel_2266": ref.url_ipca,
+            "PMSP_GeoSampa_WFS": URL_GEOSAMPA_WFS,
         },
         "checks": checks,
         "arquivos": {

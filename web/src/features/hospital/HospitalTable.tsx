@@ -77,6 +77,12 @@ export default function HospitalTable({
                     CNES {item.cnes} · {item.unit_type_name} ·{' '}
                     {formatInteger(item.sus_beds)} leitos SUS
                   </small>
+                  {item.district_code && (
+                    <small>
+                      Distrito {item.district_code} · CRS {item.health_coordinator_code ?? '—'} · STS{' '}
+                      {item.health_technical_supervision_code ?? '—'}
+                    </small>
+                  )}
                   {item.sample_status === 'amostra_insuficiente' && (
                     <small className="marca-amostra" data-testid={`hospital-sample-${item.cnes}`}>
                       amostra insuficiente para comparação

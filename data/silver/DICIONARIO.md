@@ -1,6 +1,6 @@
 # Dicionário da camada Silver — MedFlow
 
-Contrato de esquema `0.3.0`, gerado automaticamente em `2026-08-10T01:04:16.253709+00:00`.
+Contrato de esquema `0.3.0`, gerado automaticamente em `2026-08-27T00:12:50.372559+00:00`.
 
 ## Responsabilidade da camada
 
@@ -62,6 +62,50 @@ Cadastro conformado dos hospitais presentes no SIH.
 | `fl_esfera_ausente_cnes_lt` | `int8` | 0 | Indica ausência da esfera administrativa no CNES/LT. |
 | `fl_cadastro_atual_nao_historico` | `int8` | 0 | Indica atributo cadastral atual, sem vigência histórica garantida. |
 
+## `dim_hospital_alias`
+
+Aliases governados para pesquisa de hospitais.
+
+- Caminho: `data/silver/dimensoes/dim_hospital_alias.parquet`
+- Grão: uma linha por alias e CNES
+- Linhas: 2
+- Chave lógica: `cd_cnes`, `nm_alias_normalizado`
+
+| coluna | tipo | nulos | significado |
+|---|---|---:|---|
+| `cd_cnes` | `object` | 0 | Código de sete dígitos do estabelecimento no CNES. |
+| `nm_alias` | `object` | 0 | Nome alternativo governado aceito na busca do hospital. |
+| `nm_alias_normalizado` | `object` | 0 | Alias normalizado para comparação sem acentos e pontuação. |
+| `tp_alias` | `object` | 0 | Tipo do alias: popular, oficial, histórico ou sigla. |
+| `fl_alias_preferencial` | `int64` | 0 | Indica alias preferencial dentro do seu tipo. |
+| `ds_fonte_alias` | `object` | 0 | Fonte que sustenta o alias hospitalar. |
+| `dt_referencia_fonte` | `object` | 0 | Data de referência da edição territorial ou cadastral usada. |
+
+## `dim_hospital_territorio_atual`
+
+Atribuição cadastral atual dos hospitais de São Paulo ao território municipal.
+
+- Caminho: `data/silver/dimensoes/dim_hospital_territorio_atual.parquet`
+- Grão: uma linha por CNES dentro do município de São Paulo
+- Linhas: 107
+- Chave lógica: `cd_cnes`
+
+| coluna | tipo | nulos | significado |
+|---|---|---:|---|
+| `cd_cnes` | `object` | 0 | Código de sete dígitos do estabelecimento no CNES. |
+| `cd_municipio_ibge_7` | `object` | 0 | Código oficial de sete dígitos do município no IBGE. |
+| `cd_distrito_sp` | `object` | 6 | Código do distrito municipal de São Paulo na camada oficial do GeoSampa. |
+| `id_subprefeitura_sp` | `object` | 6 | Identificador canônico da subprefeitura municipal no GeoSampa. |
+| `id_crs_sms_sp` | `object` | 6 | Identificador da Coordenadoria Regional de Saúde municipal no GeoSampa. |
+| `id_sts_sms_sp` | `object` | 6 | Identificador da Supervisão Técnica de Saúde municipal no GeoSampa. |
+| `nm_bairro_cnes_atual` | `object` | 0 | Bairro informado pela fotografia atual do cadastro CNES. |
+| `vl_latitude_cnes_atual` | `float64` | 0 | Latitude informada pela fotografia atual do cadastro CNES. |
+| `vl_longitude_cnes_atual` | `float64` | 0 | Longitude informada pela fotografia atual do cadastro CNES. |
+| `tp_metodo_atribuicao` | `object` | 0 | Método usado para atribuir o hospital ao território municipal. |
+| `fl_atribuicao_ambigua` | `int64` | 0 | Indica hospital sem atribuição territorial única no ponto cadastral. |
+| `ds_fonte_territorio` | `object` | 0 | Fonte e sistema de referência usados na atribuição territorial. |
+| `dt_referencia_fonte` | `object` | 6 | Data de referência da edição territorial ou cadastral usada. |
+
 ## `dim_municipio`
 
 Municípios paulistas e sua hierarquia regional.
@@ -85,6 +129,32 @@ Municípios paulistas e sua hierarquia regional.
 | `nm_macrorregiao_saude` | `object` | 0 | Nome oficial da macrorregião de saúde. |
 | `qt_populacao_ibge_2022` | `int64` | 0 | População municipal do Censo IBGE 2022 distribuída no CSV oficial do Ministério da Saúde. |
 | `ds_fonte_populacao` | `object` | 0 | Fonte e ano de referência da população municipal. |
+
+## `dim_territorio_municipal`
+
+Hierarquia municipal de São Paulo por distrito, subprefeitura, CRS e STS.
+
+- Caminho: `data/silver/dimensoes/dim_territorio_municipal.parquet`
+- Grão: uma linha por distrito municipal
+- Linhas: 96
+- Chave lógica: `cd_municipio_ibge_7`, `cd_distrito_sp`
+
+| coluna | tipo | nulos | significado |
+|---|---|---:|---|
+| `cd_municipio_ibge_7` | `object` | 0 | Código oficial de sete dígitos do município no IBGE. |
+| `cd_distrito_sp` | `object` | 0 | Código do distrito municipal de São Paulo na camada oficial do GeoSampa. |
+| `nm_distrito` | `object` | 0 | Nome oficial do distrito municipal de São Paulo. |
+| `id_subprefeitura_sp` | `object` | 0 | Identificador canônico da subprefeitura municipal no GeoSampa. |
+| `nm_subprefeitura` | `object` | 0 | Nome oficial da subprefeitura municipal. |
+| `id_crs_sms_sp` | `object` | 0 | Identificador da Coordenadoria Regional de Saúde municipal no GeoSampa. |
+| `nm_crs_sms` | `object` | 0 | Nome da Coordenadoria Regional de Saúde municipal. |
+| `id_sts_sms_sp` | `object` | 0 | Identificador da Supervisão Técnica de Saúde municipal no GeoSampa. |
+| `nm_sts_sms` | `object` | 0 | Nome da Supervisão Técnica de Saúde municipal. |
+| `nm_regiao_municipal_5` | `object` | 0 | Região municipal ampla informada pelo GeoSampa; não é Região de Saúde do SUS. |
+| `nm_regiao_municipal_8` | `object` | 0 | Subdivisão regional municipal informada pelo GeoSampa; não é Região de Saúde do SUS. |
+| `nm_zona_popular` | `object` | 0 | Rótulo municipal amigável para busca; não é chave espacial nem sinônimo de Região de Saúde. |
+| `ds_fonte_territorio` | `object` | 0 | Fonte e sistema de referência usados na atribuição territorial. |
+| `dt_referencia_fonte` | `object` | 0 | Data de referência da edição territorial ou cadastral usada. |
 
 ## `dim_especialidade`
 

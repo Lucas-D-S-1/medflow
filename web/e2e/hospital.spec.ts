@@ -77,6 +77,60 @@ test('lista hospitais da região, marca amostra e capacidade, e seleciona pela U
   await expect(page).toHaveURL(/regiao=35073/)
   await expect(page.getByTestId('hospital-select-3012212')).toHaveText('Selecionado')
 })
+test('busca hospital por alias, envia o termo na URL e mostra o território', async ({ page }) => {
+  await mockLiveSource(page)
+  await page.route('**/api/dev/v1/regioes/resumo**', async (route) => {
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        ...regionalSnapshot,
+        source: 'oracle-live',
+        database_time: '2026-08-01T12:00:00-03:00',
+      }),
+    })
+  })
+  await page.route('**/api/dev/v1/hospitais?**', async (route) => {
+    const url = new URL(route.request().url())
+    const year = Number(url.searchParams.get('ano'))
+    const month = Number(url.searchParams.get('mes'))
+    const regionCode = url.searchParams.get('regiao') ?? ''
+    const busca = url.searchParams.get('busca')
+    const payload = busca === 'Ermelino Matarazzo'
+      ? {
+          ...hospitalListSnapshot,
+          source: 'oracle-live',
+          database_time: '2026-08-01T12:00:00-03:00',
+          data_through: `${year}-${String(month).padStart(2, '0')}`,
+          filters: { year, month, region_code: regionCode },
+          pagination: { limit: 200, offset: 0, count: 1, has_more: false, order: 'new_admissions_desc' },
+          items: [{
+            ...hospitalDestacado,
+            cnes: '2082829',
+            hospital_name: 'HOSP MUN PROFESSOR DOUTOR ALIPIO CORREA NETTO',
+            region_code: regionCode,
+            district_code: '28',
+            health_coordinator_code: '2',
+            health_technical_supervision_code: '6',
+          }],
+        }
+      : {
+          ...hospitalListSnapshot,
+          source: 'oracle-live',
+          database_time: '2026-08-01T12:00:00-03:00',
+          data_through: `${year}-${String(month).padStart(2, '0')}`,
+          filters: { year, month, region_code: regionCode },
+        }
+    await route.fulfill({ contentType: 'application/json', body: JSON.stringify(payload) })
+  })
+
+  await page.goto(`/hospital?competencia=${snapshotCompetencia}&regiao=35073&hospital=3012212`)
+  await page.getByTestId('hospital-search').fill('Ermelino Matarazzo')
+
+  await expect(page).toHaveURL(/busca=Ermelino(\+|%20)Matarazzo/)
+  await expect(page).not.toHaveURL(/hospital=/)
+  await expect(page.getByTestId('hospital-count')).toHaveText('1 de 1 hospitais')
+  await expect(page.getByText('Distrito 28 · CRS 2 · STS 6')).toBeVisible()
+})
 test('hospital sem internação nova não exibe TMH, permanência nem CMI', async ({ page }) => {
   // Regra de produto, não fato do recorte. O teste antigo dependia de existir
   // um hospital com zero internações na competência da fixture; quando o

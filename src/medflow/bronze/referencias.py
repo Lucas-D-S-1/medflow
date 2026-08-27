@@ -12,6 +12,7 @@ Fontes, todas oficiais:
 - IBGE / CONCLA, natureza jurídica 2021;
 - IBGE / SIDRA, IPCA número-índice, tabela 1737 variável 2266;
 - Ministério da Saúde / DEMAS, cadastro atual dos estabelecimentos CNES.
+- Prefeitura de São Paulo / GeoSampa, limites e hierarquia territorial municipal.
 """
 
 from __future__ import annotations
@@ -19,6 +20,7 @@ from __future__ import annotations
 import gzip
 import json
 import subprocess
+import urllib.parse
 import urllib.request
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
@@ -57,6 +59,15 @@ URL_IPCA_MODELO = (
     "https://apisidra.ibge.gov.br/values/t/1737/n1/all/v/2266/p/{periodo}?formato=json"
 )
 URL_CNES_MODELO = "https://apidadosabertos.saude.gov.br/cnes/estabelecimentos/{cnes}"
+URL_GEOSAMPA_WFS = "https://wfs.geosampa.prefeitura.sp.gov.br/geoserver/geoportal/wfs"
+CAMADAS_GEOSAMPA = {
+    "geosampa_distrito_municipal": "distrito_municipal",
+    "geosampa_subprefeitura": "subprefeitura",
+    "geosampa_coordenadoria_regional_saude": (
+        "equipamento_saude_coordenadoria_regional"
+    ),
+    "geosampa_supervisao_tecnica_saude": "equipamento_saude_supervisao_tecnica",
+}
 
 
 @dataclass
@@ -72,6 +83,7 @@ class ReferenciasBronze:
     arquivos_malha: list[str] = field(default_factory=list)
     codigos_cnes: list[str] = field(default_factory=list)
     cnes_atual_payload: dict[str, Any] = field(default_factory=dict)
+    territorio_features: dict[str, int] = field(default_factory=dict)
 
 
 def baixar_referencia(
@@ -239,6 +251,40 @@ def _baixar_cnes_atual(contexto: ContextoBronze, ref: ReferenciasBronze) -> None
     ref.arquivos["cnes_estabelecimentos_atuais"] = destino
 
 
+def _baixar_territorio_municipal(contexto: ContextoBronze, ref: ReferenciasBronze) -> None:
+    """Preserva as camadas municipais do GeoSampa em WGS84.
+
+    O WFS usa EPSG:31983 por padrão. O CNES já entrega latitude/longitude em
+    graus decimais, então a conversão é solicitada na própria resposta para
+    que a etapa espacial da Silver não dependa de uma transformação implícita.
+    Nenhum de/para é feito nesta função: os GeoJSONs continuam sendo Bronze.
+    """
+    for nome, camada in CAMADAS_GEOSAMPA.items():
+        destino = contexto.dir_referencias / f"{nome}_raw.json"
+        parametros = urllib.parse.urlencode(
+            {
+                "service": "WFS",
+                "version": "2.0.0",
+                "request": "GetFeature",
+                "typeNames": f"geoportal:{camada}",
+                "outputFormat": "application/json",
+                "srsName": "EPSG:4326",
+            }
+        )
+        url = f"{URL_GEOSAMPA_WFS}?{parametros}"
+        conteudo = baixar_referencia(url, destino, sobrescrever=contexto.sobrescrever)
+        payload = json.loads(conteudo)
+        features = payload.get("features", [])
+        assert features, f"camada GeoSampa vazia: {camada}"
+        ref.arquivos[nome] = destino
+        ref.territorio_features[nome] = len(features)
+
+    logger.info(
+        "GeoSampa: %s",
+        ", ".join(f"{nome}={quantidade}" for nome, quantidade in ref.territorio_features.items()),
+    )
+
+
 def baixar_todas(contexto: ContextoBronze) -> ReferenciasBronze:
     """Baixa e preserva todas as referências oficiais.
 
@@ -252,6 +298,7 @@ def baixar_todas(contexto: ContextoBronze) -> ReferenciasBronze:
     _baixar_concla(contexto, ref)
     _baixar_ipca(contexto, ref)
     _baixar_cnes_atual(contexto, ref)
+    _baixar_territorio_municipal(contexto, ref)
 
     logger.info("regiões/municípios MS: %d", len(ref.regioes))
     logger.info("arquivos no pacote CID-10: %d", len(ref.arquivos_cid))

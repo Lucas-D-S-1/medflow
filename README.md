@@ -143,7 +143,7 @@ Saídas canônicas:
 | `silver/fatos/fato_internacao` | 7.284.476 | AIH aprovada, tipada e enriquecida |
 | `silver/fatos/fato_leito_mensal` | 19.341 | capacidade CNES por hospital e mês |
 | `silver/dimensoes/dim_municipio` | 645 | município, região e população IBGE 2022 |
-| 5 outras dimensões | — | tempo, hospital, especialidade, CID e domínios |
+| 8 outras dimensões | — | tempo, hospital, especialidade, CID, domínios, território municipal, território atual do hospital e aliases |
 
 A Silver também gera:
 
@@ -181,10 +181,10 @@ A Gold está carregada no Autonomous AI Database 26ai `MEDFLOW`, workload
 Lakehouse, região São Paulo:
 
 - esquema de aplicação separado do `ADMIN`;
-- 2 dimensões, 7 marts, 175 colunas comentadas e 10 índices secundários;
-- 597.725 linhas carregadas e conferidas;
-- 36/36 métricas Oracle com estado `ok` e seis gates vazios;
-- profile `MEDFLOW_GENAI` usando OCI Generative AI por Resource Principal;
+- 5 dimensões, 7 marts, 209 colunas comentadas e 10 índices secundários;
+- 597.930 linhas carregadas e conferidas após a migração territorial;
+- 39/39 métricas Oracle com estado `ok`, incluindo as dimensões territoriais;
+- profile `MEDFLOW_GENAI` usando OCI Generative AI por Resource Principal, sincronizado com os doze objetos analíticos;
 - roteiro de 13 perguntas em cinco blocos, oito com SQL de referência conferido
   por execução. Na rodada de 23/08/2026, seis das oito coincidiram exatamente;
   as divergências e as limitações de narrativa/conversação estão registradas,

@@ -1,4 +1,4 @@
-"""As seis dimensões da Silver.
+"""As nove dimensões da Silver.
 
 `dim_hospital` e `dim_municipio` carregam a ressalva cadastral do projeto: nome
 e esfera vêm da fotografia **atual** do CNES, não de uma fotografia histórica
@@ -9,13 +9,16 @@ de 2024-2026. Por isso o sufixo `_atual` e a flag
 from __future__ import annotations
 
 import calendar
+import re
+import unicodedata
 from zipfile import ZipFile
 
 import numpy as np
 import pandas as pd
+from shapely.geometry import Point, shape
 
 from medflow.config import obter_logger
-from medflow.silver.carga import EntradaSilver
+from medflow.silver.carga import ARQUIVOS_TERRITORIO, EntradaSilver
 from medflow.silver.dominios import (
     CID_COMPLEMENTAR,
     DEPARA_ESPEC,
@@ -27,6 +30,193 @@ from medflow.silver.dominios import (
 )
 
 logger = obter_logger("silver.dimensoes")
+
+URL_SMS_ERMELINO = (
+    "https://prefeitura.sp.gov.br/web/saude/w/"
+    "coordenadorias-regionais-de-saude-leste"
+)
+
+
+def _features_territorio(entrada: EntradaSilver, nome: str) -> list[dict]:
+    payload = entrada.territorio_raw[nome]
+    crs = payload.get("crs", {}).get("properties", {}).get("name", "")
+    assert crs.endswith("4326"), f"{nome}: GeoJSON fora de EPSG:4326: {crs}"
+    features = payload.get("features", [])
+    assert features, f"{nome}: GeoJSON sem features"
+    return features
+
+
+def _data_referencia(*valores: object) -> str:
+    datas = [
+        pd.to_datetime(str(valor).removesuffix("Z"), utc=True)
+        for valor in valores
+        if valor
+    ]
+    assert datas
+    return max(datas).date().isoformat()
+
+
+def _normalizar_busca(valor: str) -> str:
+    sem_acentos = unicodedata.normalize("NFKD", valor)
+    sem_acentos = "".join(char for char in sem_acentos if not unicodedata.combining(char))
+    return re.sub(r"[^A-Za-z0-9]+", " ", sem_acentos).strip().upper()
+
+
+def dimensao_territorio_municipal(entrada: EntradaSilver) -> pd.DataFrame:
+    """Conforma os polígonos municipais do GeoSampa para São Paulo."""
+    assert ARQUIVOS_TERRITORIO == tuple(entrada.territorio_raw)
+    distritos = _features_territorio(entrada, "geosampa_distrito_municipal")
+    subprefeituras = _features_territorio(entrada, "geosampa_subprefeitura")
+    crs = _features_territorio(entrada, "geosampa_coordenadoria_regional_saude")
+    sts = _features_territorio(entrada, "geosampa_supervisao_tecnica_saude")
+
+    subpref_por_identificador = {
+        int(item["properties"]["cd_identificador_subprefeitura"]): item
+        for item in subprefeituras
+    }
+    poligonos_sts = [(item["properties"], shape(item["geometry"])) for item in sts]
+
+    linhas = []
+    for feature in distritos:
+        distrito = feature["properties"]
+        identificador_subprefeitura = int(distrito["cd_identificador_subprefeitura"])
+        subprefeitura = subpref_por_identificador.get(identificador_subprefeitura)
+        assert subprefeitura is not None, distrito
+        subpref = subprefeitura["properties"]
+
+        ponto = shape(feature["geometry"]).representative_point()
+        matches_sts = [props for props, poligono in poligonos_sts if poligono.covers(ponto)]
+        assert len(matches_sts) == 1, {
+            "distrito": distrito["nm_distrito_municipal"],
+            "sts_encontradas": len(matches_sts),
+        }
+        sts_props = matches_sts[0]
+        matches_crs = [
+            item
+            for item in crs
+            if _normalizar_busca(
+                item["properties"]["nm_coordenadoria_regional_saude"]
+            )
+            == _normalizar_busca(sts_props["nm_coordenadoria_regional_saude"])
+            and shape(item["geometry"]).covers(ponto)
+        ]
+        assert len(matches_crs) == 1, {
+            "distrito": distrito["nm_distrito_municipal"],
+            "crs_encontradas": len(matches_crs),
+        }
+        crs_props = matches_crs[0]["properties"]
+        codigo_crs = int(crs_props["cd_identificador_coordenadoria_regional_saude"])
+
+        linhas.append(
+            {
+                "cd_municipio_ibge_7": "3550308",
+                "cd_distrito_sp": str(distrito["cd_distrito_municipal"]),
+                "nm_distrito": distrito["nm_distrito_municipal"],
+                "id_subprefeitura_sp": str(subpref["cd_subprefeitura"]),
+                "nm_subprefeitura": subpref["nm_subprefeitura"],
+                "id_crs_sms_sp": str(codigo_crs),
+                "nm_crs_sms": crs_props["nm_coordenadoria_regional_saude"],
+                "id_sts_sms_sp": str(sts_props["cd_identificador_supervisao_tecnica_saude"]),
+                "nm_sts_sms": sts_props["nm_supervisao_tecnica_saude"],
+                "nm_regiao_municipal_5": distrito["nm_regiao_05"],
+                "nm_regiao_municipal_8": distrito["nm_regiao_08"],
+                "nm_zona_popular": distrito["nm_regiao_05"],
+                "ds_fonte_territorio": "PMSP GeoSampa WFS (EPSG:4326)",
+                "dt_referencia_fonte": _data_referencia(
+                    distrito["dt_atualizacao"],
+                    subpref["dt_atualizacao"],
+                    crs_props["dt_carga"],
+                    sts_props["dt_carga"],
+                ),
+            }
+        )
+
+    resultado = pd.DataFrame(linhas).sort_values("cd_distrito_sp").reset_index(drop=True)
+    assert len(resultado) == 96
+    assert resultado.cd_distrito_sp.nunique() == 96
+    assert resultado.id_crs_sms_sp.nunique() == 5
+    assert resultado.id_sts_sms_sp.nunique() == 26
+    return resultado
+
+
+def dimensao_hospital_territorio_atual(
+    entrada: EntradaSilver, territorio: pd.DataFrame
+) -> pd.DataFrame:
+    """Atribui os hospitais de São Paulo ao distrito pelo ponto CNES."""
+    distritos = _features_territorio(entrada, "geosampa_distrito_municipal")
+    poligonos = [(item["properties"], shape(item["geometry"])) for item in distritos]
+    por_distrito = territorio.set_index("cd_distrito_sp").to_dict("index")
+    cadastro = pd.DataFrame(entrada.cnes_atual_payload["registros"]).copy()
+    cadastro["cd_cnes"] = (
+        cadastro.codigo_cnes.astype("string").str.replace(r"\.0$", "", regex=True).str.zfill(7)
+    )
+    cadastro["cd_municipio_ibge_6"] = cadastro.codigo_municipio.astype("string").str.zfill(6)
+    cadastro = cadastro[cadastro.cd_municipio_ibge_6.eq("355030")]
+    linhas = []
+    for registro in cadastro.to_dict("records"):
+        ponto = Point(
+            float(registro["longitude_estabelecimento_decimo_grau"]),
+            float(registro["latitude_estabelecimento_decimo_grau"]),
+        )
+        matches = [props for props, poligono in poligonos if poligono.covers(ponto)]
+        distrito = matches[0] if len(matches) == 1 else None
+        campos = por_distrito.get(str(distrito["cd_distrito_municipal"])) if distrito else None
+        linhas.append(
+            {
+                "cd_cnes": registro["cd_cnes"],
+                "cd_municipio_ibge_7": "3550308",
+                "cd_distrito_sp": distrito["cd_distrito_municipal"] if distrito else None,
+                "id_subprefeitura_sp": campos["id_subprefeitura_sp"] if campos else None,
+                "id_crs_sms_sp": campos["id_crs_sms_sp"] if campos else None,
+                "id_sts_sms_sp": campos["id_sts_sms_sp"] if campos else None,
+                "nm_bairro_cnes_atual": registro.get("bairro_estabelecimento"),
+                "vl_latitude_cnes_atual": registro.get("latitude_estabelecimento_decimo_grau"),
+                "vl_longitude_cnes_atual": registro.get("longitude_estabelecimento_decimo_grau"),
+                "tp_metodo_atribuicao": (
+                    "ponto_em_poligono" if len(matches) == 1 else "ponto_fora_da_malha"
+                ),
+                "fl_atribuicao_ambigua": int(len(matches) != 1),
+                "ds_fonte_territorio": "PMSP GeoSampa WFS (EPSG:4326) + API CNES atual",
+                "dt_referencia_fonte": campos["dt_referencia_fonte"] if campos else None,
+            }
+        )
+
+    resultado = pd.DataFrame(linhas).sort_values("cd_cnes").reset_index(drop=True)
+    assert len(resultado) == 107
+    assert resultado.fl_atribuicao_ambigua.sum() == 6
+    assert resultado.cd_distrito_sp.notna().sum() == 101
+    return resultado
+
+
+def dimensao_hospital_alias(dim_hospital: pd.DataFrame) -> pd.DataFrame:
+    """Registra aliases governados sem alterar o nome cadastral do CNES."""
+    cnes = set(dim_hospital["CNES"].astype("string"))
+    assert "2082829" in cnes
+    aliases = [
+        {
+            "cd_cnes": "2082829",
+            "nm_alias": "Ermelino Matarazzo",
+            "nm_alias_normalizado": _normalizar_busca("Ermelino Matarazzo"),
+            "tp_alias": "popular",
+            "fl_alias_preferencial": 1,
+            "ds_fonte_alias": URL_SMS_ERMELINO,
+            "dt_referencia_fonte": "2026-08-13",
+        },
+        {
+            "cd_cnes": "2082829",
+            "nm_alias": "Hospital Municipal Ermelino Matarazzo - Prof. Dr. Alípio Corrêa Netto",
+            "nm_alias_normalizado": _normalizar_busca(
+                "Hospital Municipal Ermelino Matarazzo - Prof. Dr. Alípio Corrêa Netto"
+            ),
+            "tp_alias": "oficial",
+            "fl_alias_preferencial": 1,
+            "ds_fonte_alias": URL_SMS_ERMELINO,
+            "dt_referencia_fonte": "2026-08-13",
+        },
+    ]
+    resultado = pd.DataFrame(aliases)
+    assert resultado.nm_alias_normalizado.is_unique
+    return resultado
 
 
 def dimensao_tempo(competencias: list[tuple[int, int]]) -> pd.DataFrame:

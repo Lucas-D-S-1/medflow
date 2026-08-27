@@ -1172,7 +1172,7 @@ begin
     p_module_name => 'medflow_dev',
     p_pattern     => 'hospitais',
     p_etag_type   => 'HASH',
-    p_comments    => 'Hospitais com producao na regiao e competencia, com indicadores mensais persistidos.'
+    p_comments    => 'Hospitais com producao na regiao e competencia, com indicadores mensais persistidos e busca por nome ou alias.'
   );
 
   ords.define_handler(
@@ -1187,6 +1187,7 @@ begin
         select :ano as ano_bruto,
                :mes as mes_bruto,
                :regiao as regiao_bruta,
+               :busca as busca_bruta,
                :limit as limite_bruto,
                :offset as deslocamento_bruto
           from dual
@@ -1204,6 +1205,15 @@ begin
                  when p.regiao_bruta is null then null
                  when regexp_like(p.regiao_bruta, '^[0-9]{5}$') then p.regiao_bruta
                end as regiao_solicitada,
+               case
+                 when p.busca_bruta is null then null
+                 when length(trim(p.busca_bruta)) between 2 and 120 then
+                   translate(
+                     upper(trim(p.busca_bruta)),
+                     'ÁÀÂÃÄÉÈÊËÍÌÎÏÓÒÔÕÖÚÙÛÜÇ',
+                     'AAAAAEEEEIIIIOOOOOUUUUC'
+                   )
+               end as busca_solicitada,
                case
                  when regexp_like(p.limite_bruto, '^[0-9]+$') then to_number(p.limite_bruto)
                end as limite_solicitado,
@@ -1229,6 +1239,7 @@ begin
                  )
                end as mes,
                p.regiao_solicitada as regiao,
+               p.busca_solicitada as busca,
                -- 100 e o p_items_per_page do modulo: o ORDS preenche :limit com
                -- ele quando o chamador omite o parametro, entao este coalesce so
                -- protege o caso de bind nulo.
@@ -1238,6 +1249,7 @@ begin
                  when (p.ano_bruto is null or p.ano_solicitado is not null)
                   and (p.mes_bruto is null or p.mes_solicitado is not null)
                   and (p.regiao_bruta is null or p.regiao_solicitada is not null)
+                  and (p.busca_bruta is null or p.busca_solicitada is not null)
                   and (p.limite_bruto is null or p.limite_solicitado between 1 and 2000)
                   and (p.deslocamento_bruto is null or p.deslocamento_solicitado >= 0)
                  then 1
@@ -1252,6 +1264,18 @@ begin
          where v.nr_ano_competencia = p.ano
            and v.nr_mes_competencia = p.mes
            and (p.regiao is null or v.cd_regiao_saude = p.regiao)
+           and (
+             p.busca is null
+             or translate(upper(v.nm_hospital_atual),
+                          'ÁÀÂÃÄÉÈÊËÍÌÎÏÓÒÔÕÖÚÙÛÜÇ',
+                          'AAAAAEEEEIIIIOOOOOUUUUC') like '%' || p.busca || '%'
+             or exists (
+               select 1
+                 from dim_hospital_alias a
+                where a.cd_cnes = v.cd_cnes
+                  and a.nm_alias_normalizado like '%' || p.busca || '%'
+             )
+           )
       ),
       ordenado as (
         select f.*,
@@ -1317,6 +1341,13 @@ begin
                             'unit_type_name' value x.nm_tipo_unidade,
                             'municipality_code' value x.cd_municipio_ibge_6,
                             'region_code' value x.cd_regiao_saude,
+                            'district_code' value x.cd_distrito_sp,
+                            'subprefecture_code' value x.id_subprefeitura_sp,
+                            'health_coordinator_code' value x.id_crs_sms_sp,
+                            'health_technical_supervision_code' value x.id_sts_sms_sp,
+                            'neighborhood' value x.nm_bairro_cnes_atual,
+                            'territory_assignment_method' value x.tp_metodo_atribuicao,
+                            'territory_assignment_ambiguous' value x.fl_atribuicao_ambigua,
                             'sus_beds' value x.qt_leito_sus,
                             'new_admissions' value x.qt_internacao_nova,
                             'deaths' value x.qt_obito,

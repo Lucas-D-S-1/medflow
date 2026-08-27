@@ -35,16 +35,17 @@ arquivos de conexão são ignorados pelo Git.
 | Autenticação | mTLS obrigatório, acesso seguro de qualquer lugar |
 | Criado em | 31/07/2026 |
 
-## Estado validado até 23/08/2026
+## Estado validado até 27/08/2026
 
 - conexão mTLS validada como `MEDFLOW`;
-- 2 dimensões, 7 marts, 175 colunas comentadas e 10 índices secundários;
-- **597.725 linhas** carregadas: 597.018 nos marts e 707 nas dimensões
-  (recorte de 30 competências; eram 585.296 na validação de 01/08);
-- 36/36 métricas de reconciliação com estado `ok`;
+- 5 dimensões, 7 marts, 209 colunas comentadas e 10 índices secundários no
+  modelo aplicado na retomada;
+- **597.930 linhas** após a carga territorial: 597.018 nos marts e 912 nas
+  dimensões (597.725 linhas do estado anterior mais 205 novas linhas);
+- 39/39 métricas de reconciliação com estado `ok`, incluindo território;
 - seis verificações adicionais de integridade com zero ocorrências;
 - Resource Principal OCI habilitado para o esquema;
-- profile `MEDFLOW_GENAI` ativo com OCI Generative AI em `sa-saopaulo-1`;
+- profile `MEDFLOW_GENAI` ativo com OCI Generative AI em `sa-saopaulo-1`, sincronizado com os doze objetos analíticos;
 - roteiro revalidável de 13 perguntas em cinco blocos; oito têm SQL de
   referência executado e seis coincidiram exatamente na rodada de 23/08/2026;
 - pacote `medflow_select_ai` instalado para o assistente web e a demonstração opcional no APEX;
@@ -102,6 +103,23 @@ SQLcl.
 | 9 | Publicar o módulo público | `make ords-publicar` | `MEDFLOW` |
 | 10 | Montar a demonstração APEX opcional | `db/apex/README.md` | `ADMIN` + `MEDFLOW` |
 
+Em uma instância que já estava no modelo anterior, use
+`make oracle-migrar-territorio` em vez de recriar o schema. Depois, carregue só
+as novas dimensões, sem reter locks nos marts existentes:
+
+```bash
+.venv/bin/python -m dotenv -f .env run -- \
+  .venv/bin/python src/medflow/oracle/carregar_gold.py \
+  --somente dim_territorio_municipal \
+  --somente dim_hospital_territorio_atual \
+  --somente dim_hospital_alias
+```
+
+O filtro `busca` de `/hospitais` e os campos territoriais do item só entram no
+módulo público depois da ordem normal `03_modulo_medflow_dev.sql` seguida de
+`make ords-publicar`. O profile Select AI pode ser atualizado sem inferência
+com `make select-ai-sincronizar-territorio`.
+
 ### Passos 8 e 9 — dois módulos, uma definição
 
 | Módulo | Caminho | Origem aceita no CORS | Para quê |
@@ -148,8 +166,8 @@ make oracle-carregar          # ou, sem make:
 ```
 
 A carga é idempotente: esvazia cada tabela antes de inserir, na ordem inversa
-das chaves estrangeiras. São 597.725 linhas em 9 tabelas: 597.018 nos
-sete marts e 707 nas duas dimensões. Para conferir sem carregar:
+das chaves estrangeiras. São 597.930 linhas em 12 tabelas: 597.018 nos
+sete marts e 912 nas cinco dimensões. Para conferir sem carregar:
 
 ```bash
 make oracle-carregar          # ou, sem make:

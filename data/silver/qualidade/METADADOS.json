@@ -1,7 +1,7 @@
 {
   "camada": "silver",
   "versao_contrato": "0.3.0",
-  "gerado_em_utc": "2026-08-10T01:04:16.256599+00:00",
+  "gerado_em_utc": "2026-08-27T00:12:50.379347+00:00",
   "competencias": [
     "202401",
     "202402",
@@ -72,11 +72,29 @@
       "colunas": 24,
       "sha256": "1c2a6f83ac298a26ef1b76d7d4cc5c7ee5005f7c1919a983093cd94907ae2a83"
     },
+    "dim_hospital_alias": {
+      "caminho": "data/silver/dimensoes/dim_hospital_alias.parquet",
+      "linhas": 2,
+      "colunas": 7,
+      "sha256": "1e61c658521ce240993c59d845a72878d8f1a1a5092ab898ae59a15ac932d184"
+    },
+    "dim_hospital_territorio_atual": {
+      "caminho": "data/silver/dimensoes/dim_hospital_territorio_atual.parquet",
+      "linhas": 107,
+      "colunas": 13,
+      "sha256": "ce8681e7e1dcf5eb18f153f51ec6a0fef9b79f8de1d0eb7317347b555f525883"
+    },
     "dim_municipio": {
       "caminho": "data/silver/dimensoes/dim_municipio.parquet",
       "linhas": 645,
       "colunas": 12,
       "sha256": "c9d9ff981373459b25a46e0fe2a42667f1c0439106a492e0e344fa2d1bdd1c3b"
+    },
+    "dim_territorio_municipal": {
+      "caminho": "data/silver/dimensoes/dim_territorio_municipal.parquet",
+      "linhas": 96,
+      "colunas": 14,
+      "sha256": "89c0a31da8a0d70252e71bdefbc47b633c3e2ce592a525f7979280a87348be70"
     },
     "dim_especialidade": {
       "caminho": "data/silver/dimensoes/dim_especialidade.parquet",

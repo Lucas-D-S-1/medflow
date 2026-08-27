@@ -33,6 +33,13 @@ COLS_SIH_TEXTO = [
 ]
 COLS_SIH_INTEIRAS = ["QT_DIARIAS", "DIAS_PERM", "MORTE", "IDADE", "UTI_MES_TO"]
 
+ARQUIVOS_TERRITORIO = (
+    "geosampa_distrito_municipal",
+    "geosampa_subprefeitura",
+    "geosampa_coordenadoria_regional_saude",
+    "geosampa_supervisao_tecnica_saude",
+)
+
 
 @dataclass
 class EntradaSilver:
@@ -46,6 +53,7 @@ class EntradaSilver:
     ibge_raw: list[dict[str, Any]]
     regioes_ms_payload: dict[str, Any]
     cnes_atual_payload: dict[str, Any]
+    territorio_raw: dict[str, dict[str, Any]]
     regioes_csv_sp: pd.DataFrame
     arquivo_cid10: Path
     inventario: list[dict[str, Any]] = field(default_factory=list)
@@ -77,6 +85,14 @@ def carregar(base: Path) -> EntradaSilver:
     cnes_atual_payload = json.loads(
         (dir_referencias / "ms_cnes_estabelecimentos_atuais_raw.json").read_bytes()
     )
+    territorio_raw = {}
+    for nome in ARQUIVOS_TERRITORIO:
+        caminho = dir_referencias / f"{nome}_raw.json"
+        if not caminho.exists():
+            raise FileNotFoundError(
+                f"referência territorial ausente: {caminho}; rode `make bronze` antes da Silver"
+            )
+        territorio_raw[nome] = json.loads(caminho.read_bytes())
 
     arquivo_regioes_csv = dir_referencias / "macrorregiao_de_saude_csv.zip"
     with ZipFile(arquivo_regioes_csv) as pacote, pacote.open(
@@ -110,6 +126,7 @@ def carregar(base: Path) -> EntradaSilver:
         ibge_raw=ibge_raw,
         regioes_ms_payload=regioes_ms_payload,
         cnes_atual_payload=cnes_atual_payload,
+        territorio_raw=territorio_raw,
         regioes_csv_sp=regioes_csv_sp,
         arquivo_cid10=dir_referencias / "datasus_cid10_2008.zip",
     )

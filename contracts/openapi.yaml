@@ -325,11 +325,12 @@ paths:
     get:
       tags: [hospital]
       operationId: listarHospitais
-      summary: Hospitais de uma região numa competência.
+      summary: Hospitais de uma região numa competência, com busca por nome ou alias.
       parameters:
         - $ref: "#/components/parameters/Ano"
         - $ref: "#/components/parameters/Mes"
         - $ref: "#/components/parameters/Regiao"
+        - $ref: "#/components/parameters/BuscaHospital"
         - $ref: "#/components/parameters/Cnes"
         - $ref: "#/components/parameters/Limite2000"
         - $ref: "#/components/parameters/Deslocamento"
@@ -531,6 +532,15 @@ components:
         de todo o estado na competência.
       schema: { type: string, pattern: "^[0-9]{5}$" }
       example: "35073"
+    BuscaHospital:
+      name: busca
+      in: query
+      required: false
+      description: |
+        Busca sem distinção de maiúsculas, minúsculas ou acentos no nome atual
+        do hospital e nos aliases publicados. Aceita de 2 a 120 caracteres.
+      schema: { type: string, minLength: 2, maxLength: 120 }
+      example: "Ermelino Matarazzo"
     IdRegiao:
       name: id
       in: path
@@ -987,6 +997,13 @@ components:
         unit_type_name: { type: [string, "null"] }
         municipality_code: { type: [string, "null"] }
         region_code: { $ref: "#/components/schemas/CodigoRegiao" }
+        district_code: { type: [string, "null"] }
+        subprefecture_code: { type: [string, "null"] }
+        health_coordinator_code: { type: [string, "null"] }
+        health_technical_supervision_code: { type: [string, "null"] }
+        neighborhood: { type: [string, "null"] }
+        territory_assignment_method: { type: [string, "null"] }
+        territory_assignment_ambiguous: { type: [integer, "null"], enum: [0, 1, null] }
         sus_beds: { type: [integer, "null"] }
         new_admissions: { type: integer }
         deaths: { type: integer }

@@ -315,6 +315,19 @@ class TestContraAAPIViva:
         assert corpo["region"]["region_code"] == "99999"
         assert corpo["region"]["region_name"] is None
 
+    def test_busca_hospital_resolve_alias_popular(self, cliente):
+        corpo = cliente.obter(
+            "hospitais",
+            {"busca": "Ermelino Matarazzo", "limit": 10},
+        )
+        assert corpo["pagination"]["count"] == 1
+        assert corpo["items"][0]["cnes"] == "2082829"
+        assert corpo["items"][0]["district_code"] == "28"
+
+    def test_busca_hospital_com_menos_de_dois_caracteres_e_recusada(self, cliente):
+        with pytest.raises(ErroDeVarredura, match="404"):
+            cliente.obter("hospitais", {"busca": "x", "limit": 10})
+
     def test_o_teto_de_paginacao_declarado_e_o_que_o_banco_aceita(self, spec, cliente):
         """Pedir o teto tem de funcionar; pedir acima dele, não.
 

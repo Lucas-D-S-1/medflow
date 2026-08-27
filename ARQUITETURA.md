@@ -34,12 +34,12 @@ Cada etapa tem uma responsabilidade única:
 - **Dados pesados são reproduzíveis e ficam fora do Git.** Apenas código, contratos e pequenas referências oficiais necessárias à reprodutibilidade são versionados.
 - **Uma release só é marcada depois dos portões técnicos.** Pipeline, contratos, reconciliação, testes da API e testes do frontend precisam estar consistentes.
 
-## 3. Status atual — 23/08/2026
+## 3. Status atual — 27/08/2026
 
 | Área | Situação |
 |---|---|
 | Bronze, Silver e Gold | Implementadas e validadas para SP, 2024-01 a 2026-06 |
-| Oracle | 9 tabelas analíticas carregadas, totalizando 597.725 linhas |
+| Oracle | 12 tabelas analíticas carregadas, incluindo 3 dimensões territoriais |
 | Reconciliação | 8.403.103 comparações de campos entre Gold e Oracle, sem divergências |
 | API pública | `api/v1` publicada com 10 endpoints GET; amostra de 31.792 campos reconciliada sem divergências |
 | Web app | Publicado em [lucas-d-s-1.github.io/medflow](https://lucas-d-s-1.github.io/medflow/) |
@@ -55,7 +55,7 @@ A Bronze é implementada em `src/medflow/bronze/` e executada por `medflow bronz
 
 ### 4.2 Silver
 
-A Silver vive em `src/medflow/silver/` e é produzida por `medflow silver` ou `make silver`. Ela lê exclusivamente a Bronze validada e converte os campos de origem em um modelo canônico: nomes em `snake_case`, tipos explícitos, chaves normalizadas e categorias traduzidas por de/paras documentados. O resultado contém seis dimensões e duas tabelas fato, incluindo internações e a fotografia mensal de leitos. Relacionamentos entre município, estabelecimento, especialidade, competência e região são resolvidos aqui, antes das métricas. O mapeamento geográfico usa referências oficiais; atributos atuais do CNES que não representam uma dimensão historizada permanecem identificados como tal. Regras conceituais, como distinguir uma internação iniciada no período de uma permanência herdada, também ficam explícitas e testáveis. As agregações preservam categorias nulas quando elas representam informação da fonte, evitando perda silenciosa de volume. Além dos Parquets conformados, a camada gera relatórios de qualidade, metadados e evidências de mapeamento. Testes validam schemas, chaves, cobertura, totais reconciliáveis e caminhos de falha. Assim, a Gold recebe dados homogêneos e não precisa repetir limpeza, joins frágeis ou interpretações da codificação original.
+A Silver vive em `src/medflow/silver/` e é produzida por `medflow silver` ou `make silver`. Ela lê exclusivamente a Bronze validada e converte os campos de origem em um modelo canônico: nomes em `snake_case`, tipos explícitos, chaves normalizadas e categorias traduzidas por de/paras documentados. O resultado contém nove dimensões e duas tabelas fato, incluindo internações e a fotografia mensal de leitos. As três dimensões territoriais acrescentam distrito, subprefeitura, CRS, STS e aliases pesquisáveis sem substituir a região de saúde SUS. Relacionamentos entre município, estabelecimento, especialidade, competência e região são resolvidos aqui, antes das métricas. O mapeamento geográfico usa referências oficiais; atributos atuais do CNES que não representam uma dimensão historizada permanecem identificados como tal. Regras conceituais, como distinguir uma internação iniciada no período de uma permanência herdada, também ficam explícitas e testáveis. As agregações preservam categorias nulas quando elas representam informação da fonte, evitando perda silenciosa de volume. Além dos Parquets conformados, a camada gera relatórios de qualidade, metadados e evidências de mapeamento. Testes validam schemas, chaves, cobertura, totais reconciliáveis e caminhos de falha. Assim, a Gold recebe dados homogêneos e não precisa repetir limpeza, joins frágeis ou interpretações da codificação original.
 
 ### 4.3 Gold
 
@@ -63,7 +63,7 @@ A Gold é construída principalmente por `src/medflow/gold.py`, com módulos esp
 
 ### 4.4 Oracle Database
 
-O backend usa Oracle Autonomous AI Database 26ai Lakehouse no schema `MEDFLOW`. Scripts em `db/` criam e carregam duas dimensões e sete marts na ordem exigida pelas dependências, preservando no banco a mesma granularidade e os mesmos tipos lógicos da Gold. A carga atual contém 597.725 linhas e é verificada por métricas de qualidade, contratos e reconciliação campo a campo com os Parquets. Views de projeção formam a fronteira de publicação: elas selecionam e nomeiam os campos necessários, mas não recalculam indicadores. Sobre essas views, o ORDS expõe dez handlers GET. O módulo `api/dev/v1` é usado para homologação local; `api/v1` é a versão pública, com CORS restrito ao domínio do GitHub Pages e uma verificação de identidade entre os artefatos homologados e publicados. O perfil Select AI permite perguntas controladas sobre o modelo, sem substituir os contratos da API. Credenciais, wallet mTLS e arquivos `.env` nunca entram no Git e só são necessários para carga, reconciliação ao vivo ou administração. Para o trabalho comum, os testes estáticos e o pipeline de arquivos funcionam sem acesso ao Oracle. A documentação operacional separa criação, carga, publicação e diagnóstico para reduzir ações acidentais.
+O backend usa Oracle Autonomous AI Database 26ai Lakehouse no schema `MEDFLOW`. Scripts em `db/` criam e carregam cinco dimensões e sete marts na ordem exigida pelas dependências, preservando no banco a mesma granularidade e os mesmos tipos lógicos das camadas contratadas. A migração aditiva acrescentou distrito, subprefeitura, CRS, STS, atribuição espacial atual do CNES e aliases de hospital sem recriar os marts. Views de projeção formam a fronteira de publicação: elas selecionam e nomeiam os campos necessários, mas não recalculam indicadores. Sobre essas views, o ORDS expõe dez handlers GET; a lista de hospitais aceita busca por nome ou alias e devolve a atribuição territorial atual quando disponível. O módulo `api/dev/v1` é usado para homologação local; `api/v1` é a versão pública, com CORS restrito ao domínio do GitHub Pages e uma verificação de identidade entre os artefatos homologados e publicados. O perfil Select AI foi sincronizado com os doze objetos analíticos, sem reexecutar a bateria de inferência. Credenciais, wallet mTLS e arquivos `.env` nunca entram no Git e só são necessários para carga, reconciliação ao vivo ou administração. Para o trabalho comum, os testes estáticos e o pipeline de arquivos funcionam sem acesso ao Oracle. A documentação operacional separa criação, carga, publicação e diagnóstico para reduzir ações acidentais.
 
 ### 4.5 Web app
 

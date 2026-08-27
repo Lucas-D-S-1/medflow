@@ -211,6 +211,12 @@ ENDPOINTS: tuple[Endpoint, ...] = (
         mart="mart_indicador_hospital_mensal",
         enumerar=_hospitais,
         descricao="hospitais por região na última competência",
+        dimensoes=(
+            Dimensao(
+                arquivo="../silver/dimensoes/dim_hospital_territorio_atual.parquet",
+                chave="cd_cnes",
+            ),
+        ),
     ),
     Endpoint(
         padrao="hospitais/:cnes/serie",
@@ -245,9 +251,12 @@ def carregar_com_dimensoes(base: Path, endpoint: Endpoint) -> pd.DataFrame:
         # Só a chave é forçada a texto, para casar com o código do mart. O
         # resto mantém o tipo inferido: `qt_municipio` é contagem, e comparar
         # a string '7' com o 7 do JSON acusaria divergência que não existe.
-        tabela = pd.read_csv(
-            base / "data" / "gold" / dimensao.arquivo, dtype={dimensao.chave: "string"}
-        )
+        caminho = base / "data" / "gold" / dimensao.arquivo
+        if caminho.suffix == ".parquet":
+            tabela = pd.read_parquet(caminho)
+            tabela[dimensao.chave] = tabela[dimensao.chave].astype("string")
+        else:
+            tabela = pd.read_csv(caminho, dtype={dimensao.chave: "string"})
         colunas_novas = [
             coluna
             for coluna in tabela.columns

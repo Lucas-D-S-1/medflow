@@ -29,8 +29,11 @@ from medflow.silver.dimensoes import (
     dimensao_cid,
     dimensao_especialidade,
     dimensao_hospital,
+    dimensao_hospital_alias,
+    dimensao_hospital_territorio_atual,
     dimensao_municipio,
     dimensao_tempo,
+    dimensao_territorio_municipal,
 )
 from medflow.silver.dominios import (
     dimensao_dominio,
@@ -59,6 +62,9 @@ def construir(entrada: EntradaSilver) -> dict[str, Any]:
     dim_cid = dimensao_cid(entrada)
     dim_hospital, regioes_oficiais = dimensao_hospital(entrada)
     dim_municipio = dimensao_municipio(entrada, regioes_oficiais)
+    dim_territorio = dimensao_territorio_municipal(entrada)
+    dim_hospital_territorio = dimensao_hospital_territorio_atual(entrada, dim_territorio)
+    dim_hospital_aliases = dimensao_hospital_alias(dim_hospital)
     dim_dominio = dimensao_dominio()
 
     # NAT_JUR vem do CNES, então só entra no inventário depois de dim_hospital
@@ -93,7 +99,10 @@ def construir(entrada: EntradaSilver) -> dict[str, Any]:
         "saidas": {
             "dim_tempo": dim_tempo,
             "dim_hospital": dim_hospital,
+            "dim_hospital_alias": dim_hospital_aliases,
+            "dim_hospital_territorio_atual": dim_hospital_territorio,
             "dim_municipio": dim_municipio,
+            "dim_territorio_municipal": dim_territorio,
             "dim_especialidade": dim_especialidade,
             "dim_cid": dim_cid,
             "dim_dominio": dim_dominio,

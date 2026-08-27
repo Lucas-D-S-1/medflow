@@ -8,7 +8,7 @@ DOTENV  := $(PY) -m dotenv -f .env run --
 # os alvos de frontend rodam dentro de web/, então o .env fica um nível acima
 DOTENV_WEB := ../$(PY) -m dotenv -f ../.env run --
 
-.PHONY: fixtures fixtures-conferir fixtures-carimbo help setup setup-py pipeline bronze silver gold geografia validar inventario test test-completo test-py test-web test-web-ci test-web-live lint estilo contrato contrato-publico reconciliar reconciliar-completo reconciliar-publico web-install web-browser web-build web-e2e oracle-ping apex-verificar preflight select-ai-revalidar oracle-carregar ords-publicar limpar
+.PHONY: fixtures fixtures-conferir fixtures-carimbo help setup setup-py pipeline bronze silver gold geografia validar inventario test test-completo test-py test-web test-web-ci test-web-live lint estilo contrato contrato-publico reconciliar reconciliar-completo reconciliar-publico web-install web-browser web-build web-e2e oracle-ping oracle-migrar-territorio apex-verificar preflight select-ai-sincronizar-territorio select-ai-revalidar oracle-carregar ords-publicar limpar
 
 help:  ## lista os alvos disponíveis
 	@grep -hE '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) \
@@ -127,6 +127,12 @@ select-ai-revalidar:  ## roda o roteiro de Select AI e regrava a evidência data
 
 oracle-carregar:  ## carga idempotente da Gold no Autonomous Database
 	$(DOTENV) $(PY) src/medflow/oracle/carregar_gold.py
+
+oracle-migrar-territorio:  ## adiciona as dimensões territoriais sem recriar o modelo existente
+	$(DOTENV) $(PY) src/medflow/oracle/executar_sql.py db/schema/04_adicionar_dimensoes_territoriais.sql
+
+select-ai-sincronizar-territorio:  ## atualiza o profile Select AI sem chamar o LLM
+	$(DOTENV) $(PY) src/medflow/oracle/executar_sql.py db/select_ai/05_sincronizar_profile_territorio.sql
 
 # Sempre depois do 03: o módulo público é clone do de desenvolvimento, e o
 # roteiro recusa publicar se os dois divergirem.

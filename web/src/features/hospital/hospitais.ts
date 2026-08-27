@@ -15,6 +15,13 @@ export type HospitalItem = {
   unit_type_name: string
   municipality_code: string
   region_code: string
+  district_code?: string | null
+  subprefecture_code?: string | null
+  health_coordinator_code?: string | null
+  health_technical_supervision_code?: string | null
+  neighborhood?: string | null
+  territory_assignment_method?: string | null
+  territory_assignment_ambiguous?: 0 | 1 | null
   sus_beds: number
   new_admissions: number
   deaths: number
@@ -65,6 +72,7 @@ type HospitalListRequest = {
   year: number
   month: number
   regionCode: string
+  search?: string
 }
 
 type FetchOptions = {
@@ -142,6 +150,14 @@ function regionKind(value: unknown): BlockKind {
 
 function isValidItem(value: unknown): value is HospitalItem {
   if (!isRecord(value)) return false
+  const territoryFieldsValid = [
+    'district_code',
+    'subprefecture_code',
+    'health_coordinator_code',
+    'health_technical_supervision_code',
+    'neighborhood',
+    'territory_assignment_method',
+  ].every((key) => value[key] === undefined || value[key] === null || isNonEmptyText(value[key]))
   return (
     typeof value.cnes === 'string' &&
     CNES_PATTERN.test(value.cnes) &&
@@ -151,6 +167,11 @@ function isValidItem(value: unknown): value is HospitalItem {
     isNonEmptyText(value.municipality_code) &&
     typeof value.region_code === 'string' &&
     REGION_CODE_PATTERN.test(value.region_code) &&
+    territoryFieldsValid &&
+    (value.territory_assignment_ambiguous === undefined ||
+      value.territory_assignment_ambiguous === null ||
+      value.territory_assignment_ambiguous === 0 ||
+      value.territory_assignment_ambiguous === 1) &&
     isNonNegativeInteger(value.sus_beds) &&
     isNonNegativeInteger(value.new_admissions) &&
     isNonNegativeInteger(value.deaths) &&
@@ -280,6 +301,13 @@ export async function fetchHospitals(
     limit: String(limit),
     offset: String(offset),
   })
+  if (request.search !== undefined) {
+    const search = request.search.trim()
+    if (search.length < 2 || search.length > 120) {
+      throw new HospitalContractError()
+    }
+    params.set('busca', search)
+  }
 
   const controller = new AbortController()
   const abortFromCaller = () => controller.abort()
