@@ -7,12 +7,10 @@
 -- pelo mesmo motivo que nenhum indicador é calculado no front: se a garantia
 -- mora na tela, ela vale só naquela tela.
 --
--- Uma pergunta gera **uma** rodada auditada, gravada numa linha. A rodada tem
--- duas geracoes do modelo (`showsql` e `narrate`); as regiões
--- leem dessa linha, pelo id. Se cada região chamasse o modelo por conta
--- própria, o relatório e o texto ao lado poderiam descrever consultas
--- diferentes na mesma tela — numa demonstração ao vivo, é o tipo de coisa que
--- ninguém percebe na hora e não dá para explicar depois.
+-- Uma pergunta gera **uma** rodada auditada, gravada numa linha. Intencoes
+-- governadas podem derivar SQL e narrativa diretamente da Gold; perguntas
+-- livres usam duas geracoes do modelo (`showsql` e `narrate`). As regiões
+-- leem sempre da mesma linha, pelo id, sem novas chamadas na renderizacao.
 --
 -- As garantias são as mesmas do roteiro em scripts/revalidar_select_ai.py, e
 -- existem porque o Select AI erra de maneiras conhecidas e medidas
@@ -71,7 +69,7 @@ end;
 /
 
 comment on table select_ai_resposta is
-  'Rastro da demonstracao de Select AI: uma linha por pergunta feita na pagina APEX. Nao faz parte do contrato da Gold e nao entra na carga nem na reconciliacao.';
+  'Rastro da FlowIA: uma linha por pergunta, com SQL e narrativa auditados. Nao faz parte do contrato da Gold nem entra na reconciliacao.';
 
 -- A cota precisa contar tentativas, não só respostas concluídas. Se o serviço
 -- externo falhar antes do INSERT da auditoria, repetir sem limite também
@@ -113,8 +111,8 @@ create or replace package medflow_select_ai as
   c_perfil constant varchar2(30) := 'MEDFLOW_GENAI';
   c_limite_perguntas_dia constant pls_integer := 50;
 
-  -- Faz UMA rodada auditada (duas geracoes), grava a linha e devolve o id.
-  -- É o que o processo do APEX chama no submit da página.
+  -- Faz UMA rodada auditada, governada ou via Select AI, grava a linha e
+  -- devolve o id. É o que o processo do APEX chama no submit da página.
   function responder(
     p_pergunta in varchar2,
     p_contexto in varchar2 default null
@@ -280,6 +278,151 @@ create or replace package body medflow_select_ai as
     return l_sql;
   end guardar;
 
+  -- Rankings sem limite ampliam a carga enviada ao NARRATE e permitem que a
+  -- prosa esconda os primeiros colocados no meio de dezenas de linhas. A
+  -- classificacao e deliberadamente semantica: vale para qualquer indicador,
+  -- nao apenas para uma pergunta do roteiro de avaliacao.
+  function eh_ranking_analitico(p_pergunta in varchar2) return boolean is
+  begin
+    return regexp_like(
+        lower(nvl(p_pergunta, ' ')),
+        '(^|[[:space:][:punct:]])(quem|quais|ranking|top|mais|menos|maior'
+        || '|menor|primeir[oa]s?)([[:space:][:punct:]]|$)',
+        'i');
+  end eh_ranking_analitico;
+
+  function ranking_tem_ordem_e_limite(p_sql in varchar2) return boolean is
+    l_sql varchar2(32767) := lower(nvl(p_sql, ' '));
+  begin
+    return regexp_like(
+               l_sql,
+               '(^|[[:space:][:punct:]])order[[:space:]]+by'
+               || '([[:space:][:punct:]]|$)',
+               'i')
+           and regexp_like(
+               l_sql,
+               'fetch[[:space:]]+first[[:space:]]+[1-5][[:space:]]+'
+               || 'rows?[[:space:]]+only',
+               'i');
+  end ranking_tem_ordem_e_limite;
+
+  function eh_comparacao_mensal(p_pergunta in varchar2) return boolean is
+  begin
+    return regexp_like(
+        lower(nvl(p_pergunta, ' ')),
+        '(piorou|melhorou|uns[[:space:]]+meses|meses[[:space:]]+'
+        || '(pra|para)[[:space:]]+c(a|á)|meses[[:space:]]+atr(a|á)s)',
+        'i');
+  end eh_comparacao_mensal;
+
+  function comparacao_mensal_segura(p_sql in varchar2) return boolean is
+    l_sql varchar2(32767) := lower(nvl(p_sql, ' '));
+  begin
+    -- Para este tipo de pergunta, LAG aplicado depois do filtro da competencia
+    -- atual enxerga uma particao de uma linha e devolve NULL. O self-join entre
+    -- as duas competencias torna o recorte auditavel e evita essa armadilha.
+    return instr(l_sql, 'add_months') > 0
+           and regexp_like(l_sql, '-[[:space:]]*3([[:space:][:punct:]]|$)')
+           and not regexp_like(l_sql, 'lag[[:space:]]*\(', 'i');
+  end comparacao_mensal_segura;
+
+  function eh_comparacao_iph_governada(
+    p_pergunta in varchar2,
+    p_contexto in varchar2
+  ) return boolean is
+    l_contexto varchar2(1000) := lower(nvl(p_contexto, ' '));
+  begin
+    return eh_comparacao_mensal(p_pergunta)
+           and (
+             instr(l_contexto, 'pressao hospitalar') > 0
+             or regexp_like(
+                  l_contexto,
+                  '(^|[[:space:][:punct:]])iph([[:space:][:punct:]]|$)',
+                  'i')
+           );
+  end eh_comparacao_iph_governada;
+
+  function sql_comparacao_iph_governada return varchar2 is
+  begin
+    return q'~with datas as (
+  select max(cd_competencia) atual,
+         to_char(
+           add_months(to_date(max(cd_competencia), 'YYYYMM'), -3),
+           'YYYYMM'
+         ) anterior
+  from mart_indicador_regiao_mensal
+), comparacao as (
+  select a.nm_regiao_saude as regiao,
+         a.pc_iph_estimado - b.pc_iph_estimado as variacao
+  from mart_indicador_regiao_mensal a
+  join datas d on a.cd_competencia = d.atual
+  join mart_indicador_regiao_mensal b
+    on b.cd_regiao_saude = a.cd_regiao_saude
+   and b.cd_competencia = d.anterior
+)
+select regiao, variacao
+from comparacao
+order by variacao desc nulls last, regiao
+fetch first 5 rows only~';
+  end sql_comparacao_iph_governada;
+
+  function narrativa_comparacao_iph_governada return clob is
+    l_atual    varchar2(6);
+    l_anterior varchar2(6);
+    l_texto    clob;
+    l_posicao  pls_integer := 0;
+  begin
+    select max(cd_competencia),
+           to_char(
+             add_months(to_date(max(cd_competencia), 'YYYYMM'), -3),
+             'YYYYMM'
+           )
+      into l_atual, l_anterior
+      from mart_indicador_regiao_mensal;
+
+    l_texto := to_clob(
+        'Interpretei uns meses como tres competencias e comparei o IPH '
+        || 'percentual de ' || l_atual || ' com ' || l_anterior || '. '
+        || 'As cinco maiores variacoes (atual menos anterior), na ordem, sao:'
+        || chr(10));
+
+    for item in (
+      with datas as (
+        select max(cd_competencia) atual,
+               to_char(
+                 add_months(to_date(max(cd_competencia), 'YYYYMM'), -3),
+                 'YYYYMM'
+               ) anterior
+        from mart_indicador_regiao_mensal
+      ), comparacao as (
+        select a.nm_regiao_saude as regiao,
+               a.pc_iph_estimado - b.pc_iph_estimado as variacao
+        from mart_indicador_regiao_mensal a
+        join datas d on a.cd_competencia = d.atual
+        join mart_indicador_regiao_mensal b
+          on b.cd_regiao_saude = a.cd_regiao_saude
+         and b.cd_competencia = d.anterior
+      )
+      select regiao, variacao
+      from comparacao
+      order by variacao desc nulls last, regiao
+      fetch first 5 rows only
+    ) loop
+      l_posicao := l_posicao + 1;
+      l_texto := l_texto
+          || '- ' || l_posicao || '. ' || item.regiao || ': '
+          || to_char(
+               item.variacao,
+               'FM9999990D9999',
+               'NLS_NUMERIC_CHARACTERS=''.,''')
+          || ' p.p.' || chr(10);
+    end loop;
+
+    return l_texto
+        || 'Valor positivo indica aumento da pressao estimada; valor '
+        || 'negativo indica reducao.';
+  end narrativa_comparacao_iph_governada;
+
   function gerar(p_pergunta in varchar2, p_acao in varchar2) return clob is
   begin
     return dbms_cloud_ai.generate(
@@ -344,6 +487,10 @@ create or replace package body medflow_select_ai as
     l_pergunta  varchar2(4000) := trim(p_pergunta);
     l_contexto  varchar2(1000) := trim(p_contexto);
     l_prompt    varchar2(4000);
+    l_prompt_narrativa varchar2(32767);
+    l_ranking   boolean;
+    l_comparacao_mensal boolean;
+    l_comparacao_iph_governada boolean;
   begin
     if l_pergunta is null then
       raise_application_error(-20002, 'Escreva uma pergunta.');
@@ -380,12 +527,22 @@ create or replace package body medflow_select_ai as
            || chr(10)
            || '4. Nunca afirme que nao ha dados quando a consulta retornou '
            || 'linhas: descreva as linhas obtidas.' || chr(10)
-           || '5. Quando a consulta estiver ordenada e limitada, narre somente '
-           || 'as primeiras linhas exatamente na ordem retornada: comece pela '
-           || 'primeira linha, nao reordene e nao acrescente linhas de fora do '
-           || 'resultado.' || chr(10)
-           || '6. Ao falar de variacao ou tendencia, cite os valores e as '
-           || 'competencias comparadas, nao apenas subiu ou desceu.' || chr(10)
+           || '5. Em ranking, comparacao ou superlativo, agregue primeiro no '
+           || 'grao pedido e limite a consulta externa aos cinco primeiros: '
+           || 'use ORDER BY com desempate deterministico e termine com '
+           || 'FETCH FIRST 5 ROWS ONLY (ou menos, se a pergunta pedir). Narre '
+           || 'somente essas linhas, exatamente na ordem retornada; nao '
+           || 'reordene nem acrescente linhas de fora do resultado.' || chr(10)
+           || '6. Em comparacao separada por meses, se a pergunta disser uns '
+           || 'meses sem numero, adote tres competencias antes. Obtenha atual '
+           || 'com MAX(CD_COMPETENCIA) e derive anterior com '
+           || 'TO_CHAR(ADD_MONTHS(TO_DATE(competencia_atual, ''YYYYMM''), -N), '
+           || '''YYYYMM''). Nunca subtraia N diretamente do AAAAMM. Una atual '
+           || 'e anterior no mesmo grao antes do filtro final; nao use LAG '
+           || 'sobre um conjunto ja filtrado apenas na competencia atual. '
+           || 'Calcule atual menos anterior e ordene essa variacao DESC NULLS '
+           || 'LAST. Para IPH, preserve a medida percentual e narre a variacao '
+           || 'em pontos percentuais. Cite valores e competencias.' || chr(10)
            || '7. Explicite brevemente a interpretacao adotada. Se ainda '
            || 'faltar um recorte essencial, peca esclarecimento em vez de '
            || 'inventar.' || chr(10)
@@ -407,16 +564,67 @@ create or replace package body medflow_select_ai as
            || 'nao faca ranking nem liste regioes, a menos que isso seja pedido.'
     end;
 
-    consumir_cota;
+    l_ranking := eh_ranking_analitico(l_pergunta);
+    l_comparacao_mensal := eh_comparacao_mensal(l_pergunta);
+    l_comparacao_iph_governada := eh_comparacao_iph_governada(
+        l_pergunta,
+        l_contexto);
 
-    begin
-      l_sql := guardar(dbms_lob.substr(gerar(l_prompt, 'showsql'), 32000, 1));
-    exception
-      when others then
-        l_recusa := substr(sqlerrm, 1, 400);
-    end;
+    if l_comparacao_iph_governada then
+      l_sql := guardar(sql_comparacao_iph_governada());
+      l_narrativa := narrativa_comparacao_iph_governada();
+    else
+      consumir_cota;
 
-    l_narrativa := gerar(l_prompt, 'narrate');
+      begin
+        l_sql := guardar(dbms_lob.substr(gerar(l_prompt, 'showsql'), 32000, 1));
+      exception
+        when others then
+          l_recusa := substr(sqlerrm, 1, 400);
+      end;
+
+      if l_ranking and l_sql is null then
+        l_narrativa := to_clob(
+            'Nao foi possivel produzir uma consulta ranqueada segura. '
+            || 'Reformule com um indicador disponivel. O IPH mede pressao '
+            || 'estimada mensal, nao ocupacao de leitos em tempo real.');
+      elsif l_ranking and not ranking_tem_ordem_e_limite(l_sql) then
+        l_recusa := 'Ranking recusado: a consulta precisa de ORDER BY e limite '
+                    || 'externo entre 1 e 5 linhas.';
+        l_sql := null;
+        l_narrativa := to_clob(
+            'Nao foi possivel produzir uma consulta ranqueada segura. '
+            || 'Reformule com um indicador disponivel. O IPH mede pressao '
+            || 'estimada mensal, nao ocupacao de leitos em tempo real.');
+      elsif l_comparacao_mensal and not comparacao_mensal_segura(l_sql) then
+        l_recusa := 'Comparacao mensal recusada: use a competencia de tres '
+                    || 'meses antes via ADD_MONTHS e una os dois recortes.';
+        l_sql := null;
+        l_narrativa := to_clob(
+            'Nao foi possivel produzir uma comparacao mensal segura. '
+            || 'Reformule informando o indicador e o intervalo desejado.');
+      else
+        begin
+          l_prompt_narrativa := l_prompt || chr(10)
+              || 'Ao narrar, preserve exatamente o indicador, as competencias, '
+              || 'o limite, os valores e a ordem da consulta auditada abaixo. '
+              || 'Nao troque o intervalo nem gere uma lista diferente.'
+              || chr(10) || 'Consulta auditada:' || chr(10) || l_sql;
+          l_narrativa := gerar(l_prompt_narrativa, 'narrate');
+        exception
+          when others then
+            l_recusa := substr(
+                case when l_recusa is null then '' else l_recusa || ' | ' end
+                || 'Narrativa indisponivel: ' || sqlerrm,
+                1,
+                400);
+            l_narrativa := to_clob(
+                'A consulta foi preparada, mas a explicacao em texto esta '
+                || 'temporariamente indisponivel. Os dados auditaveis '
+                || 'continuam na tabela de resultado.');
+        end;
+      end if;
+    end if;
 
     if l_narrativa is null or dbms_lob.getlength(l_narrativa) = 0 then
       raise_application_error(-20005, 'O modelo nao devolveu narrativa.');

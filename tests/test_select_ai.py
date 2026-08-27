@@ -46,6 +46,60 @@ def test_prompt_governado_documenta_o_glossario_das_visoes():
         assert conceito in pacote
 
 
+def test_ranking_governado_limita_resultado_e_trata_falha_da_narrativa():
+    pacote = (RAIZ / "db" / "apex" / "02_pacote_select_ai.sql").read_text(
+        encoding="utf-8"
+    )
+
+    for garantia in (
+        "function eh_ranking_analitico",
+        "function ranking_tem_ordem_e_limite",
+        "function eh_comparacao_mensal",
+        "function comparacao_mensal_segura",
+        "function eh_comparacao_iph_governada",
+        "function sql_comparacao_iph_governada",
+        "function narrativa_comparacao_iph_governada",
+        "l_ranking := eh_ranking_analitico(l_pergunta)",
+        "l_comparacao_mensal := eh_comparacao_mensal(l_pergunta)",
+        "l_comparacao_iph_governada := eh_comparacao_iph_governada",
+        "l_ranking and not ranking_tem_ordem_e_limite(l_sql)",
+        "l_comparacao_mensal and not comparacao_mensal_segura(l_sql)",
+        "FETCH FIRST 5 ROWS ONLY",
+        "externo entre 1 e 5 linhas",
+        "Consulta auditada:",
+        "Narrativa indisponivel",
+        "temporariamente indisponivel",
+    ):
+        assert garantia in pacote
+
+
+def test_comparacao_mensal_nao_faz_aritmetica_direta_em_aaaamm():
+    pacote = (RAIZ / "db" / "apex" / "02_pacote_select_ai.sql").read_text(
+        encoding="utf-8"
+    )
+
+    assert "TO_CHAR(ADD_MONTHS(TO_DATE(competencia_atual" in pacote
+    assert "Nunca subtraia N diretamente" in pacote
+    assert "adote tres competencias antes" in pacote
+    assert "nao use LAG" in pacote
+
+
+def test_comparacao_iph_governada_deriva_datas_e_limita_sem_consumir_ia():
+    pacote = (RAIZ / "db" / "apex" / "02_pacote_select_ai.sql").read_text(
+        encoding="utf-8"
+    )
+
+    atalho = pacote.index("if l_comparacao_iph_governada then")
+    consumo = pacote.index("consumir_cota;", atalho)
+    alternativa = pacote.index("else", atalho)
+
+    assert atalho < alternativa < consumo
+    assert "max(cd_competencia)" in pacote
+    assert "a.pc_iph_estimado - b.pc_iph_estimado" in pacote
+    assert "order by variacao desc nulls last, regiao" in pacote
+    assert "fetch first 5 rows only" in pacote
+
+
 class TestGuardaDeLeitura:
     @pytest.mark.parametrize(
         "sql",

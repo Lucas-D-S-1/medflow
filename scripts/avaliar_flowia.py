@@ -541,7 +541,7 @@ def montar_relatorio(resultados: list[Resultado], inicio: datetime, fim: datetim
             linhas.extend(
                 [
                     "",
-                    f"**Conferência dos dados:** {r.veredito_sql} — {r.detalhe_sql}",
+                    f"**Conferência dos dados:** {r.veredito_sql}. {r.detalhe_sql}",
                     "",
                     "**Resposta de referência**",
                     "",
@@ -559,7 +559,7 @@ def montar_relatorio(resultados: list[Resultado], inicio: datetime, fim: datetim
         linhas.extend(
             [
                 "",
-                f"**Conferência da narrativa:** {'ok' if r.narrativa_ok else 'falhou'} — {r.detalhe_narrativa}",
+                f"**Conferência da narrativa:** {'ok' if r.narrativa_ok else 'falhou'}. {r.detalhe_narrativa}",
                 "",
                 "**SQL gerado**",
                 "",
