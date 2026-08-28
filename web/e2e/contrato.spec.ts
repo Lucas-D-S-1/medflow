@@ -24,7 +24,10 @@ import {
 } from './apoio'
 
 test('@live renderiza os números reais do Oracle pelo proxy relativo', async ({ page }) => {
-  await page.goto('/')
+  // A raiz abre em panorama desde 27/08/2026, sem território eleito. A região
+  // vem na URL porque o que este teste prova é o dado real chegando do Oracle,
+  // não o estado inicial da tela — esse tem teste próprio em pagina-continua.
+  await page.goto('/?regiao=35073')
 
   await expect(page.getByTestId('regional-count')).toHaveText('62 de 62 regiões', {
     timeout: 15_000,
@@ -66,7 +69,7 @@ test('usa somente o snapshot quando o Oracle falha', async ({ page }) => {
     `Contingência — snapshot até ${snapshotCompetencia}`,
   )
   await expect(page.getByTestId('data-through')).toHaveText(snapshotCompetenciaBR)
-  await expect(page.getByTestId('contract-version')).toHaveText('v0.3.0')
+  await expect(page.getByTestId('contract-version')).toHaveText('v0.4.0')
   await expect(page.getByTestId('fallback-note')).toContainText('nenhuma fonte foi misturada')
   await expect(page.getByTestId('coverage-regions')).toHaveText('62')
   await expect(page.getByTestId('coverage-admissions')).toHaveText(
@@ -82,7 +85,7 @@ test('distingue ausência legítima de indisponibilidade do Oracle', async ({ pa
         source: 'oracle-live',
         database_time: '2026-08-01T12:00:00-03:00',
         data_through: null,
-        contract_version: '0.3.0',
+        contract_version: '0.4.0',
       }),
     })
   })
@@ -199,7 +202,7 @@ test('mantém a geração do snapshot verificável na metadata da Gold', async (
   await page.goto('/metodologia')
 
   await expect(page.getByTestId('data-through')).toHaveText(snapshotCompetenciaBR)
-  await expect(page.getByTestId('contract-version')).toHaveText('v0.3.0')
+  await expect(page.getByTestId('contract-version')).toHaveText('v0.4.0')
 })
 test('preserva filtros na URL e ignora resposta atrasada de outra competência', async ({ page }) => {
   await mockLiveSource(page)

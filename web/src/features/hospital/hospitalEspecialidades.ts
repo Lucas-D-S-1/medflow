@@ -1,17 +1,20 @@
 import especialidadesSnapshot from '../../mocks/hospital-especialidades-3012212.json'
 import {
   CNES_PATTERN,
+  isFiniteNumber,
   isNonEmptyText,
   isNonNegativeInteger,
   isNullableNumber,
+  isComparisonSampleStatus,
   isRecord,
   isSampleStatus,
   REGION_CODE_PATTERN,
+  type ComparisonSampleStatus,
   type SampleStatus,
 } from './hospitais'
 import { apiUrl } from '../../lib/api/base'
 
-export const SPECIALTY_CONTRACT_VERSION = '0.3.0' as const
+export const SPECIALTY_CONTRACT_VERSION = '0.4.0' as const
 
 type PublishedSource = 'oracle-live' | 'snapshot'
 
@@ -28,6 +31,17 @@ export type SpecialtyItem = {
   average_stay_days: number | null
   price_reference_competence: string
   sample_status: SampleStatus
+  benchmark_admissions: number
+  benchmark_hospitals: number
+  /** Nula exatamente quando não há hospital par na região e especialidade. */
+  average_stay_benchmark: number | null
+  ipe: number | null
+  /**
+   * Elegibilidade do IPE, separada de `sample_status`. Os dois cortes são
+   * diferentes — TMH e CMI exigem 30 internações; o IPE exige 20 no hospital,
+   * 50 no benchmark e 3 hospitais pares — então divergem na mesma linha.
+   */
+  ipe_sample_status: ComparisonSampleStatus
 }
 
 export type SpecialtyHospital = {
@@ -105,6 +119,7 @@ function hospitalKind(value: unknown): BlockKind {
 
 function isValidItem(value: unknown): value is SpecialtyItem {
   if (!isRecord(value)) return false
+  const ipeElegivel = value.ipe_sample_status === 'suficiente'
   return (
     typeof value.cnes === 'string' &&
     CNES_PATTERN.test(value.cnes) &&
@@ -120,7 +135,21 @@ function isValidItem(value: unknown): value is SpecialtyItem {
     isNullableNumber(value.average_stay_days) &&
     typeof value.price_reference_competence === 'string' &&
     PRICE_COMPETENCE_PATTERN.test(value.price_reference_competence) &&
-    isSampleStatus(value.sample_status)
+    isSampleStatus(value.sample_status) &&
+    isNonNegativeInteger(value.benchmark_admissions) &&
+    isNonNegativeInteger(value.benchmark_hospitals) &&
+    isNullableNumber(value.average_stay_benchmark) &&
+    isNullableNumber(value.ipe) &&
+    isComparisonSampleStatus(value.ipe_sample_status) &&
+    // As mesmas invariantes que o IPR sustenta, pela mesma razão: um índice
+    // publicado fora do estado que o autoriza seria comparação que a Gold não
+    // fez. Ver `hospitalCids.ts`.
+    (ipeElegivel ? isFiniteNumber(value.ipe) : value.ipe === null) &&
+    (value.average_stay_benchmark === null) === (value.benchmark_hospitals === 0) &&
+    (!ipeElegivel ||
+      (isFiniteNumber(value.average_stay_benchmark) && value.average_stay_benchmark > 0)) &&
+    (value.ipe_sample_status !== 'benchmark_zero' ||
+      (value.average_stay_benchmark === 0 && value.benchmark_hospitals >= 1))
   )
 }
 

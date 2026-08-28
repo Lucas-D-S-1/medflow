@@ -3,6 +3,45 @@
 As releases seguem a política de [`VERSIONAMENTO.md`](VERSIONAMENTO.md).
 A versão da release e a versão dos contratos de dados evoluem separadamente.
 
+## Não publicado
+
+Contrato de dados **`0.4.0`**, aplicado ao Oracle em 28/08/2026. É a primeira
+mudança do contrato desde o `0.3.0`: campos novos numa resposta existente.
+
+### Adicionado
+
+- **Índice de Permanência por Especialidade (IPE)** na Gold, no banco e na API:
+  permanência média do hospital naquela especialidade dividida pela dos demais
+  hospitais da mesma região, na mesma especialidade e competência, com o
+  próprio hospital fora do benchmark. É a construção do IPR um degrau acima no
+  grão;
+- `hospitais/:cnes/especialidades` passou a expor `ipe`, `ipe_sample_status`,
+  `benchmark_admissions`, `benchmark_hospitals` e `average_stay_benchmark`;
+- coluna **IPE** na tabela de especialidades do WebApp, ordenável como as
+  demais, com a permanência dos pares abaixo da permanência do hospital e o
+  motivo escrito quando o índice não é calculável;
+- cobertura do IPE na tela de Metodologia: elegíveis, benchmark zerado e
+  amostra insuficiente, com fórmula e cortes declarados ao lado dos do IPR;
+- quatro portões novos em `03_validar_carga.sql`, que juntos provam que os três
+  estados somam as 54.328 linhas do mart — nenhuma linha ficou sem estado;
+- `05_adicionar_indice_especialidade.sql`, migração aditiva que acrescenta as
+  seis colunas sem recriar o modelo. Recriar derrubaria os marts que o site
+  público lê enquanto a carga não termina.
+
+### Sobre os cortes
+
+Os cortes ficaram iguais aos do IPR — 20 internações no hospital, 50 no
+benchmark, 3 hospitais pares — e isso foi medido antes de ser decidido. Com
+eles, a cobertura vai de **6,9%** (31.452 de 455.054 pares hospital/CID) para
+**63,9%** (34.741 de 54.328 linhas do mart de especialidades). Nove vezes mais,
+sem afrouxar nada: o ganho veio do grão. Cortes menores foram medidos e
+descartados; há teste travando os que ficaram.
+
+### Limite preservado
+
+O IPE compara permanência observada sem ajuste de risco. **Não é medida de
+qualidade nem de desfecho clínico**, pela mesma razão que o IPR não é.
+
 ## 0.4.0 — 27/08/2026
 
 Publicada em 27/08/2026 como o primeiro marco em que a FlowIA faz parte do

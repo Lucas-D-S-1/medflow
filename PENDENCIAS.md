@@ -11,6 +11,12 @@ por alias, território municipal, 8.403.103 comparações sem divergência no ga
 completo, heartbeat diário ativo e a página APEX de demonstração montada em
 25/08/2026.
 
+Em 28/08/2026 o **contrato de dados subiu para `0.4.0`** com o Índice de
+Permanência por Especialidade aplicado no Oracle: migração aditiva, Gold
+recarregada, view e módulo ORDS republicados, cinco campos novos na resposta de
+especialidades e a coluna IPE na tabela do WebApp. Cobertura de 63,9% contra
+6,9% do IPR por CID, com os mesmos cortes.
+
 Depois da `v0.4.0`, o WebApp deixou de ser quatro visões e passou a ser **duas
 páginas**: uma análise contínua com duas etapas ancoradas — território e
 hospital — e a Metodologia. A etapa de fluxos saiu por decisão de produto. As mudanças não tocaram cálculo nem contrato,

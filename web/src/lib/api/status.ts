@@ -14,7 +14,7 @@ export type PublishedStatusResponse = StatusResponse & {
 }
 
 const STATUS_PATH = apiUrl('/status')
-export const STATUS_CONTRACT_VERSION = '0.3.0' as const
+export const STATUS_CONTRACT_VERSION = '0.4.0' as const
 
 const DATA_THROUGH_PATTERN = /^\d{4}-(0[1-9]|1[0-2])$/
 const DATABASE_TIME_PATTERN =

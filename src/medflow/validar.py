@@ -11,6 +11,8 @@ import numpy as np
 import pandas as pd
 import pyarrow.parquet as pq
 
+from .contratos import VERSAO_CONTRATO
+
 PADRAO_NOME = re.compile(r"^[a-z][a-z0-9_]*$")
 
 
@@ -239,7 +241,9 @@ def validar(base: Path, *, publicar: bool = True) -> dict[str, int | str]:
         return f"{valor:,}".replace(",", ".")
 
     linhas = [
-        "# Validação técnica integrada — MedFlow 0.3.0",
+        # O número sai do contrato em vez de ficar escrito aqui: ele já ficou
+        # parado em 0.3.0 enquanto o contrato subia para 0.4.0.
+        f"# Validação técnica integrada — MedFlow {VERSAO_CONTRATO}",
         "",
         f"Executada em `{resultado['validado_em_utc']}`.",
         "",

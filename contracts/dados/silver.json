@@ -1,7 +1,7 @@
 {
   "camada": "silver",
-  "versao_contrato": "0.3.0",
-  "gerado_em_utc": "2026-08-27T00:12:50.372559+00:00",
+  "versao_contrato": "0.4.0",
+  "gerado_em_utc": "2026-08-28T12:28:17.419998+00:00",
   "principios": [
     "Dados tipados, conformados, reconciliados e prontos para reuso.",
     "Somente dimensões e fatos; indicadores e benchmarks pertencem à Gold.",

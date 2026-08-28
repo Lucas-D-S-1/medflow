@@ -1,10 +1,10 @@
 {
   "status": "ok",
   "source": "snapshot",
-  "database_time": "2026-08-10T01:06:06.417941+00:00",
-  "contract_version": "0.3.0",
+  "database_time": "2026-08-28T12:29:16.209861+00:00",
+  "contract_version": "0.4.0",
   "data_through": "2026-06",
-  "gold_updated_at": "2026-08-10T01:06:06.417941+00:00",
+  "gold_updated_at": "2026-08-28T12:29:16.209861+00:00",
   "cmi_reference_competence": "2026-06",
   "coverage": {
     "region_month_rows": 1860,
@@ -18,12 +18,15 @@
     "stay_days": 33155867,
     "flow_rows": 31033,
     "competencies": 30,
+    "eligible_ipe_rows": 34741,
+    "ipe_benchmark_zero_rows": 689,
     "hospital_cid_rows": 455054,
     "icsap_rows": 35340,
     "hospital_month_rows": 19341,
     "new_admissions": 7150693,
     "specialty_month_rows": 54328,
     "estimated_patient_days": 33593969,
+    "ipe_insufficient_sample_rows": 18898,
     "eligible_ipr_pairs": 31452
   },
   "reconciliations": [
@@ -143,6 +146,12 @@
       "interpretation": "Sinaliza variacao para investigacao; a composicao clinica pode diferir entre pares."
     },
     {
+      "id": "ipe",
+      "label": "IPE",
+      "expression": "permanencia media hospital/especialidade / benchmark regional da especialidade sem o hospital",
+      "interpretation": "Mesma leitura do IPR num grao mais largo: cobre mais casos porque a especialidade tem mais volume que o CID, e continua sem ajuste de risco."
+    },
+    {
       "id": "is",
       "label": "IS",
       "expression": "internacoes novas de 2026 / media do mesmo mes em 2024 e 2025",
@@ -208,6 +217,14 @@
       "description": "Exige minimo de 20 casos hospital/CID; benchmark com 50 casos e 3 hospitais. Se a permanencia media do benchmark for zero, o estado e benchmark_zero e o IPR permanece nulo."
     },
     {
+      "id": "ipe",
+      "label": "IPE",
+      "minimum_hospital_specialty_cases": 20,
+      "minimum_benchmark_cases": 50,
+      "minimum_benchmark_hospitals": 3,
+      "description": "Os mesmos cortes do IPR, de proposito: a cobertura sobe de 6,9 para 63,9 por cento pelo grao, nao por afrouxar a exigencia. Se a permanencia media do benchmark for zero, o estado e benchmark_zero e o IPE permanece nulo."
+    },
+    {
       "id": "specialty",
       "label": "Comparacao por especialidade",
       "minimum_hospital_month_rows": 100,
@@ -255,6 +272,7 @@
   "limitations": [
     "TMH nao possui ajuste de risco clinico.",
     "A cobertura de IPR considera somente combinacoes elegiveis pelos cortes do contrato.",
+    "IPE compara permanencia observada entre hospitais da mesma regiao e especialidade, sem ajuste de risco: nao e medida de qualidade nem de desfecho.",
     "CMI nominal e CMI real nao representam custo economico integral.",
     "IPH usa pacientes-dia reconstruidos e leitos mensais declarados; nao e ocupacao real.",
     "Quando o denominador do IPH e zero por ausencia de leito SUS declarado, o valor permanece nulo e nao ha imputacao.",

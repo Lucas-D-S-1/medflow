@@ -42,7 +42,7 @@ begin
                  || '-'
                  || substr(cd_competencia_maxima, 5, 2)
              end as "data_through",
-             '0.3.0' as "contract_version"
+             '0.4.0' as "contract_version"
         from vw_api_status
        fetch first 1 row only
     ~'
@@ -96,7 +96,10 @@ begin
                'hospital_months_above_declared_capacity' value qt_hospital_mes_acima_capacidade,
                'hospital_months_without_declared_sus_bed' value qt_hospital_mes_sem_leito_sus,
                'benchmark_zero_rows' value qt_benchmark_zero,
-               'ipr_insufficient_sample_rows' value qt_ipr_amostra_insuficiente
+               'ipr_insufficient_sample_rows' value qt_ipr_amostra_insuficiente,
+               'eligible_ipe_rows' value qt_ipe_elegivel,
+               'ipe_benchmark_zero_rows' value qt_ipe_benchmark_zero,
+               'ipe_insufficient_sample_rows' value qt_ipe_amostra_insuficiente
                returning json
              ) as "coverage",
              json_array(
@@ -241,6 +244,13 @@ begin
                  returning json
                ),
                json_object(
+                 'id' value 'ipe',
+                 'label' value 'IPE',
+                 'expression' value 'permanencia media hospital/especialidade / benchmark regional da especialidade sem o hospital',
+                 'interpretation' value 'Mesma leitura do IPR num grao mais largo: cobre mais casos porque a especialidade tem mais volume que o CID, e continua sem ajuste de risco.'
+                 returning json
+               ),
+               json_object(
                  'id' value 'is',
                  'label' value 'IS',
                  'expression' value 'internacoes novas de 2026 / media do mesmo mes em 2024 e 2025',
@@ -322,6 +332,15 @@ begin
                  returning json
                ),
                json_object(
+                 'id' value 'ipe',
+                 'label' value 'IPE',
+                 'minimum_hospital_specialty_cases' value 20,
+                 'minimum_benchmark_cases' value 50,
+                 'minimum_benchmark_hospitals' value 3,
+                 'description' value 'Os mesmos cortes do IPR, de proposito: a cobertura sobe de 6,9 para 63,9 por cento pelo grao, nao por afrouxar a exigencia. Se a permanencia media do benchmark for zero, o estado e benchmark_zero e o IPE permanece nulo.'
+                 returning json
+               ),
+               json_object(
                  'id' value 'specialty',
                  'label' value 'Comparacao por especialidade',
                  'minimum_hospital_month_rows' value 100,
@@ -379,6 +398,7 @@ begin
              json_array(
                'TMH nao possui ajuste de risco clinico.',
                'A cobertura de IPR considera somente combinacoes elegiveis pelos cortes do contrato.',
+               'IPE compara permanencia observada entre hospitais da mesma regiao e especialidade, sem ajuste de risco: nao e medida de qualidade nem de desfecho.',
                'CMI nominal e CMI real nao representam custo economico integral.',
                'IPH usa pacientes-dia reconstruidos e leitos mensais declarados; nao e ocupacao real.',
                'Quando o denominador do IPH e zero por ausencia de leito SUS declarado, o valor permanece nulo e nao ha imputacao.',
@@ -502,7 +522,7 @@ begin
                systimestamp,
                'YYYY-MM-DD"T"HH24:MI:SS.FF3TZH:TZM'
              ) as "database_time",
-             '0.3.0' as "contract_version",
+             '0.4.0' as "contract_version",
              case
                when p.ano is null or p.mes is null then null
                else to_char(p.ano, 'FM0000')
@@ -661,7 +681,7 @@ begin
                systimestamp,
                'YYYY-MM-DD"T"HH24:MI:SS.FF3TZH:TZM'
              ) as "database_time",
-             '0.3.0' as "contract_version",
+             '0.4.0' as "contract_version",
              case
                when maximo.cd_competencia is null then null
                else substr(maximo.cd_competencia, 1, 4)
@@ -873,7 +893,7 @@ begin
                systimestamp,
                'YYYY-MM-DD"T"HH24:MI:SS.FF3TZH:TZM'
              ) as "database_time",
-             '0.3.0' as "contract_version",
+             '0.4.0' as "contract_version",
              case
                when p.ano is null or p.mes is null then null
                else to_char(p.ano, 'FM0000')
@@ -1087,7 +1107,7 @@ begin
                systimestamp,
                'YYYY-MM-DD"T"HH24:MI:SS.FF3TZH:TZM'
              ) as "database_time",
-             '0.3.0' as "contract_version",
+             '0.4.0' as "contract_version",
              case
                when p.ano is null or p.mes is null then null
                else to_char(p.ano, 'FM0000')
@@ -1299,7 +1319,7 @@ begin
                systimestamp,
                'YYYY-MM-DD"T"HH24:MI:SS.FF3TZH:TZM'
              ) as "database_time",
-             '0.3.0' as "contract_version",
+             '0.4.0' as "contract_version",
              case
                when p.ano is null or p.mes is null then null
                else to_char(p.ano, 'FM0000')
@@ -1462,7 +1482,7 @@ begin
                systimestamp,
                'YYYY-MM-DD"T"HH24:MI:SS.FF3TZH:TZM'
              ) as "database_time",
-             '0.3.0' as "contract_version",
+             '0.4.0' as "contract_version",
              meta.cd_competencia_mais_recente as "data_through",
              json_object(
                'cnes' value p.cnes
@@ -1555,7 +1575,7 @@ begin
     p_module_name => 'medflow_dev',
     p_pattern     => 'hospitais/:cnes/especialidades',
     p_etag_type   => 'HASH',
-    p_comments    => 'Perfil por especialidade SIH de um hospital numa competencia.'
+    p_comments    => 'Perfil por especialidade SIH de um hospital numa competencia, com o indice de permanencia por especialidade e o benchmark regional que o forma.'
   );
 
   ords.define_handler(
@@ -1650,7 +1670,7 @@ begin
                systimestamp,
                'YYYY-MM-DD"T"HH24:MI:SS.FF3TZH:TZM'
              ) as "database_time",
-             '0.3.0' as "contract_version",
+             '0.4.0' as "contract_version",
              case
                when p.ano is null or p.mes is null then null
                else to_char(p.ano, 'FM0000')
@@ -1699,7 +1719,12 @@ begin
                             'cmi_real' value x.vl_cmi_real,
                             'average_stay_days' value x.nr_permanencia_media,
                             'price_reference_competence' value x.cd_competencia_preco_referencia,
-                            'sample_status' value x.st_amostra
+                            'sample_status' value x.st_amostra,
+                            'benchmark_admissions' value x.qt_internacao_benchmark_especialidade,
+                            'benchmark_hospitals' value x.qt_hospital_benchmark_especialidade,
+                            'average_stay_benchmark' value x.nr_permanencia_media_benchmark_especialidade,
+                            'ipe' value x.nr_ipe,
+                            'ipe_sample_status' value x.st_amostra_ipe
                             null on null returning json
                           )
                           order by x.nr_linha
@@ -1815,7 +1840,7 @@ begin
                systimestamp,
                'YYYY-MM-DD"T"HH24:MI:SS.FF3TZH:TZM'
              ) as "database_time",
-             '0.3.0' as "contract_version",
+             '0.4.0' as "contract_version",
              json_object(
                'cnes' value p.cnes,
                'eligible_only' value case when p.somente_elegiveis = 1 then 'true' else 'false' end format json

@@ -1,7 +1,7 @@
 import methodologySnapshot from '../../mocks/metodologia.json'
 import { apiUrl } from './base'
 
-export const METHODOLOGY_CONTRACT_VERSION = '0.3.0' as const
+export const METHODOLOGY_CONTRACT_VERSION = '0.4.0' as const
 
 type PublishedSource = 'oracle-live' | 'snapshot'
 
@@ -24,6 +24,9 @@ export type MethodologyCoverage = {
   hospital_months_without_declared_sus_bed: number
   benchmark_zero_rows: number
   ipr_insufficient_sample_rows: number
+  eligible_ipe_rows: number
+  ipe_benchmark_zero_rows: number
+  ipe_insufficient_sample_rows: number
 }
 
 export type MethodologyFormula = {
@@ -107,6 +110,7 @@ const DATABASE_TIME_PATTERN =
 const FORMULA_IDS = [
   'tmh',
   'ipr',
+  'ipe',
   'is',
   'cmi',
   'iph',
@@ -116,7 +120,7 @@ const FORMULA_IDS = [
   'icsap',
   'length_of_stay',
 ] as const
-const CUT_IDS = ['tmh_cmi', 'ipr', 'specialty', 'cid', 'seasonality'] as const
+const CUT_IDS = ['tmh_cmi', 'ipr', 'ipe', 'specialty', 'cid', 'seasonality'] as const
 const SOURCE_IDS = [
   'sih_rd',
   'cnes_lt',
@@ -183,6 +187,9 @@ function isValidCoverage(value: unknown): value is MethodologyCoverage {
     'hospital_months_without_declared_sus_bed',
     'benchmark_zero_rows',
     'ipr_insufficient_sample_rows',
+    'eligible_ipe_rows',
+    'ipe_benchmark_zero_rows',
+    'ipe_insufficient_sample_rows',
   ].every((key) => isNonNegativeInteger(value[key]))
 }
 

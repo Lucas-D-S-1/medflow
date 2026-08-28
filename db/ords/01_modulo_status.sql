@@ -1,3 +1,14 @@
+-- ATENCAO: este roteiro e uma FATIA HISTORICA, nao a definicao vigente.
+--
+-- `ords.define_module` substitui o modulo inteiro. Como este arquivo declara
+-- so parte dos handlers, executa-lo depois do 03 apaga todos os outros: o
+-- modulo fica com os handlers desta fatia e o resto da API responde 404 ate o
+-- 03 ser reaplicado. Aconteceu em 28/08/2026, ao publicar o contrato 0.4.0.
+--
+-- A definicao vigente e completa de `medflow_dev` e o
+-- `03_modulo_medflow_dev.sql`. Para republicar a API, rode o 03 e depois o 04.
+-- Este arquivo fica versionado como registro da fatia que foi aprovada nele.
+
 begin
   ords.define_module(
     p_module_name    => 'medflow_dev',
@@ -39,7 +50,7 @@ begin
                  || '-'
                  || substr(cd_competencia_maxima, 5, 2)
              end as "data_through",
-             '0.3.0' as "contract_version"
+             '0.4.0' as "contract_version"
         from vw_api_status
        fetch first 1 row only
     ~'

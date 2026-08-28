@@ -345,6 +345,19 @@ test('mantém a metodologia colapsável', async ({ page }) => {
 
   await page.getByRole('link', { name: 'Metodologia' }).click()
   await expect(page).toHaveURL(/\/metodologia(\?|$)/)
+
+  // O IPE presta contas da própria cobertura no mesmo lugar que os demais: os
+  // elegíveis sobre o total de linhas hospital/especialidade, e a fórmula e o
+  // corte declarados ao lado dos do IPR.
+  await expect(page.getByTestId('coverage-eligible-ipe')).toContainText(
+    pt((methodologySnapshot.coverage as Record<string, number>).eligible_ipe_rows),
+  )
+  // A fórmula mora num bloco colapsado: conferimos que ela existe, não que
+  // esteja aberta.
+  await expect(
+    page.getByText('permanencia media hospital/especialidade', { exact: false }),
+  ).toHaveCount(1)
+
   const details = page.locator('.methodology-details details')
   await expect(details).toHaveCount(6)
   await expect(details.first()).not.toHaveAttribute('open', '')

@@ -1,8 +1,8 @@
 {
   "status": "ok",
   "source": "snapshot",
-  "database_time": "2026-08-10T01:06:06.417941+00:00",
-  "contract_version": "0.3.0",
+  "database_time": "2026-08-28T12:29:16.209861+00:00",
+  "contract_version": "0.4.0",
   "data_through": "2026-06",
   "region": {
     "region_code": "35073",

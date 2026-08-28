@@ -150,6 +150,27 @@ with conferencia (ordem, metrica, esperado, obtido) as (
   union all
   select 39, 'grupos ICSAP distintos', 19,
          (select count(distinct cd_grupo_icsap) from mart_icsap_regiao_mensal) from dual
+
+  -- Indice de permanencia por especialidade, contrato 0.4.0. Os tres gates
+  -- juntos provam que a cobertura publicada e a que foi medida: elegiveis,
+  -- benchmark zerado e amostra insuficiente somam as 54.328 linhas do mart,
+  -- entao nenhuma linha ficou sem estado.
+  union all
+  select 40, 'linhas com IPE elegivel', 34741,
+         (select count(*) from mart_indicador_hospital_especialidade_mensal
+          where nr_ipe is not null) from dual
+  union all
+  select 41, 'linhas com amostra de IPE suficiente', 34741,
+         (select count(*) from mart_indicador_hospital_especialidade_mensal
+          where st_amostra_ipe = 'suficiente') from dual
+  union all
+  select 42, 'linhas de IPE com benchmark zerado', 689,
+         (select count(*) from mart_indicador_hospital_especialidade_mensal
+          where st_amostra_ipe = 'benchmark_zero') from dual
+  union all
+  select 43, 'linhas de IPE com amostra insuficiente', 18898,
+         (select count(*) from mart_indicador_hospital_especialidade_mensal
+          where st_amostra_ipe = 'amostra_insuficiente') from dual
 )
 select metrica,
        esperado,

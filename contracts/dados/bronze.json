@@ -1,7 +1,7 @@
 {
   "camada": "bronze",
-  "versao_contrato": "0.3.0",
-  "gerado_em_utc": "2026-08-27T00:03:08.834082+00:00",
+  "versao_contrato": "0.4.0",
+  "gerado_em_utc": "2026-08-28T12:28:26.367072+00:00",
   "principios": [
     "Arquivos de origem são imutáveis e preservados no formato recebido.",
     "DBF é cache técnico intermediário; Parquet é serialização fiel e reproduzível.",

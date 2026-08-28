@@ -84,7 +84,7 @@ begin
                           {"owner": "MEDFLOW", "name": "dim_hospital_alias"}
                         ]}'
     );
-  dbms_output.put_line('Profile MEDFLOW_GENAI sincronizado com o contrato 0.3.0.');
+  dbms_output.put_line('Profile MEDFLOW_GENAI sincronizado com o contrato 0.4.0.');
 end;
 /
 

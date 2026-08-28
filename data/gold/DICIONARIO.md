@@ -1,6 +1,6 @@
 # Dicionário da camada Gold — MedFlow
 
-Contrato de esquema `0.3.0`, gerado automaticamente em `2026-08-10T01:06:08.867400+00:00`.
+Contrato de esquema `0.4.0`, gerado automaticamente em `2026-08-28T12:29:18.451718+00:00`.
 
 ## Responsabilidade da camada
 
@@ -89,6 +89,12 @@ TMH e CMI por hospital, especialidade e competência.
 | `vl_cmi` | `float64` | 0 | Valor nominal aprovado nas internações novas dividido pela quantidade de internações novas. |
 | `nr_permanencia_media` | `float64` | 0 | Soma dos dias de permanência dividida pela quantidade de internações novas. |
 | `st_amostra` | `object` | 0 | Estado da amostra segundo os mínimos definidos no contrato do indicador. |
+| `qt_internacao_benchmark_especialidade` | `int64` | 0 | Internações novas dos demais hospitais da região na mesma especialidade. |
+| `qt_dia_permanencia_benchmark_especialidade` | `int32` | 0 | Dias de permanência dos demais hospitais da região na mesma especialidade. |
+| `qt_hospital_benchmark_especialidade` | `int64` | 0 | Quantidade de outros hospitais que compõem o benchmark da especialidade. |
+| `nr_permanencia_media_benchmark_especialidade` | `float64` | 2,584 | Permanência média dos demais hospitais da região na mesma especialidade, em dias. |
+| `nr_ipe` | `float64` | 19,587 | Permanência média do hospital na especialidade dividida pela dos demais hospitais da mesma região, na mesma especialidade e competência. |
+| `st_amostra_ipe` | `object` | 0 | Elegibilidade do IPE: suficiente, benchmark_zero ou amostra_insuficiente. |
 | `nr_indice_ipca` | `Float64` | 0 | Número-índice mensal do IPCA/IBGE, tabela SIDRA 1737, variável 2266. |
 | `nr_fator_correcao_ipca` | `Float64` | 0 | Fator que atualiza o valor nominal da competência para o preço de referência explícito. |
 | `cd_competencia_preco_referencia` | `object` | 0 | Competência AAAAMM para a qual os valores reais foram corrigidos pelo IPCA. |

@@ -31,8 +31,21 @@ ipr as (
          sum(case when st_amostra = 'amostra_insuficiente' then 1 else 0 end)
            as qt_ipr_amostra_insuficiente
     from mart_indicador_hospital_cid_periodo
+),
+-- O IPE e a mesma construcao do IPR um degrau acima no grao, entao presta
+-- contas do mesmo jeito: quantas linhas sao elegiveis e por que as demais
+-- nao sao. Sem isso a tela mostraria um indicador cuja cobertura ninguem
+-- consegue conferir.
+ipe as (
+  select sum(case when st_amostra_ipe = 'suficiente' then 1 else 0 end)
+           as qt_ipe_elegivel,
+         sum(case when st_amostra_ipe = 'benchmark_zero' then 1 else 0 end)
+           as qt_ipe_benchmark_zero,
+         sum(case when st_amostra_ipe = 'amostra_insuficiente' then 1 else 0 end)
+           as qt_ipe_amostra_insuficiente
+    from mart_indicador_hospital_especialidade_mensal
 )
-select '0.3.0' as contract_version,
+select '0.4.0' as contract_version,
        case
          when r.cd_competencia_maxima is null then null
          else substr(r.cd_competencia_maxima, 1, 4)
@@ -65,11 +78,15 @@ select '0.3.0' as contract_version,
        h.qt_hospital_mes_acima_capacidade,
        h.qt_hospital_mes_sem_leito_sus,
        i.qt_benchmark_zero,
-       i.qt_ipr_amostra_insuficiente
+       i.qt_ipr_amostra_insuficiente,
+       e.qt_ipe_elegivel,
+       e.qt_ipe_benchmark_zero,
+       e.qt_ipe_amostra_insuficiente
   from regiao r
  cross join hospital h
  cross join periodo_regiao p
- cross join ipr i;
+ cross join ipr i
+ cross join ipe e;
 
 comment on table vw_api_metodologia is
   'Cobertura, reconciliacoes e competencia da Gold para a tela de metodologia. Os valores sao leituras ou agregacoes de colunas persistidas; a view nao recalcula indicadores. gold_updated_at corresponde ao gerado_em_utc do manifesto Gold publicado.';

@@ -1,8 +1,8 @@
 {
   "status": "ok",
   "source": "snapshot",
-  "database_time": "2026-08-10T01:06:06.417941+00:00",
-  "contract_version": "0.3.0",
+  "database_time": "2026-08-28T12:29:16.209861+00:00",
+  "contract_version": "0.4.0",
   "data_through": "2026-06",
   "filters": {
     "cnes": "3012212",
@@ -29,6 +29,8 @@
       "price_reference_competence": "202606",
       "cnes": "3012212",
       "stay_days_total": 1732,
+      "benchmark_hospitals": 7,
+      "benchmark_admissions": 109,
       "cmi_real": 1485.2348,
       "cmi_nominal": 1485.2348,
       "average_stay_days": 5.109145,
@@ -36,13 +38,18 @@
       "specialty_code": "07",
       "tmh_percent": 1.179941,
       "new_admissions": 339,
+      "ipe": 1.652513,
       "sample_status": "suficiente",
-      "specialty_name": "Pediatria"
+      "specialty_name": "Pediatria",
+      "average_stay_benchmark": 3.091743,
+      "ipe_sample_status": "suficiente"
     },
     {
       "price_reference_competence": "202606",
       "cnes": "3012212",
       "stay_days_total": 941,
+      "benchmark_hospitals": 4,
+      "benchmark_admissions": 174,
       "cmi_real": 822.9703,
       "cmi_nominal": 822.9703,
       "average_stay_days": 3.29021,
@@ -50,13 +57,18 @@
       "specialty_code": "02",
       "tmh_percent": 0,
       "new_admissions": 286,
+      "ipe": 1.347051,
       "sample_status": "suficiente",
-      "specialty_name": "Obstetrícia"
+      "specialty_name": "Obstetrícia",
+      "average_stay_benchmark": 2.442529,
+      "ipe_sample_status": "suficiente"
     },
     {
       "price_reference_competence": "202606",
       "cnes": "3012212",
       "stay_days_total": 397,
+      "benchmark_hospitals": 7,
+      "benchmark_admissions": 1625,
       "cmi_real": 1056.2212,
       "cmi_nominal": 1056.2212,
       "average_stay_days": 1.661088,
@@ -64,13 +76,18 @@
       "specialty_code": "01",
       "tmh_percent": 0.41841,
       "new_admissions": 239,
+      "ipe": 0.585779,
       "sample_status": "suficiente",
-      "specialty_name": "Cirurgia"
+      "specialty_name": "Cirurgia",
+      "average_stay_benchmark": 2.835692,
+      "ipe_sample_status": "suficiente"
     },
     {
       "price_reference_competence": "202606",
       "cnes": "3012212",
       "stay_days_total": 50,
+      "benchmark_hospitals": 10,
+      "benchmark_admissions": 1485,
       "cmi_real": 397.2362,
       "cmi_nominal": 397.2362,
       "average_stay_days": 2.380952,
@@ -78,8 +95,11 @@
       "specialty_code": "03",
       "tmh_percent": 0,
       "new_admissions": 21,
+      "ipe": 0.417834,
       "sample_status": "amostra_insuficiente",
-      "specialty_name": "Clínica médica"
+      "specialty_name": "Clínica médica",
+      "average_stay_benchmark": 5.698316,
+      "ipe_sample_status": "suficiente"
     }
   ]
 }

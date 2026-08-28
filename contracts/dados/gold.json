@@ -1,7 +1,7 @@
 {
   "camada": "gold",
-  "versao_contrato": "0.3.0",
-  "gerado_em_utc": "2026-08-10T01:06:08.867400+00:00",
+  "versao_contrato": "0.4.0",
+  "gerado_em_utc": "2026-08-28T12:29:18.451718+00:00",
   "principios": [
     "Marts orientados às perguntas de gestão e ao consumo no BI.",
     "Toda métrica expõe amostra, numerador, denominador ou estado de calculabilidade.",
@@ -414,6 +414,48 @@
           "aceita_nulo": false,
           "nulos": 0,
           "descricao": "Estado da amostra segundo os mínimos definidos no contrato do indicador."
+        },
+        {
+          "nome": "qt_internacao_benchmark_especialidade",
+          "tipo": "int64",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Internações novas dos demais hospitais da região na mesma especialidade."
+        },
+        {
+          "nome": "qt_dia_permanencia_benchmark_especialidade",
+          "tipo": "int32",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Dias de permanência dos demais hospitais da região na mesma especialidade."
+        },
+        {
+          "nome": "qt_hospital_benchmark_especialidade",
+          "tipo": "int64",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Quantidade de outros hospitais que compõem o benchmark da especialidade."
+        },
+        {
+          "nome": "nr_permanencia_media_benchmark_especialidade",
+          "tipo": "float64",
+          "aceita_nulo": true,
+          "nulos": 2584,
+          "descricao": "Permanência média dos demais hospitais da região na mesma especialidade, em dias."
+        },
+        {
+          "nome": "nr_ipe",
+          "tipo": "float64",
+          "aceita_nulo": true,
+          "nulos": 19587,
+          "descricao": "Permanência média do hospital na especialidade dividida pela dos demais hospitais da mesma região, na mesma especialidade e competência."
+        },
+        {
+          "nome": "st_amostra_ipe",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Elegibilidade do IPE: suficiente, benchmark_zero ou amostra_insuficiente."
         },
         {
           "nome": "nr_indice_ipca",

@@ -1,12 +1,26 @@
 import hospitalSnapshot from '../../mocks/hospitais-35073.json'
 import { apiUrl } from '../../lib/api/base'
 
-export const HOSPITAL_CONTRACT_VERSION = '0.3.0' as const
+export const HOSPITAL_CONTRACT_VERSION = '0.4.0' as const
 
 type PublishedSource = 'oracle-live' | 'snapshot'
 
 export type SampleStatus = 'suficiente' | 'amostra_insuficiente'
 export type CapacityStatus = 'disponivel' | 'sem_leito_sus_declarado'
+
+/**
+ * `suficiente` é o único estado em que um índice comparativo existe. Os outros
+ * dois são motivos distintos e precisam ser ditos com palavras diferentes na
+ * tela:
+ * - `amostra_insuficiente`: não há casos bastantes no hospital e/ou nos pares.
+ *   O benchmark pode nem existir (nenhum hospital par, média nula).
+ * - `benchmark_zero`: existem pares, mas a permanência média deles é zero,
+ *   então a razão seria divisão por zero. Não é "sem par".
+ *
+ * IPR e IPE compartilham este vocabulário porque são a mesma construção em
+ * graos diferentes; separá-los daria dois nomes para o mesmo estado.
+ */
+export type ComparisonSampleStatus = SampleStatus | 'benchmark_zero'
 
 export type HospitalItem = {
   cnes: string
@@ -130,6 +144,10 @@ export function isNonEmptyText(value: unknown): value is string {
 
 export function isSampleStatus(value: unknown): value is SampleStatus {
   return value === 'suficiente' || value === 'amostra_insuficiente'
+}
+
+export function isComparisonSampleStatus(value: unknown): value is ComparisonSampleStatus {
+  return isSampleStatus(value) || value === 'benchmark_zero'
 }
 
 type BlockKind = 'complete' | 'absent' | 'invalid'

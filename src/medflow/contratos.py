@@ -12,7 +12,7 @@ from typing import Any
 import pandas as pd
 import pyarrow.parquet as pq
 
-VERSAO_CONTRATO = "0.3.0"
+VERSAO_CONTRATO = "0.4.0"
 
 MAPEAMENTO_COLUNAS = {
     "_ano": "nr_ano_competencia",

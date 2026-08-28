@@ -10,7 +10,7 @@ openapi: 3.1.0
 
 info:
   title: MedFlow — API de leitura
-  version: 0.3.0
+  version: 0.4.0
   summary: Indicadores hospitalares e territoriais do SUS em São Paulo, 2024-01 a 2026-06.
   description: |
     Dez endpoints analíticos somente leitura (`GET`) e uma fronteira governada
@@ -1060,6 +1060,30 @@ components:
         average_stay_days: { type: [number, "null"] }
         price_reference_competence: { type: [string, "null"] }
         sample_status: { $ref: "#/components/schemas/StatusAmostra" }
+        benchmark_admissions: { type: integer }
+        benchmark_hospitals:
+          type: integer
+          description: |
+            Hospitais da mesma região na mesma especialidade e competência,
+            excluído o próprio. Comparar um hospital consigo mesmo puxaria a
+            referência na direção dele, e quanto menor a região mais forte
+            seria o efeito.
+        average_stay_benchmark: { type: [number, "null"] }
+        ipe:
+          type: [number, "null"]
+          description: |
+            Índice de Permanência por Especialidade: permanência média do
+            hospital nesta especialidade dividida pela dos demais hospitais da
+            mesma região, na mesma especialidade e competência. Acima de 1
+            significa permanência maior que a dos pares. Nulo quando
+            `ipe_sample_status` não é `suficiente`. **Não é medida de qualidade
+            nem de desfecho clínico** — não há ajuste de risco.
+        ipe_sample_status:
+          allOf: [{ $ref: "#/components/schemas/StatusAmostra" }]
+          description: |
+            Elegibilidade do `ipe`. Separado de `sample_status`, que responde
+            pelo corte de TMH e CMI: os dois cortes são diferentes e podem
+            divergir na mesma linha.
 
     ItemCid:
       type: object

@@ -80,6 +80,7 @@ export default function MetodologiaView() {
             <MetricCard label="Pacientes-dia estimados" value={formatInteger(data.coverage.estimated_patient_days)} detail="numerador persistido do IPH" testId="coverage-patient-days" />
             <MetricCard label="Dias de permanência" value={formatInteger(data.coverage.stay_days)} detail="não equivalem a diárias faturadas" testId="coverage-stay-days" />
             <MetricCard label="Benchmark zerado" value={formatInteger(data.coverage.benchmark_zero_rows)} detail="linhas com IPR nulo" testId="coverage-benchmark-zero" />
+            <MetricCard label="IPE elegível" value={formatInteger(data.coverage.eligible_ipe_rows)} detail={`de ${formatInteger(data.coverage.specialty_month_rows)} linhas hospital/especialidade`} testId="coverage-eligible-ipe" />
           </div>
 
           <MethodNote>

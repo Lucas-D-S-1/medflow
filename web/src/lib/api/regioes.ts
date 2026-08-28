@@ -1,7 +1,7 @@
 import regionalSnapshot from '../../mocks/regioes-resumo.json'
 import { apiUrl } from './base'
 
-export const REGIONAL_CONTRACT_VERSION = '0.3.0' as const
+export const REGIONAL_CONTRACT_VERSION = '0.4.0' as const
 
 type PublishedSource = 'oracle-live' | 'snapshot'
 

@@ -100,16 +100,10 @@ function planoDeFixtures(ano: string, mes: string): Fixture[] {
       caminho: `regioes/${REGIAO}/serie`,
       parametros: { limit: LIMITE_DO_CLIENTE.serie },
     },
-    {
-      arquivo: `fluxos-${REGIAO}.json`,
-      caminho: 'fluxos',
-      parametros: { ...competencia, origem: REGIAO, limit: LIMITE_DO_CLIENTE.padrao },
-    },
-    {
-      arquivo: `icsap-${REGIAO}.json`,
-      caminho: 'icsap',
-      parametros: { ...competencia, regiao: REGIAO, limit: LIMITE_DO_CLIENTE.padrao },
-    },
+    // `fluxos` e `icsap` continuam na API e têm reconciliação própria, mas o
+    // WebApp deixou de consumi-los quando a etapa de fluxos saiu da análise
+    // (`3e4613b`). Gerar snapshot deles ressuscitava dois arquivos que nenhum
+    // módulo importa, a cada `make fixtures`.
     {
       arquivo: `hospitais-${REGIAO}.json`,
       caminho: 'hospitais',

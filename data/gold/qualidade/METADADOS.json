@@ -1,7 +1,7 @@
 {
   "camada": "gold",
-  "versao_contrato": "0.3.0",
-  "gerado_em_utc": "2026-08-10T01:06:06.417941+00:00",
+  "versao_contrato": "0.4.0",
+  "gerado_em_utc": "2026-08-28T12:29:16.209861+00:00",
   "metricas": {
     "internacoes_novas_reconciliadas": 7150693,
     "pacientes_dia_estimados": 33593969,
@@ -28,8 +28,8 @@
     "mart_indicador_hospital_especialidade_mensal": {
       "caminho": "data/gold/marts/mart_indicador_hospital_especialidade_mensal.parquet",
       "linhas": 54328,
-      "colunas": 24,
-      "sha256": "1cd5f7cd756dd096d8586b4497a7800f9f2d3fa69c5e64fb7b608a7af28268dd"
+      "colunas": 30,
+      "sha256": "6b668725da53b73e0aa08055ab604e981eeaa8242b451a2f2357040df53166f6"
     },
     "mart_indicador_hospital_cid_periodo": {
       "caminho": "data/gold/marts/mart_indicador_hospital_cid_periodo.parquet",

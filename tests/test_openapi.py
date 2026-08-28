@@ -89,7 +89,7 @@ class TestEspecificacao:
         validate(spec)
 
     def test_declara_a_versao_do_contrato_de_dados(self, spec):
-        assert spec["info"]["version"] == "0.3.0"
+        assert spec["info"]["version"] == "0.4.0"
 
     def test_todo_ref_aponta_para_algo_que_existe(self, spec):
         def visitar(no, trilha="#"):

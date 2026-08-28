@@ -260,9 +260,20 @@ test('mostra o perfil por especialidade somando as internações do hospital', a
   await expect(page.getByTestId('especialidade-row-07')).toContainText(
     pt(especialidadePediatria.average_stay_days as number, 2),
   )
-  await expect(page.getByTestId('especialidade-sample-03')).toContainText(
-    'amostra insuficiente para comparação',
+  // O IPE divide a permanência do hospital pela dos pares da região na mesma
+  // especialidade: 5,11 dias contra 3,09 em sete hospitais dá 1,65.
+  await expect(page.getByTestId('especialidade-ipe-07')).toHaveText(
+    pt(especialidadePediatria.ipe as number, 2),
   )
+  await expect(page.getByTestId('especialidade-row-07')).toContainText(
+    `pares: ${pt(especialidadePediatria.average_stay_benchmark as number, 2)} em 7 hospitais`,
+  )
+  // Os dois cortes divergem nesta linha: 23 internações reprovam em TMH e CMI,
+  // que exigem 30, e aprovam no IPE, que exige 20. O aviso diz de qual fala.
+  await expect(page.getByTestId('especialidade-sample-03')).toContainText(
+    'amostra insuficiente para TMH e CMI',
+  )
+  await expect(page.getByTestId('especialidade-ipe-03')).toBeVisible()
   // 322 + 300 + 258 + 23 = 903, o total do hospital na competência.
   await expect(
     page.getByText(

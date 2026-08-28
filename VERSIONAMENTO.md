@@ -84,7 +84,7 @@ etapa de fluxos saiu por decisão de produto na mesma rodada.
 A reconciliação não precisou ser repetida em nenhum desses passos: as mudanças
 movem componentes, apagam texto e derivam comparações a partir de numeradores e
 denominadores que a própria API publica, sem tocar em cálculo da Gold nem em
-contrato. O contrato público permanece em `0.3.0`.
+contrato. O contrato público permaneceu em `0.3.0` até o IPE, em 28/08/2026.
 
 O que entrou depois da `v0.4.0`, ainda sem tag: contexto global de competência e
 território, panorama territorial no mapa, totais do recorte, MoM e YoY, placar
@@ -94,5 +94,23 @@ competência restrito ao recorte publicado.
 A `v0.4.0` é um marco `MINOR` porque inclui uma função pública nova: a FlowIA
 contextual no WebApp, servida por um `POST` governado no ORDS. O mesmo marco
 fecha a dimensão territorial municipal e a busca hospitalar por aliases. O
-contrato de dados permanece em `0.3.0`: a versão da entrega avançou, mas o
+contrato de dados permanecia em `0.3.0`: a versão da entrega avançou, mas o
 esquema canônico das camadas não sofreu uma ruptura incompatível.
+
+## O contrato de dados foi para `0.4.0` em 28/08/2026
+
+O Índice de Permanência por Especialidade acrescentou seis colunas ao mart de
+especialidades e cinco campos à resposta de `hospitais/:cnes/especialidades`.
+São adições, não rupturas: quem consumia o contrato `0.3.0` continua lendo os
+mesmos campos com os mesmos significados, e por isso o passo é `MINOR` também
+no contrato de dados.
+
+A versão subiu de qualquer forma porque o contrato é o que a API promete, e ela
+passou a prometer mais. Deixá-la em `0.3.0` faria dois conjuntos de campos
+diferentes responderem pelo mesmo número, que é exatamente o que a versão
+existe para impedir.
+
+A migração foi **aditiva** (`db/schema/05_adicionar_indice_especialidade.sql`),
+não uma recriação do modelo: o `02_criar_tabelas_gold.sql` derruba e recria as
+tabelas, e rodá-lo em produção deixaria o site público sem dado durante a
+carga.

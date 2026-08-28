@@ -7,22 +7,16 @@ import {
   isNullableNumber,
   isRecord,
   REGION_CODE_PATTERN,
+  type ComparisonSampleStatus,
 } from './hospitais'
 import { apiUrl } from '../../lib/api/base'
 
-export const CID_CONTRACT_VERSION = '0.3.0' as const
+export const CID_CONTRACT_VERSION = '0.4.0' as const
 
 type PublishedSource = 'oracle-live' | 'snapshot'
 
-/**
- * `suficiente` é o único estado em que o IPR existe. Os outros dois são motivos
- * distintos e precisam ser ditos com palavras diferentes na tela:
- * - `amostra_insuficiente`: não há casos bastantes no hospital e/ou nos pares.
- *   O benchmark pode nem existir (`benchmark_hospitals` zero, média nula).
- * - `benchmark_zero`: existem pares (1 a 10 hospitais), mas a permanência média
- *   deles é zero, então a razão do IPR seria divisão por zero. Não é "sem par".
- */
-export type CidSampleStatus = 'suficiente' | 'amostra_insuficiente' | 'benchmark_zero'
+/** O vocabulário é o mesmo do IPE; ver `ComparisonSampleStatus`. */
+export type CidSampleStatus = ComparisonSampleStatus
 
 export type CidItem = {
   cnes: string
