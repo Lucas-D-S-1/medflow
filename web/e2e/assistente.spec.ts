@@ -180,3 +180,38 @@ test('mantém os atalhos úteis quando o Select AI está indisponível', async (
     'não uma taxa de ocupação real',
   )
 })
+
+test('explica as regras de comparação sem consultar o modelo', async ({ page }) => {
+  let calls = 0
+  await page.route('**/api/dev/v1/assistente/perguntar', async (route) => {
+    calls += 1
+    await route.abort()
+  })
+
+  await page.goto('/?regiao=35073#hospital')
+  await page.getByRole('button', { name: /Posso ajudar/ }).click()
+  const panel = page.locator('#medflow-assistant-panel')
+  const perguntar = async (texto: string) => {
+    await page.getByLabel('Faça outra pergunta').fill(texto)
+    await page.getByLabel('Faça outra pergunta').press('Enter')
+  }
+
+  // Critério de pares é regra de produto: ele vive no front e não existe como
+  // coluna na Gold, então mandar o modelo procurar no banco seria mandá-lo
+  // procurar o que o banco não tem.
+  await perguntar('Qual o critério para dois hospitais serem pares?')
+  await expect(panel).toContainText('mesmo tipo de unidade')
+  await expect(panel).toContainText('faixa de leitos')
+  await expect(panel).toContainText('pelo menos três pares')
+
+  await perguntar('Por que o IPH do hospital dia passa de 100%?')
+  await expect(panel).toContainText('giro sobre capacidade')
+
+  await perguntar('O que significa a faixa da barra de posição?')
+  await expect(panel).toContainText('metade central')
+
+  await perguntar('Como funciona o placar de sinais acesos?')
+  await expect(panel).toContainText('quintil mais alto')
+
+  expect(calls).toBe(0)
+})

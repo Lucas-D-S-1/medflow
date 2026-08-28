@@ -22,6 +22,7 @@ const quickQuestions: Record<RouteKey, string[]> = {
     'Como interpretar o mapa?',
   ],
   hospital: [
+    'Qual o critério para dois hospitais serem pares?',
     'O que é IPR?',
     'Por que o IPR pode ficar indisponível?',
     'Como comparar hospitais corretamente?',
@@ -217,6 +218,34 @@ export default function AssistantWidget() {
     if (/comparar hospitais|comparacao.*hospital|hospital.*comparar/.test(normalized)) {
       return {
         text: 'Compare hospitais na mesma competência e região, confirme volume de internações e use IPR, permanência e perfil clínico em conjunto. Diferenças de complexidade e amostras pequenas impedem tratar um único indicador como ranking de qualidade.',
+      }
+    }
+
+    // Critérios de comparação são regra de produto, não pergunta de dado: eles
+    // vivem no front e não existem como coluna na Gold. Responder aqui é mais
+    // correto — e mais barato — do que mandar o modelo procurar no banco o que
+    // o banco não tem.
+    if (/criterio.*par|pares.*criterio|como.*(escolhe|define|monta).*par|quem.*e.*par|grupo de par|hospitais? (sao|são) (comparados|pares)|comparad. com quem/.test(normalized)) {
+      return {
+        text: 'Há dois grupos de comparação, e você escolhe qual usar. "Mesmo tipo e porte" reúne hospitais com o mesmo tipo de unidade no CNES e a mesma faixa de leitos SUS (até 24, 25 a 59, 60 a 149, 150 a 299, 300 ou mais), em todo o estado. "Mesma região" reúne os hospitais do mesmo território. Em qualquer um deles o próprio hospital sai do grupo, pela mesma razão que o IPR exclui o hospital do benchmark regional: comparar alguém consigo mesmo puxa a mediana na direção dele. O grupo precisa de pelo menos três pares com valor calculado; abaixo disso a faixa não é publicada.',
+      }
+    }
+
+    if (/faixa|mediana.*par|quartil|barra de posicao|o que e tipico|percentil/.test(normalized)) {
+      return {
+        text: 'A barra sob cada indicador mostra como os pares se distribuem: a área destacada é a metade central do grupo, entre o primeiro e o terceiro quartil, e o traço é a mediana. O ponto é este hospital. Ela responde o que é típico entre semelhantes, não o que é bom: se estar acima é bom ou ruim depende do indicador e do contexto clínico, e essa leitura continua com quem analisa. Não há ajuste de risco.',
+      }
+    }
+
+    if (/hospital.?dia|permanencia.*menos de um dia|giro|396|iph.*acima de 100/.test(normalized)) {
+      return {
+        text: 'Em unidades com permanência média abaixo de um dia o IPH deixa de medir ocupação. Ele divide pacientes-dia por leitos-dia declarados, e a reconstrução do SIH atribui ao menos um dia por internação — num hospital-dia o paciente não passa a noite, então o índice passa a medir giro sobre capacidade. O Hospital Dia Butantã aparece com 396,7% tendo usado 20 dos 60 leitos-dia disponíveis. Comparar com unidades do mesmo tipo mantém a comparação justa, mas não transforma o número em taxa de ocupação, e a tela avisa isso.',
+      }
+    }
+
+    if (/sinais? acesos|quintil|placar|quantos sinais|indice de priorizacao/.test(normalized)) {
+      return {
+        text: 'O placar conta em quantos dos seis indicadores a região está no quintil mais alto do recorte visível: pressão sobre leitos, mortalidade observada, permanência média, custo médio, atendidos fora da região e ICSAP. É contagem de sinais, não nota de qualidade — IPH, TMH e CMI são declarados no próprio produto como não sendo medidas de qualidade, e somá-los numa nota afirmaria o que cada um deles nega. Os cortes saem do recorte que está na tela: filtrar uma rede regional muda os limiares.',
       }
     }
 
