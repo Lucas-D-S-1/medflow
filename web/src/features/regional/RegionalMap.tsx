@@ -121,6 +121,12 @@ export default function RegionalMap({
   const values = visibleItems.map((item) => item.iph_percent).sort((a, b) => a - b)
   const thresholds = [0.2, 0.4, 0.6, 0.8].map((percentile) => quantile(values, percentile))
   const hoveredItem = itemsByRegion.get(hoveredCode)
+  // Com um território escolhido o cartão fica nele por padrão: os valores da
+  // região selecionada não podem depender de manter o ponteiro parado em cima.
+  // O ponteiro passa a servir para comparar outra região sem perder a escolha.
+  const selectedItem = itemsByRegion.get(selectedRegionCode)
+  const cardItem = hoveredItem ?? selectedItem
+  const cardIsSelection = !hoveredItem && Boolean(selectedItem)
 
   function toneFor(item: RegionalSummaryItem | undefined) {
     if (!item) return 'is-muted'
@@ -214,32 +220,40 @@ export default function RegionalMap({
           )
         })}
       </svg>
-      {hoveredItem ? (
-        <div className="map-hover-card" data-testid="regional-map-tooltip" aria-live="polite">
+      {cardItem ? (
+        <div
+          className={`map-hover-card${cardIsSelection ? ' pinned' : ''}`}
+          data-testid="regional-map-tooltip"
+          aria-live="polite"
+        >
           <div className="map-hover-head">
-            <strong>{hoveredItem.region_name}</strong>
-            <span>{formatInteger(hoveredItem.municipality_count)} municípios</span>
+            <strong>{cardItem.region_name}</strong>
+            <span>
+              {cardIsSelection
+                ? 'selecionada'
+                : `${formatInteger(cardItem.municipality_count)} municípios`}
+            </span>
           </div>
           <dl>
             <div>
               <dt>IPH estimado</dt>
-              <dd>{formatPercent(hoveredItem.iph_percent)}</dd>
+              <dd>{formatPercent(cardItem.iph_percent)}</dd>
             </div>
             <div>
               <dt>Internações novas</dt>
-              <dd>{formatInteger(hoveredItem.new_admissions)}</dd>
+              <dd>{formatInteger(cardItem.new_admissions)}</dd>
             </div>
             <div>
               <dt>TMH observado</dt>
-              <dd>{formatPercent(hoveredItem.tmh_percent)}</dd>
+              <dd>{formatPercent(cardItem.tmh_percent)}</dd>
             </div>
             <div>
               <dt>Ante o próprio mês</dt>
               <dd>
-                {hoveredItem.seasonality_status === 'calculado' &&
-                hoveredItem.seasonality_index !== null
-                  ? `${hoveredItem.seasonality_index >= 1 ? '+' : '−'}${formatPercent(
-                      Math.abs(hoveredItem.seasonality_index - 1) * 100,
+                {cardItem.seasonality_status === 'calculado' &&
+                cardItem.seasonality_index !== null
+                  ? `${cardItem.seasonality_index >= 1 ? '+' : '−'}${formatPercent(
+                      Math.abs(cardItem.seasonality_index - 1) * 100,
                     )}`
                   : 'não calculado'}
               </dd>

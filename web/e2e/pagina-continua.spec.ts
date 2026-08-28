@@ -217,3 +217,21 @@ test('clicar de novo na região selecionada volta ao panorama', async ({ page })
   await expect(page.getByTestId('state-totals-scope')).toBeVisible()
   expect(new URL(page.url()).searchParams.get('regiao')).toBeNull()
 })
+
+test('o cartão do mapa fica no território escolhido, sem depender do ponteiro', async ({ page }) => {
+  await mockLiveSource(page)
+  await page.goto(`/?competencia=${snapshotCompetencia}&regiao=35073`)
+
+  const cartao = page.getByTestId('regional-map-tooltip')
+  await expect(cartao).toContainText('JUNDIAI')
+  await expect(cartao).toContainText('selecionada')
+
+  // O ponteiro passa a servir para comparar outra região sem perder a escolha.
+  await page.getByTestId('regional-map-35071').hover()
+  await expect(cartao).toContainText('BRAGANCA')
+
+  // E ao sair volta para a região escolhida, em vez de esvaziar.
+  await page.mouse.move(2, 2)
+  await expect(cartao).toContainText('JUNDIAI')
+  await expect(cartao).toContainText('selecionada')
+})
