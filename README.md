@@ -217,22 +217,29 @@ O contrato das onze operações está em
 o SQL dos handlers e contra a API viva. Um contrato que ninguém confere vira
 só uma terceira versão da verdade.
 
-O produto tem duas páginas. A análise é contínua: território, fluxos e hospital
-são etapas ancoradas da mesma investigação, e descer a página é estreitar o
+O produto tem duas páginas. A análise é contínua: território e hospital são
+etapas ancoradas da mesma investigação, e descer a página é estreitar o
 recorte. Competência e território ficam numa barra de contexto que acompanha a
 investigação inteira, e a URL preserva o recorte para abrir e compartilhar.
 
 | Endereço | O que entrega | Endpoints |
 |---|---|---|
-| `/#regional` | comportamento sazonal do mês, mapa, ranking e série regional | `regioes/resumo`, `regioes/{id}/serie` |
-| `/#fluxos` | residência, destino e condições sensíveis à atenção primária | `fluxos`, `icsap` |
-| `/#hospital` | hospitais da região, série, especialidades e diagnósticos | `hospitais`, `.../serie`, `.../especialidades`, `.../cids` |
+| `/#regional` | panorama das 62 regiões no mapa, totais do recorte, MoM, YoY, placar de sinais e série mensal | `regioes/resumo`, `regioes/{id}/serie` |
+| `/#hospital` | hospitais da região, comparação com pares, série, especialidades e diagnósticos | `hospitais`, `.../serie`, `.../especialidades`, `.../cids` |
 | `/metodologia` | Posso confiar no número e quais são seus limites? | `status`, `metodologia` |
 | assistente flutuante | acompanha a etapa visível e o recorte ativo | respostas locais; fallback `POST assistente/perguntar` |
 
-Os caminhos antigos `/regional`, `/fluxos` e `/hospital` continuam válidos: são
-reescritos para as âncoras equivalentes com o recorte intacto, antes do app
-montar.
+A etapa abre em **panorama**: nenhuma região selecionada, as 62 comparáveis no
+mapa. Escolher um território é ato do usuário — pelo mapa ou pelo seletor abaixo
+dele — e clicar de novo na região escolhida volta ao panorama.
+
+Cada indicador do hospital aberto aparece com a **distribuição dos pares**:
+faixa interquartil, mediana e a posição dele. Dois grupos alternáveis, mesmo
+tipo e porte ou mesma região, sempre com o próprio hospital fora do grupo.
+
+Os caminhos antigos `/regional` e `/hospital` continuam válidos, reescritos para
+as âncoras equivalentes com o recorte intacto, antes do app montar. `/fluxos`
+cai no início da análise: a etapa de fluxos saiu por decisão de produto.
 
 A prestação de contas sobre origem, contrato e cobertura vive só em
 Metodologia. A área analítica não interrompe a leitura para provar o dado; as

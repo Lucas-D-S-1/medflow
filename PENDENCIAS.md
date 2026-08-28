@@ -1,6 +1,6 @@
 # PENDÊNCIAS — Challenge Oracle: MedFlow
 
-Atualizado em 27/08/2026, depois da página analítica contínua.
+Atualizado em 27/08/2026, depois da comparação com pares hospitalares.
 Entrega da Sprint 2: **01/09/2026**.
 
 ## Estado atual para fechar a entrega
@@ -12,8 +12,8 @@ completo, heartbeat diário ativo e a página APEX de demonstração montada em
 25/08/2026.
 
 Depois da `v0.4.0`, o WebApp deixou de ser quatro visões e passou a ser **duas
-páginas**: uma análise contínua com três etapas ancoradas — território, fluxos
-e hospital — e a Metodologia. As mudanças não tocaram cálculo nem contrato,
+páginas**: uma análise contínua com duas etapas ancoradas — território e
+hospital — e a Metodologia. A etapa de fluxos saiu por decisão de produto. As mudanças não tocaram cálculo nem contrato,
 então a reconciliação não precisou ser repetida. O que entrou:
 
 - competência e território em contexto global, com barra persistente e recorte
@@ -22,9 +22,14 @@ então a reconciliação não precisou ser repetida. O que entrou:
   área analítica não interrompe mais a leitura para provar o dado;
 - os títulos interrogativos removidos das seções: a disposição dos dados é que
   provoca a pergunta;
-- a etapa territorial abrindo pelo comportamento sazonal do mês, promovendo um
-  índice que já vinha calculado da Gold — comparação com o observado, não
-  previsão.
+- a etapa territorial abrindo em panorama, com o mapa das 62 regiões, totais do
+  recorte, MoM, YoY e um placar de sinais acesos no lugar de uma nota composta;
+- comparação com pares por hospital: faixa interquartil, mediana e posição, com
+  o próprio hospital fora do grupo e piso de três pares, como o IPR já faz;
+- ressalva no IPH de unidades com permanência abaixo de um dia, onde o índice
+  mede giro sobre capacidade e não ocupação;
+- tabelas ordenáveis por qualquer indicador e seletor de competência que só
+  oferece o que a Gold publicou.
 
 Portões: build Vite aprovado, `tsc` limpo, Playwright **48/48** em três
 execuções seguidas, sem rolagem horizontal em 1280 px e 390 px.

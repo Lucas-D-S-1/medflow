@@ -78,9 +78,18 @@ do marco fechou e a `v0.3.0` foi publicada nessa data.
 Esse congelamento previa exceção — "salvo nova decisão explícita" — e ela veio
 **em 27/08/2026**, depois da `v0.4.0` publicada e dos portões verdes, quando o
 motivo de prazo expirou. As quatro visões viraram **duas páginas**: uma análise
-contínua com três etapas ancoradas e a Metodologia. A reconciliação não
-precisou ser repetida: a mudança move componentes e apaga texto, sem tocar em
-cálculo nem em contrato.
+contínua com duas etapas ancoradas — território e hospital — e a Metodologia. A
+etapa de fluxos saiu por decisão de produto na mesma rodada.
+
+A reconciliação não precisou ser repetida em nenhum desses passos: as mudanças
+movem componentes, apagam texto e derivam comparações a partir de numeradores e
+denominadores que a própria API publica, sem tocar em cálculo da Gold nem em
+contrato. O contrato público permanece em `0.3.0`.
+
+O que entrou depois da `v0.4.0`, ainda sem tag: contexto global de competência e
+território, panorama territorial no mapa, totais do recorte, MoM e YoY, placar
+de sinais, comparação com pares por hospital, tabelas ordenáveis e seletor de
+competência restrito ao recorte publicado.
 
 A `v0.4.0` é um marco `MINOR` porque inclui uma função pública nova: a FlowIA
 contextual no WebApp, servida por um `POST` governado no ORDS. O mesmo marco

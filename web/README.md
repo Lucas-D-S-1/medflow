@@ -3,22 +3,20 @@
 **O quê.** A aplicação React + Vite do MedFlow, servida por dez endpoints
 analíticos `GET` e pelo `POST` governado do assistente.
 
-São **duas páginas**. A análise é uma investigação contínua, com três etapas
+São **duas páginas**. A análise é uma investigação contínua, com duas etapas
 ancoradas no mesmo endereço; descer a página é estreitar o recorte. Metodologia
 é separada porque responde a outra pergunta, feita em outro momento.
 
 | Endereço | O que entrega |
 |---|---|
-| `/#regional` | comportamento sazonal do mês, mapa, ranking e série regional |
-| `/#fluxos` | residência, destino e condições sensíveis à atenção primária |
-| `/#hospital` | hospitais da região, série, especialidades e diagnósticos |
+| `/#regional` | panorama no mapa, totais do recorte, MoM, YoY, sinais e série mensal |
+| `/#hospital` | hospitais da região, comparação com pares, série, especialidades e diagnósticos |
 | `/metodologia` | Posso confiar no número e quais são seus limites? |
 
 Competência e território ficam numa barra de contexto que acompanha a
 investigação inteira; os filtros locais permanecem locais. Tudo na URL, para
-abrir e compartilhar o recorte. Os caminhos antigos `/regional`, `/fluxos` e
-`/hospital` são reescritos para as âncoras equivalentes, com o recorte intacto,
-antes do app montar — um só escritor da URL, para não competir com a
+abrir e compartilhar o recorte. Os caminhos antigos são reescritos para as âncoras
+equivalentes, com o recorte intacto, antes do app montar — um só escritor da URL, para não competir com a
 normalização do contexto.
 
 **Como preparar**, a partir da raiz do repositório:
