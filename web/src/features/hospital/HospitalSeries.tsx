@@ -1,6 +1,11 @@
 import { useEffect, useState } from 'react'
 import type { HospitalSeriesPoint, HospitalSeriesResponse } from './hospitalSerie'
 import {
+  SortableHeader,
+  useSortableRows,
+  type SortableColumn,
+} from '../../shared/useSortableRows'
+import {
   formatCurrency,
   formatDecimal,
   formatInteger,
@@ -33,29 +38,88 @@ function Valor({
   return <strong>{formatar(valor)}</strong>
 }
 
+const COLUMNS: SortableColumn<HospitalSeriesPoint>[] = [
+  {
+    id: 'competencia',
+    label: 'Competência',
+    // Numérica de propósito: `AAAAMM` ordena cronologicamente como número, e é
+    // o que faz a tabela abrir na competência mais recente.
+    numeric: true,
+    value: (ponto) => Number(ponto.competence.replace('-', '')),
+  },
+  { id: 'internacoes', label: 'Internações', numeric: true, value: (ponto) => ponto.new_admissions },
+  {
+    id: 'iph',
+    label: 'IPH estimado',
+    hint: 'não é ocupação medida',
+    numeric: true,
+    value: (ponto) => ponto.iph_percent,
+  },
+  {
+    id: 'tmh',
+    label: 'TMH',
+    hint: 'sem ajuste de risco',
+    numeric: true,
+    value: (ponto) => ponto.tmh_percent,
+  },
+  {
+    id: 'permanencia',
+    label: 'Permanência média',
+    numeric: true,
+    value: (ponto) => ponto.average_stay_days,
+  },
+  { id: 'cmi', label: 'CMI real', numeric: true, value: (ponto) => ponto.cmi_real },
+]
+
 export default function HospitalSeries({ data }: { data: HospitalSeriesResponse }) {
   const [showAll, setShowAll] = useState(false)
-  const primaryItems = data.items.slice(0, PREVIEW_SIZE)
-  const additionalItems = data.items.slice(PREVIEW_SIZE)
+  const { sorted, sortBy, descending, toggleSort } = useSortableRows(
+    data.items,
+    COLUMNS,
+    'competencia',
+    (ponto) => ponto.competence,
+  )
+  // A lista cresce dentro da própria tabela, que rola. Antes as competências
+  // além das seis primeiras iam para um segundo painel abaixo: a série ficava
+  // partida em dois lugares, e ordenar uma metade não dizia nada sobre a outra.
+  const visiveis = showAll ? sorted : sorted.slice(0, PREVIEW_SIZE)
 
   useEffect(() => setShowAll(false), [data.filters.cnes])
 
-  function renderTable(items: HospitalSeriesPoint[], label: string) {
-    return (
-      <div className="hospital-table-wrap">
-        <table className="hospital-table hospital-series-table" aria-label={label}>
+  return (
+    <section className="hospital-panel" aria-labelledby="hospital-series-title">
+      <div className="block-heading">
+        <div>
+          <p className="section-kicker">SÉRIE MENSAL DO HOSPITAL</p>
+          <h2 id="hospital-series-title">{data.hospital.hospital_name}</h2>
+          <p>
+            CNES {data.hospital.cnes} · {data.hospital.unit_type_name} ·{' '}
+            {data.hospital.region_name}. Ordene por qualquer indicador; abre na
+            competência mais recente, e o CMI real está a preços de{' '}
+            {formatPeriod(data.data_through)}.
+          </p>
+        </div>
+        <strong data-testid="serie-count">
+          {formatInteger(visiveis.length)} de {formatInteger(data.pagination.count)} competências
+        </strong>
+      </div>
+
+      <div className="hospital-table-wrap" id="hospital-series-rows">
+        <table
+          className="hospital-table hospital-series-table"
+          aria-label="Série mensal do hospital"
+        >
           <thead>
-            <tr>
-              <th scope="col">Competência</th>
-              <th scope="col">Internações</th>
-              <th scope="col">IPH estimado</th>
-              <th scope="col">TMH</th>
-              <th scope="col">Permanência média</th>
-              <th scope="col">CMI real</th>
-            </tr>
+            <SortableHeader
+              columns={COLUMNS}
+              sortBy={sortBy}
+              descending={descending}
+              onToggle={toggleSort}
+              testIdPrefix="serie-sort"
+            />
           </thead>
           <tbody>
-            {items.map((ponto) => (
+            {visiveis.map((ponto) => (
               <tr key={ponto.competence} data-testid={`serie-row-${ponto.competence}`}>
                 <td data-label="Competência">
                   <strong>{formatPeriod(ponto.competence)}</strong>
@@ -107,62 +171,20 @@ export default function HospitalSeries({ data }: { data: HospitalSeriesResponse 
           </tbody>
         </table>
       </div>
-    )
-  }
 
-  return (
-    <>
-      <section className="hospital-panel" aria-labelledby="hospital-series-title">
-        <div className="block-heading">
-          <div>
-            <p className="section-kicker">SÉRIE MENSAL DO HOSPITAL</p>
-            <h2 id="hospital-series-title">{data.hospital.hospital_name}</h2>
-            <p>
-              CNES {data.hospital.cnes} · {data.hospital.unit_type_name} ·{' '}
-              {data.hospital.region_name}. Da competência mais recente para a mais
-              antiga; o CMI real está a preços de{' '}
-              {formatPeriod(data.data_through)}.
-            </p>
-          </div>
-          <strong data-testid="serie-count">
-            {formatInteger(showAll ? data.items.length : primaryItems.length)} de{' '}
-            {formatInteger(data.pagination.count)} competências
-          </strong>
-        </div>
-
-        {renderTable(primaryItems, 'Série mensal do hospital, competências recentes')}
-
-        {data.items.length > PREVIEW_SIZE && (
-          <button
-            type="button"
-            className="secondary-action"
-            onClick={() => setShowAll((current) => !current)}
-            aria-expanded={showAll}
-            aria-controls="hospital-series-additional"
-          >
-            {showAll
-              ? 'Ocultar competências anteriores'
-              : `Ver todas as ${formatInteger(data.items.length)} competências`}
-          </button>
-        )}
-      </section>
-
-      {showAll && additionalItems.length > 0 && (
-        <section
-          className="hospital-panel hospital-panel-detail"
-          id="hospital-series-additional"
-          aria-labelledby="hospital-series-additional-title"
+      {data.items.length > PREVIEW_SIZE && (
+        <button
+          type="button"
+          className="secondary-action"
+          onClick={() => setShowAll((current) => !current)}
+          aria-expanded={showAll}
+          aria-controls="hospital-series-rows"
         >
-          <div className="block-heading">
-            <div>
-              <p className="section-kicker">COMPETÊNCIAS ANTERIORES</p>
-              <h2 id="hospital-series-additional-title">Histórico completo</h2>
-            </div>
-            <strong>{formatInteger(additionalItems.length)} competências adicionais</strong>
-          </div>
-          {renderTable(additionalItems, 'Série mensal do hospital, competências anteriores')}
-        </section>
+          {showAll
+            ? `Mostrar só as ${formatInteger(PREVIEW_SIZE)} primeiras`
+            : `Ver todas as ${formatInteger(data.items.length)} competências`}
+        </button>
       )}
-    </>
+    </section>
   )
 }

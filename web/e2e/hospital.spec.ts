@@ -28,6 +28,9 @@ import {
   totalInternacoesDoHospital,
 } from './apoio'
 
+/** O mesmo recorte que `HospitalSeries` mostra antes de expandir. */
+const PREVIEW_SERIE = 6
+
 test('lista hospitais da região, marca amostra e capacidade, e seleciona pela URL', async ({
   page,
 }) => {
@@ -232,6 +235,32 @@ test('abre a série mensal do hospital selecionado com denominadores e CMI nomin
     `${paginacao(hospitalSeriesSnapshot).count} de ${paginacao(hospitalSeriesSnapshot).count} competências`,
   )
   await expect(page.getByTestId('serie-row-2024-01')).toBeVisible()
+
+  // A série inteira fica numa tabela só, que rola dentro de si. Antes as
+  // competências além das seis primeiras iam para um segundo painel abaixo, e
+  // a lista ficava partida em dois lugares.
+  await expect(page.locator('.hospital-series-table')).toHaveCount(1)
+  const rolagem = await page
+    .locator('#hospital-series-rows')
+    .evaluate((el) => {
+      // O tsconfig das specs não carrega a lib DOM; o resto do arquivo também
+      // descreve estruturalmente o que usa.
+      const caixa = el as unknown as { clientHeight: number; scrollHeight: number }
+      return { visivel: caixa.clientHeight, total: caixa.scrollHeight }
+    })
+  expect(rolagem.total).toBeGreaterThan(rolagem.visivel)
+
+  // Ordenar vale para a série inteira, não só para a metade visível.
+  await page.getByTestId('serie-sort-iph').click()
+  const iphs = await page
+    .locator('.hospital-series-table tbody tr td:nth-child(3) strong')
+    .evaluateAll((celulas) =>
+      (celulas as unknown as { textContent: string | null }[]).map((celula) =>
+        Number((celula.textContent || '').replace('%', '').replace(',', '.')),
+      ),
+    )
+  expect(iphs.length).toBeGreaterThan(PREVIEW_SERIE)
+  expect([...iphs].sort((a, b) => b - a)).toEqual(iphs)
 })
 test('mostra o perfil por especialidade somando as internações do hospital', async ({ page }) => {
   await mockLiveSource(page)
