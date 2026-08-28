@@ -12,9 +12,10 @@
 }
 
 .analysis-section {
-  /* A âncora precisa parar abaixo do cabeçalho fixo, senão o título da
-     seção fica escondido atrás dele ao chegar por link. */
-  scroll-margin-top: clamp(7rem, 14vw, 10rem);
+  /* A âncora para abaixo do direcionador, o único elemento que continua
+     fixo. Dimensionar isto para o chrome inteiro deixava um vão enorme acima
+     do título ao chegar por link. */
+  scroll-margin-top: clamp(5.5rem, 8vw, 6.5rem);
 }
 
 .analysis-section + .analysis-section {

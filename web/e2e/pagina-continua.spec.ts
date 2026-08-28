@@ -97,3 +97,26 @@ test('leva ao território escolhido no destaque sazonal', async ({ page }) => {
     'acima do que este mês costuma ser',
   )
 })
+
+test('o filtro de contexto sai da frente ao rolar; só o direcionador fica', async ({ page }) => {
+  await mockLiveSource(page)
+  await page.goto('/')
+  await expect(page.getByTestId('seasonal-basis')).toBeVisible()
+
+  await page.mouse.wheel(0, 900)
+
+  // O direcionador continua acessível: é ele que diz em que etapa a leitura
+  // está, e some junto tornaria a marcação de etapa ativa inútil.
+  await expect
+    .poll(async () => Math.round((await page.locator('.topbar').boundingBox())?.y ?? -1))
+    .toBe(0)
+
+  // O filtro, que ocupava 188px dos 260px de chrome grudado, não cobre mais a
+  // análise durante a leitura.
+  await expect
+    .poll(async () => {
+      const caixa = await page.locator('.global-context-bar').boundingBox()
+      return caixa === null || caixa.y + caixa.height <= 0
+    })
+    .toBe(true)
+})

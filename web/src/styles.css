@@ -36,8 +36,19 @@ h3 { margin: 0; font-size: var(--font-size-lg); }
 p { line-height: 1.6; text-wrap: pretty; }
 
 .app-shell { min-height: 100vh; }
-.site-chrome { position: sticky; top: 0; z-index: 20; }
+/*
+ * O chrome inteiro grudado ocupava 260px — 29% de uma tela de 900px — e o
+ * filtro de contexto respondia por 188px disso, cobrindo a análise durante a
+ * leitura. Só o direcionador continua fixo, porque é ele que diz em que etapa
+ * a leitura está; os filtros ficam onde foram lidos e voltam com a rolagem.
+ */
+.site-chrome { display: contents; }
 .topbar {
+  /* `sticky` é limitado pela caixa do pai, então o wrapper não pode ter uma:
+     com `display: contents` o direcionador passa a se prender à página. */
+  position: sticky;
+  top: 0;
+  z-index: 20;
   min-height: 4.5rem;
   display: flex;
   align-items: center;
