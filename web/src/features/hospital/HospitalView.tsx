@@ -392,21 +392,18 @@ export default function HospitalView() {
                 insuficiente não é comparável.
               </MethodNote>
 
-              {list.items.length === 0 ? (
-                <StatePanel kind="empty" title="Nenhum hospital no recorte" testId="hospital-empty">
-                  A fonte respondeu normalmente, mas não observou hospital com produção
-                  nessa região e competência.
-                </StatePanel>
-              ) : (
-                <HospitalTable
-                  search={urlSearch}
-                  onSearchChange={updateHospitalSearch}
-                  searchDisabled={isFallback}
-                  data={list}
-                  selectedCnes={selectedCnes}
-                  onSelect={(cnes) => updateParam('hospital', cnes)}
-                />
-              )}
+              {/* A tabela é renderizada mesmo sem resultado. Ela carrega o
+                  campo de busca: escondê-la quando o filtro não casa fazia o
+                  usuário perder o próprio campo e ficar sem como apagar o que
+                  digitou. */}
+              <HospitalTable
+                search={urlSearch}
+                onSearchChange={updateHospitalSearch}
+                searchDisabled={isFallback}
+                data={list}
+                selectedCnes={selectedCnes}
+                onSelect={(cnes) => updateParam('hospital', cnes)}
+              />
             </>
           )}
 

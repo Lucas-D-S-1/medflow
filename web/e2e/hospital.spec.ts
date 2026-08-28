@@ -454,3 +454,21 @@ test('distingue competência sem hospital publicado de falha do endpoint', async
   await expect(page.getByTestId('hospital-absent-competence')).toContainText('12/2023')
   await expect(page.getByTestId('hospital-list-error')).toHaveCount(0)
 })
+
+test('busca sem resultado preserva o campo para o usuário voltar atrás', async ({ page }) => {
+  await mockLiveSource(page)
+  await page.goto(`/?competencia=${snapshotCompetencia}&regiao=35073#hospital`)
+
+  const campo = page.getByTestId('hospital-search')
+  await expect(campo).toBeVisible()
+  await campo.fill('zzzznaoexiste')
+
+  // O campo carrega a própria saída: escondê-lo junto com a tabela deixava o
+  // usuário sem como apagar o que digitou.
+  await expect(page.getByTestId('hospital-empty')).toContainText('Nenhum hospital com esse termo')
+  await expect(campo).toBeVisible()
+  await expect(campo).toHaveValue('zzzznaoexiste')
+
+  await campo.fill('')
+  await expect(page.getByTestId('hospital-count')).toBeVisible()
+})

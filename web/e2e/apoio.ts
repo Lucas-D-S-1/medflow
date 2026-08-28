@@ -178,10 +178,29 @@ export async function mockLiveSource(page: Page) {
     const year = Number(url.searchParams.get('ano'))
     const month = Number(url.searchParams.get('mes'))
     const regionCode = url.searchParams.get('regiao') ?? ''
+    // O contrato filtra por nome e alias quando `busca` vem preenchido. O mock
+    // ignorava o parâmetro, então nenhum teste conseguia exercer a busca sem
+    // resultado — e foi assim que o campo que engolia a própria saída passou.
+    const busca = (url.searchParams.get('busca') ?? '').trim().toLowerCase()
+    const filtrados = busca
+      ? (hospitalListSnapshot.items as Record<string, unknown>[]).filter((item) =>
+          String(item.hospital_name).toLowerCase().includes(busca),
+        )
+      : (hospitalListSnapshot.items as Record<string, unknown>[])
     const fixtureRegion = hospitalListSnapshot.region as Record<string, unknown>
     const payload = regionCode === fixtureRegion.region_code
       ? {
           ...hospitalListSnapshot,
+          items: filtrados,
+          // Contagem e `has_more` acompanham o filtro: o validador exige
+          // coerência entre eles, e um envelope incoerente vira "resposta
+          // inválida" em vez de "nenhum resultado".
+          pagination: {
+            ...(hospitalListSnapshot.pagination as Record<string, unknown>),
+            offset: 0,
+            count: filtrados.length,
+            has_more: false,
+          },
           source: 'oracle-live',
           database_time: '2026-08-01T12:00:00-03:00',
           data_through: `${year}-${String(month).padStart(2, '0')}`,

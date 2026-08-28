@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { HospitalItem, HospitalListResponse } from './hospitais'
+import StatePanel from '../../shared/StatePanel'
 import { formatCurrency, formatDecimal, formatInteger, formatPercent } from '../../shared/format'
 
 type ColumnId = 'hospital' | 'admissions' | 'iph' | 'tmh' | 'stay' | 'cmi'
@@ -274,7 +275,19 @@ export default function HospitalTable({
       {/* A lista vem inteira e rola dentro de si: nenhuma seção pode ocupar
           mais que metade da altura da página, e paginar em dois blocos
           escondia justamente os extremos que a ordenação existe para achar. */}
-      {renderTable(items, 'Hospitais da região')}
+      {items.length === 0 ? (
+        <StatePanel
+          kind="empty"
+          title={search ? 'Nenhum hospital com esse termo' : 'Nenhum hospital no recorte'}
+          testId="hospital-empty"
+        >
+          {search
+            ? `A busca por "${search}" não encontrou hospital por nome ou alias nesta região e competência. Limpe o campo acima para ver a lista inteira.`
+            : 'A fonte respondeu normalmente, mas não observou hospital com produção nessa região e competência.'}
+        </StatePanel>
+      ) : (
+        renderTable(items, 'Hospitais da região')
+      )}
     </section>
   )
 }
