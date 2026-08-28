@@ -54,13 +54,21 @@
   --color-loader-track: #d7e3f2;
   --color-selected: #1a2948;
   --color-hover: #ffffff;
-  --color-map-muted: #e3eaf2;
-  --color-map-1: #d7e3f2;
-  --color-map-2: #aac9e5;
-  --color-map-3: #72a9d4;
-  --color-map-4: #3d7eb9;
-  --color-map-5: #1a4e83;
-  --color-map-selected-fill: #37ab94;
+  /*
+   * Rampa sequencial quente, a convenção de coroplético para intensidade em
+   * mapas de saúde. Sequencial e não divergente: ela diz "menos" e "mais",
+   * não "bom" e "ruim" — IPH alto pode ser rede sob pressão ou capacidade
+   * subdeclarada, e a legenda continua dizendo que não é classificação
+   * clínica. A luminosidade cai de forma monotônica do 1 ao 5, então a ordem
+   * sobrevive em tons de cinza e a quem não distingue vermelho e verde.
+   */
+  --color-map-muted: #ece7de;
+  --color-map-1: #fff2c9;
+  --color-map-2: #fedd8e;
+  --color-map-3: #fdb562;
+  --color-map-4: #ee7f2d;
+  --color-map-5: #bf4a12;
+  --color-map-selected-fill: #2b6cb0;
 
   --border-subtle: 1px solid var(--color-border);
   --border-strong: 1px solid var(--color-border-strong);

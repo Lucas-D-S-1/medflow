@@ -187,21 +187,10 @@ export default function RegionalView() {
             {visibleItems.length > 0 && (
               <>
                 {/*
-                  Sem território escolhido, os totais dão a ordem de grandeza
-                  do recorte antes de o mapa pedir para comparar 62 regiões.
-                */}
-                {!selectedItem && (
-                  <StateTotals
-                    aggregate={aggregate}
-                    competence={selectedCompetence}
-                    scopeLabel={scopeLabel}
-                  />
-                )}
-
-                {/*
                   O mapa vem primeiro e ocupa a largura: é dele que sai a
                   escolha do território. Os controles vêm logo abaixo, para
-                  quem prefere escolher pelo nome depois de ver o panorama.
+                  quem prefere escolher pelo nome depois de ver o panorama, e
+                  só então os números do recorte.
                 */}
                 <section className="map-panel wide" aria-labelledby="map-title">
                   <div className="block-heading">
@@ -226,6 +215,14 @@ export default function RegionalView() {
                 </section>
 
                 <GlobalContextBar />
+
+                {!selectedItem && (
+                  <StateTotals
+                    aggregate={aggregate}
+                    competence={selectedCompetence}
+                    scopeLabel={scopeLabel}
+                  />
+                )}
 
                 {selectedRegionFromUrl && selectedItem && selectedRegionFromUrl !== selectedItem.region_code && (
                   <p className="selection-warning" role="status">
