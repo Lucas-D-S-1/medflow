@@ -51,12 +51,6 @@ test('sincroniza competência e território entre URL, barra global e rotas', as
   await expect(page).toHaveURL(/busca=teste/)
   await expect(page).toHaveURL(/elegiveis=0/)
 
-  await page.getByRole('link', { name: 'Fluxos' }).click()
-  await expect(page.getByTestId('global-competence')).toHaveValue('2025-05')
-  await expect(page.getByTestId('global-region')).toHaveValue('35073')
-  await expect(page).toHaveURL(/destino=35072/)
-  await expect(page).toHaveURL(/hospital=3012212/)
-
   await page.getByRole('link', { name: 'Hospital' }).click()
   await expect(page.getByTestId('global-competence')).toHaveValue('2025-05')
   await expect(page.getByTestId('global-region')).toHaveValue('35073')

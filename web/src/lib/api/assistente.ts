@@ -10,7 +10,7 @@ export type AssistantResponse = {
 }
 
 export type AssistantContext = {
-  route: 'regional' | 'fluxos' | 'hospital' | 'metodologia'
+  route: 'regional' | 'hospital' | 'metodologia'
   competence: string | null
   region_code: string | null
   region_name: string | null

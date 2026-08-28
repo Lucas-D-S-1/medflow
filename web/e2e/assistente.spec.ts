@@ -79,10 +79,6 @@ test('troca as sugestões junto com a etapa visível', async ({ page }) => {
   await page.getByRole('button', { name: /Posso ajudar/ }).click()
   await expect(page.getByRole('button', { name: 'O que é IPH?' })).toBeVisible()
 
-  await page.getByRole('link', { name: 'Fluxos' }).click()
-  await expect(page.getByText('Contexto: fluxos assistenciais')).toBeVisible()
-  await expect(page.getByRole('button', { name: 'O que é ICSAP?' })).toBeVisible()
-
   await page.getByRole('link', { name: 'Hospital' }).click()
   await page.getByRole('button', { name: 'Por que o IPR pode ficar indisponível?' }).click()
   await expect(page.locator('#medflow-assistant-panel')).toContainText('cortes mínimos')

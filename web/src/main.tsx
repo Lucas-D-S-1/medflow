@@ -27,10 +27,13 @@ function rewriteLegacyPath() {
   const section = path.replace(/^\/+|\/+$/g, '')
   if (!['regional', 'fluxos', 'hospital'].includes(section)) return
 
+  // `/fluxos` deixou de existir como etapa, mas o link continua valendo: cai
+  // no início da análise em vez de numa âncora morta.
+  const anchor = section === 'fluxos' ? '' : `#${section}`
   window.history.replaceState(
     window.history.state,
     '',
-    `${base}/${window.location.search}#${section}`,
+    `${base}/${window.location.search}${anchor}`,
   )
 }
 

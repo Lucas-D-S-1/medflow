@@ -7,7 +7,6 @@ import { useActiveSection } from './shared/useActiveSection'
 
 const SECTIONS = [
   { id: 'regional', label: 'Regional' },
-  { id: 'fluxos', label: 'Fluxos' },
   { id: 'hospital', label: 'Hospital' },
 ]
 const SECTION_IDS = SECTIONS.map((section) => section.id)

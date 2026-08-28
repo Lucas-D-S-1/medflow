@@ -39,12 +39,6 @@ export const regionalSnapshot = JSON.parse(
 export const regionalSeriesSnapshot = JSON.parse(
   readFileSync(new URL('../src/mocks/regiao-serie-35073.json', import.meta.url), 'utf8'),
 ) as Record<string, unknown>
-export const flowSnapshot = JSON.parse(
-  readFileSync(new URL('../src/mocks/fluxos-35073.json', import.meta.url), 'utf8'),
-) as Record<string, unknown>
-export const icsapSnapshot = JSON.parse(
-  readFileSync(new URL('../src/mocks/icsap-35073.json', import.meta.url), 'utf8'),
-) as Record<string, unknown>
 export const hospitalListSnapshot = JSON.parse(
   readFileSync(new URL('../src/mocks/hospitais-35073.json', import.meta.url), 'utf8'),
 ) as Record<string, unknown>
@@ -115,15 +109,11 @@ export const hospitalSemAmostra = acharItem(
   'sample_status',
   'amostra_insuficiente',
 )
-export const territorioFluxo = flowSnapshot.territory as Record<string, number>
-export const regiaoIcsap = icsapSnapshot.region as Record<string, number>
 export const contextoCid = cidSnapshot.hospital as Record<string, number>
 export const cidMaisFrequente = itens(cidSnapshot)[0]
 export const cidAsma = acharItem(cidSnapshot, 'cid_code', 'J459')
 export const coberturaMetodologia = methodologySnapshot.coverage as Record<string, number>
 /** O fluxo da região para ela mesma: quem foi atendido no próprio território. */
-export const fluxoIntrarregional = acharItem(flowSnapshot, 'destination_region_code', '35073')
-export const fluxoParaCampinas = acharItem(flowSnapshot, 'destination_region_code', '35072')
 export const totalInternacoesDoHospital = (specialtySnapshot.hospital as Record<string, number>)
   .new_admissions_total
 export const regiaoDestacada = acharItem(regionalSnapshot, 'region_code', '35073')
@@ -299,48 +289,6 @@ export async function mockLiveSource(page: Page) {
         })),
       }),
     })
-  })
-  await page.route('**/api/dev/v1/icsap**', async (route) => {
-    const url = new URL(route.request().url())
-    const year = Number(url.searchParams.get('ano'))
-    const month = Number(url.searchParams.get('mes'))
-    const regionCode = url.searchParams.get('regiao') ?? ''
-    const fixtureRegion = icsapSnapshot.region as Record<string, unknown>
-    const payload = regionCode === fixtureRegion.region_code
-      ? {
-          ...icsapSnapshot,
-          source: 'oracle-live',
-          database_time: '2026-08-01T12:00:00-03:00',
-          data_through: `${year}-${String(month).padStart(2, '0')}`,
-          filters: { year, month, region_code: regionCode },
-        }
-      : {
-          ...icsapSnapshot,
-          source: 'oracle-live',
-          database_time: '2026-08-01T12:00:00-03:00',
-          data_through: `${year}-${String(month).padStart(2, '0')}`,
-          filters: { year, month, region_code: regionCode },
-          region: {
-            region_code: regionCode,
-            region_name: null,
-            macroregion_code: null,
-            macroregion_name: null,
-            population: null,
-            resident_admissions_observed: null,
-            icsap_admissions: null,
-            icsap_share_of_resident_percent: null,
-            icsap_rate_per_10k: null,
-          },
-          pagination: {
-            limit: 200,
-            offset: 0,
-            count: 0,
-            has_more: false,
-            order: 'icsap_admissions_desc',
-          },
-          items: [],
-        }
-    await route.fulfill({ contentType: 'application/json', body: JSON.stringify(payload) })
   })
   await page.route('**/api/dev/v1/regioes/*/serie**', async (route) => {
     const match = new URL(route.request().url()).pathname.match(/regioes\/(\d{5})\/serie$/)

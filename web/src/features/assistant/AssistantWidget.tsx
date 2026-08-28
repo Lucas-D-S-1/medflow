@@ -6,7 +6,7 @@ import { useSource } from '../../shared/SourceContext'
 import { formatRegionalNetwork } from '../../shared/territory'
 import './AssistantWidget.css'
 
-type RouteKey = 'regional' | 'fluxos' | 'hospital' | 'metodologia'
+type RouteKey = 'regional' | 'hospital' | 'metodologia'
 type Answer = {
   text: string
   sql?: string | null
@@ -23,11 +23,6 @@ const quickQuestions: Record<RouteKey, string[]> = {
     'Quais regiões devo investigar?',
     'Como interpretar o mapa?',
   ],
-  fluxos: [
-    'O que significa evasão observada?',
-    'O que é ICSAP?',
-    'Por que pacientes saem da região?',
-  ],
   hospital: [
     'O que é IPR?',
     'Por que o IPR pode ficar indisponível?',
@@ -42,22 +37,20 @@ const quickQuestions: Record<RouteKey, string[]> = {
 
 const routeNames: Record<RouteKey, string> = {
   regional: 'visão regional',
-  fluxos: 'fluxos assistenciais',
   hospital: 'visão hospitalar',
   metodologia: 'metodologia',
 }
 
 const routeAnalysis: Record<RouteKey, string> = {
   regional: 'pressão hospitalar regional e tendência',
-  fluxos: 'fluxos assistenciais, evasão e ICSAP',
   hospital: 'hospitais, permanência, perfil clínico e IPR',
   metodologia: 'fontes, fórmulas, cobertura e limitações',
 }
 
-const ANALYSIS_SECTIONS = ['regional', 'fluxos', 'hospital']
+const ANALYSIS_SECTIONS = ['regional', 'hospital']
 
 function isRouteKey(value: string): value is RouteKey {
-  return value === 'regional' || value === 'fluxos' || value === 'hospital'
+  return value === 'regional' || value === 'hospital'
 }
 
 function normalize(value: string) {

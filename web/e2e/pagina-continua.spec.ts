@@ -8,20 +8,17 @@
 import { expect, test } from '@playwright/test'
 import { itens, mockLiveSource, pt, regionalSnapshot, snapshotCompetencia } from './apoio'
 
-test('reúne território, fluxos e hospital em uma página só', async ({ page }) => {
+test('reúne território e hospital em uma página só', async ({ page }) => {
   await mockLiveSource(page)
   await page.goto('/')
 
   await expect(page.locator('#regional')).toBeVisible()
-  await expect(page.locator('#fluxos')).toHaveCount(1)
   await expect(page.locator('#hospital')).toHaveCount(1)
+  await expect(page.locator('#fluxos')).toHaveCount(0)
   // Uma investigação, um documento: nada de <main> por etapa.
   await expect(page.locator('main')).toHaveCount(1)
   // As perguntas saem dos títulos; a disposição dos dados é que as provoca.
   await expect(page.getByRole('heading', { name: /Onde devo investigar primeiro/ })).toHaveCount(0)
-  await expect(
-    page.getByRole('heading', { name: /A população é atendida no próprio território/ }),
-  ).toHaveCount(0)
   await expect(page.getByRole('heading', { name: /O que explica o sinal da região/ })).toHaveCount(0)
 })
 
@@ -44,8 +41,8 @@ test('o direcionador marca a etapa escolhida sem trocar de tela', async ({ page 
 
   await expect(page.getByTestId('anchor-regional')).toHaveAttribute('aria-current', 'true')
 
-  await page.getByTestId('anchor-fluxos').click()
-  await expect(page.getByTestId('anchor-fluxos')).toHaveAttribute('aria-current', 'true')
+  await page.getByTestId('anchor-hospital').click()
+  await expect(page.getByTestId('anchor-hospital')).toHaveAttribute('aria-current', 'true')
   await expect(page.getByTestId('anchor-regional')).not.toHaveAttribute('aria-current', 'true')
   // Continua sendo a mesma página: a etapa anterior não foi desmontada.
   await expect(page.locator('#regional')).toHaveCount(1)
