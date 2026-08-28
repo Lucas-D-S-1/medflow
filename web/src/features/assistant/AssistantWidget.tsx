@@ -225,7 +225,11 @@ export default function AssistantWidget() {
     // vivem no front e não existem como coluna na Gold. Responder aqui é mais
     // correto — e mais barato — do que mandar o modelo procurar no banco o que
     // o banco não tem.
-    if (/criterio.*par|pares.*criterio|como.*(escolhe|define|monta).*par|quem.*e.*par|grupo de par|hospitais? (sao|são) (comparados|pares)|comparad. com quem/.test(normalized)) {
+    if (
+      /criterio.*par|pares.*criterio|como.*(escolhe|define|monta).*par|quem.*e.*par|grupo de par|hospitais? (sao|são) (comparados|pares)|comparave|compar\w*( com)? (quais|quem|outros|os outros)|(quais|que) (outros )?hospitais.*compar|hospitais? (parecidos|similares|semelhantes)/.test(
+        normalized,
+      )
+    ) {
       return {
         text: 'Há dois grupos de comparação, e você escolhe qual usar. "Mesmo tipo e porte" reúne hospitais com o mesmo tipo de unidade no CNES e a mesma faixa de leitos SUS (até 24, 25 a 59, 60 a 149, 150 a 299, 300 ou mais), em todo o estado. "Mesma região" reúne os hospitais do mesmo território. Em qualquer um deles o próprio hospital sai do grupo, pela mesma razão que o IPR exclui o hospital do benchmark regional: comparar alguém consigo mesmo puxa a mediana na direção dele. O grupo precisa de pelo menos três pares com valor calculado; abaixo disso a faixa não é publicada.',
       }

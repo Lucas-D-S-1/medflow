@@ -215,3 +215,30 @@ test('explica as regras de comparação sem consultar o modelo', async ({ page }
 
   expect(calls).toBe(0)
 })
+
+test('recusa inventar grupo de pares em vez de perguntar ao modelo', async ({ page }) => {
+  let calls = 0
+  await page.route('**/api/dev/v1/assistente/perguntar', async (route) => {
+    calls += 1
+    await route.abort()
+  })
+
+  await page.goto('/?regiao=35073#hospital')
+  await page.getByRole('button', { name: /Posso ajudar/ }).click()
+  const panel = page.locator('#medflow-assistant-panel')
+
+  // Perguntado ao modelo, "quais hospitais são comparáveis ao CNES 2027240"
+  // devolvia um hospital de outra região com confiança total, porque o
+  // agrupamento de pares não existe no banco e o modelo preenche o vazio.
+  for (const pergunta of [
+    'Quais hospitais são comparáveis ao CNES 2027240?',
+    'Com quais outros hospitais eu comparo esse?',
+    'Quais hospitais parecidos com o meu?',
+  ]) {
+    await page.getByLabel('Faça outra pergunta').fill(pergunta)
+    await page.getByLabel('Faça outra pergunta').press('Enter')
+    await expect(panel).toContainText('mesmo tipo de unidade')
+  }
+
+  expect(calls).toBe(0)
+})
