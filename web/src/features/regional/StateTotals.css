@@ -1,0 +1,48 @@
+/*
+ * Os totais do recorte abrem o panorama: são a ordem de grandeza que dá
+ * sentido às cores do mapa logo abaixo.
+ */
+
+.state-totals {
+  padding: var(--space-4);
+  border: var(--border-subtle);
+  border-radius: var(--radius-xl);
+  background: var(--color-surface);
+  margin-bottom: var(--space-4);
+}
+
+.state-totals-scope {
+  margin: var(--space-2) 0 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.state-totals .block-heading > strong {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  max-width: 12rem;
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+.state-totals .block-heading > strong.up { color: var(--color-warning-text); }
+.state-totals .block-heading > strong.down { color: var(--color-accent-strong); }
+.state-totals .block-heading > strong small {
+  color: var(--color-text-muted);
+  font-weight: 400;
+  font-size: var(--font-size-xs);
+}
+
+.state-totals-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+
+.state-totals-note {
+  margin: var(--space-3) 0 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+}

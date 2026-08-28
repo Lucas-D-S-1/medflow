@@ -153,7 +153,8 @@ export default function RegionalMap({
         <title id="regional-map-title">Mapa das 62 regiões de saúde de São Paulo</title>
         <desc id="regional-map-description">
           As cores usam percentis do IPH estimado na competência selecionada. Use as setas para
-          navegar pelas regiões e Enter ou espaço para selecionar.
+          navegar pelas regiões e Enter ou espaço para selecionar. Ativar a região já selecionada
+          volta ao panorama, sem território escolhido.
         </desc>
         {mapData.features.map((feature) => {
           const regionCode = feature.properties.cd_regiao_saude
@@ -163,7 +164,9 @@ export default function RegionalMap({
           )
           const isSelected = regionCode === selectedRegionCode
           const label = item
-            ? `${feature.properties.nm_regiao_saude}, IPH estimado ${formatPercent(item.iph_percent)}, amostra de ${formatInteger(item.new_admissions)} internações novas`
+            ? `${feature.properties.nm_regiao_saude}, IPH estimado ${formatPercent(item.iph_percent)}, amostra de ${formatInteger(item.new_admissions)} internações novas${
+                isSelected ? '. Selecionada: ative novamente para voltar ao panorama' : ''
+              }`
             : `${feature.properties.nm_regiao_saude}, sem dados para a competência selecionada`
 
           return (
@@ -184,7 +187,11 @@ export default function RegionalMap({
               onMouseLeave={() => setHoveredCode('')}
               onFocus={() => isVisible && setHoveredCode(regionCode)}
               onBlur={() => setHoveredCode('')}
-              onClick={() => isVisible && onSelect(regionCode)}
+              // Clicar de novo na região já escolhida devolve ao panorama: é o
+              // gesto que o usuário tenta primeiro para desfazer a seleção.
+              onClick={() =>
+                isVisible && onSelect(regionCode === selectedRegionCode ? '' : regionCode)
+              }
               onKeyDown={(event) => {
                 if (!isVisible) return
                 if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
@@ -198,7 +205,7 @@ export default function RegionalMap({
                   moveFocus(regionCode, event.key === 'Home' ? 'first' : 'last')
                 } else if (event.key === 'Enter' || event.key === ' ') {
                   event.preventDefault()
-                  onSelect(regionCode)
+                  onSelect(regionCode === selectedRegionCode ? '' : regionCode)
                 }
               }}
             >

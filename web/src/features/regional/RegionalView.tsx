@@ -9,6 +9,8 @@ import RegionalMap from './RegionalMap'
 import RegionalSeries from './RegionalSeries'
 import GlobalContextBar from '../../shared/GlobalContextBar'
 import SeasonalSignal from './SeasonalSignal'
+import StateTotals from './StateTotals'
+import { aggregateRegions } from './agregado'
 import StatePanel from '../../shared/StatePanel'
 import { useSource } from '../../shared/SourceContext'
 import {
@@ -75,6 +77,12 @@ export default function RegionalView() {
   const selectedItem = sharedRegionCode
     ? rankedItems.find((item) => item.region_code === sharedRegionCode) ?? null
     : null
+  const aggregate = useMemo(() => aggregateRegions(visibleItems), [visibleItems])
+  const scopeLabel = selectedMacroregion
+    ? formatRegionalNetwork(
+        visibleItems[0]?.macroregion_name ?? '',
+      )
+    : 'São Paulo'
   const rankingItems = showAllRanking
     ? rankedItems
     : rankedItems.slice(0, RANKING_PREVIEW_SIZE)
@@ -178,6 +186,18 @@ export default function RegionalView() {
 
             {visibleItems.length > 0 && (
               <>
+                {/*
+                  Sem território escolhido, os totais dão a ordem de grandeza
+                  do recorte antes de o mapa pedir para comparar 62 regiões.
+                */}
+                {!selectedItem && (
+                  <StateTotals
+                    aggregate={aggregate}
+                    competence={selectedCompetence}
+                    scopeLabel={scopeLabel}
+                  />
+                )}
+
                 {/*
                   O mapa vem primeiro e ocupa a largura: é dele que sai a
                   escolha do território. Os controles vêm logo abaixo, para

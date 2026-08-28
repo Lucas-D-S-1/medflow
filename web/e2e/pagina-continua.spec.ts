@@ -6,7 +6,7 @@
  */
 
 import { expect, test } from '@playwright/test'
-import { itens, mockLiveSource, regionalSnapshot, snapshotCompetencia } from './apoio'
+import { itens, mockLiveSource, pt, regionalSnapshot, snapshotCompetencia } from './apoio'
 
 test('reúne território, fluxos e hospital em uma página só', async ({ page }) => {
   await mockLiveSource(page)
@@ -164,5 +164,56 @@ test('escolher pelo seletor abaixo do mapa vale o mesmo que clicar nele', async 
   // E voltar ao panorama larga o território.
   await page.getByTestId('global-region').selectOption('')
   await expect(page.getByTestId('regional-selected-name')).toHaveCount(0)
+  expect(new URL(page.url()).searchParams.get('regiao')).toBeNull()
+})
+
+test('o panorama mostra os totais do recorte, somados e não promediados', async ({ page }) => {
+  await mockLiveSource(page)
+  await page.goto(`/?competencia=${snapshotCompetencia}`)
+
+  const regioes = itens(regionalSnapshot) as unknown as Record<string, number>[]
+  const soma = (campo: string) => regioes.reduce((total, item) => total + item[campo], 0)
+
+  await expect(page.getByTestId('state-total-admissions')).toContainText(
+    pt(soma('new_admissions')),
+  )
+
+  // A razão é total sobre total. A média simples dos percentuais das 62
+  // regiões dá outro número, porque trataria uma região de 4 mil internações
+  // como igual a uma de 80 mil.
+  const iphExato = (soma('estimated_patient_days') / soma('declared_capacity_bed_days')) * 100
+  const iphMediaSimples =
+    regioes.reduce((total, item) => total + item.iph_percent, 0) / regioes.length
+  expect(Math.abs(iphExato - iphMediaSimples)).toBeGreaterThan(1)
+  await expect(page.getByTestId('state-total-iph')).toContainText(`${pt(iphExato, 1)}%`)
+
+  const tmhExato = (soma('deaths') / soma('new_admissions')) * 100
+  await expect(page.getByTestId('state-total-tmh')).toContainText(`${pt(tmhExato, 1)}%`)
+
+  // Atendimento no próprio território e atendimento fora dele repartem o mesmo
+  // denominador: juntos fecham o total de residentes.
+  const proprio = (soma('resident_admissions_in_own_region') / soma('resident_admissions_observed')) * 100
+  const fora = (soma('observed_intrastate_evasion_admissions') / soma('resident_admissions_observed')) * 100
+  expect(Math.round(proprio + fora)).toBe(100)
+  await expect(page.getByTestId('state-total-own-region')).toContainText(`${pt(proprio, 1)}%`)
+  await expect(page.getByTestId('state-total-evasion')).toContainText(`${pt(fora, 1)}%`)
+
+  await expect(page.getByTestId('state-totals-scope')).toContainText(pt(soma('population')))
+})
+
+test('clicar de novo na região selecionada volta ao panorama', async ({ page }) => {
+  await mockLiveSource(page)
+  await page.goto(`/?competencia=${snapshotCompetencia}`)
+
+  const jundiai = page.getByTestId('regional-map-35073')
+  await jundiai.click()
+  await expect(page.getByTestId('regional-selected-name')).toHaveText('JUNDIAI')
+  await expect(page.getByTestId('state-totals-scope')).toHaveCount(0)
+
+  // O gesto que se tenta primeiro para desfazer é clicar de novo no mesmo
+  // lugar, e não caçar o seletor abaixo do mapa.
+  await jundiai.click()
+  await expect(page.getByTestId('regional-selected-name')).toHaveCount(0)
+  await expect(page.getByTestId('state-totals-scope')).toBeVisible()
   expect(new URL(page.url()).searchParams.get('regiao')).toBeNull()
 })
