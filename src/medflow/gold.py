@@ -188,7 +188,78 @@ def _hospital_especialidade_mensal(
         "suficiente",
         "amostra_insuficiente",
     )
+    mart = _benchmark_especialidade(mart, novas)
     return _aplicar_ipca(mart, ipca)
+
+
+def _benchmark_especialidade(
+    mart: pd.DataFrame,
+    novas: pd.DataFrame,
+) -> pd.DataFrame:
+    """Permanência do hospital contra a dos pares na mesma especialidade.
+
+    Mesma construção do IPR, um degrau acima no grão. O IPR compara por CID e
+    o grão fino custa amostra: ele fica calculável em 6,9% dos pares
+    hospital/CID, e 91,6% caem em amostra insuficiente. Por especialidade, com
+    **os mesmos cortes**, a cobertura vai a 63,9% — por isso eles não foram
+    afrouxados: o ganho veio do grão, não de relaxar a exigência.
+
+    O hospital sai do próprio benchmark. Comparar alguém consigo mesmo puxa a
+    referência na direção dele, e quanto menor a região, mais forte o efeito.
+
+    Não é medida de qualidade nem de desfecho, pela mesma razão que o IPR não
+    é: compara permanência observada entre pares, sem ajuste de risco.
+    """
+    chaves = ["cd_regiao_saude", "cd_especialidade_sih", "cd_competencia"]
+    regiao = (
+        novas.groupby(chaves, as_index=False, dropna=False)
+        .agg(
+            qt_internacao_regiao=("fl_internacao_nova", "sum"),
+            qt_dia_permanencia_regiao=("qt_dia_permanencia", "sum"),
+            qt_hospital_regiao=("cd_cnes", "nunique"),
+        )
+    )
+    mart = mart.merge(regiao, on=chaves, how="left", validate="many_to_one")
+    mart["qt_internacao_benchmark_especialidade"] = (
+        mart.qt_internacao_regiao - mart.qt_internacao_nova
+    )
+    mart["qt_dia_permanencia_benchmark_especialidade"] = (
+        mart.qt_dia_permanencia_regiao - mart.qt_dia_permanencia_soma
+    )
+    mart["qt_hospital_benchmark_especialidade"] = mart.qt_hospital_regiao - 1
+    mart["nr_permanencia_media_benchmark_especialidade"] = _dividir(
+        mart.qt_dia_permanencia_benchmark_especialidade,
+        mart.qt_internacao_benchmark_especialidade,
+    )
+    mart["nr_ipe"] = _dividir(
+        mart.nr_permanencia_media,
+        mart.nr_permanencia_media_benchmark_especialidade,
+    )
+    elegivel = (
+        mart.qt_internacao_nova.ge(20)
+        & mart.qt_internacao_benchmark_especialidade.ge(50)
+        & mart.qt_hospital_benchmark_especialidade.ge(3)
+        & mart.nr_permanencia_media_benchmark_especialidade.gt(0)
+    )
+    mart["st_amostra_ipe"] = np.select(
+        [
+            elegivel,
+            mart.nr_permanencia_media_benchmark_especialidade.eq(0),
+        ],
+        [
+            "suficiente",
+            "benchmark_zero",
+        ],
+        default="amostra_insuficiente",
+    )
+    mart.loc[~elegivel, "nr_ipe"] = np.nan
+    return mart.drop(
+        columns=[
+            "qt_internacao_regiao",
+            "qt_dia_permanencia_regiao",
+            "qt_hospital_regiao",
+        ]
+    )
 
 
 def _hospital_cid_periodo(novas: pd.DataFrame) -> pd.DataFrame:

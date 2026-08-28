@@ -26,6 +26,7 @@ from medflow.gold import (
     _calcular_paciente_dia,
     _dividir,
     _hospital_cid_periodo,
+    _hospital_especialidade_mensal,
     _hospital_mensal,
 )
 from medflow.ipca import carregar_ipca
@@ -547,3 +548,149 @@ class TestClassificarCID:
 
     def test_vazio_nao_quebra(self):
         assert classificar_cid("")[0] == "--"
+
+
+def _internacoes_especialidade(
+    linhas: list[tuple[str, str, int, float]],
+) -> pd.DataFrame:
+    """Uma linha por internação, com hospital, especialidade, quantidade e permanência."""
+    registros = []
+    for cnes, especialidade, quantidade, permanencia in linhas:
+        registros.extend(
+            [
+                {
+                    "cd_cnes": cnes,
+                    "cd_especialidade_sih": especialidade,
+                    "nm_especialidade": f"Especialidade {especialidade}",
+                    "cd_regiao_saude": "35073",
+                    "nm_regiao_saude": "JUNDIAI",
+                    "cd_macrorregiao_saude": "3527",
+                    "nm_macrorregiao_saude": "MACRO",
+                    "nr_ano_competencia": 2026,
+                    "nr_mes_competencia": 6,
+                    "cd_competencia": "202606",
+                    "fl_internacao_nova": 1,
+                    "fl_obito_internacao_nova": 0,
+                    "qt_dia_permanencia": permanencia,
+                    "vl_total_aprovado_sus": 100.0,
+                    "vl_aprovado_continuacao": 0.0,
+                }
+            ]
+            * quantidade
+        )
+    return pd.DataFrame(registros)
+
+
+def _mart_especialidade(novas: pd.DataFrame) -> pd.DataFrame:
+    ipca = pd.DataFrame(
+        [{"cd_competencia": "202606", "nr_fator_correcao_ipca": 1.0}]
+    )
+    return _hospital_especialidade_mensal(novas, novas, ipca)
+
+
+class TestIndicePermanenciaEspecialidade:
+    """O IPE é o IPR um degrau acima no grão, e herda a mesma disciplina.
+
+    O IPR compara por CID e fica calculável em 6,9% dos pares hospital/CID.
+    Por especialidade, com os mesmos cortes, a cobertura vai a 63,9%: o ganho
+    veio do grão, não de afrouxar a exigência. Por isso os cortes 20/50/3
+    continuam valendo, e o teste existe para que continuem.
+    """
+
+    @staticmethod
+    def _linha(mart: pd.DataFrame, cnes: str) -> pd.Series:
+        return mart.loc[mart.cd_cnes.eq(cnes)].iloc[0]
+
+    def test_amostra_suficiente_calcula_o_indice(self):
+        # A internou 20 vezes com 10 dias; os quatro vizinhos, 60 com 5.
+        mart = _mart_especialidade(
+            _internacoes_especialidade(
+                [
+                    ("A", "01", 20, 10.0),
+                    ("B", "01", 15, 5.0),
+                    ("C", "01", 15, 5.0),
+                    ("D", "01", 15, 5.0),
+                    ("E", "01", 15, 5.0),
+                ]
+            )
+        )
+        linha = self._linha(mart, "A")
+        assert linha.st_amostra_ipe == "suficiente"
+        assert linha.nr_permanencia_media == 10.0
+        assert linha.nr_permanencia_media_benchmark_especialidade == 5.0
+        assert linha.nr_ipe == 2.0
+
+    def test_hospital_sai_do_proprio_benchmark(self):
+        # Se A entrasse no próprio benchmark, a referência subiria e o índice
+        # cairia: comparar alguém consigo mesmo puxa a régua na direção dele.
+        mart = _mart_especialidade(
+            _internacoes_especialidade(
+                [
+                    ("A", "01", 100, 10.0),
+                    ("B", "01", 20, 2.0),
+                    ("C", "01", 20, 2.0),
+                    ("D", "01", 20, 2.0),
+                ]
+            )
+        )
+        linha = self._linha(mart, "A")
+        assert linha.qt_internacao_benchmark_especialidade == 60
+        assert linha.nr_permanencia_media_benchmark_especialidade == 2.0
+        assert linha.nr_ipe == 5.0
+
+    def test_hospital_com_menos_de_vinte_internacoes_nao_tem_indice(self):
+        mart = _mart_especialidade(
+            _internacoes_especialidade(
+                [
+                    ("A", "01", 19, 10.0),
+                    ("B", "01", 20, 5.0),
+                    ("C", "01", 20, 5.0),
+                    ("D", "01", 20, 5.0),
+                    ("E", "01", 20, 5.0),
+                ]
+            )
+        )
+        linha = self._linha(mart, "A")
+        assert linha.st_amostra_ipe == "amostra_insuficiente"
+        assert pd.isna(linha.nr_ipe)
+
+    def test_benchmark_com_menos_de_cinquenta_internacoes_nao_tem_indice(self):
+        mart = _mart_especialidade(
+            _internacoes_especialidade(
+                [
+                    ("A", "01", 30, 10.0),
+                    ("B", "01", 12, 5.0),
+                    ("C", "01", 12, 5.0),
+                    ("D", "01", 12, 5.0),
+                    ("E", "01", 12, 5.0),
+                ]
+            )
+        )
+        assert self._linha(mart, "A").st_amostra_ipe == "amostra_insuficiente"
+
+    def test_poucos_hospitais_na_especialidade_nao_tem_indice(self):
+        mart = _mart_especialidade(
+            _internacoes_especialidade(
+                [
+                    ("A", "01", 30, 10.0),
+                    ("B", "01", 40, 5.0),
+                    ("C", "01", 40, 5.0),
+                ]
+            )
+        )
+        assert self._linha(mart, "A").st_amostra_ipe == "amostra_insuficiente"
+
+    def test_benchmark_zerado_e_nomeado_em_vez_de_virar_divisao_por_zero(self):
+        mart = _mart_especialidade(
+            _internacoes_especialidade(
+                [
+                    ("A", "01", 30, 10.0),
+                    ("B", "01", 20, 0.0),
+                    ("C", "01", 20, 0.0),
+                    ("D", "01", 20, 0.0),
+                ]
+            )
+        )
+        linha = self._linha(mart, "A")
+        assert linha.st_amostra_ipe == "benchmark_zero"
+        assert pd.isna(linha.nr_ipe)

@@ -237,6 +237,23 @@ DESCRICOES_EXATAS = {
     "vl_aprovado_continuacao_soma": "Soma nominal dos valores aprovados para continuações de longa permanência.",
     "qt_internacao_benchmark": "Quantidade de internações no benchmark regional, excluído o hospital avaliado.",
     "qt_hospital_benchmark": "Quantidade de outros hospitais que compõem o benchmark.",
+    "nr_ipe": (
+        "Permanência média do hospital na especialidade dividida pela dos demais "
+        "hospitais da mesma região, na mesma especialidade e competência."
+    ),
+    "st_amostra_ipe": "Elegibilidade do IPE: suficiente, benchmark_zero ou amostra_insuficiente.",
+    "qt_internacao_benchmark_especialidade": (
+        "Internações novas dos demais hospitais da região na mesma especialidade."
+    ),
+    "qt_dia_permanencia_benchmark_especialidade": (
+        "Dias de permanência dos demais hospitais da região na mesma especialidade."
+    ),
+    "qt_hospital_benchmark_especialidade": (
+        "Quantidade de outros hospitais que compõem o benchmark da especialidade."
+    ),
+    "nr_permanencia_media_benchmark_especialidade": (
+        "Permanência média dos demais hospitais da região na mesma especialidade, em dias."
+    ),
     "qt_ano_historico": "Quantidade de anos históricos usados na referência sazonal.",
     "tx_internacao_residente_observada_por_100_mil": "Internações de residentes da região atendidos em SP por 100 mil habitantes; não observa atendimentos fora do estado.",
     "qt_internacao_residente_observada": "Internações novas de residentes da região observadas nos hospitais de São Paulo.",

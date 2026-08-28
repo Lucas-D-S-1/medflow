@@ -304,6 +304,12 @@ create table mart_indicador_hospital_especialidade_mensal (
   cd_competencia_preco_referencia  varchar2(6 char)  not null,
   vl_aprovado_internacao_nova_real_soma number(18,2) not null,
   vl_cmi_real                      number(18,4)      not null,
+  qt_internacao_benchmark_especialidade number(12),
+  qt_dia_permanencia_benchmark_especialidade number(14),
+  qt_hospital_benchmark_especialidade   number(6),
+  nr_permanencia_media_benchmark_especialidade number(12,6),
+  nr_ipe                           number(12,6),
+  st_amostra_ipe                   varchar2(40 char) not null,
   constraint pk_mart_hosp_esp_mensal primary key (cd_cnes, cd_especialidade_sih, cd_competencia),
   constraint fk_mart_hosp_esp_regiao foreign key (cd_regiao_saude)
     references dim_geografia_regiao (cd_regiao_saude)
@@ -312,6 +318,12 @@ create table mart_indicador_hospital_especialidade_mensal (
 comment on table mart_indicador_hospital_especialidade_mensal is
   'Fato mensal por hospital e especialidade do SIH: TMH e CMI. Uma linha por CNES, especialidade e competencia. Para ranquear especialidades por mortalidade, filtre st_amostra igual a suficiente, agrupe por nm_especialidade, exija pelo menos 100 linhas hospital-mes por especialidade, calcule a media de pc_tmh e ordene da maior para a menor.';
 comment on column mart_indicador_hospital_especialidade_mensal.cd_cnes is 'Codigo de sete digitos do estabelecimento no CNES.';
+comment on column mart_indicador_hospital_especialidade_mensal.nr_ipe is 'Indice de Permanencia por Especialidade: permanencia media do hospital nesta especialidade dividida pela permanencia media dos demais hospitais da mesma regiao na mesma especialidade e competencia. Acima de 1 significa permanencia maior que a dos pares. Nulo quando st_amostra_ipe nao e suficiente. Nao e nota de qualidade nem medida de desfecho: compara permanencia observada sem ajuste de risco clinico.';
+comment on column mart_indicador_hospital_especialidade_mensal.st_amostra_ipe is 'Elegibilidade do nr_ipe: suficiente, benchmark_zero ou amostra_insuficiente. Suficiente exige 20 internacoes no hospital, 50 no benchmark, 3 outros hospitais e permanencia do benchmark maior que zero.';
+comment on column mart_indicador_hospital_especialidade_mensal.qt_internacao_benchmark_especialidade is 'Internacoes novas dos demais hospitais da regiao na mesma especialidade e competencia. Exclui este hospital.';
+comment on column mart_indicador_hospital_especialidade_mensal.qt_dia_permanencia_benchmark_especialidade is 'Dias de permanencia dos demais hospitais da regiao na mesma especialidade e competencia. Exclui este hospital.';
+comment on column mart_indicador_hospital_especialidade_mensal.qt_hospital_benchmark_especialidade is 'Quantidade de outros hospitais que compoem o benchmark da especialidade.';
+comment on column mart_indicador_hospital_especialidade_mensal.nr_permanencia_media_benchmark_especialidade is 'Permanencia media dos demais hospitais da regiao na mesma especialidade e competencia, em dias.';
 comment on column mart_indicador_hospital_especialidade_mensal.cd_especialidade_sih is 'Codigo de especialidade da internacao no SIH.';
 comment on column mart_indicador_hospital_especialidade_mensal.nm_especialidade is 'Descricao da especialidade do SIH, por exemplo clinica cirurgica, clinica medica ou UTI.';
 comment on column mart_indicador_hospital_especialidade_mensal.cd_regiao_saude is 'Codigo oficial de cinco digitos da regiao de saude do hospital.';
