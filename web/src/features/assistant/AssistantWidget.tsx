@@ -13,8 +13,6 @@ type Answer = {
   warning?: string | null
 }
 
-const SESSION_LIMIT = 5
-const SESSION_KEY = 'medflow-select-ai-questions'
 
 const quickQuestions: Record<RouteKey, string[]> = {
   regional: [
@@ -62,11 +60,6 @@ function normalize(value: string) {
     .trim()
 }
 
-function sessionUsage() {
-  const value = Number(window.sessionStorage.getItem(SESSION_KEY) ?? '0')
-  return Number.isInteger(value) && value >= 0 ? value : 0
-}
-
 function AssistantRobot({ compact = false }: { compact?: boolean }) {
   return (
     <span className={`assistant-robot${compact ? ' compact' : ''}`} aria-hidden="true">
@@ -88,7 +81,6 @@ export default function AssistantWidget() {
   const [askedQuestion, setAskedQuestion] = useState<string | null>(null)
   const [answer, setAnswer] = useState<Answer | null>(null)
   const [isLoading, setIsLoading] = useState(false)
-  const [usage, setUsage] = useState(sessionUsage)
   const inputRef = useRef<HTMLInputElement>(null)
   // A FlowIA acompanha a etapa visível, não a rota: na página contínua as
   // três seções dividem o mesmo endereço.
@@ -277,16 +269,6 @@ export default function AssistantWidget() {
       return
     }
 
-    if (usage >= SESSION_LIMIT) {
-      // Antes esta mensagem parecia "não soube responder". Um limite precisa
-      // se anunciar como limite: senão o produto passa por incapaz por uma
-      // regra que ele mesmo impôs.
-      setAnswer({
-        text: `Esta sessão já usou as ${SESSION_LIMIT} perguntas livres ao Select AI. Recarregue a página para começar outra sessão, ou use as sugestões abaixo, que são respondidas sem consultar o modelo.`,
-      })
-      return
-    }
-
     setIsLoading(true)
     try {
       const params = new URLSearchParams(location.search)
@@ -304,9 +286,6 @@ export default function AssistantWidget() {
         active_analysis: routeAnalysis[currentRoute],
       }
       const response = await askOracleSelectAi(cleanQuestion, context)
-      const nextUsage = usage + 1
-      window.sessionStorage.setItem(SESSION_KEY, String(nextUsage))
-      setUsage(nextUsage)
       setAnswer({
         text: response.narrative,
         sql: response.sql,

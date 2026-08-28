@@ -1,8 +1,8 @@
 /**
  * Visão regional.
  *
- * Onde está o sinal e como ele evolui: mapa por percentis, ranking
- * com amostra, série mensal e sazonalidade.
+ * Onde está o sinal e como ele evolui: mapa por percentis, série mensal
+ * e sazonalidade.
  */
 
 import { expect, test } from '@playwright/test'
@@ -72,7 +72,8 @@ test('renderiza a competência e a versão do contrato recebidas do Oracle', asy
   await expect(page.getByTestId('regional-admissions')).toHaveText(
     pt(regiaoDestacada.new_admissions as number),
   )
-  await expect(page.getByTestId('regional-ranking-sample-35073')).toContainText(
+  // A amostra da região agora vive no painel da região selecionada.
+  await expect(page.getByTestId('regional-admissions')).toContainText(
     pt(regiaoDestacada.new_admissions as number),
   )
   await expect(page.getByTestId('regional-iph')).toHaveText(
@@ -174,8 +175,8 @@ test('filtra a competência sem abandonar o mapa espacial e o tamanho da amostra
   await expect.poll(() => requestedCompetence).toBe('2025-05')
   await expect(page.getByTestId('regional-context-note')).toContainText('05/2025')
   await expect(page.locator('.regional-map-shape')).toHaveCount(62)
-  await expect(page.getByTestId('regional-ranking-sample-35073')).toContainText(
-    `amostra: ${pt(regiaoDestacada.new_admissions as number)} internações novas`,
+  await expect(page.getByTestId('regional-admissions')).toContainText(
+    pt(regiaoDestacada.new_admissions as number),
   )
 })
 test('expõe o mapa com percentis, seleção textual e uma única parada de tabulação', async ({ page }) => {
@@ -319,7 +320,7 @@ test('explica pelo contrato quando a sazonalidade não é calculada', async ({ p
     'Competência fora do período-alvo definido para sazonalidade',
   )
 })
-test('declara o ranking truncado, permite ver tudo e mantém metodologia colapsável', async ({ page }) => {
+test('mantém a metodologia colapsável', async ({ page }) => {
   await mockLiveSource(page)
   await page.route('**/api/dev/v1/regioes/resumo**', async (route) => {
     await route.fulfill({
@@ -333,10 +334,6 @@ test('declara o ranking truncado, permite ver tudo e mantém metodologia colaps�
   })
 
   await page.goto('/regional?regiao=35073')
-  await expect(page.getByTestId('regional-ranking-count')).toHaveText('8 de 62')
-  await page.getByRole('button', { name: 'Ver todas as 62 regiões' }).click()
-  await expect(page.getByTestId('regional-ranking-count')).toHaveText('62 de 62')
-  await expect(page.locator('.ranking-list li')).toHaveCount(62)
 
   await page.getByRole('link', { name: 'Metodologia' }).click()
   await expect(page).toHaveURL(/\/metodologia(\?|$)/)

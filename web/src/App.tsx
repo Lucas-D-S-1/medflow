@@ -4,6 +4,7 @@ import AnalisePage from './features/analise/AnalisePage'
 import AssistantWidget from './features/assistant/AssistantWidget'
 import MetodologiaView from './features/metodologia/MetodologiaView'
 import { useActiveSection } from './shared/useActiveSection'
+import { useSource } from './shared/SourceContext'
 
 const SECTIONS = [
   { id: 'regional', label: 'Regional' },
@@ -15,6 +16,18 @@ function Shell() {
   const location = useLocation()
   const onAnalysis = location.pathname === '/'
   const activeSection = useActiveSection(SECTION_IDS, onAnalysis, location.hash)
+  const { selectedHospitalName, sourceState, sharedRegionCode } = useSource()
+  const selectedRegionName =
+    sourceState.kind === 'live' || sourceState.kind === 'fallback'
+      ? sourceState.data.regions.items.find((item) => item.region_code === sharedRegionCode)
+          ?.region_name ?? null
+      : null
+  // O direcionador acompanha o recorte: dizer só "Hospital" quando há um
+  // estabelecimento aberto esconde onde a leitura está.
+  const sectionSuffix: Record<string, string | null> = {
+    regional: selectedRegionName,
+    hospital: selectedHospitalName ?? selectedRegionName,
+  }
   const routeWithContext = (pathname: string) => ({
     pathname,
     search: location.search,
@@ -74,6 +87,11 @@ function Shell() {
                 data-testid={`anchor-${section.id}`}
               >
                 {section.label}
+                {sectionSuffix[section.id] && (
+                  <small data-testid={`anchor-context-${section.id}`}>
+                    {sectionSuffix[section.id]}
+                  </small>
+                )}
               </Link>
             ))}
             <NavLink to={routeWithContext('/metodologia')}>Metodologia</NavLink>

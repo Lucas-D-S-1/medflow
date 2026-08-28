@@ -53,7 +53,7 @@ type CidState =
 const CNES_PATTERN = /^\d{7}$/
 
 export default function HospitalView() {
-  const { sourceState, sharedCompetence, sharedRegionCode } = useSource()
+  const { sourceState, sharedCompetence, sharedRegionCode, reportHospitalName } = useSource()
   const [searchParams, setSearchParams] = useSearchParams()
   const [listState, setListState] = useState<ListState>({ kind: 'idle' })
   const [seriesState, setSeriesState] = useState<SeriesState>({ kind: 'idle' })
@@ -86,6 +86,14 @@ export default function HospitalView() {
     CNES_PATTERN.test(urlHospital) && list?.items.some((item) => item.cnes === urlHospital)
       ? urlHospital
       : ''
+
+  // O direcionador precisa saber qual estabelecimento está aberto, e só esta
+  // view resolve o nome a partir da lista carregada.
+  useEffect(() => {
+    reportHospitalName(
+      list?.items.find((item) => item.cnes === selectedCnes)?.hospital_name ?? null,
+    )
+  }, [list, reportHospitalName, selectedCnes])
 
   useEffect(() => {
     listRequest.current?.abort()
@@ -315,31 +323,6 @@ export default function HospitalView() {
 
       {sourceData && (
         <>
-          <section className="hospital-controls" aria-labelledby="hospital-controls-title">
-            <div>
-              <p className="section-kicker">FILTROS LOCAIS</p>
-              <h2 id="hospital-controls-title">Busca hospitalar</h2>
-            </div>
-            <div className="hospital-toolbar">
-              <label>
-                Buscar hospital
-                <input
-                  type="search"
-                  value={urlSearch}
-                  minLength={2}
-                  maxLength={120}
-                  placeholder="Nome ou alias"
-                  disabled={isFallback}
-                  data-testid="hospital-search"
-                  onChange={(event) => updateHospitalSearch(event.target.value)}
-                />
-              </label>
-            </div>
-            <small>
-              Esta busca local limpa o hospital selecionado.
-            </small>
-          </section>
-
           {listState.kind === 'loading' && (
             <StatePanel kind="loading" title="Carregando lista" testId="hospital-list-loading">
               A resposta anterior não será exibida como se fosse deste recorte.
@@ -379,6 +362,9 @@ export default function HospitalView() {
                 </StatePanel>
               ) : (
                 <HospitalTable
+                  search={urlSearch}
+                  onSearchChange={updateHospitalSearch}
+                  searchDisabled={isFallback}
                   data={list}
                   selectedCnes={selectedCnes}
                   onSelect={(cnes) => updateParam('hospital', cnes)}

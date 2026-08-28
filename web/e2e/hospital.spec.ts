@@ -46,7 +46,7 @@ test('lista hospitais da região, marca amostra e capacidade, e seleciona pela U
   await page.goto(`/hospital?competencia=${snapshotCompetencia}&regiao=35073`)
 
   await expect(page.getByTestId('hospital-count')).toHaveText(
-    `8 de ${paginacao(hospitalListSnapshot).count} hospitais`,
+    `${paginacao(hospitalListSnapshot).count} de ${paginacao(hospitalListSnapshot).count} hospitais`,
   )
   await expect(page.getByTestId('hospital-row-2786435')).toContainText('HCSVP HOSPITAL SAO VICENTE')
   await expect(page.getByTestId('hospital-row-2786435')).toContainText(pt(hospitalDestacado.new_admissions as number))
@@ -61,7 +61,6 @@ test('lista hospitais da região, marca amostra e capacidade, e seleciona pela U
   await expect(page.getByText('não ocupação real acima do teto físico')).toBeVisible()
 
   const totalHospitais = paginacao(hospitalListSnapshot).count
-  await page.getByRole('button', { name: `Ver todos os ${totalHospitais} hospitais` }).click()
   await expect(page.getByTestId('hospital-count')).toHaveText(
     `${totalHospitais} de ${totalHospitais} hospitais`,
   )
@@ -182,10 +181,6 @@ test('hospital sem internação nova não exibe TMH, permanência nem CMI', asyn
   })
 
   await page.goto(`/hospital?competencia=${snapshotCompetencia}&regiao=35073`)
-  await page
-    .getByRole('button', { name: `Ver todos os ${itens(hospitalListSnapshot).length + 1} hospitais` })
-    .click()
-
   await expect(page.getByTestId('hospital-row-9999999')).toContainText(
     'sem internação nova na competência',
   )
@@ -360,7 +355,7 @@ test('isola falha dos diagnósticos sem derrubar especialidades nem série', asy
     `6 de ${paginacao(hospitalSeriesSnapshot).count} competências`,
   )
   await expect(page.getByTestId('hospital-count')).toHaveText(
-    `8 de ${paginacao(hospitalListSnapshot).count} hospitais`,
+    `${paginacao(hospitalListSnapshot).count} de ${paginacao(hospitalListSnapshot).count} hospitais`,
   )
 })
 test('isola falha da série sem derrubar a lista de hospitais', async ({ page }) => {
@@ -383,7 +378,7 @@ test('isola falha da série sem derrubar a lista de hospitais', async ({ page })
 
   await expect(page.getByTestId('serie-error')).toContainText('Série do hospital indisponível')
   await expect(page.getByTestId('hospital-count')).toHaveText(
-    `8 de ${paginacao(hospitalListSnapshot).count} hospitais`,
+    `${paginacao(hospitalListSnapshot).count} de ${paginacao(hospitalListSnapshot).count} hospitais`,
   )
   await expect(page.getByTestId('source-badge')).toHaveCount(0)
 })

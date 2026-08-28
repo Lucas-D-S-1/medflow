@@ -61,6 +61,9 @@ type SourceContextValue = {
   /** Mesmas regiões na competência anterior e no mesmo mês do ano anterior,
    *  para MoM e YoY. Nulo enquanto carrega, ou quando o período não existe. */
   regionalComparison: RegionalComparison
+  /** Nome do hospital aberto, para o direcionador acompanhar o recorte. */
+  selectedHospitalName: string | null
+  reportHospitalName: (name: string | null) => void
 }
 
 export type RegionalComparison = {
@@ -108,6 +111,7 @@ export function SourceProvider({ children }: { children: ReactNode }) {
   const [regionalComparison, setRegionalComparison] =
     useState<RegionalComparison>(EMPTY_COMPARISON)
   const comparisonRequest = useRef<AbortController | null>(null)
+  const [selectedHospitalName, setSelectedHospitalName] = useState<string | null>(null)
   const reloadGeneration = useRef(0)
 
   const sourceData =
@@ -478,6 +482,8 @@ export function SourceProvider({ children }: { children: ReactNode }) {
         setSharedRegion,
         setSharedMacroregion,
         regionalComparison,
+        selectedHospitalName,
+        reportHospitalName: setSelectedHospitalName,
       }}
     >
       {children}

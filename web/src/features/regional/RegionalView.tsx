@@ -24,8 +24,6 @@ import {
 import { formatRegionalNetwork } from '../../shared/territory'
 import './RegionalView.css'
 
-const RANKING_PREVIEW_SIZE = 8
-
 type SeriesState =
   | { kind: 'idle' | 'loading' | 'empty' | 'error' | 'snapshot-missing' }
   | { kind: 'ready'; data: RegionalSeriesResponse }
@@ -41,7 +39,6 @@ export default function RegionalView() {
     setSharedRegion,
     regionalComparison,
   } = useSource()
-  const [showAllRanking, setShowAllRanking] = useState(false)
   const [seriesState, setSeriesState] = useState<SeriesState>({ kind: 'idle' })
   const seriesRequest = useRef<AbortController | null>(null)
   const sourceData =
@@ -101,9 +98,6 @@ export default function RegionalView() {
         visibleItems[0]?.macroregion_name ?? '',
       )
     : 'São Paulo'
-  const rankingItems = showAllRanking
-    ? rankedItems
-    : rankedItems.slice(0, RANKING_PREVIEW_SIZE)
 
   useEffect(() => {
     seriesRequest.current?.abort()
@@ -349,40 +343,6 @@ export default function RegionalView() {
                   <RegionalSeries data={seriesState.data} selectedCompetence={selectedCompetence} />
                 )}
 
-                <section className="ranking-panel" aria-labelledby="ranking-title">
-                  <div className="block-heading">
-                    <div>
-                      <p className="section-kicker">PRIORIZAR INVESTIGAÇÃO</p>
-                      <h3 id="ranking-title">Maiores valores observados de IPH estimado</h3>
-                    </div>
-                    <strong data-testid="regional-ranking-count">
-                      {formatInteger(rankingItems.length)} de {formatInteger(rankedItems.length)}
-                    </strong>
-                  </div>
-                  <ol className={showAllRanking ? 'ranking-list expanded' : 'ranking-list'}>
-                    {rankingItems.map((item) => (
-                      <li key={item.region_code}>
-                        <button type="button" onClick={() => setSharedRegion(item.region_code)}>
-                          <span>{item.region_name}</span>
-                          <strong>{formatPercent(item.iph_percent)}</strong>
-                          <small data-testid={`regional-ranking-sample-${item.region_code}`}>
-                            amostra: {formatInteger(item.new_admissions)} internações novas
-                          </small>
-                        </button>
-                      </li>
-                    ))}
-                  </ol>
-                  {rankedItems.length > RANKING_PREVIEW_SIZE && (
-                    <button
-                      className="ranking-toggle"
-                      type="button"
-                      aria-expanded={showAllRanking}
-                      onClick={() => setShowAllRanking((current) => !current)}
-                    >
-                      {showAllRanking ? 'Mostrar somente o resumo' : `Ver todas as ${rankedItems.length} regiões`}
-                    </button>
-                  )}
-                </section>
               </>
             )}
           </>
