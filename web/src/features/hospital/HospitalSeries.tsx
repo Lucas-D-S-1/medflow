@@ -69,6 +69,13 @@ const COLUMNS: SortableColumn<HospitalSeriesPoint>[] = [
     value: (ponto) => ponto.average_stay_days,
   },
   { id: 'cmi', label: 'CMI real', numeric: true, value: (ponto) => ponto.cmi_real },
+  {
+    id: 'ipe',
+    label: 'Ante os pares (IPE)',
+    hint: 'não é nota de qualidade',
+    numeric: true,
+    value: (ponto) => ponto.ipe_median,
+  },
 ]
 
 export default function HospitalSeries({ data }: { data: HospitalSeriesResponse }) {
@@ -104,7 +111,12 @@ export default function HospitalSeries({ data }: { data: HospitalSeriesResponse 
         </strong>
       </div>
 
-      <div className="hospital-table-wrap" id="hospital-series-rows">
+      <div
+        // O teto de altura vale só na lista expandida: com as seis primeiras a
+        // tabela cabe inteira, e limitar ali prendia a rolagem da página.
+        className={`hospital-table-wrap${showAll ? ' rolagem-interna' : ''}`}
+        id="hospital-series-rows"
+      >
         <table
           className="hospital-table hospital-series-table"
           aria-label="Série mensal do hospital"
@@ -164,6 +176,21 @@ export default function HospitalSeries({ data }: { data: HospitalSeriesResponse 
                   />
                   {ponto.cmi_nominal !== null && ponto.cmi_real !== null && (
                     <small>nominal {formatCurrency(ponto.cmi_nominal)}</small>
+                  )}
+                </td>
+                <td data-label="IPE">
+                  {ponto.ipe_median === null ? (
+                    <em className="valor-ausente">sem especialidade comparável</em>
+                  ) : (
+                    <>
+                      <strong data-testid={`serie-ipe-${ponto.competence}`}>
+                        {formatDecimal(ponto.ipe_median)}
+                      </strong>
+                      <small>
+                        {formatInteger(ponto.ipe_above_reference)} de{' '}
+                        {formatInteger(ponto.ipe_eligible_specialties)} acima dos pares
+                      </small>
+                    </>
                   )}
                 </td>
               </tr>

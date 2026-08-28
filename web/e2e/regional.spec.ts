@@ -275,6 +275,13 @@ test('renderiza a série regional persistida com competência, amostra e denomin
   await currentPoint.press('Escape')
   await expect(tooltip).not.toBeVisible()
 
+  // O IPE entrou no seletor da série: a evolução mensal é onde se vê se a
+  // permanência ante os pares vem piorando ou é do mês.
+  await page.getByRole('radio', { name: 'Ante os pares (IPE)' }).click()
+  await expect(page.locator('#regional-series-chart-title')).toContainText(
+    'Ante os pares (IPE)',
+  )
+
   const details = page.locator('.series-values-details')
   await expect(details.locator('summary')).toContainText(
     `6 de ${paginacao(regionalSeriesSnapshot).count}`,
@@ -368,6 +375,19 @@ test('mantém a metodologia colapsável', async ({ page }) => {
         .getBoundingClientRect().height,
   )
   expect(detailHeight).toBeLessThanOrEqual(0.45 * 720 + 1)
+})
+
+test('a escala do placar usa a rampa inteira, do melhor ao pior do recorte', async ({ page }) => {
+  await mockLiveSource(page)
+  await page.goto(`/?competencia=${snapshotCompetencia}`)
+  await expect(page.locator('.regional-map-shape')).toHaveCount(62)
+
+  // Os cortes eram fixos em 0, 1, 2 e 3. Como o recorte publicado chega no
+  // máximo a 3 dos 6 sinais, os dois tons escuros nunca apareciam: o mapa
+  // inteiro ficava na metade clara, e a legenda exibia um tom que região
+  // nenhuma tinha. Sem o tom mais escuro em uso, "quem é o pior" não se vê.
+  await expect(page.locator('.regional-map-shape.tone-1').first()).toBeVisible()
+  await expect(page.locator('.regional-map-shape.tone-5').first()).toBeVisible()
 })
 
 test('o mapa pode colorir pelo placar que consome os seis indicadores', async ({ page }) => {

@@ -30,6 +30,11 @@ export type RegionalSeriesItem = {
   price_reference_competence: string
   approved_amount_real: number
   cmi_real: number
+  /** Resumo do IPE da região no mês; nulo quando nada é comparável. */
+  ipe_median: number | null
+  ipe_eligible_pairs: number
+  ipe_above_reference: number
+  ipe_above_reference_percent: number | null
 }
 
 export type RegionalSeriesResponse = {
@@ -70,6 +75,8 @@ const INTEGER_FIELDS = [
   'declared_sus_beds',
   'declared_capacity_bed_days',
   'historical_years',
+  'ipe_eligible_pairs',
+  'ipe_above_reference',
 ] as const
 const NUMBER_FIELDS = [
   'approved_amount_nominal',
@@ -124,7 +131,11 @@ function isValidItem(value: unknown): value is RegionalSeriesItem {
       (value.seasonality_status === 'calculado' ||
         value.seasonality_status === 'fora_periodo_alvo' ||
         value.seasonality_status === 'historico_insuficiente') &&
-      typeof value.price_reference_competence === 'string',
+      typeof value.price_reference_competence === 'string' &&
+      (value.ipe_median === null || isFiniteNumber(value.ipe_median)) &&
+      (value.ipe_above_reference_percent === null ||
+        isFiniteNumber(value.ipe_above_reference_percent)) &&
+      (value.ipe_median === null) === (value.ipe_eligible_pairs === 0),
   )
 }
 

@@ -130,12 +130,13 @@
   }
 }
 
-.hospital-series-table td:nth-child(1) { width: 16%; }
-.hospital-series-table td:nth-child(2) { width: 15%; }
-.hospital-series-table td:nth-child(3) { width: 25%; }
-.hospital-series-table td:nth-child(4) { width: 12%; }
-.hospital-series-table td:nth-child(5) { width: 15%; }
-.hospital-series-table td:nth-child(6) { width: 17%; }
+.hospital-series-table td:nth-child(1) { width: 14%; }
+.hospital-series-table td:nth-child(2) { width: 13%; }
+.hospital-series-table td:nth-child(3) { width: 22%; }
+.hospital-series-table td:nth-child(4) { width: 10%; }
+.hospital-series-table td:nth-child(5) { width: 13%; }
+.hospital-series-table td:nth-child(6) { width: 14%; }
+.hospital-series-table td:nth-child(7) { width: 14%; }
 
 .hospital-specialty-table td:nth-child(1) { width: 30%; }
 .hospital-specialty-table td:nth-child(2) { width: 22%; }
@@ -175,15 +176,26 @@
 .hospital-cid-table td:nth-child(5) { width: 15%; }
 
 
-/* A lista vem cheia e rola dentro de si, mostrando cerca de dez hospitais.
-   Paginar em dois blocos escondia os extremos — que é exatamente o que a
-   ordenação existe para achar. */
-.hospital-table-wrap {
-  /* Cabe cerca de dez linhas: o suficiente para o extremo da ordenação estar
-     na tela sem a lista tomar a página inteira. */
+/* Por padrão a tabela cresce com o conteúdo e só rola de lado, quando não
+   cabe na largura. O teto de altura é opt-in.
+
+   Ele era global, e prendia a roda do mouse: bastava o conteúdo passar do teto
+   — por zoom, janela baixa ou linhas que quebram em duas — para a rolagem
+   parar na tabela e não continuar na página, por causa do
+   `overscroll-behavior: contain`. Quem rolava a série mensal ficava preso num
+   quadro que nem parecia rolável. */
+.hospital-table-wrap { overflow-x: auto; }
+
+/* Lista longa por natureza: vem cheia e rola dentro de si, mostrando cerca de
+   dez linhas. Paginar em dois blocos escondia os extremos, que é exatamente o
+   que a ordenação existe para achar.
+
+   Sem `overscroll-behavior: contain`: ao chegar no fim da lista a página
+   continua descendo, que é o que o dedo espera. Conter a rolagem só faria
+   sentido se sair da lista fosse erro, e não é. */
+.hospital-table-wrap.rolagem-interna {
   max-height: 34rem;
   overflow: auto;
-  overscroll-behavior: contain;
 }
 .hospital-table { min-width: 60rem; }
 .hospital-table th:first-child,

@@ -62,12 +62,19 @@
    * clínica. A luminosidade cai de forma monotônica do 1 ao 5, então a ordem
    * sobrevive em tons de cinza e a quem não distingue vermelho e verde.
    */
-  --color-map-muted: #ece7de;
-  --color-map-1: #fff2c9;
-  --color-map-2: #fedd8e;
-  --color-map-3: #fdb562;
-  --color-map-4: #ee7f2d;
-  --color-map-5: #bf4a12;
+  /* Rampa sequencial de um hue só, do claro ao escuro.
+     A anterior ia de #fff2c9 a #bf4a12 e os dois tons mais claros ficavam a
+     ΔE 7,3 um do outro: indistinguíveis mesmo com visão de cores completa, e
+     era neles que a maior parte do mapa caía. Esta abre a faixa de
+     luminosidade (0,94 a 0,29 em OKLab) e leva o pior par adjacente a
+     ΔE 14,8, com separação para daltonismo aprovada no validador.
+     Medido com scripts/validate_palette.js da orientação de visualização. */
+  --color-map-muted: #e3e7ea;
+  --color-map-1: #fbe8d6;
+  --color-map-2: #f2a75f;
+  --color-map-3: #d76c22;
+  --color-map-4: #9c3f0e;
+  --color-map-5: #4a1c0a;
   --color-map-selected-fill: #2b6cb0;
 
   --border-subtle: 1px solid var(--color-border);

@@ -88,7 +88,7 @@ export default function CidTable({
         </span>
       </div>
 
-      <div className="hospital-table-wrap">
+      <div className="hospital-table-wrap rolagem-interna">
         <table
           className="hospital-table hospital-cid-table"
           aria-label="Diagnósticos do hospital por internações novas"

@@ -35,6 +35,11 @@ export type HospitalSeriesPoint = {
   sample_status: SampleStatus
   capacity_status: CapacityStatus
   above_declared_capacity: number
+  /** Mediana do IPE entre as especialidades comparáveis do hospital no mês. */
+  ipe_median: number | null
+  ipe_eligible_specialties: number
+  ipe_above_reference: number
+  ipe_above_reference_percent: number | null
 }
 
 export type HospitalIdentity = {
@@ -148,7 +153,12 @@ function isValidPoint(value: unknown): value is HospitalSeriesPoint {
     (value.capacity_status === 'disponivel' ||
       value.capacity_status === 'sem_leito_sus_declarado') &&
     (value.above_declared_capacity === 0 || value.above_declared_capacity === 1) &&
-    (value.capacity_status !== 'sem_leito_sus_declarado' || value.iph_percent === null)
+    (value.capacity_status !== 'sem_leito_sus_declarado' || value.iph_percent === null) &&
+    isNonNegativeInteger(value.ipe_eligible_specialties) &&
+    isNonNegativeInteger(value.ipe_above_reference) &&
+    isNullableNumber(value.ipe_median) &&
+    isNullableNumber(value.ipe_above_reference_percent) &&
+    (value.ipe_median === null) === (value.ipe_eligible_specialties === 0)
   )
 }
 

@@ -129,7 +129,7 @@ export default function HospitalTable({
   // estreitas, que é o limite que esta interface se impôs.
   function renderTable(items: HospitalItem[], label: string) {
     return (
-      <div className="hospital-table-wrap">
+      <div className="hospital-table-wrap rolagem-interna">
         <table className="hospital-table" aria-label={label}>
           <thead>
             <tr>

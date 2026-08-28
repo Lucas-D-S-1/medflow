@@ -250,6 +250,36 @@ test('abre a série mensal do hospital selecionado com denominadores e CMI nomin
     })
   expect(rolagem.total).toBeGreaterThan(rolagem.visivel)
 
+  // O IPE também na evolução mensal: a série responde "isso é de agora ou vem
+  // de antes?", e sem ele o indicador novo só existia na foto do mês.
+  await expect(page.getByTestId(`serie-ipe-${snapshotCompetencia}`)).toHaveText(
+    pt(linhaSerieHospital.ipe_median as number, 2),
+  )
+
+  // Chegar no fim da lista não pode prender a página. O quadro tinha
+  // `overscroll-behavior: contain`, e a rolagem parava ali: quem descia a
+  // página ficava travado num quadro que nem parecia rolável.
+  const caixa = page.locator('#hospital-series-rows')
+  await caixa.scrollIntoViewIfNeeded()
+  const quadro = await caixa.boundingBox()
+  await page.mouse.move(quadro!.x + quadro!.width / 2, quadro!.y + 80)
+  for (let i = 0; i < 12; i++) {
+    await page.mouse.wheel(0, 200)
+    await page.waitForTimeout(50)
+  }
+  const interno = await caixa.evaluate((el) => {
+    const c = el as unknown as { scrollTop: number; scrollHeight: number; clientHeight: number }
+    return { fim: c.scrollTop >= c.scrollHeight - c.clientHeight - 2 }
+  })
+  expect(interno.fim).toBe(true)
+  const paginaAntes = await page.evaluate(() => (globalThis as unknown as { scrollY: number }).scrollY)
+  for (let i = 0; i < 5; i++) {
+    await page.mouse.wheel(0, 200)
+    await page.waitForTimeout(50)
+  }
+  const paginaDepois = await page.evaluate(() => (globalThis as unknown as { scrollY: number }).scrollY)
+  expect(paginaDepois).toBeGreaterThan(paginaAntes)
+
   // Ordenar vale para a série inteira, não só para a metade visível.
   await page.getByTestId('serie-sort-iph').click()
   const iphs = await page

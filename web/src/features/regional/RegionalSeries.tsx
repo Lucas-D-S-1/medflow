@@ -11,7 +11,7 @@ import {
   formatPeriod,
 } from '../../shared/format'
 
-type IndicatorId = 'iph' | 'admissions' | 'tmh' | 'cmi' | 'seasonality'
+type IndicatorId = 'iph' | 'admissions' | 'tmh' | 'cmi' | 'ipe' | 'seasonality'
 
 type IndicatorConfig = {
   label: string
@@ -52,6 +52,16 @@ const INDICATORS: Record<IndicatorId, IndicatorConfig> = {
     format: formatCurrency,
     detail: (item) => `${formatInteger(item.new_admissions)} internações novas`,
     note: 'Valor SIH aprovado médio nominal; não representa custo contábil completo.',
+  },
+  ipe: {
+    label: 'Ante os pares (IPE)',
+    value: (item) => item.ipe_median,
+    format: formatDecimal,
+    detail: (item) =>
+      item.ipe_eligible_pairs === 0
+        ? 'Nenhuma comparação elegível nesta competência'
+        : `${formatInteger(item.ipe_above_reference)} de ${formatInteger(item.ipe_eligible_pairs)} comparações hospital-especialidade acima dos pares`,
+    note: 'Mediana da permanência ante os pares na mesma especialidade; não é nota de qualidade e não há ajuste de risco.',
   },
   seasonality: {
     label: 'Índice sazonal',

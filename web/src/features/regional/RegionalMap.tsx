@@ -148,8 +148,15 @@ export default function RegionalMap({
   const metricOf = (item: RegionalSummaryItem) =>
     bySignals ? (signals?.get(item.region_code)?.count ?? 0) : item.iph_percent
   const values = visibleItems.map(metricOf).sort((a, b) => a - b)
+  // Os cortes do placar eram fixos em 0, 1, 2 e 3. Como o recorte publicado
+  // chega no máximo a 3 dos 6 sinais, os dois tons escuros nunca eram usados:
+  // o mapa inteiro ficava na metade clara da rampa, e a legenda mostrava um
+  // tom que região nenhuma tinha. Agora a escala se estica até o máximo
+  // observado, então o pior do recorte é sempre o tom mais escuro e o melhor
+  // é sempre o mais claro.
+  const observedMax = bySignals ? (values.at(-1) ?? 0) : 0
   const thresholds = bySignals
-    ? [0, 1, 2, 3]
+    ? [0.2, 0.4, 0.6, 0.8].map((fracao) => fracao * observedMax)
     : [0.2, 0.4, 0.6, 0.8].map((percentile) => quantile(values, percentile))
   const hoveredItem = itemsByRegion.get(hoveredCode)
   // Com um território escolhido o cartão fica nele por padrão: os valores da
@@ -190,9 +197,11 @@ export default function RegionalMap({
       >
         <title id="regional-map-title">Mapa das 62 regiões de saúde de São Paulo</title>
         <desc id="regional-map-description">
-          As cores usam percentis do IPH estimado na competência selecionada. Use as setas para
-          navegar pelas regiões e Enter ou espaço para selecionar. Ativar a região já selecionada
-          volta ao panorama, sem território escolhido.
+          {bySignals
+            ? 'As cores vão do mais claro, nenhum sinal aceso, ao mais escuro, o maior placar observado nesta competência.'
+            : 'As cores usam percentis do IPH estimado na competência selecionada.'}{' '}
+          Use as setas para navegar pelas regiões e Enter ou espaço para selecionar. Ativar a
+          região já selecionada volta ao panorama, sem território escolhido.
         </desc>
         {mapData.features.map((feature) => {
           const regionCode = feature.properties.cd_regiao_saude
