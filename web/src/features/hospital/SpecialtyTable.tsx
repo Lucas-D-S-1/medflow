@@ -1,4 +1,9 @@
 import type { SpecialtyItem, SpecialtyResponse } from './hospitalEspecialidades'
+import {
+  SortableHeader,
+  useSortableRows,
+  type SortableColumn,
+} from '../../shared/useSortableRows'
 import { formatCurrency, formatDecimal, formatInteger, formatPercent, formatPeriod } from '../../shared/format'
 
 function Valor({
@@ -18,7 +23,33 @@ function ausencia(item: SpecialtyItem) {
   return item.new_admissions === 0 ? 'sem internação nova' : 'não calculado'
 }
 
+const COLUMNS: SortableColumn<SpecialtyItem>[] = [
+  { id: 'especialidade', label: 'Especialidade', numeric: false, value: (item) => item.specialty_name },
+  { id: 'internacoes', label: 'Internações', numeric: true, value: (item) => item.new_admissions },
+  {
+    id: 'tmh',
+    label: 'Mortalidade observada (TMH)',
+    hint: 'sem ajuste de risco',
+    numeric: true,
+    value: (item) => item.tmh_percent,
+  },
+  { id: 'permanencia', label: 'Permanência média', numeric: true, value: (item) => item.average_stay_days },
+  {
+    id: 'cmi',
+    label: 'Custo médio por internação (CMI real)',
+    numeric: true,
+    value: (item) => item.cmi_real,
+  },
+]
+
 export default function SpecialtyTable({ data }: { data: SpecialtyResponse }) {
+  const { sorted, sortBy, descending, toggleSort } = useSortableRows(
+    data.items,
+    COLUMNS,
+    'internacoes',
+    (item) => item.specialty_name,
+  )
+
   return (
     <section className="hospital-panel" aria-labelledby="hospital-specialty-title">
       <div className="block-heading">
@@ -28,7 +59,7 @@ export default function SpecialtyTable({ data }: { data: SpecialtyResponse }) {
             Especialidades em {formatPeriod(data.data_through)}
           </h2>
           <p>
-            Em ordem decrescente de internações novas. As especialidades somam as{' '}
+            Ordene por qualquer indicador. As especialidades somam as{' '}
             {formatInteger(data.hospital.new_admissions_total)} internações do hospital na
             competência; especialidade com amostra insuficiente não é comparável.
           </p>
@@ -45,16 +76,16 @@ export default function SpecialtyTable({ data }: { data: SpecialtyResponse }) {
           aria-label="Especialidades do hospital por internações novas"
         >
           <thead>
-            <tr>
-              <th scope="col">Especialidade</th>
-              <th scope="col">Internações</th>
-              <th scope="col">Mortalidade observada (TMH)</th>
-              <th scope="col">Permanência média</th>
-              <th scope="col">Custo médio por internação (CMI real)</th>
-            </tr>
+            <SortableHeader
+              columns={COLUMNS}
+              sortBy={sortBy}
+              descending={descending}
+              onToggle={toggleSort}
+              testIdPrefix="especialidade-sort"
+            />
           </thead>
           <tbody>
-            {data.items.map((item) => (
+            {sorted.map((item) => (
               <tr key={item.specialty_code} data-testid={`especialidade-row-${item.specialty_code}`}>
                 <td data-label="Especialidade">
                   <strong>{item.specialty_name}</strong>

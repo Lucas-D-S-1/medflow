@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { HospitalItem, HospitalListResponse } from './hospitais'
 import { formatCurrency, formatDecimal, formatInteger, formatPercent } from '../../shared/format'
 
@@ -65,6 +65,30 @@ export default function HospitalTable({
   onSearchChange: (value: string) => void
   searchDisabled: boolean
 }) {
+  // O campo escreve em estado local e só depois na URL. Controlado direto pela
+  // URL, cada tecla disparava uma navegação do router e o input re-renderizava
+  // com o valor anterior no meio da digitação: digitar "butanta" deixava "u".
+  const [draft, setDraft] = useState(search)
+  const pushed = useRef(search)
+
+  // Mudança vinda de fora — a busca rápida do topo, um link colado — reposiciona
+  // o campo. Mudança que este componente acabou de empurrar, não.
+  useEffect(() => {
+    if (search !== pushed.current) {
+      pushed.current = search
+      setDraft(search)
+    }
+  }, [search])
+
+  useEffect(() => {
+    if (draft === pushed.current) return
+    const timer = window.setTimeout(() => {
+      pushed.current = draft
+      onSearchChange(draft)
+    }, 350)
+    return () => window.clearTimeout(timer)
+  }, [draft, onSearchChange])
+
   const [sortBy, setSortBy] = useState<ColumnId>('admissions')
   const [descending, setDescending] = useState(true)
 
@@ -232,13 +256,13 @@ export default function HospitalTable({
             <span>Filtrar</span>
             <input
               type="search"
-              value={search}
+              value={draft}
               minLength={2}
               maxLength={120}
               placeholder="Nome ou alias"
               disabled={searchDisabled}
               data-testid="hospital-search"
-              onChange={(event) => onSearchChange(event.target.value)}
+              onChange={(event) => setDraft(event.target.value)}
             />
           </label>
           <strong data-testid="hospital-count">

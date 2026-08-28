@@ -8,6 +8,8 @@
 import { expect, test } from '@playwright/test'
 import {
   itens,
+  competenciaVisivel,
+  escolherCompetencia,
   mockLiveSource,
   regionalSnapshot,
   snapshotCompetencia,
@@ -38,11 +40,11 @@ test('sincroniza competência e território entre URL, barra global e rotas', as
       '&destino=35072&hospital=3012212&busca=teste&elegiveis=0',
   )
 
-  await expect(page.getByTestId('global-competence')).toHaveValue(snapshotCompetencia)
+  await expect.poll(() => competenciaVisivel(page)).toBe(snapshotCompetencia)
   await expect(page.getByTestId('global-macroregion')).toHaveValue('3527')
   await expect(page.getByTestId('global-region')).toHaveValue('35073')
 
-  await page.getByTestId('global-competence').fill('2025-05')
+  await escolherCompetencia(page, '2025-05')
   await expect(page).toHaveURL(/competencia=2025-05/)
   await expect(page).toHaveURL(/macrorregiao=3527/)
   await expect(page).toHaveURL(/regiao=35073/)
@@ -52,7 +54,7 @@ test('sincroniza competência e território entre URL, barra global e rotas', as
   await expect(page).toHaveURL(/elegiveis=0/)
 
   await page.getByRole('link', { name: 'Hospital' }).click()
-  await expect(page.getByTestId('global-competence')).toHaveValue('2025-05')
+  await expect.poll(() => competenciaVisivel(page)).toBe('2025-05')
   await expect(page.getByTestId('global-region')).toHaveValue('35073')
   await expect(page.getByTestId('hospital-search')).toHaveValue('teste')
 

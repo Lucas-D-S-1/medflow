@@ -11,6 +11,8 @@ import {
   goldMetadata,
   internacoesNovasBR,
   methodologySnapshot,
+  competenciaVisivel,
+  escolherCompetencia,
   mockLiveSource,
   pt,
   regionalSnapshot,
@@ -229,8 +231,8 @@ test('preserva filtros na URL e ignora resposta atrasada de outra competência',
   await page.goto(`/regional?competencia=${snapshotCompetencia}&macrorregiao=3527&regiao=35073`)
   await expect(page.getByTestId('regional-selected-name')).toHaveText('JUNDIAI')
 
-  await page.getByTestId('global-competence').fill('2025-04')
-  await page.getByTestId('global-competence').fill('2025-05')
+  await escolherCompetencia(page, '2025-04')
+  await escolherCompetencia(page, '2025-05')
 
   await expect(page.getByTestId('regional-context-note')).toContainText('05/2025')
   await expect(page).toHaveURL(/competencia=2025-05/)

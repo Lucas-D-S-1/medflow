@@ -1,6 +1,8 @@
 import { useMemo, useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useSource } from './SourceContext'
+import CompetencePicker from './CompetencePicker'
+import { shiftCompetence } from './SourceContext'
 import { formatPeriod } from './format'
 import { formatRegionalNetwork } from './territory'
 import './GlobalContextBar.css'
@@ -34,6 +36,13 @@ export default function GlobalContextBar() {
       : null
   const isFallback = sourceState.kind === 'fallback'
   const isReady = Boolean(sourceData)
+  // O recorte publicado sai da própria cobertura: a última competência menos o
+  // número de competências publicadas. Cravar 2024-01 aqui daria uma faixa que
+  // deixaria de ser verdade no próximo avanço do pipeline.
+  const lastCompetence = sourceData?.status.data_through ?? ''
+  const firstCompetence = lastCompetence
+    ? shiftCompetence(lastCompetence, -(sourceData?.methodology.coverage.competencies ?? 1) + 1)
+    : ''
 
   const macroregions = useMemo(() => {
     if (!sourceData) return []
@@ -123,14 +132,12 @@ export default function GlobalContextBar() {
         <div className="global-context-fields">
           <label>
             Competência
-            <input
-              type="month"
+            <CompetencePicker
               value={sharedCompetence}
-              max={sourceData?.status.data_through}
+              min={firstCompetence}
+              max={lastCompetence}
               disabled={!isReady || isFallback}
-              data-testid="global-competence"
-              onChange={(event) => setSharedCompetence(event.target.value)}
-              aria-describedby="global-context-help"
+              onChange={setSharedCompetence}
             />
           </label>
           <label>

@@ -1,4 +1,9 @@
 import type { CidItem, CidResponse } from './hospitalCids'
+import {
+  SortableHeader,
+  useSortableRows,
+  type SortableColumn,
+} from '../../shared/useSortableRows'
 import { formatDecimal, formatInteger, formatPercent } from '../../shared/format'
 
 const PREVIEW_SIZE = 10
@@ -10,6 +15,30 @@ const MOTIVO_INELEGIVEL: Record<Exclude<CidItem['sample_status'], 'suficiente'>,
   benchmark_zero: 'pares sem permanência registrada',
 }
 
+const COLUMNS: SortableColumn<CidItem>[] = [
+  { id: 'diagnostico', label: 'Diagnóstico', numeric: false, value: (item) => item.cid_code },
+  { id: 'internacoes', label: 'Internações', numeric: true, value: (item) => item.new_admissions },
+  {
+    id: 'permanencia',
+    label: 'Permanência neste hospital',
+    numeric: true,
+    value: (item) => item.average_stay_hospital,
+  },
+  {
+    id: 'pares',
+    label: 'Permanência dos pares na região',
+    numeric: true,
+    value: (item) => item.average_stay_benchmark,
+  },
+  {
+    id: 'ipr',
+    label: 'Permanência ante os pares (IPR)',
+    hint: 'não é nota de qualidade',
+    numeric: true,
+    value: (item) => item.ipr,
+  },
+]
+
 export default function CidTable({
   data,
   eligibleOnly,
@@ -17,7 +46,13 @@ export default function CidTable({
   data: CidResponse
   eligibleOnly: boolean
 }) {
-  const visibleItems = data.items.slice(0, PREVIEW_SIZE)
+  const { sorted, sortBy, descending, toggleSort } = useSortableRows(
+    data.items,
+    COLUMNS,
+    'internacoes',
+    (item) => item.cid_code,
+  )
+  const visibleItems = sorted.slice(0, PREVIEW_SIZE)
 
   return (
     <section className="hospital-panel" aria-labelledby="hospital-cid-title">
@@ -59,13 +94,13 @@ export default function CidTable({
           aria-label="Diagnósticos do hospital por internações novas"
         >
           <thead>
-            <tr>
-              <th scope="col">Diagnóstico</th>
-              <th scope="col">Internações</th>
-              <th scope="col">Permanência neste hospital</th>
-              <th scope="col">Permanência dos pares na região</th>
-              <th scope="col">Permanência ante os pares (IPR)</th>
-            </tr>
+            <SortableHeader
+              columns={COLUMNS}
+              sortBy={sortBy}
+              descending={descending}
+              onToggle={toggleSort}
+              testIdPrefix="cid-sort"
+            />
           </thead>
           <tbody>
             {visibleItems.map((item) => (

@@ -325,3 +325,24 @@ export async function mockLiveSource(page: Page) {
   })
 }
 
+
+/**
+ * O seletor de competência deixou de ser `input type="month"`: ele agora é um
+ * botão que abre um painel de meses, para rotular em português e oferecer só o
+ * que a Gold publicou. Os testes falam com ele por aqui.
+ */
+export async function competenciaVisivel(page: Page) {
+  return page.getByTestId('global-competence').getAttribute('data-value')
+}
+
+export async function escolherCompetencia(page: Page, competencia: string) {
+  const [ano, mes] = competencia.split('-')
+  await page.getByTestId('global-competence').click()
+  const alvo = Number(ano)
+  for (let tentativa = 0; tentativa < 6; tentativa += 1) {
+    const atual = Number(await page.getByTestId('competence-year').innerText())
+    if (atual === alvo) break
+    await page.getByRole('button', { name: atual > alvo ? 'Ano anterior' : 'Próximo ano' }).click()
+  }
+  await page.getByTestId(`competence-month-${Number(mes)}`).click()
+}

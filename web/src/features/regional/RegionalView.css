@@ -165,7 +165,13 @@
 .series-current-value strong { color: var(--color-heading); font: 600 var(--font-size-lg) var(--font-heading); }
 .series-current-value small { text-align: right; }
 .series-chart { margin-top: var(--space-3); }
-.series-chart-canvas { position: relative; }
+/* O tooltip escapa a caixa do gráfico. Sem contexto de empilhamento próprio,
+   a tabela logo abaixo — que vem depois no DOM e tem fundo — pintava por cima
+   dele justamente quando o ponteiro estava nos últimos meses. */
+.series-chart-canvas { position: relative; z-index: 4; }
+/* A tabela só existe como alternativa auditável ao gráfico: ela cede a
+   sobreposição em vez de disputá-la. */
+.series-values-details { position: relative; z-index: 1; }
 .series-chart-canvas svg { display: block; width: 100%; max-height: 18rem; overflow: visible; }
 .series-grid-line { stroke: var(--color-border-strong); stroke-width: 1; vector-effect: non-scaling-stroke; }
 .series-line { fill: none; stroke: var(--color-accent-strong); stroke-width: 3; stroke-linejoin: round; stroke-linecap: round; vector-effect: non-scaling-stroke; }

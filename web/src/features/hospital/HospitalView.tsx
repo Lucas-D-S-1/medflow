@@ -81,6 +81,10 @@ export default function HospitalView() {
   const apiSearch = urlSearch.trim()
   // O recorte de elegíveis vive na URL como os demais filtros, e vem ligado por
   // padrão: sem ele a lista abre em diagnósticos que não têm IPR calculável.
+  // O recorte de elegíveis continua na URL para links já compartilhados, mas
+  // perdeu o controle próprio: a tabela já marca quem não tem IPR calculável,
+  // e o botão pedia que o usuário soubesse o que "elegível" significa antes de
+  // ver a lista.
   const eligibleOnly = (searchParams.get('elegiveis') ?? '1') !== '0'
   const selectedCompetence = sharedCompetence
   const selectedRegion = sharedRegionCode
@@ -462,22 +466,6 @@ export default function HospitalView() {
           )}
           {specialtyState.kind === 'ready' && <SpecialtyTable data={specialtyState.data} />}
 
-          {/* O recorte de elegíveis é controle, não conteúdo: fica fora do
-              painel de dados para não sumir enquanto a resposta é refeita. */}
-          {selectedCnes && cidState.kind !== 'idle' && (
-            <label className="cid-toggle">
-              <input
-                type="checkbox"
-                checked={eligibleOnly}
-                data-testid="cid-eligible-toggle"
-                onChange={(event) =>
-                  updateParam('elegiveis', event.target.checked ? '' : '0')
-                }
-              />
-              Mostrar apenas diagnósticos elegíveis para IPR
-            </label>
-          )}
-
           {cidState.kind === 'loading' && (
             <StatePanel kind="loading" title="Carregando diagnósticos" testId="cid-loading">
               Buscando o índice de permanência relativa por diagnóstico.
@@ -498,9 +486,8 @@ export default function HospitalView() {
           {cidState.kind === 'ready' &&
             (cidState.data.items.length === 0 ? (
               <StatePanel kind="empty" title="Nenhum diagnóstico no recorte" testId="cid-empty">
-                {eligibleOnly
-                  ? 'Nenhum diagnóstico deste hospital tem amostra e par regional suficientes para calcular o IPR. Desmarque o recorte para ver os demais.'
-                  : 'A fonte respondeu normalmente, mas não observou diagnóstico para esse hospital.'}
+                A fonte respondeu normalmente, mas não observou diagnóstico para esse
+                hospital neste recorte.
               </StatePanel>
             ) : (
               <CidTable data={cidState.data} eligibleOnly={eligibleOnly} />

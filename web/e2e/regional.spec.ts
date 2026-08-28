@@ -10,6 +10,8 @@ import {
   coberturaMetodologia,
   iphDaMacro3529,
   methodologySnapshot,
+  competenciaVisivel,
+  escolherCompetencia,
   mockLiveSource,
   paginacao,
   pt,
@@ -62,7 +64,7 @@ test('renderiza a competência e a versão do contrato recebidas do Oracle', asy
   await expect(page.getByTestId('contract-version')).toHaveCount(0)
   await expect(page.getByTestId('regional-context-note')).toContainText(snapshotCompetenciaBR)
   await expect(page.getByTestId('regional-count')).toHaveText('62 de 62 regiões')
-  await expect(page.getByTestId('global-competence')).toHaveValue(snapshotCompetencia)
+  await expect.poll(() => competenciaVisivel(page)).toBe(snapshotCompetencia)
   await expect(page.getByTestId('regional-map-svg')).toHaveCount(1)
   await expect(page.locator('.regional-map-shape')).toHaveCount(62)
   await expect(page.getByTestId('regional-selected-name')).toHaveText('JUNDIAI')
@@ -169,8 +171,8 @@ test('filtra a competência sem abandonar o mapa espacial e o tamanho da amostra
   })
 
   await page.goto('/?regiao=35073')
-  await expect(page.getByTestId('global-competence')).toHaveValue(snapshotCompetencia)
-  await page.getByTestId('global-competence').fill('2025-05')
+  await expect.poll(() => competenciaVisivel(page)).toBe(snapshotCompetencia)
+  await escolherCompetencia(page, '2025-05')
 
   await expect.poll(() => requestedCompetence).toBe('2025-05')
   await expect(page.getByTestId('regional-context-note')).toContainText('05/2025')

@@ -323,13 +323,9 @@ test('compara diagnósticos com pares elegíveis e explica quem não é elegíve
     pt(contextoCid.hospital_eligible_combinations),
   )
 
-  // O recorte de elegíveis vive na URL.
-  await expect(page.getByTestId('cid-eligible-toggle')).toBeChecked()
-  // `click` em vez de `uncheck`: o input é controlado pela URL, e o `uncheck`
-  // do Playwright lê o estado antes de o React reprocessar a navegação.
-  await page.getByTestId('cid-eligible-toggle').click()
-  await expect(page).toHaveURL(/elegiveis=0/)
-  await expect(page.getByTestId('cid-eligible-toggle')).not.toBeChecked()
+  // O recorte de elegíveis continua na URL para links já compartilhados, mas
+  // perdeu o controle próprio: a tabela já marca quem não tem IPR calculável.
+  await expect(page.getByTestId('cid-eligible-toggle')).toHaveCount(0)
 })
 test('isola falha dos diagnósticos sem derrubar especialidades nem série', async ({ page }) => {
   await mockLiveSource(page)
