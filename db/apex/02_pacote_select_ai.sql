@@ -473,6 +473,35 @@ fetch first 5 rows only~';
       raise;
   end consumir_cota;
 
+  -- Corta o parágrafo final que só repete o que a resposta acabou de dizer.
+  --
+  -- A instrução de concisão está no prompt e o modelo a ignora justamente
+  -- nesse fecho: depois da lista, ele emenda "Isso significa que…" repetindo a
+  -- definição do indicador. Aparar aqui é determinístico e não depende de o
+  -- modelo obedecer. Só corta quando sobra texto antes: uma resposta que é
+  -- inteira uma frase dessas continua inteira.
+  function enxugar(p_texto in clob) return clob is
+    l_texto  clob := p_texto;
+    l_corte  pls_integer;
+    l_antes  clob;
+  begin
+    if l_texto is null then
+      return l_texto;
+    end if;
+    l_corte := regexp_instr(
+        l_texto,
+        '(^|[[:space:]])(Isso (significa|representa|indica|quer dizer)|Em resumo|Ou seja|Portanto)[[:space:],]',
+        1, 1, 0, 'i');
+    if l_corte > 1 then
+      l_antes := trim(dbms_lob.substr(l_texto, l_corte - 1, 1));
+      -- Só apara se o que sobra já é resposta: pelo menos uma frase inteira.
+      if dbms_lob.getlength(l_antes) >= 40 then
+        return l_antes;
+      end if;
+    end if;
+    return l_texto;
+  end enxugar;
+
   function responder(
     p_pergunta in varchar2,
     p_contexto in varchar2 default null
@@ -485,8 +514,12 @@ fetch first 5 rows only~';
     l_no_texto  varchar2(4000);
     l_no_sql    varchar2(4000);
     l_pergunta  varchar2(4000) := trim(p_pergunta);
-    l_contexto  varchar2(1000) := trim(p_contexto);
-    l_prompt    varchar2(4000);
+    l_contexto  varchar2(4000) := trim(p_contexto);
+    -- 32767 e nao 4000: o texto fixo das regras ja passa de 4 mil caracteres, e
+    -- somado ao contexto (ate 1000) e a pergunta (ate 300) estourava o buffer.
+    -- O limite antigo cabia por pouco desde antes das regras 11 e 12, e o
+    -- estouro seria ORA-06502 no meio da resposta, nao um erro de contrato.
+    l_prompt    varchar2(32767);
     l_prompt_narrativa varchar2(32767);
     l_ranking   boolean;
     l_comparacao_mensal boolean;
@@ -500,8 +533,8 @@ fetch first 5 rows only~';
       raise_application_error(-20004, 'A pergunta deve ter no maximo 300 caracteres.');
     end if;
 
-    if length(l_contexto) > 1000 then
-      raise_application_error(-20008, 'O contexto deve ter no maximo 1000 caracteres.');
+    if length(l_contexto) > 4000 then
+      raise_application_error(-20008, 'O contexto deve ter no maximo 4000 caracteres.');
     end if;
 
     l_prompt := case
@@ -553,15 +586,56 @@ fetch first 5 rows only~';
            || 'coordenadoria municipal.' || chr(10)
            || '9. Glossario analitico: IPH e pressao estimada sobre capacidade '
            || 'SUS declarada; TMH e mortalidade hospitalar observada; IPR compara '
-           || 'permanencia com pares; CMI e valor medio aprovado, nao custo total; '
+           || 'permanencia com pares por CID; IPE compara permanencia com pares '
+           || 'por especialidade, na mesma regiao e competencia, com o proprio '
+           || 'hospital fora do benchmark: acima de 1 e permanencia maior que a '
+           || 'dos pares, e ele existe por hospital-especialidade, por hospital '
+           || '(NR_IPE_MEDIANA, mediana das especialidades elegiveis) e por '
+           || 'regiao (NR_IPE_MEDIANA do mart regional). '
+           || 'CMI e valor medio aprovado, nao custo total; '
            || 'IS compara o mes com anos anteriores; evasao e deslocamento '
            || 'intrastadual observado; ICSAP e sinal territorial, nao '
            || 'evitabilidade individual. TMH = obitos / internacoes novas x 100; '
            || 'IS = internacoes novas de 2026 / media do mesmo mes em 2024 e 2025; '
            || 'CMI nominal e real usam o valor SIH aprovado por internacao.' || chr(10)
            || '10. Para perguntas definicionais (o que e, que significa, explique) '
-           || 'sobre um indicador, responda a definicao e a formula do glossario; '
-           || 'nao faca ranking nem liste regioes, a menos que isso seja pedido.'
+           || 'sobre um indicador, responda a definicao e a formula do glossario '
+           || 'em ate duas frases e PARE. Nao consulte dado, nao ranqueie, nao '
+           || 'liste regioes nem hospitais, nao de exemplos com valores: quem '
+           || 'pergunta o que e um indicador nao pediu os maiores.'
+           || chr(10)
+           || '11. Em unidades com permanencia media abaixo de um dia, como '
+           || 'hospital-dia, o IPH deixa de medir ocupacao: a reconstrucao '
+           || 'atribui ao menos um dia por internacao e o indice passa a medir '
+           || 'giro sobre capacidade. Se o hospital citado ou listado estiver '
+           || 'nessa condicao, diga isso em uma frase e nao chame o valor de '
+           || 'taxa de ocupacao. Nesses casos o IPE compara melhor, porque '
+           || 'confronta o hospital com pares da mesma especialidade.' || chr(10)
+           || '12. Escreva curto, e escolha UM formato: ou ate tres frases, ou '
+           || 'uma lista de ate cinco itens de uma linha cada. Nunca os dois. '
+           || 'Comece pela resposta, com o numero, a unidade e a competencia. '
+           || 'Proibido: repetir a pergunta, abrir com preambulo, e fechar com '
+           || 'frase que explica o que acabou de ser dito (nada de "isso '
+           || 'significa que", "isso representa", "em resumo"). Depois da lista '
+           || 'nao venha paragrafo de conclusao. Ressalva so quando muda a '
+           || 'leitura do numero, e em uma frase. Sucinto nao e vago: nunca '
+           || 'omita o numero, a unidade, a competencia nem a ressalva que '
+           || 'impede uma leitura errada.' || chr(10)
+           || '13. O contexto pode trazer conversa_anterior, com as ultimas '
+           || 'rodadas no formato P: pergunta R: resposta. Use-a para resolver '
+           || 'pergunta eliptica: se a nova pergunta so troca o indicador ou o '
+           || 'recorte ("e o TMH?", "e em 2025?", "e o maior?"), mantenha o '
+           || 'restante do que a rodada anterior fixou, inclusive a regiao, o '
+           || 'hospital e a competencia, e diga em qual recorte esta '
+           || 'respondendo. Se a nova pergunta nomear outro assunto, a conversa '
+           || 'anterior nao vale mais: responda so a nova.' || chr(10)
+           || '14. Nomes de regiao, municipio e hospital estao gravados em '
+           || 'MAIUSCULAS e SEM ACENTO (SAO PAULO, JUNDIAI, RIBEIRAO PRETO). '
+           || 'Nunca compare com igualdade a um nome escrito pelo usuario: '
+           || 'filtre com UPPER da coluna e LIKE, trocando acentos por letras '
+           || 'simples, por exemplo UPPER(NM_REGIAO_SAUDE) LIKE ''%SAO PAULO%''. '
+           || 'Igualdade sensivel a caixa devolve zero linha e faz parecer que '
+           || 'o dado nao existe.'
     end;
 
     l_ranking := eh_ranking_analitico(l_pergunta);
@@ -610,7 +684,7 @@ fetch first 5 rows only~';
               || 'o limite, os valores e a ordem da consulta auditada abaixo. '
               || 'Nao troque o intervalo nem gere uma lista diferente.'
               || chr(10) || 'Consulta auditada:' || chr(10) || l_sql;
-          l_narrativa := gerar(l_prompt_narrativa, 'narrate');
+          l_narrativa := enxugar(gerar(l_prompt_narrativa, 'narrate'));
         exception
           when others then
             l_recusa := substr(

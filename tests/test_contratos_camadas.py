@@ -157,7 +157,7 @@ class TestValidadorDeContrato:
             json.dumps(
                 {
                     "camada": camada,
-                    "versao_contrato": "0.4.0",
+                    "versao_contrato": "0.5.0",
                     "tabelas": [
                         {
                             "nome": "tabela",

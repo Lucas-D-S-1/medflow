@@ -10,7 +10,7 @@ openapi: 3.1.0
 
 info:
   title: MedFlow — API de leitura
-  version: 0.4.0
+  version: 0.5.0
   summary: Indicadores hospitalares e territoriais do SUS em São Paulo, 2024-01 a 2026-06.
   description: |
     Dez endpoints analíticos somente leitura (`GET`) e uma fronteira governada
@@ -923,6 +923,18 @@ components:
         price_reference_competence: { type: [string, "null"] }
         approved_amount_real: { type: [number, "null"] }
         cmi_real: { type: [number, "null"] }
+        ipe_median:
+          type: [number, "null"]
+          description: |
+            Mediana do IPE entre as combinações hospital-especialidade
+            elegíveis da região na competência. Sai do conjunto inteiro da
+            região, não da mediana das medianas dos hospitais. Nula quando
+            nenhuma combinação é elegível. **Não é medida de qualidade.**
+        ipe_eligible_pairs: { type: integer }
+        ipe_above_reference:
+          type: integer
+          description: Combinações com IPE acima de 1, isto é, permanência acima da dos pares.
+        ipe_above_reference_percent: { type: [number, "null"] }
 
     ItemSerieRegional:
       type: object
@@ -954,6 +966,18 @@ components:
         price_reference_competence: { type: [string, "null"] }
         approved_amount_real: { type: [number, "null"] }
         cmi_real: { type: [number, "null"] }
+        ipe_median:
+          type: [number, "null"]
+          description: |
+            Mediana do IPE entre as combinações hospital-especialidade
+            elegíveis da região na competência. Sai do conjunto inteiro da
+            região, não da mediana das medianas dos hospitais. Nula quando
+            nenhuma combinação é elegível. **Não é medida de qualidade.**
+        ipe_eligible_pairs: { type: integer }
+        ipe_above_reference:
+          type: integer
+          description: Combinações com IPE acima de 1, isto é, permanência acima da dos pares.
+        ipe_above_reference_percent: { type: [number, "null"] }
 
     ItemFluxo:
       type: object
@@ -1019,6 +1043,18 @@ components:
           type: integer
           enum: [0, 1]
           description: 1 quando o IPH passa de 1, isto é, de 100%.
+        ipe_median:
+          type: [number, "null"]
+          description: |
+            Mediana do IPE entre as especialidades elegíveis do hospital na
+            competência. Mediana e não média porque a razão tem cauda longa à
+            direita. Nula quando nenhuma especialidade é elegível. **Não é
+            medida de qualidade.**
+        ipe_eligible_specialties: { type: integer }
+        ipe_above_reference:
+          type: integer
+          description: Especialidades com IPE acima de 1, isto é, permanência acima da dos pares.
+        ipe_above_reference_percent: { type: [number, "null"] }
 
     ItemSerieHospital:
       type: object
@@ -1043,6 +1079,18 @@ components:
         sample_status: { $ref: "#/components/schemas/StatusAmostra" }
         capacity_status: { $ref: "#/components/schemas/StatusCapacidade" }
         above_declared_capacity: { type: integer, enum: [0, 1] }
+        ipe_median:
+          type: [number, "null"]
+          description: |
+            Mediana do IPE entre as especialidades elegíveis do hospital na
+            competência. Mediana e não média porque a razão tem cauda longa à
+            direita. Nula quando nenhuma especialidade é elegível. **Não é
+            medida de qualidade.**
+        ipe_eligible_specialties: { type: integer }
+        ipe_above_reference:
+          type: integer
+          description: Especialidades com IPE acima de 1, isto é, permanência acima da dos pares.
+        ipe_above_reference_percent: { type: [number, "null"] }
 
     ItemEspecialidade:
       type: object

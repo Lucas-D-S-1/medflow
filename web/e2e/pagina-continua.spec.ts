@@ -195,6 +195,15 @@ test('o panorama mostra os totais do recorte, somados e não promediados', async
   await expect(page.getByTestId('state-total-own-region')).toContainText(`${pt(proprio, 1)}%`)
   await expect(page.getByTestId('state-total-evasion')).toContainText(`${pt(fora, 1)}%`)
 
+  // O IPE agrega por contagem, não por média de medianas: uma região com 4
+  // comparações não pode pesar o mesmo que uma com 243.
+  const ipeAcima = (soma('ipe_above_reference') / soma('ipe_eligible_pairs')) * 100
+  await expect(page.getByTestId('state-total-ipe')).toContainText(`${pt(ipeAcima, 1)}%`)
+  // O testId fica no valor; a contagem que o sustenta mora no detalhe ao lado.
+  await expect(page.getByTestId('state-total-ipe').locator('..')).toContainText(
+    `${pt(soma('ipe_above_reference'))} de ${pt(soma('ipe_eligible_pairs'))}`,
+  )
+
   await expect(page.getByTestId('state-totals-scope')).toContainText(pt(soma('population')))
 })
 

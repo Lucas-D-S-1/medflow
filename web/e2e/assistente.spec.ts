@@ -80,8 +80,8 @@ test('troca as sugestões junto com a etapa visível', async ({ page }) => {
   await expect(page.getByRole('button', { name: 'O que é IPH?' })).toBeVisible()
 
   await page.getByRole('link', { name: 'Hospital' }).click()
-  await page.getByRole('button', { name: 'Por que o IPR pode ficar indisponível?' }).click()
-  await expect(page.locator('#medflow-assistant-panel')).toContainText('cortes mínimos')
+  await page.getByRole('button', { name: 'Qual a diferença entre IPE e IPR?' }).click()
+  await expect(page.locator('#medflow-assistant-panel')).toContainText('grãos diferentes')
 })
 
 test('envia somente pergunta livre ao Oracle Select AI e mostra SQL auditável', async ({ page }) => {
@@ -99,6 +99,7 @@ test('envia somente pergunta livre ao Oracle Select AI e mostra SQL auditável',
         macroregion_label: 'Rede regional 16 — Bragança e Jundiaí',
         hospital_cnes: null,
         active_analysis: 'pressão hospitalar regional e tendência',
+        history: [],
       },
     })
     await route.fulfill({
@@ -241,4 +242,79 @@ test('recusa inventar grupo de pares em vez de perguntar ao modelo', async ({ pa
   }
 
   expect(calls).toBe(0)
+})
+
+test('a conversa fica na tela e a pergunta seguinte leva a anterior', async ({ page }) => {
+  // O caso é o do usuário: "qual o IPH de São Paulo?" e depois "e o TMH?".
+  // A segunda pergunta não nomeia a região, então ou o histórico vai junto ou
+  // o modelo responde sobre coisa nenhuma.
+  const enviados: unknown[] = []
+  await page.route('**/api/dev/v1/assistente/perguntar', async (route) => {
+    const corpo = route.request().postDataJSON() as { question: string }
+    enviados.push(corpo)
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        status: 'ok',
+        source: 'oracle-select-ai',
+        response_id: enviados.length,
+        narrative:
+          corpo.question === 'e o TMH?'
+            ? 'O TMH de SAO PAULO é 4,82% em junho de 2026.'
+            : 'O IPH de SAO PAULO é 32,3% em junho de 2026.',
+        sql: null,
+        warning: null,
+      }),
+    })
+  })
+
+  await page.goto('/regional?regiao=35073')
+  await page.getByRole('button', { name: /Posso ajudar/ }).click()
+
+  await page.getByLabel('Faça outra pergunta').fill('qual o IPH de São Paulo?')
+  await page.getByRole('button', { name: 'Enviar pergunta' }).click()
+  await expect(page.getByTestId('assistant-thread')).toContainText('O IPH de SAO PAULO')
+
+  await page.getByLabel('Faça outra pergunta').fill('e o TMH?')
+  await page.getByRole('button', { name: 'Enviar pergunta' }).click()
+  await expect(page.getByTestId('assistant-thread')).toContainText('O TMH de SAO PAULO')
+
+  // A primeira rodada continua na tela: era ela que sumia.
+  const thread = page.getByTestId('assistant-thread')
+  await expect(thread).toContainText('qual o IPH de São Paulo?')
+  await expect(thread).toContainText('O IPH de SAO PAULO')
+  await expect(thread).toContainText('e o TMH?')
+
+  const segunda = enviados[1] as { context: { history: { question: string; answer: string }[] } }
+  expect(segunda.context.history).toHaveLength(1)
+  expect(segunda.context.history[0].question).toBe('qual o IPH de São Paulo?')
+  expect(segunda.context.history[0].answer).toContain('O IPH de SAO PAULO')
+})
+
+test('a conversa sobrevive à troca de etapa', async ({ page }) => {
+  await page.route('**/api/dev/v1/assistente/perguntar', async (route) => {
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        status: 'ok',
+        source: 'oracle-select-ai',
+        response_id: 7,
+        narrative: 'Resposta que precisa continuar visível.',
+        sql: null,
+        warning: null,
+      }),
+    })
+  })
+
+  await page.goto('/regional?regiao=35073')
+  await page.getByRole('button', { name: /Posso ajudar/ }).click()
+  await page.getByLabel('Faça outra pergunta').fill('uma pergunta qualquer')
+  await page.getByRole('button', { name: 'Enviar pergunta' }).click()
+  await expect(page.getByTestId('assistant-thread')).toContainText('precisa continuar visível')
+
+  await page.getByRole('link', { name: 'Hospital' }).click()
+  // Quem estava investigando território e desce para hospital continua a mesma
+  // investigação; perder o fio ali era a queixa.
+  await expect(page.getByTestId('assistant-thread')).toContainText('precisa continuar visível')
+  await expect(page.locator('#medflow-assistant-panel')).toContainText('Contexto: visão hospitalar')
 })

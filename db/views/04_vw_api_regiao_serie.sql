@@ -26,7 +26,11 @@ select r.cd_regiao_saude,
        r.st_indice_sazonalidade,
        r.cd_competencia_preco_referencia,
        r.vl_aprovado_internacao_nova_real_soma,
-       r.vl_cmi_real
+       r.vl_cmi_real,
+       r.qt_hospital_especialidade_ipe_elegivel,
+       r.qt_hospital_especialidade_ipe_acima_referencia,
+       r.pc_hospital_especialidade_ipe_acima_referencia,
+       r.nr_ipe_mediana
   from mart_indicador_regiao_mensal r;
 
 comment on table vw_api_regiao_serie is

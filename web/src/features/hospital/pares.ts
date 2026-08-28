@@ -17,13 +17,17 @@ export type PeerMode = 'regiao' | 'tipo-porte'
 /** O IPR já usa três como piso de comparação; a extensão herda o mesmo corte. */
 export const MIN_PEERS = 3
 
-export type MetricId = 'iph' | 'tmh' | 'stay' | 'cmi'
+export type MetricId = 'iph' | 'tmh' | 'stay' | 'cmi' | 'ipe'
 
 export const METRICS: Record<MetricId, (item: HospitalItem) => number | null> = {
   iph: (item) => item.iph_percent,
   tmh: (item) => item.tmh_percent,
   stay: (item) => item.average_stay_days,
   cmi: (item) => item.cmi_real,
+  // O IPE já compara com pares por construção, mas contra os pares da região
+  // na mesma especialidade. Aqui a faixa mostra outra coisa: como essa
+  // comparação se distribui entre hospitais do mesmo tipo e porte.
+  ipe: (item) => item.ipe_median,
 }
 
 /**
@@ -131,6 +135,7 @@ export type PeerHospital = Pick<
   | 'tmh_percent'
   | 'average_stay_days'
   | 'cmi_real'
+  | 'ipe_median'
 >
 
 export class PeerContractError extends Error {
@@ -155,7 +160,8 @@ function isPeer(value: unknown): value is PeerHospital {
     optionalNumber('iph_percent') &&
     optionalNumber('tmh_percent') &&
     optionalNumber('average_stay_days') &&
-    optionalNumber('cmi_real')
+    optionalNumber('cmi_real') &&
+    optionalNumber('ipe_median')
   )
 }
 

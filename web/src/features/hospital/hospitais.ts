@@ -1,7 +1,7 @@
 import hospitalSnapshot from '../../mocks/hospitais-35073.json'
 import { apiUrl } from '../../lib/api/base'
 
-export const HOSPITAL_CONTRACT_VERSION = '0.4.0' as const
+export const HOSPITAL_CONTRACT_VERSION = '0.5.0' as const
 
 type PublishedSource = 'oracle-live' | 'snapshot'
 
@@ -51,6 +51,16 @@ export type HospitalItem = {
   sample_status: SampleStatus
   capacity_status: CapacityStatus
   above_declared_capacity: number
+  /**
+   * Resumo do IPE deste hospital na competência: mediana entre as
+   * especialidades comparáveis e quantas delas ficam acima da permanência dos
+   * pares. Nulo quando nenhuma é elegível — que não é o mesmo que estar em dia
+   * com os pares.
+   */
+  ipe_median: number | null
+  ipe_eligible_specialties: number
+  ipe_above_reference: number
+  ipe_above_reference_percent: number | null
 }
 
 export type HospitalRegion = {
@@ -205,7 +215,16 @@ function isValidItem(value: unknown): value is HospitalItem {
     (value.above_declared_capacity === 0 || value.above_declared_capacity === 1) &&
     // Sem leito SUS declarado não existe denominador de IPH. Publicar um número
     // aqui seria inventar ocupação.
-    (value.capacity_status !== 'sem_leito_sus_declarado' || value.iph_percent === null)
+    (value.capacity_status !== 'sem_leito_sus_declarado' || value.iph_percent === null) &&
+    isNonNegativeInteger(value.ipe_eligible_specialties) &&
+    isNonNegativeInteger(value.ipe_above_reference) &&
+    isNullableNumber(value.ipe_median) &&
+    isNullableNumber(value.ipe_above_reference_percent) &&
+    // Mediana e percentual são nulos exatamente quando nada é elegível.
+    (value.ipe_median === null) === (value.ipe_eligible_specialties === 0) &&
+    (value.ipe_above_reference_percent === null) ===
+      (value.ipe_eligible_specialties === 0) &&
+    value.ipe_above_reference <= value.ipe_eligible_specialties
   )
 }
 

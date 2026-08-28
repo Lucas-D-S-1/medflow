@@ -45,7 +45,7 @@ ipe as (
            as qt_ipe_amostra_insuficiente
     from mart_indicador_hospital_especialidade_mensal
 )
-select '0.4.0' as contract_version,
+select '0.5.0' as contract_version,
        case
          when r.cd_competencia_maxima is null then null
          else substr(r.cd_competencia_maxima, 1, 4)

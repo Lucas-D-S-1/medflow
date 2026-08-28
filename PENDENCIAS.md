@@ -17,6 +17,11 @@ recarregada, view e módulo ORDS republicados, cinco campos novos na resposta de
 especialidades e a coluna IPE na tabela do WebApp. Cobertura de 63,9% contra
 6,9% do IPR por CID, com os mesmos cortes.
 
+No mesmo dia o contrato foi a **`0.5.0`** com o resumo do IPE por hospital e por
+região, que leva o índice à lista hospitalar, à comparação com pares, aos totais
+do território e ao cartão do mapa. E a FlowIA passou a manter a conversa, a
+entender pergunta de seguimento e a responder de forma mais curta.
+
 Depois da `v0.4.0`, o WebApp deixou de ser quatro visões e passou a ser **duas
 páginas**: uma análise contínua com duas etapas ancoradas — território e
 hospital — e a Metodologia. A etapa de fluxos saiu por decisão de produto. As mudanças não tocaram cálculo nem contrato,

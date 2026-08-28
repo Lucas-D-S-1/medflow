@@ -35,6 +35,9 @@ export type RegionalAggregate = {
   icsapRatePer10k: number | null
   seasonalDeviation: number | null
   seasonalRegionsCompared: number
+  ipeEligiblePairs: number
+  ipeAboveReference: number
+  ipeAbovePercent: number | null
 }
 
 function sum(items: RegionalSummaryItem[], pick: (item: RegionalSummaryItem) => number) {
@@ -76,6 +79,15 @@ export function aggregateRegions(items: RegionalSummaryItem[]): RegionalAggregat
   const icsapShare = ratio(icsapAdmissions, residentAdmissions)
   const icsapRate = ratio(icsapAdmissions, population)
 
+  // O IPE agrega por contagem, não por média de medianas: somar as combinações
+  // elegíveis e as que ficam acima de 1 responde "em que fração das
+  // comparações possíveis a permanência excede a dos pares". Uma média das
+  // medianas regionais daria peso igual a uma região com 4 comparações e a
+  // outra com 243.
+  const ipeEligiblePairs = sum(items, (item) => item.ipe_eligible_pairs)
+  const ipeAboveReference = sum(items, (item) => item.ipe_above_reference)
+  const ipeAbove = ratio(ipeAboveReference, ipeEligiblePairs)
+
   return {
     regions: items.length,
     municipalities: sum(items, (item) => item.municipality_count),
@@ -96,5 +108,8 @@ export function aggregateRegions(items: RegionalSummaryItem[]): RegionalAggregat
     icsapRatePer10k: icsapRate === null ? null : icsapRate * 10_000,
     seasonalDeviation: seasonalRatio === null ? null : seasonalRatio - 1,
     seasonalRegionsCompared: comparable.length,
+    ipeEligiblePairs,
+    ipeAboveReference,
+    ipeAbovePercent: ipeAbove === null ? null : ipeAbove * 100,
   }
 }

@@ -42,7 +42,7 @@ begin
                  || '-'
                  || substr(cd_competencia_maxima, 5, 2)
              end as "data_through",
-             '0.4.0' as "contract_version"
+             '0.5.0' as "contract_version"
         from vw_api_status
        fetch first 1 row only
     ~'
@@ -522,7 +522,7 @@ begin
                systimestamp,
                'YYYY-MM-DD"T"HH24:MI:SS.FF3TZH:TZM'
              ) as "database_time",
-             '0.4.0' as "contract_version",
+             '0.5.0' as "contract_version",
              case
                when p.ano is null or p.mes is null then null
                else to_char(p.ano, 'FM0000')
@@ -591,7 +591,11 @@ begin
                             'ipca_factor' value x.nr_fator_correcao_ipca,
                             'price_reference_competence' value x.cd_competencia_preco_referencia,
                             'approved_amount_real' value x.vl_aprovado_internacao_nova_real_soma,
-                            'cmi_real' value x.vl_cmi_real
+                            'cmi_real' value x.vl_cmi_real,
+                            'ipe_median' value x.nr_ipe_mediana,
+                            'ipe_eligible_pairs' value x.qt_hospital_especialidade_ipe_elegivel,
+                            'ipe_above_reference' value x.qt_hospital_especialidade_ipe_acima_referencia,
+                            'ipe_above_reference_percent' value x.pc_hospital_especialidade_ipe_acima_referencia
                             null on null returning json
                           )
                           order by x.nr_linha
@@ -681,7 +685,7 @@ begin
                systimestamp,
                'YYYY-MM-DD"T"HH24:MI:SS.FF3TZH:TZM'
              ) as "database_time",
-             '0.4.0' as "contract_version",
+             '0.5.0' as "contract_version",
              case
                when maximo.cd_competencia is null then null
                else substr(maximo.cd_competencia, 1, 4)
@@ -740,7 +744,11 @@ begin
                             'seasonality_status' value x.st_indice_sazonalidade,
                             'price_reference_competence' value x.cd_competencia_preco_referencia,
                             'approved_amount_real' value x.vl_aprovado_internacao_nova_real_soma,
-                            'cmi_real' value x.vl_cmi_real
+                            'cmi_real' value x.vl_cmi_real,
+                            'ipe_median' value x.nr_ipe_mediana,
+                            'ipe_eligible_pairs' value x.qt_hospital_especialidade_ipe_elegivel,
+                            'ipe_above_reference' value x.qt_hospital_especialidade_ipe_acima_referencia,
+                            'ipe_above_reference_percent' value x.pc_hospital_especialidade_ipe_acima_referencia
                             null on null returning json
                           )
                           order by x.nr_linha
@@ -893,7 +901,7 @@ begin
                systimestamp,
                'YYYY-MM-DD"T"HH24:MI:SS.FF3TZH:TZM'
              ) as "database_time",
-             '0.4.0' as "contract_version",
+             '0.5.0' as "contract_version",
              case
                when p.ano is null or p.mes is null then null
                else to_char(p.ano, 'FM0000')
@@ -1107,7 +1115,7 @@ begin
                systimestamp,
                'YYYY-MM-DD"T"HH24:MI:SS.FF3TZH:TZM'
              ) as "database_time",
-             '0.4.0' as "contract_version",
+             '0.5.0' as "contract_version",
              case
                when p.ano is null or p.mes is null then null
                else to_char(p.ano, 'FM0000')
@@ -1319,7 +1327,7 @@ begin
                systimestamp,
                'YYYY-MM-DD"T"HH24:MI:SS.FF3TZH:TZM'
              ) as "database_time",
-             '0.4.0' as "contract_version",
+             '0.5.0' as "contract_version",
              case
                when p.ano is null or p.mes is null then null
                else to_char(p.ano, 'FM0000')
@@ -1379,7 +1387,11 @@ begin
                             'average_stay_days' value x.nr_permanencia_media,
                             'sample_status' value x.st_amostra,
                             'capacity_status' value x.st_capacidade,
-                            'above_declared_capacity' value x.fl_acima_capacidade_declarada
+                            'above_declared_capacity' value x.fl_acima_capacidade_declarada,
+                            'ipe_median' value x.nr_ipe_mediana,
+                            'ipe_eligible_specialties' value x.qt_especialidade_ipe_elegivel,
+                            'ipe_above_reference' value x.qt_especialidade_ipe_acima_referencia,
+                            'ipe_above_reference_percent' value x.pc_especialidade_ipe_acima_referencia
                             null on null returning json
                           )
                           order by x.nr_linha
@@ -1482,7 +1494,7 @@ begin
                systimestamp,
                'YYYY-MM-DD"T"HH24:MI:SS.FF3TZH:TZM'
              ) as "database_time",
-             '0.4.0' as "contract_version",
+             '0.5.0' as "contract_version",
              meta.cd_competencia_mais_recente as "data_through",
              json_object(
                'cnes' value p.cnes
@@ -1534,7 +1546,11 @@ begin
                             'price_reference_competence' value x.cd_competencia_preco_referencia,
                             'sample_status' value x.st_amostra,
                             'capacity_status' value x.st_capacidade,
-                            'above_declared_capacity' value x.fl_acima_capacidade_declarada
+                            'above_declared_capacity' value x.fl_acima_capacidade_declarada,
+                            'ipe_median' value x.nr_ipe_mediana,
+                            'ipe_eligible_specialties' value x.qt_especialidade_ipe_elegivel,
+                            'ipe_above_reference' value x.qt_especialidade_ipe_acima_referencia,
+                            'ipe_above_reference_percent' value x.pc_especialidade_ipe_acima_referencia
                             null on null returning json
                           )
                           order by x.nr_linha
@@ -1670,7 +1686,7 @@ begin
                systimestamp,
                'YYYY-MM-DD"T"HH24:MI:SS.FF3TZH:TZM'
              ) as "database_time",
-             '0.4.0' as "contract_version",
+             '0.5.0' as "contract_version",
              case
                when p.ano is null or p.mes is null then null
                else to_char(p.ano, 'FM0000')
@@ -1840,7 +1856,7 @@ begin
                systimestamp,
                'YYYY-MM-DD"T"HH24:MI:SS.FF3TZH:TZM'
              ) as "database_time",
-             '0.4.0' as "contract_version",
+             '0.5.0' as "contract_version",
              json_object(
                'cnes' value p.cnes,
                'eligible_only' value case when p.somente_elegiveis = 1 then 'true' else 'false' end format json
@@ -1947,7 +1963,7 @@ begin
         l_body     json_object_t;
         l_context  json_object_t;
         l_question varchar2(4000);
-        l_context_text varchar2(1000);
+        l_context_text varchar2(4000);
         l_id       number;
         l_json     clob;
         l_status   pls_integer := 200;
@@ -1971,6 +1987,33 @@ begin
             return substr(l_context.get_string(p_chave), 1, 200);
           end if;
           return null;
+        exception
+          when others then
+            return null;
+        end;
+
+        -- As rodadas anteriores da conversa, achatadas em texto. Sem elas o
+        -- modelo nao tem como responder "e o TMH?" depois de "qual o IPH de
+        -- Sao Paulo?": a pergunta seguinte nao nomeia o assunto.
+        function historico return varchar2 is
+          l_turnos json_array_t;
+          l_turno  json_object_t;
+          l_texto  varchar2(2000) := null;
+        begin
+          if l_context is null or not l_context.has('history') then
+            return null;
+          end if;
+          l_turnos := l_context.get_array('history');
+          for i in 0 .. l_turnos.get_size - 1 loop
+            l_turno := treat(l_turnos.get(i) as json_object_t);
+            l_texto := substr(
+                nvl(l_texto, '')
+                || ' | P: ' || substr(l_turno.get_string('question'), 1, 200)
+                || ' R: ' || substr(l_turno.get_string('answer'), 1, 300),
+                1,
+                2000);
+          end loop;
+          return l_texto;
         exception
           when others then
             return null;
@@ -2006,7 +2049,8 @@ begin
               || '; rras=' || nvl(contexto('macroregion_name'), 'nao informada')
               || '; codigo_rede=' || nvl(contexto('macroregion_code'), 'nao informado')
               || '; hospital_cnes=' || nvl(contexto('hospital_cnes'), 'nao informado')
-              || '; analise_ativa=' || nvl(contexto('active_analysis'), 'nao informada');
+              || '; analise_ativa=' || nvl(contexto('active_analysis'), 'nao informada')
+              || nvl2(historico, '; conversa_anterior=' || historico, '');
           end if;
         exception
           when others then

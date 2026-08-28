@@ -1,7 +1,7 @@
 {
   "camada": "gold",
   "versao_contrato": "0.4.0",
-  "gerado_em_utc": "2026-08-28T12:29:18.451718+00:00",
+  "gerado_em_utc": "2026-08-28T14:35:42.675113+00:00",
   "principios": [
     "Marts orientados às perguntas de gestão e ao consumo no BI.",
     "Toda métrica expõe amostra, numerador, denominador ou estado de calculabilidade.",
@@ -232,6 +232,34 @@
           "aceita_nulo": false,
           "nulos": 0,
           "descricao": "Estado da amostra segundo os mínimos definidos no contrato do indicador."
+        },
+        {
+          "nome": "qt_especialidade_ipe_elegivel",
+          "tipo": "int64",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Quantidade referente a especialidade ipe elegivel."
+        },
+        {
+          "nome": "nr_ipe_mediana",
+          "tipo": "float64",
+          "aceita_nulo": true,
+          "nulos": 4576,
+          "descricao": "Valor numérico referente a ipe mediana."
+        },
+        {
+          "nome": "qt_especialidade_ipe_acima_referencia",
+          "tipo": "int64",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Quantidade referente a especialidade ipe acima referencia."
+        },
+        {
+          "nome": "pc_especialidade_ipe_acima_referencia",
+          "tipo": "float64",
+          "aceita_nulo": true,
+          "nulos": 4576,
+          "descricao": "Percentual referente a especialidade ipe acima referencia."
         },
         {
           "nome": "nr_indice_ipca",
@@ -902,6 +930,34 @@
           "aceita_nulo": false,
           "nulos": 0,
           "descricao": "Estado de calculabilidade do índice sazonal."
+        },
+        {
+          "nome": "qt_hospital_especialidade_ipe_elegivel",
+          "tipo": "int64",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Quantidade referente a hospital especialidade ipe elegivel."
+        },
+        {
+          "nome": "nr_ipe_mediana",
+          "tipo": "float64",
+          "aceita_nulo": true,
+          "nulos": 317,
+          "descricao": "Valor numérico referente a ipe mediana."
+        },
+        {
+          "nome": "qt_hospital_especialidade_ipe_acima_referencia",
+          "tipo": "int64",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Quantidade referente a hospital especialidade ipe acima referencia."
+        },
+        {
+          "nome": "pc_hospital_especialidade_ipe_acima_referencia",
+          "tipo": "float64",
+          "aceita_nulo": true,
+          "nulos": 317,
+          "descricao": "Percentual referente a hospital especialidade ipe acima referencia."
         },
         {
           "nome": "nr_indice_ipca",

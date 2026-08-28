@@ -1,6 +1,6 @@
 # Contrato de nomenclatura dos dados
 
-Versão `0.4.0`. Este contrato se aplica às camadas Silver e Gold. A Bronze
+Versão `0.5.0`. Este contrato se aplica às camadas Silver e Gold. A Bronze
 preserva os nomes originais para garantir fidelidade e rastreabilidade.
 
 ## Regras

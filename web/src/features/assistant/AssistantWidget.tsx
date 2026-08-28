@@ -1,7 +1,12 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import { useLocation } from 'react-router-dom'
 import { useActiveSection } from '../../shared/useActiveSection'
-import { AssistantRequestError, askOracleSelectAi, type AssistantContext } from '../../lib/api/assistente'
+import {
+  AssistantRequestError,
+  askOracleSelectAi,
+  type AssistantContext,
+  type AssistantTurn,
+} from '../../lib/api/assistente'
 import { useSource } from '../../shared/SourceContext'
 import { formatRegionalNetwork } from '../../shared/territory'
 import './AssistantWidget.css'
@@ -13,6 +18,22 @@ type Answer = {
   warning?: string | null
 }
 
+/** Uma rodada completa da conversa, já respondida. */
+type Exchange = {
+  id: number
+  question: string
+  answer: Answer
+}
+
+/**
+ * Quantas rodadas anteriores acompanham a próxima pergunta.
+ *
+ * Duas, não a conversa inteira: o contexto tem teto de caracteres no banco, e
+ * o que resolve "e o TMH?" é a rodada imediatamente anterior. Arrastar dez
+ * rodadas gastaria o teto com assunto velho e empurraria o recente para fora.
+ */
+const HISTORY_TURNS = 2
+
 
 const quickQuestions: Record<RouteKey, string[]> = {
   regional: [
@@ -23,8 +44,8 @@ const quickQuestions: Record<RouteKey, string[]> = {
   ],
   hospital: [
     'Qual o critério para dois hospitais serem pares?',
-    'O que é IPR?',
-    'Por que o IPR pode ficar indisponível?',
+    'O que é IPE?',
+    'Qual a diferença entre IPE e IPR?',
     'Como comparar hospitais corretamente?',
   ],
   metodologia: [
@@ -79,10 +100,13 @@ export default function AssistantWidget() {
   const { sourceState } = useSource()
   const [isOpen, setIsOpen] = useState(false)
   const [question, setQuestion] = useState('')
-  const [askedQuestion, setAskedQuestion] = useState<string | null>(null)
-  const [answer, setAnswer] = useState<Answer | null>(null)
+  // O fio inteiro, não a última rodada. Guardar só uma fazia a pergunta
+  // seguinte apagar a anterior da tela e da memória do modelo.
+  const [thread, setThread] = useState<Exchange[]>([])
+  const [pendingQuestion, setPendingQuestion] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
+  const bodyRef = useRef<HTMLDivElement>(null)
   // A FlowIA acompanha a etapa visível, não a rota: na página contínua as
   // três seções dividem o mesmo endereço.
   const activeSection = useActiveSection(
@@ -114,11 +138,21 @@ export default function AssistantWidget() {
     if (isOpen) window.setTimeout(() => inputRef.current?.focus(), 80)
   }, [isOpen])
 
+  // Mudar de etapa não apaga a conversa: quem estava investigando território e
+  // desce para hospital continua a mesma investigação, e perder o fio ali era
+  // justamente a queixa. O contexto enviado ao modelo acompanha a etapa nova;
+  // o que já foi dito continua na tela.
   useEffect(() => {
-    setAskedQuestion(null)
-    setAnswer(null)
     setQuestion('')
   }, [currentRoute])
+
+  // Rola o corpo do painel, não a página: `scrollIntoView` levaria a janela
+  // junto e tiraria a análise da vista para mostrar o chat.
+  useEffect(() => {
+    if (!isOpen) return
+    const body = bodyRef.current
+    if (body) body.scrollTop = body.scrollHeight
+  }, [isOpen, isLoading, thread.length, pendingQuestion])
 
   function localAnswer(rawQuestion: string): Answer | null {
     const normalized = normalize(rawQuestion)
@@ -215,6 +249,30 @@ export default function AssistantWidget() {
       }
     }
 
+    // O IPE tem resposta local pela mesma razão que o IPR: a definição é regra
+    // de produto, é sempre a mesma, e mandá-la ao modelo gastava cota para
+    // devolver a definição seguida de um ranking que ninguém pediu.
+    if (
+      (pedidoExplicacao && /(\bipe\b|permanencia por especialidade)/.test(normalized)) ||
+      (/\bipe\b/.test(normalized) && /acima de 1|ruim|bom|qualidade|como ler/.test(normalized))
+    ) {
+      return {
+        text: 'IPE é o Índice de Permanência por Especialidade: a permanência média do hospital naquela especialidade dividida pela dos demais hospitais da mesma região, na mesma especialidade e competência, com o próprio hospital fora do benchmark. Acima de 1 é permanência maior que a dos pares. Não é nota de qualidade: compara permanência observada, sem ajuste de risco.',
+      }
+    }
+
+    if (/\bipe\b/.test(normalized) && /(indisponivel|nao calculado|sem valor|vazio|amostra)/.test(normalized)) {
+      return {
+        text: 'O IPE exige 20 internações no hospital, 50 no benchmark e 3 hospitais pares na mesma especialidade e região. Fora disso ele fica nulo e o estado diz o motivo: amostra insuficiente ou benchmark sem permanência registrada. Com esses cortes ele cobre 63,9% das linhas hospital-especialidade, contra 6,9% do IPR por CID.',
+      }
+    }
+
+    if (/(\bipe\b|\bipr\b).*(diferenca|diferente|versus|ou ipr|em vez)|diferenca entre ipe e ipr/.test(normalized)) {
+      return {
+        text: 'São a mesma construção em grãos diferentes. O IPR compara por CID, é mais específico clinicamente e fica calculável em 6,9% dos pares hospital/CID. O IPE compara por especialidade e cobre 63,9%, com os mesmos cortes: o ganho veio do grão, não de afrouxar a exigência.',
+      }
+    }
+
     if (/comparar hospitais|comparacao.*hospital|hospital.*comparar/.test(normalized)) {
       return {
         text: 'Compare hospitais na mesma competência e região, confirme volume de internações e use IPR, permanência e perfil clínico em conjunto. Diferenças de complexidade e amostras pequenas impedem tratar um único indicador como ranking de qualidade.',
@@ -288,17 +346,31 @@ export default function AssistantWidget() {
     return null
   }
 
+  function historyForRequest(): AssistantTurn[] {
+    // A resposta vai truncada: o que o modelo precisa dali é o assunto — a
+    // região, o hospital, o indicador citado —, e ele aparece nas primeiras
+    // linhas. O teto de contexto do banco é pequeno e disputado.
+    return thread.slice(-HISTORY_TURNS).map((turn) => ({
+      question: turn.question.slice(0, 200),
+      answer: turn.answer.text.slice(0, 300),
+    }))
+  }
+
+  function registrar(pergunta: string, resposta: Answer) {
+    setThread((atual) => [...atual, { id: Date.now() + atual.length, question: pergunta, answer: resposta }])
+    setPendingQuestion(null)
+  }
+
   async function ask(rawQuestion: string) {
     const cleanQuestion = rawQuestion.trim().slice(0, 300)
     if (!cleanQuestion || isLoading) return
 
-    setAskedQuestion(cleanQuestion)
+    setPendingQuestion(cleanQuestion)
     setQuestion('')
-    setAnswer(null)
 
     const deterministic = localAnswer(cleanQuestion)
     if (deterministic) {
-      setAnswer(deterministic)
+      registrar(cleanQuestion, deterministic)
       return
     }
 
@@ -317,9 +389,10 @@ export default function AssistantWidget() {
           : null,
         hospital_cnes: params.get('hospital'),
         active_analysis: routeAnalysis[currentRoute],
+        history: historyForRequest(),
       }
       const response = await askOracleSelectAi(cleanQuestion, context)
-      setAnswer({
+      registrar(cleanQuestion, {
         text: response.narrative,
         sql: response.sql,
         warning: response.warning,
@@ -328,7 +401,7 @@ export default function AssistantWidget() {
       // O cliente já distingue cota estourada, contrato inválido e tempo
       // esgotado. Trocar tudo por uma frase única fazia o produto parecer
       // incapaz quando o problema era outro, e apagava a pista do diagnóstico.
-      setAnswer({
+      registrar(cleanQuestion, {
         text:
           error instanceof AssistantRequestError
             ? `${error.message} Tente uma das sugestões abaixo.`
@@ -365,10 +438,11 @@ export default function AssistantWidget() {
             </button>
           </header>
 
-          <div className="assistant-body">
-            {!askedQuestion && (
+          <div className="assistant-body" ref={bodyRef}>
+            {thread.length === 0 && !pendingQuestion && (
               <p className="assistant-intro">
-                Pergunte sobre os indicadores ou escolha um atalho desta tela.
+                Pergunte sobre os indicadores ou escolha um atalho desta tela. A
+                conversa fica aqui, e a pergunta seguinte entende a anterior.
               </p>
             )}
 
@@ -385,26 +459,36 @@ export default function AssistantWidget() {
               ))}
             </div>
 
-            {askedQuestion && (
-              <div className="assistant-conversation">
-                <p className="assistant-question">{askedQuestion}</p>
-                {isLoading ? (
-                  <div className="assistant-thinking" role="status">
-                    <span /> Consultando os dados…
+            {(thread.length > 0 || pendingQuestion) && (
+              <div className="assistant-conversation" data-testid="assistant-thread">
+                {thread.map((turn) => (
+                  <div key={turn.id} className="assistant-exchange">
+                    <p className="assistant-question">{turn.question}</p>
+                    <article className="assistant-answer">
+                      <span>FlowIA</span>
+                      <p>{turn.answer.text}</p>
+                      {turn.answer.warning && (
+                        <p className="assistant-warning">{turn.answer.warning}</p>
+                      )}
+                      {turn.answer.sql && (
+                        <details>
+                          <summary>Ver SQL gerado e validado</summary>
+                          <pre>{turn.answer.sql}</pre>
+                        </details>
+                      )}
+                    </article>
                   </div>
-                ) : answer ? (
-                  <article className="assistant-answer">
-                    <span>FlowIA</span>
-                    <p>{answer.text}</p>
-                    {answer.warning && <p className="assistant-warning">{answer.warning}</p>}
-                    {answer.sql && (
-                      <details>
-                        <summary>Ver SQL gerado e validado</summary>
-                        <pre>{answer.sql}</pre>
-                      </details>
+                ))}
+                {pendingQuestion && (
+                  <div className="assistant-exchange">
+                    <p className="assistant-question">{pendingQuestion}</p>
+                    {isLoading && (
+                      <div className="assistant-thinking" role="status">
+                        <span /> Consultando os dados…
+                      </div>
                     )}
-                  </article>
-                ) : null}
+                  </div>
+                )}
               </div>
             )}
           </div>

@@ -277,6 +277,13 @@ test('mostra o perfil por especialidade somando as internações do hospital', a
 
   await page.goto(`/hospital?competencia=${snapshotCompetencia}&regiao=35073&hospital=3012212`)
 
+  // O IPE também sobe de grão: a lista hospitalar mostra a mediana entre as
+  // especialidades comparáveis do hospital, o mesmo índice um degrau acima.
+  // Sem isso ele só existia dentro da tabela de especialidades.
+  await expect(page.getByTestId(`hospital-ipe-${hospitalDestacado.cnes}`)).toHaveText(
+    pt(hospitalDestacado.ipe_median as number, 2),
+  )
+
   await expect(page.getByTestId('especialidade-count')).toHaveText('4 de 4 especialidades')
   await expect(page.getByTestId('especialidade-row-02')).toContainText('Obstetrícia')
   await expect(page.getByTestId('especialidade-row-02')).toContainText(

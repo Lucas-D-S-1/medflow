@@ -1,8 +1,8 @@
 {
   "status": "ok",
   "source": "snapshot",
-  "database_time": "2026-08-28T12:29:16.209861+00:00",
-  "contract_version": "0.4.0",
+  "database_time": "2026-08-28T14:35:40.430880+00:00",
+  "contract_version": "0.5.0",
   "filters": {
     "cnes": "3012212",
     "eligible_only": true

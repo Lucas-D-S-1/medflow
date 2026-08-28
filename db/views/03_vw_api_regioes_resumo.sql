@@ -41,10 +41,14 @@ select r.cd_regiao_saude,
        r.nr_fator_correcao_ipca,
        r.cd_competencia_preco_referencia,
        r.vl_aprovado_internacao_nova_real_soma,
-       r.vl_cmi_real
+       r.vl_cmi_real,
+       r.qt_hospital_especialidade_ipe_elegivel,
+       r.qt_hospital_especialidade_ipe_acima_referencia,
+       r.pc_hospital_especialidade_ipe_acima_referencia,
+       r.nr_ipe_mediana
   from mart_indicador_regiao_mensal r
   join dim_geografia_regiao g
     on g.cd_regiao_saude = r.cd_regiao_saude;
 
 comment on table vw_api_regioes_resumo is
-  'Resumo mensal das 62 regioes para mapa e visao executiva. A view le indicadores e denominadores persistidos na Gold; nao recalcula indicadores.';
+  'Resumo mensal das 62 regioes para mapa e visao executiva. A view le indicadores e denominadores persistidos na Gold; nao recalcula indicadores. O resumo do IPE agrega as combinacoes hospital-especialidade elegiveis da regiao: mediana e quantas ficam acima da permanencia dos pares.';

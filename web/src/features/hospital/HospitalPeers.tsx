@@ -21,6 +21,10 @@ const LABELS: Record<MetricId, { label: string; format: (value: number) => strin
   tmh: { label: 'Mortalidade observada (TMH)', format: formatPercent },
   stay: { label: 'Permanência média', format: (value) => `${formatDecimal(value)} dias` },
   cmi: { label: 'Custo médio por internação (CMI real)', format: formatCurrency },
+  ipe: {
+    label: 'Permanência ante os pares (IPE)',
+    format: (value) => formatDecimal(value),
+  },
 }
 
 type HospitalPeersProps = {

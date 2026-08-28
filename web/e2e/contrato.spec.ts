@@ -69,7 +69,7 @@ test('usa somente o snapshot quando o Oracle falha', async ({ page }) => {
     `Contingência — snapshot até ${snapshotCompetencia}`,
   )
   await expect(page.getByTestId('data-through')).toHaveText(snapshotCompetenciaBR)
-  await expect(page.getByTestId('contract-version')).toHaveText('v0.4.0')
+  await expect(page.getByTestId('contract-version')).toHaveText('v0.5.0')
   await expect(page.getByTestId('fallback-note')).toContainText('nenhuma fonte foi misturada')
   await expect(page.getByTestId('coverage-regions')).toHaveText('62')
   await expect(page.getByTestId('coverage-admissions')).toHaveText(
@@ -85,7 +85,7 @@ test('distingue ausência legítima de indisponibilidade do Oracle', async ({ pa
         source: 'oracle-live',
         database_time: '2026-08-01T12:00:00-03:00',
         data_through: null,
-        contract_version: '0.4.0',
+        contract_version: '0.5.0',
       }),
     })
   })
@@ -202,7 +202,7 @@ test('mantém a geração do snapshot verificável na metadata da Gold', async (
   await page.goto('/metodologia')
 
   await expect(page.getByTestId('data-through')).toHaveText(snapshotCompetenciaBR)
-  await expect(page.getByTestId('contract-version')).toHaveText('v0.4.0')
+  await expect(page.getByTestId('contract-version')).toHaveText('v0.5.0')
 })
 test('preserva filtros na URL e ignora resposta atrasada de outra competência', async ({ page }) => {
   await mockLiveSource(page)

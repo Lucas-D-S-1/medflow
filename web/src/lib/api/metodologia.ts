@@ -1,7 +1,7 @@
 import methodologySnapshot from '../../mocks/metodologia.json'
 import { apiUrl } from './base'
 
-export const METHODOLOGY_CONTRACT_VERSION = '0.4.0' as const
+export const METHODOLOGY_CONTRACT_VERSION = '0.5.0' as const
 
 type PublishedSource = 'oracle-live' | 'snapshot'
 

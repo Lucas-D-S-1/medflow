@@ -33,10 +33,14 @@ select h.cd_cnes,
        h.cd_competencia_preco_referencia,
        h.st_amostra,
        h.st_capacidade,
-       h.fl_acima_capacidade_declarada
+       h.fl_acima_capacidade_declarada,
+       h.qt_especialidade_ipe_elegivel,
+       h.qt_especialidade_ipe_acima_referencia,
+       h.pc_especialidade_ipe_acima_referencia,
+       h.nr_ipe_mediana
   from mart_indicador_hospital_mensal h
   left join dim_hospital_territorio_atual t
     on t.cd_cnes = h.cd_cnes;
 
 comment on table vw_api_hospitais is
-  'Indicadores mensais por hospital (CNES), com regiao de saude, denominadores, amostras, estado de capacidade e atribuicao territorial municipal atual. A view nao recalcula indicadores.';
+  'Indicadores mensais por hospital (CNES), com regiao de saude, denominadores, amostras, estado de capacidade e atribuicao territorial municipal atual. A view nao recalcula indicadores. O resumo do IPE agrega as especialidades elegiveis do hospital: mediana e quantas ficam acima da permanencia dos pares na mesma especialidade.';

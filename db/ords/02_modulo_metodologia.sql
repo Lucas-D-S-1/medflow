@@ -53,7 +53,7 @@ begin
                  || '-'
                  || substr(cd_competencia_maxima, 5, 2)
              end as "data_through",
-             '0.4.0' as "contract_version"
+             '0.5.0' as "contract_version"
         from vw_api_status
        fetch first 1 row only
     ~'

@@ -262,6 +262,79 @@ def _benchmark_especialidade(
     )
 
 
+def _resumo_ipe(especialidade: pd.DataFrame, chaves: list[str]) -> pd.DataFrame:
+    """Resume o IPE das especialidades elegíveis no grão pedido.
+
+    O IPE nasce por hospital e especialidade, que é o grão em que ele significa
+    alguma coisa. Para aparecer na lista hospitalar e no mapa ele precisa subir
+    de grão, e subir de grão exige escolher o que se perde.
+
+    A escolha é a mediana, não a média: a razão tem cauda longa à direita — o
+    máximo observado passa de 400 — e uma especialidade extrema puxaria a média
+    do hospital inteiro. A mediana diz onde está o meio das especialidades, que
+    é a pergunta.
+
+    E ela vem acompanhada da contagem de especialidades acima de 1, porque
+    mediana sozinha esconde dispersão: um hospital com metade das
+    especialidades muito acima e metade muito abaixo tem mediana perto de 1 e
+    não se parece nada com um hospital equilibrado.
+
+    Só entram linhas elegíveis. As demais têm `nr_ipe` nulo por decisão, e
+    tratá-las como zero ou como 1 inventaria comparação que a Gold recusou.
+    """
+    elegiveis = especialidade[especialidade.nr_ipe.notna()]
+    resumo = (
+        elegiveis.groupby(chaves, as_index=False, dropna=False)
+        .agg(
+            qt_ipe_elegivel=("nr_ipe", "size"),
+            nr_ipe_mediana=("nr_ipe", "median"),
+            qt_ipe_acima_referencia=("nr_ipe", lambda s: int(s.gt(1).sum())),
+        )
+    )
+    return resumo
+
+
+def _juntar_resumo_ipe(
+    mart: pd.DataFrame,
+    especialidade: pd.DataFrame,
+    chaves: list[str],
+    prefixo_quantidade: str,
+) -> pd.DataFrame:
+    """Acopla o resumo do IPE a um mart, com os nomes daquele grão."""
+    resumo = _resumo_ipe(especialidade, chaves).rename(
+        columns={
+            "qt_ipe_elegivel": f"qt_{prefixo_quantidade}_ipe_elegivel",
+            "qt_ipe_acima_referencia": f"qt_{prefixo_quantidade}_ipe_acima_referencia",
+        }
+    )
+    resultado = mart.merge(resumo, on=chaves, how="left", validate="one_to_one")
+    contagens = [
+        f"qt_{prefixo_quantidade}_ipe_elegivel",
+        f"qt_{prefixo_quantidade}_ipe_acima_referencia",
+    ]
+    # Sem especialidade elegível a contagem é zero de verdade — nenhuma foi
+    # comparável. Já a mediana continua nula: não há valor central de conjunto
+    # vazio, e escrever zero ali diria "permanência nula ante os pares".
+    # `to_numeric` antes do `fillna`: quando nenhuma especialidade é elegível o
+    # merge traz a coluna como objeto, e o fillna sozinho deixaria o dtype ao
+    # sabor do conteúdo.
+    for coluna in contagens:
+        resultado[coluna] = (
+            pd.to_numeric(resultado[coluna], errors="coerce").fillna(0).astype("int64")
+        )
+    resultado["nr_ipe_mediana"] = pd.to_numeric(
+        resultado["nr_ipe_mediana"], errors="coerce"
+    )
+    resultado[f"pc_{prefixo_quantidade}_ipe_acima_referencia"] = (
+        _dividir(
+            resultado[f"qt_{prefixo_quantidade}_ipe_acima_referencia"],
+            resultado[f"qt_{prefixo_quantidade}_ipe_elegivel"],
+        )
+        * 100
+    )
+    return resultado
+
+
 def _hospital_cid_periodo(novas: pd.DataFrame) -> pd.DataFrame:
     chaves = [
         "cd_cnes",
@@ -352,6 +425,7 @@ def _hospital_mensal(
     novas: pd.DataFrame,
     leitos: pd.DataFrame,
     hospitais: pd.DataFrame,
+    especialidade: pd.DataFrame,
     ipca: pd.DataFrame,
 ) -> pd.DataFrame:
     paciente_dia = _calcular_paciente_dia(novas)
@@ -429,6 +503,15 @@ def _hospital_mensal(
         mart.qt_internacao_nova.ge(30),
         "suficiente",
         "amostra_insuficiente",
+    )
+    # O índice sobe de grão aqui: a lista hospitalar precisa dizer, numa
+    # coluna só, se este hospital fica acima dos pares nas especialidades que
+    # dão para comparar.
+    mart = _juntar_resumo_ipe(
+        mart,
+        especialidade,
+        ["cd_cnes", "nr_ano_competencia", "nr_mes_competencia", "cd_competencia"],
+        "especialidade",
     )
     return _aplicar_ipca(mart, ipca)
 
@@ -653,6 +736,7 @@ def _fluxo_assistencial_mensal(
 def _regiao_mensal(
     novas: pd.DataFrame,
     hospital_mensal: pd.DataFrame,
+    especialidade: pd.DataFrame,
     populacao_regiao: pd.DataFrame,
     residencia_mensal: pd.DataFrame,
     atracao_mensal: pd.DataFrame,
@@ -803,6 +887,16 @@ def _regiao_mensal(
         ],
         default="historico_insuficiente",
     )
+    # No mapa o IPE responde outra pergunta: em quantas combinações
+    # hospital-especialidade desta região a permanência fica acima da dos
+    # pares. A mediana vem do conjunto inteiro da região, não da mediana das
+    # medianas dos hospitais, que seria média de médias com outro nome.
+    mart = _juntar_resumo_ipe(
+        mart,
+        especialidade,
+        chaves_regiao,
+        "hospital_especialidade",
+    )
     return _aplicar_ipca(mart, ipca)
 
 
@@ -904,10 +998,13 @@ def calcular_gold(*, base: Path, sobrescrever: bool = False) -> dict[str, pd.Dat
     fluxo_mensal = _fluxo_assistencial_mensal(novas, municipios)
     hospital_especialidade = _hospital_especialidade_mensal(fato, novas, ipca)
     hospital_cid = _hospital_cid_periodo(novas)
-    hospital_mensal = _hospital_mensal(novas, leitos, hospitais, ipca)
+    hospital_mensal = _hospital_mensal(
+        novas, leitos, hospitais, hospital_especialidade, ipca
+    )
     regiao_mensal = _regiao_mensal(
         novas,
         hospital_mensal,
+        hospital_especialidade,
         populacao_regiao,
         residencia_mensal,
         atracao_mensal,

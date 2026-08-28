@@ -229,6 +229,10 @@ create table mart_indicador_hospital_mensal (
   cd_competencia_preco_referencia  varchar2(6 char)   not null,
   vl_aprovado_internacao_nova_real_soma number(18,2) not null,
   vl_cmi_real                      number(18,4),
+  qt_especialidade_ipe_elegivel    number(6)          not null,
+  nr_ipe_mediana                   number(12,6),
+  qt_especialidade_ipe_acima_referencia number(6)     not null,
+  pc_especialidade_ipe_acima_referencia number(9,6),
   constraint pk_mart_hosp_mensal primary key (cd_cnes, cd_competencia),
   constraint ck_mart_hosp_mensal_flag check (fl_acima_capacidade_declarada in (0, 1)),
   constraint fk_mart_hosp_mensal_regiao foreign key (cd_regiao_saude)
@@ -314,6 +318,15 @@ create table mart_indicador_hospital_especialidade_mensal (
   constraint fk_mart_hosp_esp_regiao foreign key (cd_regiao_saude)
     references dim_geografia_regiao (cd_regiao_saude)
 );
+
+comment on column mart_indicador_hospital_mensal.qt_especialidade_ipe_elegivel is 'Quantidade de especialidades deste hospital na competencia em que o IPE e calculavel. Zero significa que nenhuma passou nos cortes, nao que o hospital esteja bem ou mal.';
+comment on column mart_indicador_hospital_mensal.nr_ipe_mediana is 'Mediana do IPE entre as especialidades elegiveis do hospital na competencia. Mediana e nao media porque a razao tem cauda longa a direita e uma especialidade extrema deslocaria o hospital inteiro. Nula quando nenhuma especialidade e elegivel. Nao e nota de qualidade: compara permanencia observada sem ajuste de risco.';
+comment on column mart_indicador_hospital_mensal.qt_especialidade_ipe_acima_referencia is 'Quantidade de especialidades elegiveis do hospital com IPE maior que 1, ou seja, com permanencia media acima da dos pares da regiao na mesma especialidade.';
+comment on column mart_indicador_hospital_mensal.pc_especialidade_ipe_acima_referencia is 'Percentual das especialidades elegiveis do hospital com IPE maior que 1. Nulo quando nenhuma e elegivel.';
+comment on column mart_indicador_regiao_mensal.qt_hospital_especialidade_ipe_elegivel is 'Quantidade de combinacoes hospital-especialidade da regiao na competencia em que o IPE e calculavel.';
+comment on column mart_indicador_regiao_mensal.nr_ipe_mediana is 'Mediana do IPE entre as combinacoes hospital-especialidade elegiveis da regiao na competencia. Sai do conjunto inteiro da regiao, nao da mediana das medianas dos hospitais. Nula quando nenhuma combinacao e elegivel.';
+comment on column mart_indicador_regiao_mensal.qt_hospital_especialidade_ipe_acima_referencia is 'Quantidade de combinacoes hospital-especialidade da regiao com IPE maior que 1.';
+comment on column mart_indicador_regiao_mensal.pc_hospital_especialidade_ipe_acima_referencia is 'Percentual das combinacoes hospital-especialidade elegiveis da regiao com IPE maior que 1. Nulo quando nenhuma e elegivel.';
 
 comment on table mart_indicador_hospital_especialidade_mensal is
   'Fato mensal por hospital e especialidade do SIH: TMH e CMI. Uma linha por CNES, especialidade e competencia. Para ranquear especialidades por mortalidade, filtre st_amostra igual a suficiente, agrupe por nm_especialidade, exija pelo menos 100 linhas hospital-mes por especialidade, calcule a media de pc_tmh e ordene da maior para a menor.';
@@ -444,6 +457,10 @@ create table mart_indicador_regiao_mensal (
   cd_competencia_preco_referencia     varchar2(6 char)  not null,
   vl_aprovado_internacao_nova_real_soma number(18,2)   not null,
   vl_cmi_real                         number(18,4)      not null,
+  qt_hospital_especialidade_ipe_elegivel number(8)      not null,
+  nr_ipe_mediana                      number(12,6),
+  qt_hospital_especialidade_ipe_acima_referencia number(8) not null,
+  pc_hospital_especialidade_ipe_acima_referencia number(9,6),
   constraint pk_mart_regiao_mensal primary key (cd_regiao_saude, cd_competencia),
   constraint fk_mart_regiao_mensal_regiao foreign key (cd_regiao_saude)
     references dim_geografia_regiao (cd_regiao_saude)

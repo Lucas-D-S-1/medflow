@@ -288,6 +288,14 @@ export default function RegionalMap({
               <dd>{cardItem.average_stay_days.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} dias</dd>
             </div>
             <div>
+              <dt>Acima dos pares (IPE)</dt>
+              <dd data-testid="map-card-ipe">
+                {cardItem.ipe_eligible_pairs === 0
+                  ? 'sem comparação elegível'
+                  : `${formatInteger(cardItem.ipe_above_reference)} de ${formatInteger(cardItem.ipe_eligible_pairs)}`}
+              </dd>
+            </div>
+            <div>
               <dt>CMI nominal</dt>
               <dd>
                 {cardItem.cmi_nominal.toLocaleString('pt-BR', {

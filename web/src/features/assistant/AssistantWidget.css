@@ -151,7 +151,11 @@
 .assistant-suggestions button:hover:not(:disabled) { border-color: var(--color-accent); background: #edf8f5; }
 .assistant-suggestions button:disabled { cursor: not-allowed; opacity: .5; }
 
-.assistant-conversation { display: grid; gap: .65rem; margin-top: 1rem; }
+.assistant-conversation { display: grid; gap: 1rem; margin-top: 1rem; }
+.assistant-exchange { display: grid; gap: .65rem; }
+/* Separador entre rodadas: com o fio inteiro na tela, sem ele as perguntas
+   antigas se misturam com as respostas vizinhas. */
+.assistant-exchange + .assistant-exchange { padding-top: 1rem; border-top: var(--border-subtle); }
 .assistant-question {
   justify-self: end;
   max-width: 88%;

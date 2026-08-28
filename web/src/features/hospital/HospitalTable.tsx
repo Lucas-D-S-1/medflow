@@ -3,7 +3,7 @@ import type { HospitalItem, HospitalListResponse } from './hospitais'
 import StatePanel from '../../shared/StatePanel'
 import { formatCurrency, formatDecimal, formatInteger, formatPercent } from '../../shared/format'
 
-type ColumnId = 'hospital' | 'admissions' | 'iph' | 'tmh' | 'stay' | 'cmi'
+type ColumnId = 'hospital' | 'admissions' | 'iph' | 'tmh' | 'stay' | 'cmi' | 'ipe'
 
 /**
  * A ordenação é do usuário porque a pergunta é dele. "Pior IPH" e "menor
@@ -22,6 +22,10 @@ const COLUMNS: {
   { id: 'tmh', label: 'Mortalidade observada (TMH)', numeric: true, value: (item) => item.tmh_percent },
   { id: 'stay', label: 'Permanência média', numeric: true, value: (item) => item.average_stay_days },
   { id: 'cmi', label: 'Custo médio por internação (CMI real)', numeric: true, value: (item) => item.cmi_real },
+  // A mediana entre as especialidades comparáveis do hospital. Ordenar por ela
+  // responde "quem fica mais tempo que os pares", que é outra pergunta que
+  // nenhuma das colunas acima respondia.
+  { id: 'ipe', label: 'Permanência ante os pares (IPE)', numeric: true, value: (item) => item.ipe_median },
 ]
 
 /**
@@ -220,6 +224,21 @@ export default function HospitalTable({
                     formatar={formatCurrency}
                     motivo={motivoAusencia(item, 'derivado')}
                   />
+                </td>
+                <td data-label="IPE">
+                  {item.ipe_median === null ? (
+                    <em className="valor-ausente">sem especialidade comparável</em>
+                  ) : (
+                    <>
+                      <strong data-testid={`hospital-ipe-${item.cnes}`}>
+                        {formatDecimal(item.ipe_median)}
+                      </strong>
+                      <small>
+                        {formatInteger(item.ipe_above_reference)} de{' '}
+                        {formatInteger(item.ipe_eligible_specialties)} acima dos pares
+                      </small>
+                    </>
+                  )}
                 </td>
                 <td data-label="Ação">
                   <button

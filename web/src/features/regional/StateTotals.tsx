@@ -145,6 +145,16 @@ export default function StateTotals({
           testId="state-total-evasion"
         />
         <MetricCard
+          label="Permanência acima dos pares (IPE)"
+          value={percent(aggregate.ipeAbovePercent)}
+          detail={
+            aggregate.ipeEligiblePairs === 0
+              ? 'nenhuma comparação elegível no recorte'
+              : `${formatInteger(aggregate.ipeAboveReference)} de ${formatInteger(aggregate.ipeEligiblePairs)} comparações hospital-especialidade`
+          }
+          testId="state-total-ipe"
+        />
+        <MetricCard
           label="ICSAP"
           value={percent(aggregate.icsapSharePercent)}
           detail={

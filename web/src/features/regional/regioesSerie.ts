@@ -1,7 +1,7 @@
 import regionSeriesSnapshot from '../../mocks/regiao-serie-35073.json'
 import { apiUrl } from '../../lib/api/base'
 
-export const REGIONAL_SERIES_CONTRACT_VERSION = '0.4.0' as const
+export const REGIONAL_SERIES_CONTRACT_VERSION = '0.5.0' as const
 
 type PublishedSource = 'oracle-live' | 'snapshot'
 

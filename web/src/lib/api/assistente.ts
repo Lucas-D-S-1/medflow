@@ -9,6 +9,20 @@ export type AssistantResponse = {
   warning: string | null
 }
 
+/**
+ * Uma rodada anterior da conversa, enviada para o modelo resolver pergunta
+ * elíptica: "qual o IPH de São Paulo?" seguido de "e o TMH?" só faz sentido
+ * com a anterior à vista.
+ *
+ * Vão as duas pontas, pergunta e resposta, porque o assunto pode estar em
+ * qualquer uma delas: o usuário diz "e o TMH?" sobre a região que **a
+ * resposta** citou, não a que ele digitou.
+ */
+export type AssistantTurn = {
+  question: string
+  answer: string
+}
+
 export type AssistantContext = {
   route: 'regional' | 'hospital' | 'metodologia'
   competence: string | null
@@ -19,6 +33,7 @@ export type AssistantContext = {
   macroregion_label: string | null
   hospital_cnes: string | null
   active_analysis: string
+  history: AssistantTurn[]
 }
 
 const ASSISTANT_PATH = apiUrl('/assistente/perguntar')

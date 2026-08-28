@@ -171,6 +171,26 @@ with conferencia (ordem, metrica, esperado, obtido) as (
   select 43, 'linhas de IPE com amostra insuficiente', 18898,
          (select count(*) from mart_indicador_hospital_especialidade_mensal
           where st_amostra_ipe = 'amostra_insuficiente') from dual
+
+  -- Resumo do IPE, contrato 0.5.0. O indice sobe de grao para a lista
+  -- hospitalar e para o mapa; estes gates provam que subir nao perdeu nem
+  -- inventou linha: as tres contagens tem de dar o mesmo numero.
+  union all
+  select 44, 'IPE elegivel somado no mart de hospitais', 34741,
+         (select sum(qt_especialidade_ipe_elegivel)
+          from mart_indicador_hospital_mensal) from dual
+  union all
+  select 45, 'IPE elegivel somado no mart de regioes', 34741,
+         (select sum(qt_hospital_especialidade_ipe_elegivel)
+          from mart_indicador_regiao_mensal) from dual
+  union all
+  select 46, 'IPE acima de 1 somado no mart de hospitais', 13688,
+         (select sum(qt_especialidade_ipe_acima_referencia)
+          from mart_indicador_hospital_mensal) from dual
+  union all
+  select 47, 'IPE acima de 1 somado no mart de regioes', 13688,
+         (select sum(qt_hospital_especialidade_ipe_acima_referencia)
+          from mart_indicador_regiao_mensal) from dual
 )
 select metrica,
        esperado,

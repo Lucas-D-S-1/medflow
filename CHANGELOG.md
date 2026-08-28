@@ -5,6 +5,51 @@ A versão da release e a versão dos contratos de dados evoluem separadamente.
 
 ## Não publicado
 
+Contrato de dados **`0.5.0`**, aplicado ao Oracle em 28/08/2026, no mesmo dia
+do `0.4.0`: o IPE existia num grão só, e o produto precisava dele nas outras
+visões.
+
+### Adicionado
+
+- **Resumo do IPE por hospital e por região** na Gold, no banco e na API. Por
+  hospital, a mediana entre as especialidades comparáveis e quantas ficam acima
+  dos pares; por região, o mesmo sobre as combinações hospital-especialidade.
+  A mediana e não a média porque a razão tem cauda longa à direita, e uma
+  especialidade extrema deslocaria o hospital inteiro;
+- coluna **IPE** na lista hospitalar, ordenável, com a contagem de
+  especialidades acima dos pares embaixo;
+- o IPE entrou na **comparação com pares** do hospital, com a mesma barra de
+  posição dos demais indicadores;
+- **totais do território** e **cartão do mapa** passaram a mostrar em quantas
+  comparações da região a permanência fica acima da dos pares;
+- quatro portões novos no `03_validar_carga.sql`, que provam que o índice subiu
+  de grão sem perder nem inventar linha: as três contagens fecham em 34.741.
+
+### FlowIA
+
+- **conversa persistente**: o painel guarda o fio inteiro e a pergunta seguinte
+  leva as duas rodadas anteriores ao modelo. "Qual o IPH de São Paulo?" seguido
+  de "e o TMH?" agora responde sobre São Paulo. Antes cada pergunta apagava a
+  anterior da tela e da memória;
+- **respostas mais curtas**: regra de concisão no prompt e poda determinística
+  do parágrafo final que só repetia o que já tinha sido dito. Uma resposta de
+  ranking caiu de 594 para 439 caracteres, sem perder número, unidade nem
+  competência;
+- IPE, diferença entre IPE e IPR e a ressalva do hospital-dia entram no
+  glossário do Select AI e nas respostas locais, que não gastam cota;
+- **nome de região deixou de falhar por caixa**: o modelo comparava
+  `= 'Sao Paulo'` contra `SAO PAULO` na Gold e devolvia zero linha, dizendo que
+  não havia dado. Agora a regra manda usar `UPPER` e `LIKE`.
+
+### Corrigido
+
+- o buffer do prompt do Select AI era `varchar2(4000)` e o texto fixo das regras
+  já passava disso somado ao contexto e à pergunta. Passou para `varchar2(32767)`;
+- a série mensal do hospital virou uma lista só, que rola e ordena, em vez de
+  abrir um segundo painel com as competências restantes.
+
+## `0.4.0` do contrato de dados — 28/08/2026
+
 Contrato de dados **`0.4.0`**, aplicado ao Oracle em 28/08/2026. É a primeira
 mudança do contrato desde o `0.3.0`: campos novos numa resposta existente.
 

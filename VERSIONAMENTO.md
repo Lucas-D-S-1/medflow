@@ -114,3 +114,18 @@ A migração foi **aditiva** (`db/schema/05_adicionar_indice_especialidade.sql`)
 não uma recriação do modelo: o `02_criar_tabelas_gold.sql` derruba e recria as
 tabelas, e rodá-lo em produção deixaria o site público sem dado durante a
 carga.
+
+## E para `0.5.0` no mesmo dia
+
+O `0.4.0` publicou o IPE no grão em que ele é calculado: hospital, especialidade
+e competência. Só que a lista hospitalar e o mapa agregam acima disso, e ali o
+índice não existia. O `0.5.0` acrescenta o resumo por hospital e por região, com a mediana e a
+contagem acima da referência, em `mart_indicador_hospital_mensal` e
+`mart_indicador_regiao_mensal`, por migração aditiva
+(`db/schema/06_adicionar_resumo_ipe.sql`).
+
+Duas versões no mesmo dia não é ideal, e a alternativa era pior: publicar um
+indicador que só aparece numa tela e deixar as outras sem ele até a próxima
+rodada. O passo continua `MINOR` pelo mesmo motivo do anterior: são campos
+novos numa resposta existente, e quem lia o `0.4.0` continua lendo tudo o que
+lia.

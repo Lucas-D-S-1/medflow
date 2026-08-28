@@ -28,6 +28,7 @@ from medflow.gold import (
     _hospital_cid_periodo,
     _hospital_especialidade_mensal,
     _hospital_mensal,
+    _juntar_resumo_ipe,
 )
 from medflow.ipca import carregar_ipca
 from medflow.silver.dominios import classificar_cid, normaliza_codigo
@@ -478,7 +479,18 @@ class TestIPHSemLeitoDeclarado:
         ipca = pd.DataFrame(
             {"cd_competencia": ["202403"], "nr_fator_correcao_ipca": [1.0]}
         )
-        return _hospital_mensal(novas, leitos, hospitais, ipca).iloc[0]
+        # Sem especialidade elegível o resumo do IPE fica zerado, que é o
+        # estado certo para um hospital que este teste nem faz comparar.
+        especialidade = pd.DataFrame(
+            columns=[
+                "cd_cnes",
+                "nr_ano_competencia",
+                "nr_mes_competencia",
+                "cd_competencia",
+                "nr_ipe",
+            ]
+        )
+        return _hospital_mensal(novas, leitos, hospitais, especialidade, ipca).iloc[0]
 
     def test_capacidade_declarada_produz_iph(self):
         linha = self._mart(capacidade=100.0)
@@ -694,3 +706,109 @@ class TestIndicePermanenciaEspecialidade:
         linha = self._linha(mart, "A")
         assert linha.st_amostra_ipe == "benchmark_zero"
         assert pd.isna(linha.nr_ipe)
+
+
+class TestResumoDoIpe:
+    """O IPE sobe de grão para caber numa coluna só, e subir custa alguma coisa.
+
+    Estes testes travam o que se escolheu perder: mediana em vez de média,
+    porque a razão tem cauda longa; só linhas elegíveis; e contagem zero
+    distinta de mediana nula.
+    """
+
+    @staticmethod
+    def _resumir(mart: pd.DataFrame) -> pd.DataFrame:
+        chaves = ["cd_cnes", "nr_ano_competencia", "nr_mes_competencia", "cd_competencia"]
+        esqueleto = mart[chaves].drop_duplicates()
+        return _juntar_resumo_ipe(esqueleto, mart, chaves, "especialidade")
+
+    def test_mediana_e_contagem_saem_das_especialidades_elegiveis(self):
+        # A tem três especialidades comparáveis, com IPE 2, 1 e 0,5.
+        mart = _mart_especialidade(
+            _internacoes_especialidade(
+                [
+                    ("A", "01", 20, 10.0),
+                    ("B", "01", 30, 5.0),
+                    ("C", "01", 30, 5.0),
+                    ("D", "01", 30, 5.0),
+                    ("A", "02", 20, 5.0),
+                    ("B", "02", 30, 5.0),
+                    ("C", "02", 30, 5.0),
+                    ("D", "02", 30, 5.0),
+                    ("A", "03", 20, 2.5),
+                    ("B", "03", 30, 5.0),
+                    ("C", "03", 30, 5.0),
+                    ("D", "03", 30, 5.0),
+                ]
+            )
+        )
+        linha = self._resumir(mart).set_index("cd_cnes").loc["A"]
+        assert linha.qt_especialidade_ipe_elegivel == 3
+        assert linha.nr_ipe_mediana == 1.0
+        assert linha.qt_especialidade_ipe_acima_referencia == 1
+        assert linha.pc_especialidade_ipe_acima_referencia == pytest.approx(100 / 3)
+
+    def test_a_mediana_resiste_a_uma_especialidade_extrema(self):
+        # Uma especialidade com IPE 10 desloca a média para longe do típico; a
+        # mediana continua dizendo onde está o meio.
+        mart = _mart_especialidade(
+            _internacoes_especialidade(
+                [
+                    ("A", "01", 20, 50.0),
+                    ("B", "01", 30, 5.0),
+                    ("C", "01", 30, 5.0),
+                    ("D", "01", 30, 5.0),
+                    ("A", "02", 20, 5.0),
+                    ("B", "02", 30, 5.0),
+                    ("C", "02", 30, 5.0),
+                    ("D", "02", 30, 5.0),
+                    ("A", "03", 20, 2.5),
+                    ("B", "03", 30, 5.0),
+                    ("C", "03", 30, 5.0),
+                    ("D", "03", 30, 5.0),
+                ]
+            )
+        )
+        linha = self._resumir(mart).set_index("cd_cnes").loc["A"]
+        media = mart.loc[mart.cd_cnes.eq("A"), "nr_ipe"].mean()
+        assert linha.nr_ipe_mediana == 1.0
+        assert media > 3
+
+    def test_especialidade_inelegivel_nao_entra_no_resumo(self):
+        # A tem duas especialidades, e só uma passa nos cortes. Contar a outra
+        # como 1 ou como 0 inventaria comparação que a Gold recusou.
+        mart = _mart_especialidade(
+            _internacoes_especialidade(
+                [
+                    ("A", "01", 20, 10.0),
+                    ("B", "01", 30, 5.0),
+                    ("C", "01", 30, 5.0),
+                    ("D", "01", 30, 5.0),
+                    ("A", "02", 19, 40.0),
+                    ("B", "02", 30, 5.0),
+                    ("C", "02", 30, 5.0),
+                    ("D", "02", 30, 5.0),
+                ]
+            )
+        )
+        linha = self._resumir(mart).set_index("cd_cnes").loc["A"]
+        assert linha.qt_especialidade_ipe_elegivel == 1
+        assert linha.nr_ipe_mediana == 2.0
+
+    def test_hospital_sem_especialidade_elegivel_conta_zero_com_mediana_nula(self):
+        mart = _mart_especialidade(
+            _internacoes_especialidade(
+                [
+                    ("A", "01", 19, 10.0),
+                    ("B", "01", 30, 5.0),
+                    ("C", "01", 30, 5.0),
+                    ("D", "01", 30, 5.0),
+                ]
+            )
+        )
+        linha = self._resumir(mart).set_index("cd_cnes").loc["A"]
+        assert linha.qt_especialidade_ipe_elegivel == 0
+        assert linha.qt_especialidade_ipe_acima_referencia == 0
+        # Zero especialidades comparáveis não é permanência zero ante os pares.
+        assert pd.isna(linha.nr_ipe_mediana)
+        assert pd.isna(linha.pc_especialidade_ipe_acima_referencia)

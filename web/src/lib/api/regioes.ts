@@ -1,7 +1,7 @@
 import regionalSnapshot from '../../mocks/regioes-resumo.json'
 import { apiUrl } from './base'
 
-export const REGIONAL_CONTRACT_VERSION = '0.4.0' as const
+export const REGIONAL_CONTRACT_VERSION = '0.5.0' as const
 
 type PublishedSource = 'oracle-live' | 'snapshot'
 
@@ -46,6 +46,15 @@ export type RegionalSummaryItem = {
   price_reference_competence: string
   approved_amount_real: number
   cmi_real: number
+  /**
+   * Resumo do IPE da região: mediana e quantas combinações
+   * hospital-especialidade ficam acima da permanência dos pares. Nulo quando
+   * nenhuma é elegível — que não é o mesmo que estar em dia com os pares.
+   */
+  ipe_median: number | null
+  ipe_eligible_pairs: number
+  ipe_above_reference: number
+  ipe_above_reference_percent: number | null
 }
 
 export type RegionalSummaryResponse = {
@@ -97,6 +106,8 @@ const ITEM_INTEGER_FIELDS = [
   'admissions_received_from_other_sp_regions',
   'admissions_received_from_other_states',
   'historical_years',
+  'ipe_eligible_pairs',
+  'ipe_above_reference',
 ] as const
 const ITEM_NUMBER_FIELDS = [
   'approved_amount_nominal',
@@ -153,6 +164,13 @@ function isValidItem(value: unknown): value is RegionalSummaryItem {
     ) &&
     ITEM_INTEGER_FIELDS.every((key) => isNonNegativeInteger(value[key])) &&
     ITEM_NUMBER_FIELDS.every((key) => isFiniteNumber(value[key])) &&
+    (value.ipe_median === null || isFiniteNumber(value.ipe_median)) &&
+    (value.ipe_above_reference_percent === null ||
+      isFiniteNumber(value.ipe_above_reference_percent)) &&
+    // Mediana e percentual são nulos exatamente quando nada é elegível: um
+    // deles preenchido sem o outro seria resumo de conjunto vazio.
+    (value.ipe_median === null) === (value.ipe_eligible_pairs === 0) &&
+    (value.ipe_above_reference_percent === null) === (value.ipe_eligible_pairs === 0) &&
     (value.seasonality_index === null || isFiniteNumber(value.seasonality_index)) &&
     (value.seasonal_variation_percent === null ||
       isFiniteNumber(value.seasonal_variation_percent)) &&

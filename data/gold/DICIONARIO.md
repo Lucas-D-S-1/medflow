@@ -1,6 +1,6 @@
 # Dicionário da camada Gold — MedFlow
 
-Contrato de esquema `0.4.0`, gerado automaticamente em `2026-08-28T12:29:18.451718+00:00`.
+Contrato de esquema `0.4.0`, gerado automaticamente em `2026-08-28T14:35:42.675113+00:00`.
 
 ## Responsabilidade da camada
 
@@ -53,6 +53,10 @@ Pressão estimada, capacidade e volume mensal por hospital.
 | `vl_cmi` | `float64` | 1,049 | Valor nominal aprovado nas internações novas dividido pela quantidade de internações novas. |
 | `nr_permanencia_media` | `float64` | 1,049 | Soma dos dias de permanência dividida pela quantidade de internações novas. |
 | `st_amostra` | `object` | 0 | Estado da amostra segundo os mínimos definidos no contrato do indicador. |
+| `qt_especialidade_ipe_elegivel` | `int64` | 0 | Quantidade referente a especialidade ipe elegivel. |
+| `nr_ipe_mediana` | `float64` | 4,576 | Valor numérico referente a ipe mediana. |
+| `qt_especialidade_ipe_acima_referencia` | `int64` | 0 | Quantidade referente a especialidade ipe acima referencia. |
+| `pc_especialidade_ipe_acima_referencia` | `float64` | 4,576 | Percentual referente a especialidade ipe acima referencia. |
 | `nr_indice_ipca` | `Float64` | 0 | Número-índice mensal do IPCA/IBGE, tabela SIDRA 1737, variável 2266. |
 | `nr_fator_correcao_ipca` | `Float64` | 0 | Fator que atualiza o valor nominal da competência para o preço de referência explícito. |
 | `cd_competencia_preco_referencia` | `object` | 0 | Competência AAAAMM para a qual os valores reais foram corrigidos pelo IPCA. |
@@ -179,6 +183,10 @@ Indicadores consolidados para mapa e visão executiva regional.
 | `nr_indice_sazonalidade` | `float64` | 1,488 | Volume atual dividido pela média do mesmo mês em 2024 e 2025. |
 | `pc_variacao_sazonal` | `float64` | 1,488 | Variação percentual correspondente ao índice de sazonalidade. |
 | `st_indice_sazonalidade` | `object` | 0 | Estado de calculabilidade do índice sazonal. |
+| `qt_hospital_especialidade_ipe_elegivel` | `int64` | 0 | Quantidade referente a hospital especialidade ipe elegivel. |
+| `nr_ipe_mediana` | `float64` | 317 | Valor numérico referente a ipe mediana. |
+| `qt_hospital_especialidade_ipe_acima_referencia` | `int64` | 0 | Quantidade referente a hospital especialidade ipe acima referencia. |
+| `pc_hospital_especialidade_ipe_acima_referencia` | `float64` | 317 | Percentual referente a hospital especialidade ipe acima referencia. |
 | `nr_indice_ipca` | `Float64` | 0 | Número-índice mensal do IPCA/IBGE, tabela SIDRA 1737, variável 2266. |
 | `nr_fator_correcao_ipca` | `Float64` | 0 | Fator que atualiza o valor nominal da competência para o preço de referência explícito. |
 | `cd_competencia_preco_referencia` | `object` | 0 | Competência AAAAMM para a qual os valores reais foram corrigidos pelo IPCA. |
