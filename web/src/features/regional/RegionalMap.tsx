@@ -22,6 +22,10 @@ type RegionalMapProps = {
   onSelect: (regionCode: string) => void
   formatInteger: (value: number) => string
   formatPercent: (value: number) => string
+  /** Região sob o ponteiro ou o foco, controlada de fora para que o mapa e a
+   *  tabela comparativa se destaquem mutuamente. */
+  hoveredCode?: string
+  onHoverChange?: (regionCode: string) => void
 }
 
 const mapData = JSON.parse(regionalMapAsset) as MapFeatureCollection
@@ -83,8 +87,15 @@ export default function RegionalMap({
   onSelect,
   formatInteger,
   formatPercent,
+  hoveredCode: controlledHoveredCode,
+  onHoverChange,
 }: RegionalMapProps) {
-  const [hoveredCode, setHoveredCode] = useState('')
+  const [ownHoveredCode, setOwnHoveredCode] = useState('')
+  const hoveredCode = controlledHoveredCode ?? ownHoveredCode
+  const setHoveredCode = (regionCode: string) => {
+    setOwnHoveredCode(regionCode)
+    onHoverChange?.(regionCode)
+  }
   const pathRefs = useRef(new Map<string, SVGPathElement>())
   const itemsByRegion = useMemo(
     () => new Map(items.map((item) => [item.region_code, item])),
@@ -196,11 +207,43 @@ export default function RegionalMap({
           )
         })}
       </svg>
-      <p className="map-hover-label" data-testid="regional-map-tooltip" aria-live="polite">
-        {hoveredItem
-          ? `${hoveredItem.region_name}: IPH estimado ${formatPercent(hoveredItem.iph_percent)}`
-          : 'Passe o ponteiro ou use as setas para identificar uma região.'}
-      </p>
+      {hoveredItem ? (
+        <div className="map-hover-card" data-testid="regional-map-tooltip" aria-live="polite">
+          <div className="map-hover-head">
+            <strong>{hoveredItem.region_name}</strong>
+            <span>{formatInteger(hoveredItem.municipality_count)} municípios</span>
+          </div>
+          <dl>
+            <div>
+              <dt>IPH estimado</dt>
+              <dd>{formatPercent(hoveredItem.iph_percent)}</dd>
+            </div>
+            <div>
+              <dt>Internações novas</dt>
+              <dd>{formatInteger(hoveredItem.new_admissions)}</dd>
+            </div>
+            <div>
+              <dt>TMH observado</dt>
+              <dd>{formatPercent(hoveredItem.tmh_percent)}</dd>
+            </div>
+            <div>
+              <dt>Ante o próprio mês</dt>
+              <dd>
+                {hoveredItem.seasonality_status === 'calculado' &&
+                hoveredItem.seasonality_index !== null
+                  ? `${hoveredItem.seasonality_index >= 1 ? '+' : '−'}${formatPercent(
+                      Math.abs(hoveredItem.seasonality_index - 1) * 100,
+                    )}`
+                  : 'não calculado'}
+              </dd>
+            </div>
+          </dl>
+        </div>
+      ) : (
+        <p className="map-hover-label" data-testid="regional-map-tooltip" aria-live="polite">
+          Passe o ponteiro ou use as setas para identificar uma região.
+        </p>
+      )}
       <div className="regional-map-legend" aria-label="Legenda do IPH estimado" data-testid="regional-map-legend">
         <span><i className="tone-swatch tone-1" /> mínimo real {formatPercent(values[0] ?? 0)}</span>
         <span><i className="tone-swatch tone-5" /> máximo real {formatPercent(values.at(-1) ?? 0)}</span>

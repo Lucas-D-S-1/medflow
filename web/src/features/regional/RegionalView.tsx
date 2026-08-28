@@ -7,6 +7,7 @@ import {
 import MetricCard from '../../shared/MetricCard'
 import RegionalMap from './RegionalMap'
 import RegionalSeries from './RegionalSeries'
+import GlobalContextBar from '../../shared/GlobalContextBar'
 import SeasonalSignal from './SeasonalSignal'
 import StatePanel from '../../shared/StatePanel'
 import { useSource } from '../../shared/SourceContext'
@@ -68,10 +69,12 @@ export default function RegionalView() {
       ),
     [visibleItems],
   )
-  const selectedItem =
-    rankedItems.find((item) => item.region_code === sharedRegionCode) ??
-    rankedItems[0] ??
-    null
+  // Sem região no contexto o panorama é o estado: o mapa mostra as 62 lado a
+  // lado e ninguém é eleito por padrão. Cair no primeiro item faria a tela
+  // abrir filtrada em um território que o usuário não escolheu.
+  const selectedItem = sharedRegionCode
+    ? rankedItems.find((item) => item.region_code === sharedRegionCode) ?? null
+    : null
   const rankingItems = showAllRanking
     ? rankedItems
     : rankedItems.slice(0, RANKING_PREVIEW_SIZE)
@@ -173,13 +176,47 @@ export default function RegionalView() {
               </StatePanel>
             )}
 
-            {selectedItem && visibleItems.length > 0 && (
+            {visibleItems.length > 0 && (
               <>
-                {selectedRegionFromUrl && selectedRegionFromUrl !== selectedItem.region_code && (
+                {/*
+                  O mapa vem primeiro e ocupa a largura: é dele que sai a
+                  escolha do território. Os controles vêm logo abaixo, para
+                  quem prefere escolher pelo nome depois de ver o panorama.
+                */}
+                <section className="map-panel wide" aria-labelledby="map-title">
+                  <div className="block-heading">
+                    <div>
+                      <p className="section-kicker">MAPA DE SINAIS</p>
+                      <h3 id="map-title">IPH estimado por percentis</h3>
+                    </div>
+                    <strong data-testid="regional-map-selection">
+                      {selectedItem
+                        ? `Selecionada: ${selectedItem.region_name}`
+                        : 'Nenhuma região selecionada'}
+                    </strong>
+                  </div>
+                  <RegionalMap
+                    items={regionalData.items}
+                    selectedRegionCode={selectedItem?.region_code ?? ''}
+                    selectedMacroregionCode={selectedMacroregion}
+                    onSelect={setSharedRegion}
+                    formatInteger={formatInteger}
+                    formatPercent={formatPercent}
+                  />
+                </section>
+
+                <GlobalContextBar />
+
+                {selectedRegionFromUrl && selectedItem && selectedRegionFromUrl !== selectedItem.region_code && (
                   <p className="selection-warning" role="status">
                     A região preservada na URL não existe neste recorte; exibindo {selectedItem.region_name} sem apagar o filtro compartilhável.
                   </p>
                 )}
+              </>
+            )}
+
+            {selectedItem && visibleItems.length > 0 && (
+              <>
                 <SeasonalSignal
                   items={visibleItems}
                   selected={selectedItem}
@@ -188,27 +225,7 @@ export default function RegionalView() {
                   onSelect={setSharedRegion}
                 />
 
-                <div className="regional-layout">
-                  <section className="map-panel" aria-labelledby="map-title">
-                    <div className="block-heading">
-                      <div>
-                        <p className="section-kicker">MAPA DE SINAIS</p>
-                        <h3 id="map-title">IPH estimado por percentis</h3>
-                      </div>
-                      <strong data-testid="regional-map-selection">
-                        Selecionada: {selectedItem.region_name}
-                      </strong>
-                    </div>
-                    <RegionalMap
-                      items={regionalData.items}
-                      selectedRegionCode={selectedItem.region_code}
-                      selectedMacroregionCode={selectedMacroregion}
-                      onSelect={setSharedRegion}
-                      formatInteger={formatInteger}
-                      formatPercent={formatPercent}
-                    />
-                  </section>
-
+                <div className="regional-layout focused">
                   <section className="selected-region" aria-labelledby="selected-region-title">
                     <p className="section-kicker">REGIÃO SELECIONADA</p>
                     <h3 id="selected-region-title" data-testid="regional-selected-name">

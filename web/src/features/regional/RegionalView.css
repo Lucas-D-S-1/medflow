@@ -27,6 +27,37 @@
   gap: var(--space-4);
   align-items: start;
 }
+/* No foco o mapa já foi lido acima: o painel da região selecionada ocupa a
+   largura em vez de dividir espaço com uma coluna que não existe mais. */
+.regional-layout.focused { grid-template-columns: minmax(0, 1fr); }
+
+/* O mapa abre a etapa e é dele que sai a escolha do território, então ele
+   ganha a largura e a altura que a leitura pede. O cartão de valores fica ao
+   lado, e não abaixo: com o mapa nesta altura, embaixo ele cairia fora da tela
+   justamente enquanto o ponteiro está sobre a região. */
+.map-panel.wide .regional-map {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(15rem, 21rem);
+  grid-template-areas: "map card" "legend card";
+  gap: var(--space-3) var(--space-4);
+  align-items: start;
+}
+.map-panel.wide .regional-map-svg { grid-area: map; max-height: min(34rem, 62vh); }
+.map-panel.wide .map-hover-card,
+.map-panel.wide .map-hover-label { grid-area: card; margin: 0; }
+.map-panel.wide .regional-map-legend { grid-area: legend; }
+.map-panel.wide .map-hover-card dl { grid-template-columns: minmax(0, 1fr); }
+
+@media (max-width: 60rem) {
+  .map-panel.wide .regional-map {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "map" "card" "legend";
+  }
+  .map-panel.wide .regional-map-svg { max-height: 21rem; }
+  .map-panel.wide .map-hover-card dl {
+    grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  }
+}
 .map-panel,
 .selected-region,
 .ranking-panel { padding: var(--space-4); border: var(--border-subtle); border-radius: var(--radius-xl); background: var(--color-surface); }
@@ -44,7 +75,33 @@
 .regional-map-shape.filtered-out { opacity: .13; pointer-events: none; }
 .regional-map-shape:hover { stroke: var(--color-hover); stroke-width: 3.5; }
 .regional-map-shape.selected { fill: var(--color-map-selected-fill); stroke: var(--color-selected); stroke-width: 4.5; opacity: 1; }
-.map-hover-label { min-height: 1.5rem; margin: var(--space-2) 0; color: var(--color-heading); font-size: var(--font-size-sm); font-weight: 700; }
+.map-hover-label { min-height: 1.5rem; margin: var(--space-2) 0; color: var(--color-text-muted); font-size: var(--font-size-sm); }
+
+/* O hover responde "o que está ruim aqui", então mostra os valores, não só o
+   nome da região. */
+.map-hover-card {
+  margin: var(--space-2) 0;
+  padding: var(--space-3);
+  border: var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-soft);
+}
+.map-hover-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-2) var(--space-3); }
+.map-hover-head strong { color: var(--color-heading); font: 700 var(--font-size-md) var(--font-heading); }
+.map-hover-head span { color: var(--color-text-muted); font-size: var(--font-size-xs); }
+.map-hover-card dl {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  gap: var(--space-2) var(--space-4);
+  margin: var(--space-3) 0 0;
+}
+.map-hover-card dt { color: var(--color-text-muted); font-size: var(--font-size-xs); }
+.map-hover-card dd {
+  margin: 0;
+  color: var(--color-heading);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
 .regional-map-legend { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-4); color: var(--color-text-muted); font-size: var(--font-size-xs); }
 .regional-map-legend span { display: inline-flex; align-items: center; gap: var(--space-2); }
 .regional-map-legend small { flex-basis: 100%; }

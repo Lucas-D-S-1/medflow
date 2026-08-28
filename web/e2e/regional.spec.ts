@@ -54,7 +54,7 @@ test('renderiza a competência e a versão do contrato recebidas do Oracle', asy
     })
   })
 
-  await page.goto('/')
+  await page.goto('/?regiao=35073')
 
   // Contrato e origem prestam contas apenas em Metodologia.
   await expect(page.getByTestId('source-badge')).toHaveCount(0)
@@ -164,7 +164,7 @@ test('filtra a competência sem abandonar o mapa espacial e o tamanho da amostra
     })
   })
 
-  await page.goto('/')
+  await page.goto('/?regiao=35073')
   await expect(page.getByTestId('global-competence')).toHaveValue(snapshotCompetencia)
   await page.getByTestId('global-competence').fill('2025-05')
 
@@ -188,7 +188,7 @@ test('expõe o mapa com percentis, seleção textual e uma única parada de tabu
     })
   })
 
-  await page.goto('/regional')
+  await page.goto('/regional?regiao=35073')
 
   const map = page.getByTestId('regional-map-svg')
   await expect(map).not.toHaveAttribute('role', 'img')
@@ -205,7 +205,7 @@ test('expõe o mapa com percentis, seleção textual e uma única parada de tabu
   await expect(map.locator('[tabindex="0"]')).toHaveCount(1)
   await expect(page.getByTestId('regional-map-selection')).not.toContainText('JUNDIAI')
 
-  await page.goto('/regional?macrorregiao=3529')
+  await page.goto('/regional?macrorregiao=3529&regiao=35102')
   await expect(page.getByTestId('regional-count')).toHaveText('4 de 62 regiões')
   await expect(page.getByTestId('regional-map-svg').locator('[role="button"]')).toHaveCount(4)
   await expect(page.getByTestId('regional-map-legend')).toContainText(
@@ -308,7 +308,7 @@ test('explica pelo contrato quando a sazonalidade não é calculada', async ({ p
     })
   })
 
-  await page.goto('/regional?competencia=2024-03')
+  await page.goto('/regional?competencia=2024-03&regiao=35073')
 
   const seasonalityValue = page.getByTestId('regional-seasonality')
   await expect(seasonalityValue).toHaveText('não calculado')
@@ -329,14 +329,14 @@ test('declara o ranking truncado, permite ver tudo e mantém metodologia colaps�
     })
   })
 
-  await page.goto('/regional')
+  await page.goto('/regional?regiao=35073')
   await expect(page.getByTestId('regional-ranking-count')).toHaveText('8 de 62')
   await page.getByRole('button', { name: 'Ver todas as 62 regiões' }).click()
   await expect(page.getByTestId('regional-ranking-count')).toHaveText('62 de 62')
   await expect(page.locator('.ranking-list li')).toHaveCount(62)
 
   await page.getByRole('link', { name: 'Metodologia' }).click()
-  await expect(page).toHaveURL(/\/metodologia$/)
+  await expect(page).toHaveURL(/\/metodologia(\?|$)/)
   const details = page.locator('.methodology-details details')
   await expect(details).toHaveCount(6)
   await expect(details.first()).not.toHaveAttribute('open', '')

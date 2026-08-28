@@ -95,16 +95,21 @@ export function SourceProvider({ children }: { children: ReactNode }) {
   const requestedCompetence = searchParams.get('competencia') ?? ''
   const sharedRegionParam = searchParams.get('regiao') ?? ''
   const sharedMacroregionCode = searchParams.get('macrorregiao') ?? ''
-  const defaultRegionCode =
+  // Em contingência o recorte é uma publicação travada: o território sai do
+  // próprio snapshot e não há panorama a oferecer.
+  const fallbackRegionCode =
     sourceData?.regions.items.find((item) => item.region_code === '35073')?.region_code ??
     sourceData?.regions.items[0]?.region_code ??
     ''
-  const sharedRegionCode =
-    !isFallback &&
-    REGION_CODE_PATTERN.test(sharedRegionParam) &&
-    Boolean(sourceData?.regions.items.some((item) => item.region_code === sharedRegionParam))
+  // Ao vivo, "nenhuma região" é um estado legítimo: é o panorama, onde as 62
+  // regiões são comparáveis entre si. Escolher um território é um ato do
+  // usuário, não um padrão herdado.
+  const sharedRegionCode = isFallback
+    ? fallbackRegionCode
+    : REGION_CODE_PATTERN.test(sharedRegionParam) &&
+        Boolean(sourceData?.regions.items.some((item) => item.region_code === sharedRegionParam))
       ? sharedRegionParam
-      : defaultRegionCode
+      : ''
   const sharedCompetence = isFallback
     ? sourceData?.regions.data_through ?? sourceData?.status.data_through ?? ''
     : COMPETENCE_PATTERN.test(requestedCompetence)
@@ -268,9 +273,13 @@ export function SourceProvider({ children }: { children: ReactNode }) {
       return
     }
 
-    const currentRegion = sharedRegionParam
-      ? urlRegion
-      : regions.find((item) => item.region_code === sharedRegionCode)
+    // No panorama a RRAS é só um recorte do mapa e da tabela: escolher uma
+    // rede não deve eleger um território por conta própria. A reconciliação
+    // existe para resolver conflito entre região e RRAS, e sem região
+    // escolhida não há conflito.
+    if (!sharedRegionParam) return
+
+    const currentRegion = urlRegion
     if (currentRegion?.macroregion_code === sharedMacroregionCode) return
 
     const nextRegion = regionsInMacroregion[0]
@@ -317,7 +326,20 @@ export function SourceProvider({ children }: { children: ReactNode }) {
 
   const setSharedRegion = useCallback(
     (regionCode: string) => {
-      if (isFallback || !REGION_CODE_PATTERN.test(regionCode)) return
+      if (isFallback) return
+      if (regionCode === '') {
+        // Voltar ao panorama larga o território e tudo que dependia dele.
+        setSearchParams((current) => {
+          const next = new URLSearchParams(current)
+          next.delete('regiao')
+          next.delete('macrorregiao')
+          next.delete('destino')
+          next.delete('hospital')
+          return next
+        })
+        return
+      }
+      if (!REGION_CODE_PATTERN.test(regionCode)) return
       setSearchParams((current) => {
         const next = new URLSearchParams(current)
         next.set('regiao', regionCode)

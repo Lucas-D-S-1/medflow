@@ -3,7 +3,6 @@ import { SourceProvider } from './shared/SourceContext'
 import AnalisePage from './features/analise/AnalisePage'
 import AssistantWidget from './features/assistant/AssistantWidget'
 import MetodologiaView from './features/metodologia/MetodologiaView'
-import GlobalContextBar from './shared/GlobalContextBar'
 import { useActiveSection } from './shared/useActiveSection'
 
 const SECTIONS = [
@@ -81,7 +80,6 @@ function Shell() {
             <NavLink to={routeWithContext('/metodologia')}>Metodologia</NavLink>
           </nav>
         </header>
-        <GlobalContextBar />
       </div>
 
       <Routes>

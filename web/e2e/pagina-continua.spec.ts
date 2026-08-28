@@ -98,25 +98,71 @@ test('leva ao território escolhido no destaque sazonal', async ({ page }) => {
   )
 })
 
-test('o filtro de contexto sai da frente ao rolar; só o direcionador fica', async ({ page }) => {
+test('o filtro rola junto com a página; só o direcionador fica fixo', async ({ page }) => {
   await mockLiveSource(page)
-  await page.goto('/')
+  await page.goto(`/?competencia=${snapshotCompetencia}&regiao=35073`)
   await expect(page.getByTestId('seasonal-basis')).toBeVisible()
 
-  await page.mouse.wheel(0, 900)
+  const antes = (await page.locator('.global-context-bar').boundingBox())?.y ?? 0
+  await page.mouse.wheel(0, 600)
+
+  // O filtro ocupava 188px de chrome grudado e cobria a análise durante a
+  // leitura. Agora ele vive no fluxo da página, depois do mapa.
+  await expect
+    .poll(async () => {
+      const depois = (await page.locator('.global-context-bar').boundingBox())?.y ?? 0
+      return antes - depois > 300
+    })
+    .toBe(true)
 
   // O direcionador continua acessível: é ele que diz em que etapa a leitura
   // está, e some junto tornaria a marcação de etapa ativa inútil.
   await expect
     .poll(async () => Math.round((await page.locator('.topbar').boundingBox())?.y ?? -1))
     .toBe(0)
+})
 
-  // O filtro, que ocupava 188px dos 260px de chrome grudado, não cobre mais a
-  // análise durante a leitura.
-  await expect
-    .poll(async () => {
-      const caixa = await page.locator('.global-context-bar').boundingBox()
-      return caixa === null || caixa.y + caixa.height <= 0
-    })
-    .toBe(true)
+test('abre em panorama, sem território eleito por padrão', async ({ page }) => {
+  await mockLiveSource(page)
+  await page.goto('/')
+
+  // O mapa compara as 62 regiões antes de qualquer filtro: escolher um
+  // território é um ato do usuário, não um padrão herdado.
+  await expect(page.locator('.regional-map-shape')).toHaveCount(62)
+  await expect(page.getByTestId('regional-map-selection')).toContainText('Nenhuma região')
+  await expect(page.getByTestId('global-region')).toHaveValue('')
+  await expect(page.getByTestId('regional-selected-name')).toHaveCount(0)
+  expect(new URL(page.url()).searchParams.get('regiao')).toBeNull()
+})
+
+test('o hover no mapa mostra os valores da região, e o clique propaga', async ({ page }) => {
+  await mockLiveSource(page)
+  await page.goto('/')
+  await expect(page.locator('.regional-map-shape')).toHaveCount(62)
+
+  const alvo = page.getByTestId('regional-map-35073')
+  await alvo.hover()
+  const cartao = page.getByTestId('regional-map-tooltip')
+  await expect(cartao).toContainText('JUNDIAI')
+  await expect(cartao).toContainText('IPH estimado')
+  await expect(cartao).toContainText('Internações novas')
+  await expect(cartao).toContainText('Ante o próprio mês')
+
+  await alvo.click()
+  await expect(page).toHaveURL(/regiao=35073/)
+  await expect(page.getByTestId('regional-selected-name')).toHaveText('JUNDIAI')
+  await expect(page.getByTestId('global-region')).toHaveValue('35073')
+})
+
+test('escolher pelo seletor abaixo do mapa vale o mesmo que clicar nele', async ({ page }) => {
+  await mockLiveSource(page)
+  await page.goto('/')
+
+  await page.getByTestId('global-region').selectOption('35073')
+  await expect(page.getByTestId('regional-selected-name')).toHaveText('JUNDIAI')
+
+  // E voltar ao panorama larga o território.
+  await page.getByTestId('global-region').selectOption('')
+  await expect(page.getByTestId('regional-selected-name')).toHaveCount(0)
+  expect(new URL(page.url()).searchParams.get('regiao')).toBeNull()
 })

@@ -157,6 +157,9 @@ export default function GlobalContextBar() {
               data-testid="global-region"
               onChange={(event) => setSharedRegion(event.target.value)}
             >
+              {/* O vazio não é ausência de opção: é o panorama, com as 62
+                  regiões comparáveis no mapa. */}
+              <option value="">Nenhuma — comparar no mapa</option>
               {regions.map((item) => (
                 <option key={item.region_code} value={item.region_code}>
                   {item.region_name}
