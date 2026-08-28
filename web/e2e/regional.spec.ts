@@ -146,7 +146,10 @@ test('filtra a competência sem abandonar o mapa espacial e o tamanho da amostra
     const requestUrl = new URL(route.request().url())
     const year = Number(requestUrl.searchParams.get('ano') ?? '2026')
     const month = Number(requestUrl.searchParams.get('mes') ?? '5')
-    requestedCompetence = `${year}-${String(month).padStart(2, '0')}`
+    const competence = `${year}-${String(month).padStart(2, '0')}`
+    // MoM e YoY pedem a competência anterior e o mesmo mês do ano anterior no
+    // mesmo endpoint. O que este teste observa é a competência escolhida.
+    if (competence >= '2025-05') requestedCompetence = competence
     await route.fulfill({
       contentType: 'application/json',
       body: JSON.stringify({

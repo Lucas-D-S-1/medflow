@@ -1,6 +1,8 @@
 import { useMemo, useRef, useState } from 'react'
 import regionalMapAsset from '../../../../data/gold/geografia/mapa_regiao_saude_sp.geojson?raw'
 import type { RegionalSummaryItem } from '../../lib/api/regioes'
+import type { RegionSignals } from './sinais'
+import { signalLabel } from './sinais'
 
 type Position = [number, number]
 type Polygon = Position[][]
@@ -26,6 +28,9 @@ type RegionalMapProps = {
    *  tabela comparativa se destaquem mutuamente. */
   hoveredCode?: string
   onHoverChange?: (regionCode: string) => void
+  /** Sinais acesos e variações por região, para o cartão de valores. */
+  signals?: Map<string, RegionSignals>
+  variations?: Map<string, { mom: number | null; yoy: number | null }>
 }
 
 const mapData = JSON.parse(regionalMapAsset) as MapFeatureCollection
@@ -71,6 +76,17 @@ function geometryPath(geometry: MapGeometry) {
     .join(' ')
 }
 
+/** Ausência de comparação não é variação de zero, e o texto diz isso. */
+function formatVariation(value: number | null) {
+  if (value === null) return 'sem comparação'
+  const percent = Math.abs(value * 100).toLocaleString('pt-BR', {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  })
+  if (Math.abs(value) < 0.0005) return '0,0%'
+  return `${value > 0 ? '+' : '−'}${percent}%`
+}
+
 function quantile(sortedValues: number[], percentile: number) {
   if (sortedValues.length === 0) return 0
   const position = (sortedValues.length - 1) * percentile
@@ -89,6 +105,8 @@ export default function RegionalMap({
   formatPercent,
   hoveredCode: controlledHoveredCode,
   onHoverChange,
+  signals,
+  variations,
 }: RegionalMapProps) {
   const [ownHoveredCode, setOwnHoveredCode] = useState('')
   const hoveredCode = controlledHoveredCode ?? ownHoveredCode
@@ -127,6 +145,7 @@ export default function RegionalMap({
   const selectedItem = itemsByRegion.get(selectedRegionCode)
   const cardItem = hoveredItem ?? selectedItem
   const cardIsSelection = !hoveredItem && Boolean(selectedItem)
+  const cardSignals = cardItem ? signals?.get(cardItem.region_code) : undefined
 
   function toneFor(item: RegionalSummaryItem | undefined) {
     if (!item) return 'is-muted'
@@ -270,17 +289,24 @@ export default function RegionalMap({
               <dd>{formatPercent(cardItem.icsap_share_of_observed_resident_admissions_percent)}</dd>
             </div>
             <div>
-              <dt>Ante o próprio mês</dt>
-              <dd>
-                {cardItem.seasonality_status === 'calculado' &&
-                cardItem.seasonality_index !== null
-                  ? `${cardItem.seasonality_index >= 1 ? '+' : '−'}${formatPercent(
-                      Math.abs(cardItem.seasonality_index - 1) * 100,
-                    )}`
-                  : 'não calculado'}
-              </dd>
+              <dt>MoM · mês anterior</dt>
+              <dd>{formatVariation(variations?.get(cardItem.region_code)?.mom ?? null)}</dd>
+            </div>
+            <div>
+              <dt>YoY · mesmo mês do ano anterior</dt>
+              <dd>{formatVariation(variations?.get(cardItem.region_code)?.yoy ?? null)}</dd>
             </div>
           </dl>
+          {cardSignals && (
+            <p className="map-hover-signals" data-testid="regional-map-signals">
+              <strong>
+                {cardSignals.count} de {cardSignals.total} sinais no quintil mais alto
+              </strong>
+              {cardSignals.count > 0 && (
+                <span>{cardSignals.lit.map(signalLabel).join(' · ')}</span>
+              )}
+            </p>
+          )}
         </div>
       ) : (
         <p className="map-hover-label" data-testid="regional-map-tooltip" aria-live="polite">

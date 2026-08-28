@@ -105,6 +105,18 @@
   margin: var(--space-3) 0 0;
 }
 .map-hover-card dt { color: var(--color-text-muted); font-size: var(--font-size-xs); }
+.map-hover-signals {
+  margin: var(--space-3) 0 0;
+  padding-top: var(--space-3);
+  border-top: var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  font-size: var(--font-size-xs);
+}
+.map-hover-signals strong { color: var(--color-heading); }
+.map-hover-signals span { color: var(--color-text-muted); }
+
 .map-hover-card dd {
   margin: 0;
   color: var(--color-heading);

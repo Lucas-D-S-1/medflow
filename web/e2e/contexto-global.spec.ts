@@ -107,10 +107,18 @@ test('trava o contexto global inteiro no fallback de snapshot', async ({ page })
 
 test('normaliza URL territorial incoerente sem perder parâmetros locais', async ({ page }) => {
   await mockLiveSource(page)
+  // Conta só as cargas da competência pedida: MoM e YoY buscam outras duas
+  // competências no mesmo endpoint, e contá-las aqui esconderia o que este
+  // teste vigia — que a normalização da URL não dispara recarga da atual.
   let regionalRequests = 0
   await page.route('**/api/dev/v1/regioes/resumo**', async (route) => {
-    regionalRequests += 1
     const url = new URL(route.request().url())
+    if (
+      `${url.searchParams.get('ano')}-${String(url.searchParams.get('mes')).padStart(2, '0')}` ===
+      snapshotCompetencia
+    ) {
+      regionalRequests += 1
+    }
     const year = Number(url.searchParams.get('ano'))
     const month = Number(url.searchParams.get('mes'))
     await route.fulfill({

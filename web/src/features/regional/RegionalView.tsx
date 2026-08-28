@@ -11,6 +11,7 @@ import GlobalContextBar from '../../shared/GlobalContextBar'
 import SeasonalSignal from './SeasonalSignal'
 import StateTotals from './StateTotals'
 import { aggregateRegions } from './agregado'
+import { aggregateVariation, computeSignals, variation } from './sinais'
 import StatePanel from '../../shared/StatePanel'
 import { useSource } from '../../shared/SourceContext'
 import {
@@ -38,6 +39,7 @@ export default function RegionalView() {
     sharedRegionParam,
     sharedMacroregionCode,
     setSharedRegion,
+    regionalComparison,
   } = useSource()
   const [showAllRanking, setShowAllRanking] = useState(false)
   const [seriesState, setSeriesState] = useState<SeriesState>({ kind: 'idle' })
@@ -78,6 +80,22 @@ export default function RegionalView() {
     ? rankedItems.find((item) => item.region_code === sharedRegionCode) ?? null
     : null
   const aggregate = useMemo(() => aggregateRegions(visibleItems), [visibleItems])
+  const signals = useMemo(() => computeSignals(visibleItems), [visibleItems])
+  const variations = useMemo(
+    () =>
+      new Map(
+        visibleItems.map((item) => [
+          item.region_code,
+          {
+            mom: variation(item, regionalComparison.previous),
+            yoy: variation(item, regionalComparison.yearAgo),
+          },
+        ]),
+      ),
+    [regionalComparison, visibleItems],
+  )
+  const aggregateMom = aggregateVariation(visibleItems, regionalComparison.previous)
+  const aggregateYoy = aggregateVariation(visibleItems, regionalComparison.yearAgo)
   const scopeLabel = selectedMacroregion
     ? formatRegionalNetwork(
         visibleItems[0]?.macroregion_name ?? '',
@@ -211,6 +229,8 @@ export default function RegionalView() {
                     onSelect={setSharedRegion}
                     formatInteger={formatInteger}
                     formatPercent={formatPercent}
+                    signals={signals}
+                    variations={variations}
                   />
                 </section>
 
@@ -221,6 +241,9 @@ export default function RegionalView() {
                     aggregate={aggregate}
                     competence={selectedCompetence}
                     scopeLabel={scopeLabel}
+                    mom={aggregateMom}
+                    yoy={aggregateYoy}
+                    signals={signals}
                   />
                 )}
 

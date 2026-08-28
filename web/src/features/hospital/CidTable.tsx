@@ -62,9 +62,9 @@ export default function CidTable({
             <tr>
               <th scope="col">Diagnóstico</th>
               <th scope="col">Internações</th>
-              <th scope="col">Permanência do hospital</th>
-              <th scope="col">Benchmark regional</th>
-              <th scope="col">IPR</th>
+              <th scope="col">Permanência neste hospital</th>
+              <th scope="col">Permanência dos pares na região</th>
+              <th scope="col">Permanência ante os pares (IPR)</th>
             </tr>
           </thead>
           <tbody>

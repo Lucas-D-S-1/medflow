@@ -58,6 +58,26 @@ type SourceContextValue = {
   setSharedCompetence: (competence: string) => void
   setSharedRegion: (regionCode: string) => void
   setSharedMacroregion: (macroregionCode: string) => void
+  /** Mesmas regiões na competência anterior e no mesmo mês do ano anterior,
+   *  para MoM e YoY. Nulo enquanto carrega, ou quando o período não existe. */
+  regionalComparison: RegionalComparison
+}
+
+export type RegionalComparison = {
+  previous: RegionalSummaryResponse | null
+  yearAgo: RegionalSummaryResponse | null
+}
+
+const EMPTY_COMPARISON: RegionalComparison = { previous: null, yearAgo: null }
+
+/** Desloca uma competência `AAAA-MM` em meses, sem depender de fuso. */
+export function shiftCompetence(competence: string, months: number) {
+  const match = COMPETENCE_PATTERN.exec(competence)
+  if (!match) return ''
+  const total = Number(match[1]) * 12 + (Number(match[2]) - 1) + months
+  const year = Math.floor(total / 12)
+  const month = (total % 12) + 1
+  return `${year}-${String(month).padStart(2, '0')}`
 }
 
 const SourceContext = createContext<SourceContextValue | null>(null)
@@ -85,6 +105,9 @@ export function SourceProvider({ children }: { children: ReactNode }) {
   const [regionalLoadState, setRegionalLoadState] =
     useState<RegionalLoadState>('idle')
   const regionalRequest = useRef<{ id: number; controller: AbortController } | null>(null)
+  const [regionalComparison, setRegionalComparison] =
+    useState<RegionalComparison>(EMPTY_COMPARISON)
+  const comparisonRequest = useRef<AbortController | null>(null)
   const reloadGeneration = useRef(0)
 
   const sourceData =
@@ -312,6 +335,45 @@ export function SourceProvider({ children }: { children: ReactNode }) {
     sourceState.kind,
   ])
 
+  // MoM e YoY exigem as mesmas 62 regiões em outras duas competências. As
+  // buscas são de melhor esforço e nunca bloqueiam a tela: se o período não
+  // existe — e no começo do recorte ele não existe — a comparação some em vez
+  // de virar zero.
+  useEffect(() => {
+    comparisonRequest.current?.abort()
+    if (sourceState.kind !== 'live' || !COMPETENCE_PATTERN.test(sharedCompetence)) {
+      setRegionalComparison(EMPTY_COMPARISON)
+      return
+    }
+
+    const controller = new AbortController()
+    comparisonRequest.current = controller
+    setRegionalComparison(EMPTY_COMPARISON)
+
+    const load = async (competence: string) => {
+      const match = COMPETENCE_PATTERN.exec(competence)
+      if (!match) return null
+      try {
+        return await fetchRegioesResumo(Number(match[1]), Number(match[2]), {
+          signal: controller.signal,
+        })
+      } catch {
+        return null
+      }
+    }
+
+    void (async () => {
+      const [previous, yearAgo] = await Promise.all([
+        load(shiftCompetence(sharedCompetence, -1)),
+        load(shiftCompetence(sharedCompetence, -12)),
+      ])
+      if (controller.signal.aborted) return
+      setRegionalComparison({ previous, yearAgo })
+    })()
+
+    return () => controller.abort()
+  }, [sharedCompetence, sourceState.kind])
+
   const setSharedCompetence = useCallback(
     (competence: string) => {
       if (isFallback || !COMPETENCE_PATTERN.test(competence)) return
@@ -415,6 +477,7 @@ export function SourceProvider({ children }: { children: ReactNode }) {
         setSharedCompetence,
         setSharedRegion,
         setSharedMacroregion,
+        regionalComparison,
       }}
     >
       {children}

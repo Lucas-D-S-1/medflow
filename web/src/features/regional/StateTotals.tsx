@@ -1,5 +1,7 @@
 import MetricCard from '../../shared/MetricCard'
 import type { RegionalAggregate } from './agregado'
+import type { RegionSignals } from './sinais'
+import { SIGNALS } from './sinais'
 import {
   formatCurrency,
   formatDecimal,
@@ -14,10 +16,20 @@ type StateTotalsProps = {
   competence: string
   /** Rótulo do recorte: o estado inteiro, ou a rede regional filtrada. */
   scopeLabel: string
+  mom: number | null
+  yoy: number | null
+  signals: Map<string, RegionSignals>
 }
 
 function percent(value: number | null) {
   return value === null ? 'sem base' : formatPercent(value)
+}
+
+/** Ausência de comparação não é variação de zero, e o texto diz isso. */
+function variationText(value: number | null) {
+  if (value === null) return 'sem comparação'
+  if (Math.abs(value) < 0.0005) return '0,0%'
+  return `${value > 0 ? '+' : '−'}${formatPercent(Math.abs(value) * 100)}`
 }
 
 /**
@@ -25,8 +37,19 @@ function percent(value: number | null) {
  * Sem isto, o panorama pedia que o gestor lesse 62 regiões para saber a ordem
  * de grandeza do próprio estado.
  */
-export default function StateTotals({ aggregate, competence, scopeLabel }: StateTotalsProps) {
+export default function StateTotals({
+  aggregate,
+  competence,
+  scopeLabel,
+  mom,
+  yoy,
+  signals,
+}: StateTotalsProps) {
   const deviation = aggregate.seasonalDeviation
+  // Quantas regiões acumulam metade ou mais dos sinais: é a leitura de
+  // quantos territórios pedem atenção, sem ordenar ninguém como "pior".
+  const litThreshold = Math.ceil(SIGNALS.length / 2)
+  const manySignals = [...signals.values()].filter((item) => item.count >= litThreshold).length
 
   return (
     <section className="state-totals" aria-labelledby="state-totals-title">
@@ -47,8 +70,8 @@ export default function StateTotals({ aggregate, competence, scopeLabel }: State
             className={deviation > 0 ? 'up' : deviation < 0 ? 'down' : undefined}
             data-testid="state-totals-seasonal"
           >
-            {`${deviation >= 0 ? '+' : '−'}${formatPercent(Math.abs(deviation) * 100)}`} ante o
-            próprio mês
+            {`${deviation >= 0 ? '+' : '−'}${formatPercent(Math.abs(deviation) * 100)}`} ante a
+            média histórica do mês
             <small>
               {formatInteger(aggregate.seasonalRegionsCompared)} regiões com histórico comparável
             </small>
@@ -62,6 +85,24 @@ export default function StateTotals({ aggregate, competence, scopeLabel }: State
           value={formatInteger(aggregate.newAdmissions)}
           detail={`${formatInteger(aggregate.hospitalsWithAdmissions)} hospitais com produção`}
           testId="state-total-admissions"
+        />
+        <MetricCard
+          label="MoM"
+          value={variationText(mom)}
+          detail="internações contra a competência anterior"
+          testId="state-total-mom"
+        />
+        <MetricCard
+          label="YoY"
+          value={variationText(yoy)}
+          detail="internações contra o mesmo mês do ano anterior"
+          testId="state-total-yoy"
+        />
+        <MetricCard
+          label="Regiões com metade dos sinais"
+          value={`${formatInteger(manySignals)} de ${formatInteger(aggregate.regions)}`}
+          detail={`${litThreshold} ou mais dos ${SIGNALS.length} indicadores no quintil mais alto`}
+          testId="state-total-signals"
         />
         <MetricCard
           label="IPH estimado"

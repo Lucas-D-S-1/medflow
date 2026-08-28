@@ -48,9 +48,9 @@ export default function SpecialtyTable({ data }: { data: SpecialtyResponse }) {
             <tr>
               <th scope="col">Especialidade</th>
               <th scope="col">Internações</th>
-              <th scope="col">TMH</th>
+              <th scope="col">Mortalidade observada (TMH)</th>
               <th scope="col">Permanência média</th>
-              <th scope="col">CMI real</th>
+              <th scope="col">Custo médio por internação (CMI real)</th>
             </tr>
           </thead>
           <tbody>

@@ -57,10 +57,10 @@ export default function HospitalTable({
             <tr>
               <th scope="col">Hospital</th>
               <th scope="col">Internações</th>
-              <th scope="col">IPH estimado</th>
-              <th scope="col">TMH</th>
+              <th scope="col">Pressão sobre leitos (IPH)</th>
+              <th scope="col">Mortalidade observada (TMH)</th>
               <th scope="col">Permanência média</th>
-              <th scope="col">CMI real</th>
+              <th scope="col">Custo médio por internação (CMI real)</th>
               <th scope="col">Ação</th>
             </tr>
           </thead>

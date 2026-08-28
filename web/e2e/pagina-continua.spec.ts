@@ -146,7 +146,7 @@ test('o hover no mapa mostra os valores da região, e o clique propaga', async (
   await expect(cartao).toContainText('JUNDIAI')
   await expect(cartao).toContainText('IPH estimado')
   await expect(cartao).toContainText('Internações novas')
-  await expect(cartao).toContainText('Ante o próprio mês')
+  await expect(cartao).toContainText('MoM')
 
   await alvo.click()
   await expect(page).toHaveURL(/regiao=35073/)
