@@ -9,7 +9,9 @@
   border: var(--border-subtle);
   border-radius: var(--radius-xl);
   background: var(--color-surface);
-  margin-bottom: var(--space-4);
+  /* Respiro maior acima do que abaixo: colada no cartão do mapa, a barra
+     parecia parte dele em vez de um bloco de controles próprio. */
+  margin: var(--space-6) 0 var(--space-4);
 }
 
 .global-context-inner {
