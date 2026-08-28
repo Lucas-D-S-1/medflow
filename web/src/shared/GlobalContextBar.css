@@ -1,13 +1,19 @@
+/*
+ * A barra deixou de ser faixa fixa do cabeçalho e virou um bloco da própria
+ * análise, entre o mapa e os totais. Herdar borda inferior, sombra de faixa e
+ * largura própria fazia ela encostar nos cartões vizinhos como se fosse
+ * chrome invadindo o conteúdo.
+ */
 .global-context-bar {
-  border-bottom: 1px solid var(--color-nav-border);
-  background: var(--color-surface-translucent);
-  box-shadow: 0 .45rem 1.5rem rgba(26, 41, 72, .08);
+  padding: var(--space-4);
+  border: var(--border-subtle);
+  border-radius: var(--radius-xl);
+  background: var(--color-surface);
+  margin-bottom: var(--space-4);
 }
 
 .global-context-inner {
-  width: min(74rem, calc(100% - 3rem));
-  margin: 0 auto;
-  padding: var(--space-3) 0;
+  width: 100%;
 }
 
 .global-context-heading {

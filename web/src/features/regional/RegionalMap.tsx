@@ -248,6 +248,28 @@ export default function RegionalMap({
               <dd>{formatPercent(cardItem.tmh_percent)}</dd>
             </div>
             <div>
+              <dt>Permanência média</dt>
+              <dd>{cardItem.average_stay_days.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} dias</dd>
+            </div>
+            <div>
+              <dt>CMI nominal</dt>
+              <dd>
+                {cardItem.cmi_nominal.toLocaleString('pt-BR', {
+                  style: 'currency',
+                  currency: 'BRL',
+                  maximumFractionDigits: 0,
+                })}
+              </dd>
+            </div>
+            <div>
+              <dt>Atendidos fora da região</dt>
+              <dd>{formatPercent(cardItem.observed_evasion_percent)}</dd>
+            </div>
+            <div>
+              <dt>ICSAP</dt>
+              <dd>{formatPercent(cardItem.icsap_share_of_observed_resident_admissions_percent)}</dd>
+            </div>
+            <div>
               <dt>Ante o próprio mês</dt>
               <dd>
                 {cardItem.seasonality_status === 'calculado' &&

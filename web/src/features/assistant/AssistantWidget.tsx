@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import { useLocation } from 'react-router-dom'
 import { useActiveSection } from '../../shared/useActiveSection'
-import { askOracleSelectAi, type AssistantContext } from '../../lib/api/assistente'
+import { AssistantRequestError, askOracleSelectAi, type AssistantContext } from '../../lib/api/assistente'
 import { useSource } from '../../shared/SourceContext'
 import { formatRegionalNetwork } from '../../shared/territory'
 import './AssistantWidget.css'
@@ -118,9 +118,10 @@ export default function AssistantWidget() {
     if (!sourceData) return null
     const params = new URLSearchParams(location.search)
     const code = params.get('regiao')
-    return sourceData.regions.items.find((item) => item.region_code === code)
-      ?? sourceData.regions.items[0]
-      ?? null
+    // Sem região na URL o contexto é o panorama. Cair na primeira região da
+    // lista fazia a FlowIA responder sobre um território que o usuário não
+    // escolheu, e afirmar isso com a mesma confiança de uma escolha real.
+    return sourceData.regions.items.find((item) => item.region_code === code) ?? null
   }, [location.search, sourceData])
 
   useEffect(() => {
@@ -284,8 +285,11 @@ export default function AssistantWidget() {
     }
 
     if (usage >= SESSION_LIMIT) {
+      // Antes esta mensagem parecia "não soube responder". Um limite precisa
+      // se anunciar como limite: senão o produto passa por incapaz por uma
+      // regra que ele mesmo impôs.
       setAnswer({
-        text: 'Vamos continuar pelas sugestões abaixo. Escolha uma delas para explorar os indicadores.',
+        text: `Esta sessão já usou as ${SESSION_LIMIT} perguntas livres ao Select AI. Recarregue a página para começar outra sessão, ou use as sugestões abaixo, que são respondidas sem consultar o modelo.`,
       })
       return
     }
@@ -315,9 +319,15 @@ export default function AssistantWidget() {
         sql: response.sql,
         warning: response.warning,
       })
-    } catch {
+    } catch (error) {
+      // O cliente já distingue cota estourada, contrato inválido e tempo
+      // esgotado. Trocar tudo por uma frase única fazia o produto parecer
+      // incapaz quando o problema era outro, e apagava a pista do diagnóstico.
       setAnswer({
-        text: 'Não consegui responder essa pergunta agora. Tente uma das sugestões.',
+        text:
+          error instanceof AssistantRequestError
+            ? `${error.message} Tente uma das sugestões abaixo.`
+            : 'Não consegui responder essa pergunta agora. Tente uma das sugestões.',
       })
     } finally {
       setIsLoading(false)

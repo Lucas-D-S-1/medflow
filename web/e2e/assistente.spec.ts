@@ -118,7 +118,7 @@ test('envia somente pergunta livre ao Oracle Select AI e mostra SQL auditável',
     })
   })
 
-  await page.goto('/regional')
+  await page.goto('/regional?regiao=35073')
   await page.getByRole('button', { name: /Posso ajudar/ }).click()
   await page.getByLabel('Faça outra pergunta').fill(
     'Quais sinais merecem uma análise conjunta?',
