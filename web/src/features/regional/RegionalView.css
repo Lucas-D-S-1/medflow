@@ -63,6 +63,23 @@
 .ranking-panel { padding: var(--space-4); border: var(--border-subtle); border-radius: var(--radius-xl); background: var(--color-surface); }
 .block-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-3); }
 .block-heading > strong { max-width: 14rem; color: var(--color-accent-strong); text-align: right; font-size: var(--font-size-sm); }
+.map-metric { display: inline-flex; gap: var(--space-2); margin-top: var(--space-2); flex-wrap: wrap; }
+.map-metric button {
+  padding: var(--space-1) var(--space-3);
+  border: var(--border-subtle);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+}
+.map-metric button[aria-checked='true'] {
+  border-color: var(--color-accent);
+  color: var(--color-heading);
+  font-weight: 700;
+}
+
 .regional-map { margin-top: var(--space-3); }
 .regional-map-svg { display: block; width: 100%; max-height: 21rem; overflow: visible; }
 .regional-map-shape { stroke: var(--color-surface); stroke-width: 1.5; vector-effect: non-scaling-stroke; cursor: pointer; transition: opacity .15s, stroke-width .15s, fill .15s; }

@@ -196,6 +196,10 @@ test('expõe o mapa com percentis, seleção textual e uma única parada de tabu
 
   await page.goto('/regional?regiao=35073')
 
+  // O mapa abre colorido pelo placar de sinais. Este teste é sobre a escala por
+  // percentis do IPH, então ele declara o indicador que exercita.
+  await page.getByTestId('map-metric-iph').click()
+
   const map = page.getByTestId('regional-map-svg')
   await expect(map).not.toHaveAttribute('role', 'img')
   await expect(map.locator('[role="button"]')).toHaveCount(62)
@@ -212,6 +216,8 @@ test('expõe o mapa com percentis, seleção textual e uma única parada de tabu
   await expect(page.getByTestId('regional-map-selection')).not.toContainText('JUNDIAI')
 
   await page.goto('/regional?macrorregiao=3529&regiao=35102')
+  // Navegar recomeça no placar de sinais, que é o padrão do mapa.
+  await page.getByTestId('map-metric-iph').click()
   await expect(page.getByTestId('regional-count')).toHaveText('4 de 62 regiões')
   await expect(page.getByTestId('regional-map-svg').locator('[role="button"]')).toHaveCount(4)
   await expect(page.getByTestId('regional-map-legend')).toContainText(
@@ -349,4 +355,24 @@ test('mantém a metodologia colapsável', async ({ page }) => {
         .getBoundingClientRect().height,
   )
   expect(detailHeight).toBeLessThanOrEqual(0.45 * 720 + 1)
+})
+
+test('o mapa pode colorir pelo placar que consome os seis indicadores', async ({ page }) => {
+  await mockLiveSource(page)
+  await page.goto(`/?competencia=${snapshotCompetencia}`)
+
+  // O padrão é o placar: ele é o que responde "onde olhar primeiro", enquanto
+  // o IPH sozinho é um dos seis sinais que ele conta.
+  await expect(page.locator('#map-title')).toContainText('Sinais acesos')
+  await expect(page.getByTestId('regional-map-legend')).toContainText('sinais')
+  await expect(page.getByTestId('regional-map-legend')).toContainText(
+    'não nota de qualidade',
+  )
+
+  await page.getByTestId('map-metric-iph').click()
+  await expect(page.locator('#map-title')).toContainText('IPH estimado')
+  await expect(page.getByTestId('regional-map-legend')).toContainText('mínimo real')
+
+  await page.getByTestId('map-metric-sinais').click()
+  await expect(page.locator('#map-title')).toContainText('Sinais acesos')
 })

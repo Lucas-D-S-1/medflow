@@ -2,7 +2,7 @@ import { useMemo, useRef, useState } from 'react'
 import regionalMapAsset from '../../../../data/gold/geografia/mapa_regiao_saude_sp.geojson?raw'
 import type { RegionalSummaryItem } from '../../lib/api/regioes'
 import type { RegionSignals } from './sinais'
-import { signalLabel } from './sinais'
+import { SIGNALS, signalLabel } from './sinais'
 
 type Position = [number, number]
 type Polygon = Position[][]
@@ -30,10 +30,14 @@ type RegionalMapProps = {
   onHoverChange?: (regionCode: string) => void
   /** Sinais acesos e variações por região, para o cartão de valores. */
   signals?: Map<string, RegionSignals>
+  /** O que a cor representa. O placar de sinais consome os seis indicadores;
+   *  o IPH é um deles isolado. */
+  colorBy?: 'iph' | 'sinais'
   variations?: Map<string, { mom: number | null; yoy: number | null }>
 }
 
 const mapData = JSON.parse(regionalMapAsset) as MapFeatureCollection
+const SIGNAL_TOTAL = SIGNALS.length
 const MAP_WIDTH = 1_000
 const MAP_HEIGHT = 620
 const MAP_PADDING = 16
@@ -107,6 +111,7 @@ export default function RegionalMap({
   onHoverChange,
   signals,
   variations,
+  colorBy = 'iph',
 }: RegionalMapProps) {
   const [ownHoveredCode, setOwnHoveredCode] = useState('')
   const hoveredCode = controlledHoveredCode ?? ownHoveredCode
@@ -136,8 +141,16 @@ export default function RegionalMap({
   const rovingCode = interactiveCodes.includes(selectedRegionCode)
     ? selectedRegionCode
     : interactiveCodes[0]
-  const values = visibleItems.map((item) => item.iph_percent).sort((a, b) => a - b)
-  const thresholds = [0.2, 0.4, 0.6, 0.8].map((percentile) => quantile(values, percentile))
+  // Colorir pelo placar de sinais não usa percentis: a escala já é discreta e
+  // pequena, de zero a seis, e reparti-la em quintis inventaria um corte onde
+  // a contagem já é o corte.
+  const bySignals = colorBy === 'sinais' && signals !== undefined
+  const metricOf = (item: RegionalSummaryItem) =>
+    bySignals ? (signals?.get(item.region_code)?.count ?? 0) : item.iph_percent
+  const values = visibleItems.map(metricOf).sort((a, b) => a - b)
+  const thresholds = bySignals
+    ? [0, 1, 2, 3]
+    : [0.2, 0.4, 0.6, 0.8].map((percentile) => quantile(values, percentile))
   const hoveredItem = itemsByRegion.get(hoveredCode)
   // Com um território escolhido o cartão fica nele por padrão: os valores da
   // região selecionada não podem depender de manter o ponteiro parado em cima.
@@ -149,7 +162,7 @@ export default function RegionalMap({
 
   function toneFor(item: RegionalSummaryItem | undefined) {
     if (!item) return 'is-muted'
-    const index = thresholds.findIndex((threshold) => item.iph_percent <= threshold)
+    const index = thresholds.findIndex((threshold) => metricOf(item) <= threshold)
     return `tone-${index === -1 ? 5 : index + 1}`
   }
 
@@ -189,7 +202,11 @@ export default function RegionalMap({
           )
           const isSelected = regionCode === selectedRegionCode
           const label = item
-            ? `${feature.properties.nm_regiao_saude}, IPH estimado ${formatPercent(item.iph_percent)}, amostra de ${formatInteger(item.new_admissions)} internações novas${
+            ? `${feature.properties.nm_regiao_saude}, ${
+                bySignals
+                  ? `${signals?.get(regionCode)?.count ?? 0} de ${SIGNAL_TOTAL} sinais acesos`
+                  : `IPH estimado ${formatPercent(item.iph_percent)}`
+              }, amostra de ${formatInteger(item.new_admissions)} internações novas${
                 isSelected ? '. Selecionada: ative novamente para voltar ao panorama' : ''
               }`
             : `${feature.properties.nm_regiao_saude}, sem dados para a competência selecionada`
@@ -314,9 +331,24 @@ export default function RegionalMap({
         </p>
       )}
       <div className="regional-map-legend" aria-label="Legenda do IPH estimado" data-testid="regional-map-legend">
-        <span><i className="tone-swatch tone-1" /> mínimo real {formatPercent(values[0] ?? 0)}</span>
-        <span><i className="tone-swatch tone-5" /> máximo real {formatPercent(values.at(-1) ?? 0)}</span>
-        <small>Escala visual relativa por percentis desta competência; não é classificação clínica.</small>
+        {bySignals ? (
+          <>
+            {/* A legenda descreve o que está na tela: cravar "quatro ou mais"
+                anunciaria um tom que pode não existir na competência. */}
+            <span><i className="tone-swatch tone-1" /> {formatInteger(values[0] ?? 0)} de {SIGNAL_TOTAL} sinais</span>
+            <span><i className="tone-swatch tone-5" /> até {formatInteger(values.at(-1) ?? 0)} de {SIGNAL_TOTAL}</span>
+            <small>
+              Contagem de indicadores no quintil mais alto do recorte. É placar de
+              sinais para priorizar investigação, não nota de qualidade.
+            </small>
+          </>
+        ) : (
+          <>
+            <span><i className="tone-swatch tone-1" /> mínimo real {formatPercent(values[0] ?? 0)}</span>
+            <span><i className="tone-swatch tone-5" /> máximo real {formatPercent(values.at(-1) ?? 0)}</span>
+            <small>Escala visual relativa por percentis desta competência; não é classificação clínica.</small>
+          </>
+        )}
       </div>
     </div>
   )

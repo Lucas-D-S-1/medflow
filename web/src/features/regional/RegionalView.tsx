@@ -40,6 +40,9 @@ export default function RegionalView() {
     regionalComparison,
   } = useSource()
   const [seriesState, setSeriesState] = useState<SeriesState>({ kind: 'idle' })
+  // O mapa pode colorir por um indicador isolado ou pelo placar que consome os
+  // seis. O padrão é o placar: ele é o que responde "onde olhar primeiro".
+  const [mapMetric, setMapMetric] = useState<'sinais' | 'iph'>('sinais')
   const seriesRequest = useRef<AbortController | null>(null)
   const sourceData =
     sourceState.kind === 'live' || sourceState.kind === 'fallback'
@@ -208,7 +211,25 @@ export default function RegionalView() {
                   <div className="block-heading">
                     <div>
                       <p className="section-kicker">MAPA DE SINAIS</p>
-                      <h3 id="map-title">IPH estimado por percentis</h3>
+                      <h3 id="map-title">
+                        {mapMetric === 'sinais'
+                          ? 'Sinais acesos por região'
+                          : 'IPH estimado por percentis'}
+                      </h3>
+                      <div className="map-metric" role="radiogroup" aria-label="O que a cor mostra">
+                        {(['sinais', 'iph'] as const).map((candidate) => (
+                          <button
+                            key={candidate}
+                            type="button"
+                            role="radio"
+                            aria-checked={mapMetric === candidate}
+                            onClick={() => setMapMetric(candidate)}
+                            data-testid={`map-metric-${candidate}`}
+                          >
+                            {candidate === 'sinais' ? 'Placar de sinais' : 'IPH estimado'}
+                          </button>
+                        ))}
+                      </div>
                     </div>
                     <strong data-testid="regional-map-selection">
                       {selectedItem
@@ -225,6 +246,7 @@ export default function RegionalView() {
                     formatPercent={formatPercent}
                     signals={signals}
                     variations={variations}
+                    colorBy={mapMetric}
                   />
                 </section>
 
