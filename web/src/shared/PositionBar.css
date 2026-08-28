@@ -1,0 +1,60 @@
+/*
+ * A barra mostra dispersão, não julgamento. Por isso a faixa central é neutra
+ * e só o marcador do próprio valor recebe o acento — o olho precisa achar
+ * "onde eu estou", não "quem é bom".
+ */
+
+.position-bar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+.position-track {
+  position: relative;
+  height: .55rem;
+  border-radius: var(--radius-pill);
+  background: var(--color-surface-soft);
+  border: 1px solid var(--color-border);
+}
+
+.position-box {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: var(--color-accent-soft);
+  border-radius: var(--radius-pill);
+}
+
+.position-median {
+  position: absolute;
+  top: -.15rem;
+  bottom: -.15rem;
+  width: 2px;
+  margin-left: -1px;
+  background: var(--color-text-muted);
+}
+
+.position-marker {
+  position: absolute;
+  top: 50%;
+  width: .7rem;
+  height: .7rem;
+  margin: -.35rem 0 0 -.35rem;
+  border-radius: 50%;
+  background: var(--color-accent-strong);
+  box-shadow: 0 0 0 .18rem var(--color-surface);
+}
+
+.position-legend {
+  display: flex;
+  flex-direction: column;
+  gap: .1rem;
+  margin: 0;
+  font-size: var(--font-size-xs);
+  font-variant-numeric: tabular-nums;
+}
+.position-legend strong { color: var(--color-heading); }
+.position-legend span,
+.position-legend small { color: var(--color-text-muted); }

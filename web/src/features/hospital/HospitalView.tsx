@@ -25,6 +25,9 @@ import {
   type CidResponse,
 } from './hospitalCids'
 import CidTable from './CidTable'
+import HospitalPeers from './HospitalPeers'
+import { fetchStatewideHospitals, type PeerHospital } from './pares'
+import type { HospitalItem } from './hospitais'
 import HospitalSeries from './HospitalSeries'
 import HospitalTable from './HospitalTable'
 import SpecialtyTable from './SpecialtyTable'
@@ -56,6 +59,9 @@ export default function HospitalView() {
   const { sourceState, sharedCompetence, sharedRegionCode, reportHospitalName } = useSource()
   const [searchParams, setSearchParams] = useSearchParams()
   const [listState, setListState] = useState<ListState>({ kind: 'idle' })
+  const [statewide, setStatewide] = useState<PeerHospital[] | null>(null)
+  const [statewideFailed, setStatewideFailed] = useState(false)
+  const statewideRequest = useRef<AbortController | null>(null)
   const [seriesState, setSeriesState] = useState<SeriesState>({ kind: 'idle' })
   const [specialtyState, setSpecialtyState] = useState<SpecialtyState>({ kind: 'idle' })
   const [cidState, setCidState] = useState<CidState>({ kind: 'idle' })
@@ -86,6 +92,33 @@ export default function HospitalView() {
     CNES_PATTERN.test(urlHospital) && list?.items.some((item) => item.cnes === urlHospital)
       ? urlHospital
       : ''
+
+  // A lista estadual só é buscada quando há um hospital aberto: ela existe
+  // para montar o grupo de pares por tipo e porte, e ninguém paga por ela
+  // enquanto está apenas olhando a região.
+  useEffect(() => {
+    statewideRequest.current?.abort()
+    if (!selectedCnes || sourceState.kind !== 'live' || !COMPETENCE_PATTERN.test(selectedCompetence)) {
+      return
+    }
+
+    const controller = new AbortController()
+    statewideRequest.current = controller
+    setStatewideFailed(false)
+    const [year, month] = selectedCompetence.split('-')
+    void fetchStatewideHospitals(Number(year), Number(month), { signal: controller.signal })
+      .then((items) => {
+        if (!controller.signal.aborted) setStatewide(items)
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) {
+          setStatewide(null)
+          setStatewideFailed(true)
+        }
+      })
+
+    return () => controller.abort()
+  }, [selectedCnes, selectedCompetence, sourceState.kind])
 
   // O direcionador precisa saber qual estabelecimento está aberto, e só esta
   // view resolve o nome a partir da lista carregada.
@@ -390,6 +423,16 @@ export default function HospitalView() {
               lista de hospitais acima não foi afetada.
             </StatePanel>
           )}
+          {selectedCnes && list && (
+            <HospitalPeers
+              hospital={list.items.find((item) => item.cnes === selectedCnes) as HospitalItem}
+              regionName={list.region.region_name ?? 'esta região'}
+              regionHospitals={list.items}
+              statewide={statewide}
+              statewideFailed={statewideFailed}
+            />
+          )}
+
           {seriesState.kind === 'ready' && <HospitalSeries data={seriesState.data} />}
 
           {specialtyState.kind === 'loading' && (
