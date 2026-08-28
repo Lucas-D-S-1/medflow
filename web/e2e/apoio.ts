@@ -11,7 +11,7 @@
  * recorte extinto sem que nada acusasse.
  */
 
-import type { Page } from '@playwright/test'
+import { expect, type Page } from '@playwright/test'
 import { readFileSync } from 'node:fs'
 
 // Verdade corrente do pipeline, para os testes @live não guardarem número de
@@ -356,7 +356,15 @@ export async function competenciaVisivel(page: Page) {
 
 export async function escolherCompetencia(page: Page, competencia: string) {
   const [ano, mes] = competencia.split('-')
-  await page.getByTestId('global-competence').click()
+  const gatilho = page.getByTestId('global-competence')
+
+  // Abrir pelo estado, não pelo clique: o gatilho alterna, e duas escolhas
+  // seguidas faziam o segundo clique fechar o painel que o helper ia usar.
+  if ((await gatilho.getAttribute('aria-expanded')) !== 'true') {
+    await gatilho.click()
+  }
+  await expect(page.getByTestId('competence-year')).toBeVisible()
+
   const alvo = Number(ano)
   for (let tentativa = 0; tentativa < 6; tentativa += 1) {
     const atual = Number(await page.getByTestId('competence-year').innerText())
@@ -364,4 +372,5 @@ export async function escolherCompetencia(page: Page, competencia: string) {
     await page.getByRole('button', { name: atual > alvo ? 'Ano anterior' : 'Próximo ano' }).click()
   }
   await page.getByTestId(`competence-month-${Number(mes)}`).click()
+  await expect(page.getByTestId('competence-year')).toHaveCount(0)
 }
