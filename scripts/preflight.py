@@ -22,6 +22,7 @@ import sys
 import urllib.error
 import urllib.request
 from dataclasses import dataclass, field
+from pathlib import Path
 
 BASE_PADRAO = (
     "https://gf68e03b2a30d55-medflow.adb.sa-saopaulo-1.oraclecloudapps.com"
@@ -29,7 +30,14 @@ BASE_PADRAO = (
 )
 SITE_PADRAO = "https://lucas-d-s-1.github.io/medflow/"
 
-CONTRATO_ESPERADO = "0.3.0"
+# A versão sai do contrato, não fica escrita aqui: o preflight ficou reprovando
+# uma publicação correta porque o número tinha sido esquecido em 0.3.0 enquanto
+# o contrato já ia em 0.5.0. Um portão que dá alarme falso é um portão que se
+# aprende a ignorar.
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
+from medflow.contratos import VERSAO_CONTRATO  # noqa: E402
+
+CONTRATO_ESPERADO = VERSAO_CONTRATO
 COMPETENCIA_ESPERADA = "2026-06"
 REGIOES_ESPERADAS = 62
 
@@ -189,7 +197,7 @@ class Preflight:
 
         print(
             "\nO que a máquina não checa, e continua sendo necessário:\n"
-            "  - abrir as quatro visões em janela anônima, sem cache nem login;\n"
+            "  - abrir as duas páginas em janela anônima, sem cache nem login;\n"
             "  - testar um filtro regional e um par hospital/CID elegível;\n"
             "  - simular a contingência e conferir o selo de origem na tela;\n"
             "  - abrir o link em outra rede ou no celular, fora do wi-fi da sala;\n"

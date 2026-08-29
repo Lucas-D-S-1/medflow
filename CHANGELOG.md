@@ -3,11 +3,39 @@
 As releases seguem a política de [`VERSIONAMENTO.md`](VERSIONAMENTO.md).
 A versão da release e a versão dos contratos de dados evoluem separadamente.
 
-## Não publicado
+## 1.0.0 — 29/08/2026
+
+Primeira versão estável. Produto e contrato de dados fecham juntos, que era a
+condição declarada para a `1.0`: marcar antes deixaria o marco sem o índice que
+o motivou.
+
+O que fecha aqui: o **Índice de Permanência por Especialidade** existindo em
+todos os grãos que o produto lê — hospital-especialidade, hospital e região —,
+a **comparação com pares fixando o porte**, a FlowIA com **memória de conversa**
+e a análise em duas páginas sem repetição entre blocos.
 
 Contrato de dados **`0.5.0`**, aplicado ao Oracle em 28/08/2026, no mesmo dia
 do `0.4.0`: o IPE existia num grão só, e o produto precisava dele nas outras
 visões.
+
+### O que mudou depois da `v0.4.0`
+
+- **Comparação com pares por porte**: os dois grupos fixam a faixa de leitos
+  SUS e variam só o alcance, região ou estado. O modo antigo comparava por
+  região sem controlar porte, e punha um hospital de 876 leitos contra um de 9;
+- o painel de pares passou a **nomear os pares** e a dizer o critério, o porte,
+  o alcance e quanto das internações da região passam por aquele hospital;
+- **FlowIA com conversa persistente**: o fio inteiro fica na tela e as duas
+  rodadas anteriores acompanham a próxima pergunta, então "e o TMH?" depois de
+  "qual o IPH de São Paulo?" responde sobre São Paulo;
+- **território sem repetição**: saíram o painel de comportamento sazonal, que já
+  vivia na série mensal, e o quadro da região selecionada, que repetia o cartão
+  do mapa;
+- **mapa legível**: rampa sequencial com o pior par adjacente indo de ΔE 7,3
+  para 14,8, e escala que se estica até o máximo observado, então o melhor do
+  recorte é sempre o tom mais claro e o pior é sempre o mais escuro;
+- a **série mensal do hospital** virou uma lista só, ordenável, que rola sem
+  prender a página.
 
 ### Adicionado
 

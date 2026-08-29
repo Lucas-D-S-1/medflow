@@ -5,6 +5,10 @@ Entrega da Sprint 2: **01/09/2026**.
 
 ## Estado atual para fechar a entrega
 
+**`v1.0.0` publicada em 29/08/2026**: produto e contrato de dados fecham juntos,
+com o IPE em todos os grãos, comparação com pares por porte e FlowIA com memória
+de conversa. Preflight 12 de 12.
+
 O produto técnico está fechado e publicado: `v0.4.0`, dez endpoints `GET` e o
 `POST /assistente/perguntar` em `api/v1`, FlowIA contextual, busca hospitalar
 por alias, território municipal, 8.403.103 comparações sem divergência no gate

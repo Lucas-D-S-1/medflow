@@ -50,7 +50,8 @@ posteriores usam uma nova versão; tags públicas existentes não são movidas.
 | `v0.2.0` | histórico | Gold, geografia, contratos e validação integrada |
 | `v0.3.0` | histórico | Oracle carregado, `api/v1` pública, WebApp no ar e Select AI revalidado; publicada em 23/08/2026 |
 | `v0.3.1` | histórico | hardening da entrega publicado em 25/08/2026 |
-| `v0.4.0` | estável | FlowIA contextual, Select AI no WebApp, território municipal e busca por aliases; publicada em 27/08/2026 |
+| `v1.0.0` | **estável** | Índice de permanência por especialidade em todos os grãos, comparação com pares por porte, FlowIA com memória de conversa; contrato de dados `0.5.0`; publicada em 29/08/2026 |
+| `v0.4.0` | histórico | FlowIA contextual, Select AI no WebApp, território municipal e busca por aliases; publicada em 27/08/2026 |
 
 A tag legada `medflow-v0` não deve ser apagada nem reutilizada. A `v0.1.0`
 nasceu neste repositório em 29/07/2026 e foi espelhada no `fiap-1tscoa` em
