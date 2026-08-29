@@ -1,19 +1,27 @@
 # PENDÊNCIAS — Challenge Oracle: MedFlow
 
-Atualizado em 27/08/2026, depois da comparação com pares hospitalares.
+Atualizado em 29/08/2026, depois de fechar a bateria da FlowIA.
 Entrega da Sprint 2: **01/09/2026**.
 
 ## Estado atual para fechar a entrega
 
-**`v1.0.0` publicada em 29/08/2026**: produto e contrato de dados fecham juntos,
-com o IPE em todos os grãos, comparação com pares por porte e FlowIA com memória
-de conversa. Preflight 12 de 12.
+**`v1.0.1` publicada em 29/08/2026**, com contrato de dados `0.5.0`: produto e
+contrato fecham juntos, com o IPE em todos os grãos, comparação com pares por
+porte e FlowIA com memória de conversa. Preflight 12 de 12.
 
-O produto técnico está fechado e publicado: `v0.4.0`, dez endpoints `GET` e o
-`POST /assistente/perguntar` em `api/v1`, FlowIA contextual, busca hospitalar
-por alias, território municipal, 8.403.103 comparações sem divergência no gate
-completo, heartbeat diário ativo e a página APEX de demonstração montada em
-25/08/2026.
+**O código da FlowIA avançou depois da `v1.0.1`.** As correções que levaram a
+bateria de 20 perguntas humanas de 11 para 20 acertos estão em `main` e ainda
+não têm tag. `montar_zip_entrega.sh` empacota `v1.0.1`, então **uma `v1.0.2`
+precisa sair antes de montar o ZIP**, ou o pacote irá sem elas.
+
+O produto técnico está fechado e publicado: onze endpoints em `api/v1` — dez
+`GET` mais o `POST /assistente/perguntar` —, 597.930 linhas em 12 tabelas,
+FlowIA contextual, busca hospitalar por alias, território municipal, 8.403.103
+comparações sem divergência no gate completo, 204 testes Python, heartbeat
+diário ativo e a página APEX de demonstração montada em 25/08/2026.
+
+O deck fechou em **24 slides** e o roteiro do vídeo está narrado e cronometrado
+em `entregues/sprint_2/ROTEIRO_VIDEO_E_ENSAIO.md`, no repositório acadêmico.
 
 Em 28/08/2026 o **contrato de dados subiu para `0.4.0`** com o Índice de
 Permanência por Especialidade aplicado no Oracle: migração aditiva, Gold

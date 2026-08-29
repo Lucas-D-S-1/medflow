@@ -35,9 +35,10 @@ disponível e validado: **2024-01 a 2026-06 (30 meses)**.
 Site estático no GitHub Pages falando direto com o Autonomous Database pelo
 módulo ORDS público `api/v1`, somente leitura. Publicado e conferido no
 navegador em 16/08/2026. Versão pública estável:
-[`v0.4.0`](https://github.com/Lucas-D-S-1/medflow/releases/tag/v0.4.0), com
-Oracle carregado, API pública, WebApp no ar, FlowIA contextual, Select AI
-governado no ORDS, busca hospitalar por alias e território municipal. A
+[`v1.0.1`](https://github.com/Lucas-D-S-1/medflow/releases/tag/v1.0.1), com
+Oracle carregado, API pública, WebApp no ar, FlowIA contextual e aprovada em 20
+de 20 na bateria de perguntas humanas, Select AI governado no ORDS, busca
+hospitalar por alias e território municipal. A
 evidência da comparação temporal final está em
 [`docs/qualidade/AVALIACAO_FLOWIA_PARCIAL_F12.md`](docs/qualidade/AVALIACAO_FLOWIA_PARCIAL_F12.md),
 e o roteiro anterior permanece em
@@ -202,8 +203,8 @@ a base versionada da demonstração APEX, em [`db/apex/`](db/apex/README.md).
 
 ### Webapp — concluído e revisado em 26/08/2026
 
-O produto é uma aplicação React + Vite em `web/`, servida por dez endpoints
-ORDS analíticos somente leitura (`GET`) sobre nove views de projeção pura e um
+O produto é uma aplicação React + Vite em `web/`, servida por onze endpoints
+ORDS: dez analíticos somente leitura (`GET`) sobre views de projeção pura, e um
 `POST` governado para perguntas livres do assistente. Nenhum objeto da Gold é
 publicado por AutoREST.
 

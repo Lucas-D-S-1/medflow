@@ -85,16 +85,16 @@ As técnicas implementadas abrangem análise exploratória, modelagem dimensiona
 | Pipeline Bronze/Silver | reproduzível e validado para 2024-01 a 2026-06 |
 | Indicadores e Gold | implementados, contratados e validados |
 | Oracle Autonomous AI Database | provisionado, carregado e reconciliado |
-| WebApp | quatro visões concluídas e revisadas; produto publicado |
+| WebApp | duas páginas e quatro visões concluídas e revisadas; produto publicado |
 | Link público | concluído em 16/08/2026 e servido pelo módulo ORDS `api/v1` |
 | Validação do produto | 8.403.103 comparações campo a campo, sem divergências |
-| FlowIA e Select AI | FlowIA contextual publicada no WebApp; conceitos simples são determinísticos, perguntas analíticas usam o `POST /assistente/perguntar` governado e a F12 temporal foi aprovada por inteiro em 26/08/2026 |
-| GitHub | versão pública `v0.4.0` registrada em 27/08/2026 |
+| FlowIA e Select AI | FlowIA contextual publicada no WebApp; conceitos simples são determinísticos, perguntas analíticas usam o `POST /assistente/perguntar` governado; a bateria de 20 perguntas humanas passou de 0 de 20 em 26/08/2026 para **20 de 20** em 29/08/2026 |
+| GitHub | versão pública `v1.0.1` registrada em 29/08/2026; contrato de dados `0.5.0` |
 | Disponibilidade | heartbeat diário ativo; `make preflight` confere o produto publicado antes da banca |
 | Página APEX de Select AI | montada em 25/08/2026; workspace `MEDFLOW_DEMO`, aplicação `100`, página `1`, export versionado em `db/apex/` |
-| PPT | fechado em 21 slides e dois blocos de Select AI; foi regerado em 25/08/2026 com a captura real da página APEX no slide 16 e mora no repositório acadêmico privado |
+| PPT | fechado em **24 slides**, revisados a partir do deck do time em 29/08/2026; o slide 14 é a FlowIA e o 19 é a evidência da IA, com a captura ao vivo do site e a da página APEX; mora no repositório acadêmico privado |
 | Planilha de integrantes | preenchida no template oficial, com os cinco integrantes em ordem alfabética; mora no repositório acadêmico privado |
-| Vídeo | pendente; a URL pública do YouTube ainda não está no workspace e deve entrar no slide 21 |
+| Vídeo | pendente; roteiro narrado e cronometrado em `ROTEIRO_VIDEO_E_ENSAIO.md`; a URL do YouTube deve entrar no slide final, o 24 |
 | ZIP FIAP ON | montagem automatizada no repositório acadêmico; bloqueada de propósito até o link do vídeo entrar no PPT |
 
 O recorte avançou de 29 para 30 competências em 09/08/2026. Os números vigentes já refletem junho de 2026; referências antigas a 2026-05, 585.296 linhas Oracle, 653 hospitais ou 8.257.139 comparações descrevem estados históricos, não o produto atual.
@@ -103,7 +103,7 @@ O recorte avançou de 29 para 30 competências em 09/08/2026. Os números vigent
 
 O MedFlow integra dados administrativos públicos do SIH/SUS, CNES, Ministério da Saúde/DATASUS e IBGE para apoiar gestores e analistas regionais de saúde de São Paulo. O produto transforma fontes com finalidades e temporalidades diferentes em uma leitura mensal, rastreável e comparável da demanda dos residentes, da produção dos hospitais, dos fluxos assistenciais, das condições sensíveis à atenção primária e de sinais hospitalares.
 
-Um pipeline reproduzível preserva as fontes na Bronze, conforma conceitos na Silver e calcula indicadores na Gold. A Gold validada é carregada no Oracle Autonomous AI Database 26ai Lakehouse, projetada por views e publicada por dez endpoints ORDS somente leitura. Quatro visões React/Vite apresentam os valores persistidos sem recalcular métricas. O Select AI acrescenta linguagem natural de maneira controlada e subordinada ao SQL de referência.
+Um pipeline reproduzível preserva as fontes na Bronze, conforma conceitos na Silver e calcula indicadores na Gold. A Gold validada é carregada no Oracle Autonomous AI Database 26ai Lakehouse, projetada por views e publicada por onze endpoints ORDS — dez de leitura e o POST do assistente. Duas páginas e quatro visões React/Vite apresentam os valores persistidos sem recalcular métricas. O Select AI acrescenta linguagem natural de maneira controlada e subordinada ao SQL de referência.
 
 O resultado é um MVP tecnicamente validado para triagem e formulação de hipóteses de investigação. Não é um sistema em tempo real, mecanismo de previsão, medida de ocupação real, prontuário, ferramenta de regulação, prova de causalidade ou substituto do contexto local. A utilidade, a adoção e o impacto ainda não foram medidos com usuários reais.
 
@@ -196,7 +196,7 @@ O MedFlow transforma bases públicas administrativas em uma jornada auditável d
 ### Escopo funcional do MVP
 
 - triagem mensal territorial e hospitalar;
-- quatro visões navegáveis;
+- duas páginas e quatro visões navegáveis;
 - indicadores calculados e persistidos na Gold;
 - API pública somente leitura;
 - rastreabilidade até fontes, contratos e fórmulas;
@@ -270,7 +270,7 @@ O princípio arquitetural é a responsabilidade única por etapa: Bronze preserv
 
 | Estado | Elementos |
 |---|---|
-| **Implementado no MVP** | fontes → Bronze → Silver → Gold; dimensões e marts; carga no Oracle 26ai Lakehouse; schema `MEDFLOW`; views; ORDS `api/v1`; WebApp público; snapshots de contingência; Select AI com profile e roteiro revalidável de 13 perguntas; contratos e reconciliações |
+| **Implementado no MVP** | fontes → Bronze → Silver → Gold; dimensões e marts; carga no Oracle 26ai Lakehouse; schema `MEDFLOW`; views; ORDS `api/v1`; WebApp público; snapshots de contingência; Select AI com profile, roteiro revalidável de 13 perguntas e a FlowIA no produto; contratos e reconciliações |
 | **Demonstração montada em 25/08/2026** | página APEX de Select AI no ar: workspace `MEDFLOW_DEMO`, aplicação `100`, página `1`, com o export versionado em `db/apex/05_aplicacao_medflow_select_ai.sql` e conferido por `make apex-verificar` |
 | **Evidência futura, fora da arquitetura implementada** | validação primária com usuários para medir compreensão, utilidade, adoção, tempo, erro e impacto |
 | **Fora do MVP, sem implementação alegada** | tempo real, previsão, machine learning, clustering, decisão automática, prontuário, regulação, censo operacional de leitos e custo contábil completo |
@@ -283,7 +283,7 @@ Nenhum componente do fluxo principal do diagrama é apresentado como meramente p
 |---|---|---|---|---|
 | **Bronze** | arquivos SIH/RD, CNES/LT e referências oficiais em formatos originais ou respostas preservadas | descoberta das competências, download e cache incremental, conversão fiel para Parquet, linhagem técnica, manifesto e SHA-256; sem regra de negócio | 7.284.476 linhas SIH/RD, 251.457 linhas CNES/LT e referências oficiais preservadas | mantém proveniência, permite auditoria e torna o processo reconstruível |
 | **Silver** | somente dados preservados e validados na Bronze | tipagem, nomes canônicos, de/paras, chaves, dimensões, fatos, geografia e qualidade; separação de AIH aprovada, internação nova e continuação | 6 dimensões e 2 fatos; fato de internação com 7.284.476 linhas, fato mensal de leitos com 19.341 linhas e dimensão municipal com 645 municípios | cria linguagem comum, resolve domínios e evita limpeza ou joins divergentes por indicador |
-| **Gold** | somente estruturas contratadas da Silver | fórmulas, denominadores, amostras, benchmarks, fluxos, ICSAP, IPCA e agregações geográficas | 2 dimensões geográficas e 7 marts; 597.725 linhas carregadas no Oracle | constitui a fonte semântica única dos valores consumidos pelo banco, pela API e pelas telas |
+| **Gold** | somente estruturas contratadas da Silver | fórmulas, denominadores, amostras, benchmarks, fluxos, ICSAP, IPCA e agregações geográficas | 5 dimensões e 7 marts; 597.930 linhas carregadas no Oracle | constitui a fonte semântica única dos valores consumidos pelo banco, pela API e pelas telas |
 
 ### Bronze
 
@@ -318,15 +318,15 @@ As dimensões geográficas e os ativos GeoJSON/TopoJSON sustentam a leitura muni
 - Oracle Autonomous AI Database **26ai**, workload **Lakehouse**, na região de São Paulo;
 - banco `MEDFLOW` com conexão mTLS obrigatória;
 - schema de aplicação **`MEDFLOW`**, separado do usuário `ADMIN`;
-- **9 tabelas:** 2 dimensões e 7 marts;
+- **12 tabelas:** 5 dimensões e 7 marts;
 - 175 colunas comentadas e 10 índices secundários no modelo registrado;
-- **597.725 linhas** carregadas no recorte vigente;
+- **597.930 linhas** carregadas no recorte vigente;
 - 36 de 36 métricas do gate Oracle com estado `ok` e seis gates de integridade vazios;
 - views de projeção pura, sem recálculo de indicadores.
 
 ### ORDS e módulos
 
-O ORDS publica **10 endpoints**, todos `GET`. O módulo de desenvolvimento é `api/dev/v1`; o módulo público é `api/v1`, consumido pelo GitHub Pages. A produção foi criada a partir dos metadados do módulo de desenvolvimento e possui verificações de contrato. Nenhuma tabela Gold é publicada diretamente por AutoREST.
+O ORDS publica **11 endpoints**: 10 `GET` e o `POST` do assistente. O módulo de desenvolvimento é `api/dev/v1`; o módulo público é `api/v1`, consumido pelo GitHub Pages. A produção foi criada a partir dos metadados do módulo de desenvolvimento e possui verificações de contrato. Nenhuma tabela Gold é publicada diretamente por AutoREST.
 
 | Grupo | Endpoints | Conteúdo |
 |---|---|---|
@@ -394,7 +394,7 @@ do Select AI como demonstração controlada, não como chat público.
 
 ## 12. WebApp
 
-O WebApp usa React 19, TypeScript e Vite e está publicado no GitHub Pages. As quatro visões consomem valores prontos da API; o frontend aplica formatação com `Intl`, sem fórmulas analíticas, faixas ou cortes próprios.
+O WebApp usa React 19, TypeScript e Vite e está publicado no GitHub Pages. As duas páginas e suas quatro visões consomem valores prontos da API; o frontend aplica formatação com `Intl`, sem fórmulas analíticas, faixas ou cortes próprios.
 
 | Visão | Pergunta respondida | Conteúdo disponível | Significado para o usuário |
 |---|---|---|---|
@@ -448,7 +448,7 @@ Regras semânticas transversais já incorporadas ao produto incluem denominador 
 | Residentes de SP observados | **7.089.959** | internações de residentes paulistas atendidos em SP |
 | Internações ICSAP | **988.453** | internações residentes classificadas nos 19 grupos oficiais |
 | Deslocamentos inter-regionais | **939.143** | saídas e entradas entre regiões paulistas, reconciliadas |
-| Linhas Oracle | **597.725** | 2 dimensões e 7 marts carregados |
+| Linhas Oracle | **597.930** | 12 tabelas: 5 dimensões e 7 marts |
 
 ### Evidências de validação
 
@@ -483,9 +483,12 @@ Esta seção registra invariantes factuais, não um processo de revisão.
 |---|---|
 | Período | 2024-01 a 2026-06; 30 competências; 2026 parcial até junho |
 | Volumetria principal | 7.284.476 AIHs; 7.150.693 internações novas; 655 hospitais; 645 municípios; 62 regiões; 19 macrorregiões |
-| Oracle | 597.725 linhas; schema `MEDFLOW`; 2 dimensões; 7 marts; views sem recálculo |
-| Validação completa | 8.403.103 comparações; zero divergências |
-| Produto | 10 endpoints `GET`; 4 visões; roteiro de 13 perguntas Select AI |
+| Oracle | 597.930 linhas; schema `MEDFLOW`; 12 tabelas — 5 dimensões e 7 marts; views sem recálculo |
+| Validação completa | 8.403.103 comparações; zero divergências; gate Oracle 47 de 47 |
+| Produto | 11 endpoints — 10 `GET` e o `POST` do assistente; duas páginas e quatro visões; seis indicadores |
+| Select AI | roteiro de 13 perguntas em cinco blocos; FlowIA aprovada em 20 de 20 na bateria de perguntas humanas |
+| Testes | 204 testes Python, sem credencial |
+| Release | `v1.0.1`, de 29/08/2026; contrato de dados `0.5.0` |
 | Origem pública | módulo ORDS `api/v1`; contingência identificada separadamente |
 | Nome | MedFlow é marca, não sigla |
 | Cálculo | indicadores calculados na Gold; frontend apenas apresenta e formata |

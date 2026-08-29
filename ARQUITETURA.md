@@ -120,7 +120,7 @@ o 404 documentado para parâmetro inválido e o link público abrindo.
 
 O que a máquina não checa continua na mão, e o comando imprime a lista no fim:
 
-1. abrir as quatro visões em janela anônima, sem cache nem login;
+1. abrir as duas páginas em janela anônima, sem cache nem login;
 2. testar um filtro regional e um par hospital/CID elegível;
 3. simular a contingência e conferir o selo de origem na tela;
 4. abrir o link em outra rede ou no celular, fora do wi-fi da sala;
