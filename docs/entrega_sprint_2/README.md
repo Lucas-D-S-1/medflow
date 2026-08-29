@@ -45,9 +45,6 @@ apresentação precisa alcançá-lo.
 - **`capturar_flowia.mjs`** — faz uma pergunta real à FlowIA no site publicado e
   captura a resposta. **Cada execução gasta uma pergunta da cota diária** do
   Select AI, que é de 50.
-- **`gerar_apresentacao.py`** — o gerador antigo, que montava um deck do zero.
-  **Não produz mais o deck entregue.** Continua aqui porque a trava do
-  `VIDEO_URL` ainda olha para ele; ver abaixo.
 - **`capturas/`** — as imagens usadas no deck.
 
 Os scripts precisam do Playwright e do `python-pptx`, que vêm de
@@ -58,23 +55,26 @@ Os scripts precisam do Playwright e do `python-pptx`, que vêm de
 O ZIP **recusa fechar** enquanto qualquer uma destas não estiver resolvida.
 Elas existem porque cada uma já falhou uma vez.
 
-1. **URL do vídeo.** `montar_zip_entrega.sh` exige que `VIDEO_URL` seja uma URL
-   real do YouTube.
+1. **URL do vídeo.** `montar_zip_entrega.sh` procura um link do YouTube
+   **dentro do `.pptx` entregue**, abrindo os XML dos slides. Não adianta
+   preencher a URL em outro lugar.
 2. **Tag atrás de `main`.** O ZIP empacota o código por tag. Se a tag estiver
    atrás, o script diz quantos commits e para. Já aconteceu de o pacote levar a
    `v0.3.1` enquanto o produto no ar era a `v1.0.1`.
 3. **Arquivos obrigatórios.** O `.pptx` e a planilha precisam existir com os
    nomes oficiais.
 
-### Uma armadilha ainda aberta
+### Onde a URL do vídeo entra
 
-A trava do `VIDEO_URL` confere o valor dentro de **`gerar_apresentacao.py`** —
-que **não produz mais o deck entregue**. Preencher a URL lá satisfaz a trava
-**sem que o link apareça no deck**, e o link no PPT é regra da FIAP, não
-acabamento.
+No slide final, e ela precisa **acabar dentro do `.pptx`**. O caminho é
+acrescentar a URL pelo `revisar_deck_time.py`, como qualquer outro texto do
+deck, e regerar. Editar o `.pptx` à mão funciona até a próxima execução do
+roteiro, que sobrescreve.
 
-Antes de montar o ZIP, decidir onde a URL entra no `_vtime.pptx` e garantir que
-ela apareça no slide final do deck gerado.
+Até 29/08/2026 a trava conferia a URL dentro de `gerar_apresentacao.py`, um
+gerador que já não produzia o deck — dava para passar na trava sem o link
+aparecer em slide nenhum. Hoje a conferência é no arquivo que vai ser
+entregue.
 
 ## Sobre a duplicação
 

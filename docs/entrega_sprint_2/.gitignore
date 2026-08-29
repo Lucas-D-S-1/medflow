@@ -1,0 +1,40 @@
+# Fora do repositório, mas continuam existindo na máquina de quem gera.
+#
+# O deck usa quatro capturas — apex_select_ai_real, flowia-ao-vivo-conversa,
+# jornada-1-territorio e jornada-4-pares — mais a flowia-ao-vivo, que o roteiro
+# do vídeo cita como plano B. As de baixo são o resto do que
+# `capturar_produto.mjs` produz numa passada e não entram em slide nenhum:
+# eram as "seis capturas sem lugar" desde que os três painéis de evidência
+# viraram um.
+#
+# Se alguma voltar a ser usada no deck, `git add -f` no arquivo e tire a linha
+# daqui.
+apresentacao/capturas/assistente-medflow.png
+apresentacao/capturas/jornada-2-serie.png
+apresentacao/capturas/jornada-3-hospitais.png
+apresentacao/capturas/jornada-5-especialidades.png
+apresentacao/capturas/metodologia-evidencia.png
+apresentacao/capturas/produto-abertura.png
+
+# O PDF de 25/08 tinha 21 páginas e saía do gerador antigo, que foi removido.
+# O deck entregue tem 24 slides e o ZIP leva o .pptx, não o .pdf.
+apresentacao/*.pdf
+
+# Aposentados em 29/08/2026. Continuam no disco de quem já os tinha, e no
+# histórico do Git, mas não descrevem mais a entrega:
+#
+# - gerar_apresentacao.py montava um deck do zero. O deck entregue passou a
+#   sair de revisar_deck_time.py, sobre o _vtime.pptx do time. Mantê-lo dava a
+#   impressão de que ainda produzia alguma coisa — e a trava do link do vídeo
+#   chegou a conferir a URL dentro dele, que era um jeito de passar na trava
+#   sem o link aparecer em slide nenhum.
+# - ROTEIRO_NARRATIVO.md era a narrativa daquele deck. Substituído por
+#   ROTEIRO_VIDEO_E_ENSAIO.md, que traz o texto falado e os tempos.
+# - HANDOFF_CODEX_CHROME_APEX.md era o combinado para montar a página APEX,
+#   já cumprido. O que sobrou de útil está em APEX_SELECT_AI_PASSO_A_PASSO.md.
+apresentacao/gerar_apresentacao.py
+apresentacao/ROTEIRO_NARRATIVO.md
+HANDOFF_CODEX_CHROME_APEX.md
+
+# Saída do montar_zip_entrega.sh.
+*.zip
