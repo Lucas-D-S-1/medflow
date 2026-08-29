@@ -71,25 +71,16 @@ test('renderiza a competência e a versão do contrato recebidas do Oracle', asy
   await expect(page.getByLabel('Rede Regional de Atenção à Saúde')).toContainText(
     'Rede regional 16 — Bragança e Jundiaí',
   )
-  await expect(page.getByTestId('regional-admissions')).toHaveText(
-    pt(regiaoDestacada.new_admissions as number),
+  // Os números da região selecionada moram no cartão do mapa. Eles também
+  // apareciam num quadro logo abaixo, repetidos, que saiu por isso.
+  const cartao = page.getByTestId('regional-map-tooltip')
+  await expect(cartao).toContainText(pt(regiaoDestacada.new_admissions as number))
+  await expect(cartao).toContainText(`${pt(regiaoDestacada.iph_percent as number, 1)}%`)
+  await expect(cartao).toContainText(`${pt(regiaoDestacada.tmh_percent as number, 1)}%`)
+  await expect(cartao).toContainText(
+    `${pt(regiaoDestacada.ipe_above_reference as number)} de ${pt(regiaoDestacada.ipe_eligible_pairs as number)}`,
   )
-  // A amostra da região agora vive no painel da região selecionada.
-  await expect(page.getByTestId('regional-admissions')).toContainText(
-    pt(regiaoDestacada.new_admissions as number),
-  )
-  await expect(page.getByTestId('regional-iph')).toHaveText(
-    `${pt(regiaoDestacada.iph_percent as number, 1)}%`,
-  )
-  await expect(page.getByTestId('regional-tmh')).toHaveText(
-    `${pt(regiaoDestacada.tmh_percent as number, 1)}%`,
-  )
-  await expect(page.getByTestId('regional-cmi')).toContainText(
-    pt(regiaoDestacada.cmi_real as number, 2),
-  )
-  await expect(page.getByTestId('regional-seasonality')).toHaveText(
-    pt(regiaoDestacada.seasonality_index as number, 2),
-  )
+
 
   await page.getByRole('link', { name: 'Metodologia' }).click()
   await expect(page.getByTestId('methodology-data-through')).toContainText(`Gold publicada até ${snapshotCompetenciaBR}`)
@@ -177,7 +168,9 @@ test('filtra a competência sem abandonar o mapa espacial e o tamanho da amostra
   await expect.poll(() => requestedCompetence).toBe('2025-05')
   await expect(page.getByTestId('regional-context-note')).toContainText('05/2025')
   await expect(page.locator('.regional-map-shape')).toHaveCount(62)
-  await expect(page.getByTestId('regional-admissions')).toContainText(
+  // A amostra da região continua visível no cartão do mapa, que é onde os
+  // números da região selecionada passaram a viver.
+  await expect(page.getByTestId('regional-map-tooltip')).toContainText(
     pt(regiaoDestacada.new_admissions as number),
   )
 })
@@ -329,9 +322,11 @@ test('explica pelo contrato quando a sazonalidade não é calculada', async ({ p
 
   await page.goto('/regional?competencia=2024-03&regiao=35073')
 
-  const seasonalityValue = page.getByTestId('regional-seasonality')
-  await expect(seasonalityValue).toHaveText('não calculado')
-  await expect(seasonalityValue.locator('..').locator('small')).toHaveText(
+  // A explicação mudou de lugar, não de exigência: ela vive na série mensal,
+  // ao lado da curva que qualifica. Dizer só "não calculado" trataria fora do
+  // período-alvo e histórico insuficiente como a mesma coisa.
+  await page.getByRole('radio', { name: 'Índice sazonal' }).click()
+  await expect(page.getByTestId('regional-series-current')).toContainText(
     'Competência fora do período-alvo definido para sazonalidade',
   )
 })

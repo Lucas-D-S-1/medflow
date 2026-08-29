@@ -48,57 +48,17 @@ test('o direcionador marca a etapa escolhida sem trocar de tela', async ({ page 
   await expect(page.locator('#regional')).toHaveCount(1)
 })
 
-test('abre a etapa territorial pelo comportamento sazonal do mês', async ({ page }) => {
-  await mockLiveSource(page)
-  await page.goto(`/?competencia=${snapshotCompetencia}&regiao=35073`)
-
-  const jundiai = itens(regionalSnapshot).find(
-    (item) => item.region_code === '35073',
-  ) as Record<string, number>
-  const desvio = (jundiai.seasonality_index as number) - 1
-
-  // JUNDIAI está dentro da faixa de ruído no recorte publicado, e o texto
-  // precisa dizer isso em vez de anunciar um sinal que não existe.
-  expect(Math.abs(desvio)).toBeLessThan(0.05)
-  await expect(page.getByTestId('seasonal-headline')).toContainText(
-    'dentro do que costuma ser',
-  )
-  await expect(page.getByTestId('seasonal-basis')).toContainText('na média do mesmo mês em')
-  await expect(page.getByTestId('seasonal-basis')).toContainText('anos anteriores')
-  await expect(page.getByTestId('seasonal-above-count')).toContainText('de 62 regiões')
-})
-
-test('leva ao território escolhido no destaque sazonal', async ({ page }) => {
-  await mockLiveSource(page)
-  await page.goto(`/?competencia=${snapshotCompetencia}&regiao=35073`)
-
-  // O alvo sai dos dados, não da ordem do DOM: a lista reordena quando a
-  // competência termina de carregar, e ler o nome de um chip para clicar nele
-  // logo depois deixava o teste dependendo dessa janela.
-  const maisAcima = itens(regionalSnapshot)
-    .filter((item) => item.seasonality_status === 'calculado')
-    .sort(
-      (left, right) =>
-        (right.seasonality_index as number) - (left.seasonality_index as number),
-    )[0] as Record<string, string | number>
-  const nome = maisAcima.region_name as string
-
-  // Espera o contexto estar destravado: em fallback a troca de território não
-  // tem efeito, e clicar cedo demais media o nada.
-  const chip = page.locator('.seasonal-highlights button', { hasText: nome })
-  await expect(chip).toBeEnabled()
-  await chip.click()
-
-  await expect(page.getByTestId('regional-selected-name')).toHaveText(nome)
-  await expect(page.getByTestId('seasonal-headline')).toContainText(
-    'acima do que este mês costuma ser',
-  )
-})
+// Saíram daqui os dois testes do painel de comportamento sazonal. O painel foi
+// removido do produto por ser repetição: o índice sazonal já vive na série
+// mensal, ao lado da curva que ele qualifica, e lá ele responde a pergunta que
+// interessa — se o mês está pior ou se sempre foi assim neste mês. O motivo de
+// não ser calculado continua coberto em `regional.spec.ts`.
 
 test('o filtro rola junto com a página; só o direcionador fica fixo', async ({ page }) => {
   await mockLiveSource(page)
   await page.goto(`/?competencia=${snapshotCompetencia}&regiao=35073`)
-  await expect(page.getByTestId('seasonal-basis')).toBeVisible()
+  // Espera a etapa territorial montada antes de medir a rolagem.
+  await expect(page.getByTestId('regional-map-svg')).toBeVisible()
 
   const antes = (await page.locator('.global-context-bar').boundingBox())?.y ?? 0
   await page.mouse.wheel(0, 600)

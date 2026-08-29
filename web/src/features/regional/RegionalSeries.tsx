@@ -67,10 +67,17 @@ const INDICATORS: Record<IndicatorId, IndicatorConfig> = {
     label: 'Índice sazonal',
     value: (item) => item.seasonality_index,
     format: formatDecimal,
+    // Quando não é calculado, o motivo importa: fora do período-alvo é regra
+    // do contrato, histórico insuficiente é falta de base. Dizer só "não
+    // calculado" trata os dois como a mesma coisa. A explicação vivia no
+    // quadro da região selecionada, que saiu por ser repetição; ela não podia
+    // sair junto.
     detail: (item) =>
       item.seasonality_status === 'calculado'
         ? `${formatInteger(item.historical_years)} anos comparáveis · média histórica ${formatDecimal(item.historical_admissions_average)}`
-        : 'Não calculado para esta competência',
+        : item.seasonality_status === 'fora_periodo_alvo'
+          ? 'Competência fora do período-alvo definido para sazonalidade'
+          : `Histórico insuficiente: ${formatInteger(item.historical_years)} ${item.historical_years === 1 ? 'ano comparável' : 'anos comparáveis'}`,
     note: 'Comparação com a média do mesmo mês histórico; não é previsão definitiva.',
   },
 }

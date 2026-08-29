@@ -12,7 +12,21 @@ import type { HospitalItem } from './hospitais'
  * ajuste de risco aqui, e TMH continua sendo mortalidade observada.
  */
 
-export type PeerMode = 'regiao' | 'tipo-porte'
+/**
+ * Os dois grupos de comparação, e o que os dois têm em comum: **porte**.
+ *
+ * Antes um dos modos era "mesma região" sem controle de porte, e ele produzia
+ * comparação enganosa justamente nos hospitais sobre os quais mais se decide.
+ * O caso que mostrou isso: o Hospital de Base de São José do Rio Preto, 876
+ * leitos numa região cuja mediana é 25, aparecia com permanência 66% acima dos
+ * pares na clínica médica — sendo que o benchmark incluía um hospital com uma
+ * internação no mês. Contra os 24 hospitais de 300+ leitos do estado, ele fica
+ * melhor que 75% deles.
+ *
+ * Porte é o que torna os números comparáveis, então porte não sai nunca. O que
+ * varia é o alcance geográfico.
+ */
+export type PeerMode = 'regiao-porte' | 'porte'
 
 /** O IPR já usa três como piso de comparação; a extensão herda o mesmo corte. */
 export const MIN_PEERS = 3
@@ -44,13 +58,18 @@ function sizeBand(beds: number) {
 }
 
 export function peerGroupOf(item: HospitalItem, mode: PeerMode, regionName: string) {
-  return mode === 'regiao'
-    ? { key: item.region_code, label: `hospitais de ${regionName}` }
-    : {
-        key: `${item.unit_type_name}|${sizeBand(item.sus_beds)}`,
-        label: `${item.unit_type_name}, ${sizeBand(item.sus_beds)}`,
+  const porte = sizeBand(item.sus_beds)
+  return mode === 'regiao-porte'
+    ? {
+        key: `${item.region_code}|${porte}`,
+        label: `hospitais de ${porte} em ${regionName}`,
+        porte,
       }
+    : { key: porte, label: `hospitais de ${porte} no estado`, porte }
 }
+
+/** A faixa de porte, exposta para a tela poder dizê-la sem recalcular. */
+export { sizeBand as porteDe }
 
 export type Distribution = {
   count: number

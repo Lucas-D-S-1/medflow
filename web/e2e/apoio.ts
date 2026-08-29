@@ -218,14 +218,18 @@ export async function mockLiveSource(page: Page) {
             macroregion_code: null,
             macroregion_name: null,
           },
+          // A chamada sem `regiao` é a lista estadual que monta o grupo de
+          // pares. Devolvia zero itens, então nenhum teste hermético conseguia
+          // exercer a comparação com pares — e ela chegou a produção sem teste.
+          // Aqui o estado é o próprio recorte da fixture, que basta para
+          // provar o critério, o rebaixamento e a lista nomeada.
           pagination: {
-            limit: 200,
+            limit: 2000,
             offset: 0,
-            count: 0,
+            count: (hospitalListSnapshot.items as unknown[]).length,
             has_more: false,
             order: 'new_admissions_desc',
           },
-          items: [],
         }
     await route.fulfill({ contentType: 'application/json', body: JSON.stringify(payload) })
   })

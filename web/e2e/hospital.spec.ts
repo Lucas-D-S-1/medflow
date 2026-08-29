@@ -549,3 +549,56 @@ test('busca sem resultado preserva o campo para o usuário voltar atrás', async
   await campo.fill('')
   await expect(page.getByTestId('hospital-count')).toBeVisible()
 })
+
+test('a comparacao com pares diz o criterio, o porte e quem sao os pares', async ({ page }) => {
+  await mockLiveSource(page)
+  await page.goto(
+    `/hospital?competencia=${snapshotCompetencia}&regiao=35073&hospital=2701561`,
+  )
+
+  // O porte é a régua, e ela fica escrita. Antes um dos modos comparava por
+  // região sem controlar porte, e isso punha um hospital de 876 leitos contra
+  // um de 9 — o caso do Hospital de Base de São José do Rio Preto.
+  const criterio = page.getByTestId('peer-criterio')
+  await expect(criterio).toContainText('na faixa de até 24 leitos')
+  await expect(criterio).toContainText('em JUNDIAI')
+  await expect(page.getByTestId('peer-rebaixado')).toHaveCount(0)
+
+  // Sem os nomes, a faixa é um número sobre um grupo invisível.
+  await page.getByTestId('peer-lista').locator('summary').click()
+  await expect(page.getByTestId('peer-lista').locator('li')).toHaveCount(5)
+  await expect(page.getByTestId('peer-lista')).toContainText('HOSPITAL DA CRIANCA GRENDACC')
+})
+
+test('sem pares do mesmo porte na regiao, a regua sobe e a tela avisa', async ({ page }) => {
+  await mockLiveSource(page)
+  await page.goto(
+    `/hospital?competencia=${snapshotCompetencia}&regiao=35073&hospital=3012212`,
+  )
+
+  // Cair calado num grupo diferente do anunciado seria pior do que não
+  // comparar: o número mudaria de significado sem avisar.
+  await expect(page.getByTestId('peer-rebaixado')).toContainText('não há 3 hospitais')
+  await expect(page.getByTestId('peer-criterio')).toContainText('no estado')
+})
+
+test('a participacao do hospital na regiao fica visivel', async ({ page }) => {
+  await mockLiveSource(page)
+  await page.goto(
+    `/hospital?competencia=${snapshotCompetencia}&regiao=35073&hospital=2786435`,
+  )
+
+  // Quem concentra a maior parte das internações não é um par entre iguais: é
+  // a referência, e permanência maior é o esperado nesse papel.
+  const total = itens(hospitalListSnapshot).reduce(
+    (soma, item) => soma + (item.new_admissions as number),
+    0,
+  )
+  const destaque = itens(hospitalListSnapshot).find(
+    (item) => item.cnes === '2786435',
+  ) as Record<string, number>
+  const participacao = (destaque.new_admissions / total) * 100
+  await expect(page.getByTestId('peer-participacao')).toContainText(
+    `${pt(participacao, 1)}%`,
+  )
+})

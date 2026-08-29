@@ -4,19 +4,15 @@ import {
   getRegiaoSerieSnapshot,
   type RegionalSeriesResponse,
 } from './regioesSerie'
-import MetricCard from '../../shared/MetricCard'
 import RegionalMap from './RegionalMap'
 import RegionalSeries from './RegionalSeries'
 import GlobalContextBar from '../../shared/GlobalContextBar'
-import SeasonalSignal from './SeasonalSignal'
 import StateTotals from './StateTotals'
 import { aggregateRegions } from './agregado'
 import { aggregateVariation, computeSignals, variation } from './sinais'
 import StatePanel from '../../shared/StatePanel'
 import { useSource } from '../../shared/SourceContext'
 import {
-  formatCurrency,
-  formatDecimal,
   formatInteger,
   formatPercent,
   formatPeriod,
@@ -232,9 +228,16 @@ export default function RegionalView() {
                       </div>
                     </div>
                     <strong data-testid="regional-map-selection">
-                      {selectedItem
-                        ? `Selecionada: ${selectedItem.region_name}`
-                        : 'Nenhuma região selecionada'}
+                      {selectedItem ? (
+                        <>
+                          Selecionada:{' '}
+                          <span data-testid="regional-selected-name">
+                            {selectedItem.region_name}
+                          </span>
+                        </>
+                      ) : (
+                        'Nenhuma região selecionada'
+                      )}
                     </strong>
                   </div>
                   <RegionalMap
@@ -273,74 +276,19 @@ export default function RegionalView() {
 
             {selectedItem && visibleItems.length > 0 && (
               <>
-                <SeasonalSignal
-                  items={visibleItems}
-                  selected={selectedItem}
-                  competence={selectedCompetence}
-                  locked={sourceState.kind === 'fallback'}
-                  onSelect={setSharedRegion}
-                />
+                {/*
+                  Saíram daqui dois blocos, por serem repetição.
 
-                <div className="regional-layout focused">
-                  <section className="selected-region" aria-labelledby="selected-region-title">
-                    <p className="section-kicker">REGIÃO SELECIONADA</p>
-                    <h3 id="selected-region-title" data-testid="regional-selected-name">
-                      {selectedItem.region_name}
-                    </h3>
-                    <p>
-                      {formatRegionalNetwork(selectedItem.macroregion_name)} · {formatInteger(selectedItem.municipality_count)} municípios
-                    </p>
-                    <div className="selected-metrics">
-                      <MetricCard
-                        label="Internações novas"
-                        value={formatInteger(selectedItem.new_admissions)}
-                        detail={`${formatInteger(selectedItem.hospitals_with_admissions)} hospitais com produção`}
-                        testId="regional-admissions"
-                      />
-                      <MetricCard
-                        label="IPH estimado"
-                        value={formatPercent(selectedItem.iph_percent)}
-                        detail={`${formatInteger(selectedItem.estimated_patient_days)} pacientes-dia / ${formatInteger(selectedItem.declared_capacity_bed_days)} leitos-dia declarados`}
-                        testId="regional-iph"
-                      />
-                      <MetricCard
-                        label="TMH observado"
-                        value={formatPercent(selectedItem.tmh_percent)}
-                        detail={`${formatInteger(selectedItem.deaths)} óbitos · ${formatInteger(selectedItem.new_admissions)} internações`}
-                        testId="regional-tmh"
-                      />
-                      <MetricCard
-                        label="CMI nominal"
-                        value={formatCurrency(selectedItem.cmi_nominal)}
-                        detail={`${formatInteger(selectedItem.new_admissions)} internações novas`}
-                        testId="regional-cmi"
-                      />
-                      <MetricCard
-                        label="Permanência média"
-                        value={`${formatDecimal(selectedItem.average_stay_days)} dias`}
-                        detail={`${formatInteger(selectedItem.stay_days)} dias na amostra`}
-                      />
-                      <MetricCard
-                        label="Índice sazonal"
-                        value={
-                          selectedItem.seasonality_status !== 'calculado' ||
-                          selectedItem.seasonality_index === null
-                            ? 'não calculado'
-                            : formatDecimal(selectedItem.seasonality_index)
-                        }
-                        detail={
-                          selectedItem.seasonality_status === 'fora_periodo_alvo'
-                            ? 'Competência fora do período-alvo definido para sazonalidade'
-                            : selectedItem.seasonality_status === 'historico_insuficiente'
-                              ? `Histórico insuficiente: ${formatInteger(selectedItem.historical_years)} ${selectedItem.historical_years === 1 ? 'ano comparável' : 'anos comparáveis'}`
-                              : `${formatInteger(selectedItem.historical_years)} ${selectedItem.historical_years === 1 ? 'ano comparável' : 'anos comparáveis'}`
-                        }
-                        testId="regional-seasonality"
-                      />
-                    </div>
-                  </section>
-                </div>
+                  O comportamento sazonal: o índice sazonal já vive na série
+                  mensal, ao lado da curva que ele qualifica, e é lá que ele
+                  responde a pergunta que interessa — se o mês está pior ou se
+                  sempre foi assim neste mês.
 
+                  E o quadro da região selecionada: os mesmos seis números já
+                  aparecem no cartão do mapa quando a região é escolhida, e o
+                  nome dela no cabeçalho do mapa. Repetir logo abaixo empurrava
+                  a série para fora da tela sem acrescentar nada.
+                */}
                 {seriesState.kind === 'loading' && (
                   <StatePanel kind="loading" title="Carregando série regional" testId="regional-series-loading">
                     Buscando as competências da região selecionada.
