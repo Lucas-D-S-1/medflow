@@ -201,9 +201,12 @@ test('explica as regras de comparação sem consultar o modelo', async ({ page }
   // coluna na Gold, então mandar o modelo procurar no banco seria mandá-lo
   // procurar o que o banco não tem.
   await perguntar('Qual o critério para dois hospitais serem pares?')
-  await expect(panel).toContainText('mesmo tipo de unidade')
-  await expect(panel).toContainText('faixa de leitos')
-  await expect(panel).toContainText('pelo menos três pares')
+  // O porte não sai do critério: é ele que torna os números comparáveis. Se
+  // este texto voltar a falar de tipo de unidade sem porte, a FlowIA estará
+  // descrevendo um produto que não existe mais.
+  await expect(panel).toContainText('mesma faixa de leitos SUS')
+  await expect(panel).toContainText('na mesma região, que é o padrão')
+  await expect(panel).toContainText('a régua sobe para o estado')
 
   await perguntar('Por que o IPH do hospital dia passa de 100%?')
   await expect(panel).toContainText('giro sobre capacidade')
@@ -238,7 +241,7 @@ test('recusa inventar grupo de pares em vez de perguntar ao modelo', async ({ pa
   ]) {
     await page.getByLabel('Faça outra pergunta').fill(pergunta)
     await page.getByLabel('Faça outra pergunta').press('Enter')
-    await expect(panel).toContainText('mesmo tipo de unidade')
+    await expect(panel).toContainText('mesma faixa de leitos SUS')
   }
 
   expect(calls).toBe(0)
@@ -317,4 +320,44 @@ test('a conversa sobrevive à troca de etapa', async ({ page }) => {
   // investigação; perder o fio ali era a queixa.
   await expect(page.getByTestId('assistant-thread')).toContainText('precisa continuar visível')
   await expect(page.locator('#medflow-assistant-panel')).toContainText('Contexto: visão hospitalar')
+})
+
+test('perguntas sobre a leitura da tela nao vao ao modelo', async ({ page }) => {
+  let chamadas = 0
+  await page.route('**/api/dev/v1/assistente/perguntar', async (route) => {
+    chamadas += 1
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        status: 'ok',
+        source: 'oracle-select-ai',
+        response_id: 1,
+        narrative: 'resposta do modelo que não deveria aparecer',
+        sql: null,
+        warning: null,
+      }),
+    })
+  })
+  await mockLiveSource(page)
+  await page.goto('/regional?regiao=35073')
+  await page.getByRole('button', { name: /Posso ajudar/ }).click()
+
+  const casos: [string, string][] = [
+    // O modelo leu "97 de 237 acima dos pares" como posição num ranking de 237
+    // regiões. É contagem, não posição, e ranking é o que ele sabe fazer.
+    ['no mapa, o que significa são paulo estar 97 de 237 acima dos pares', 'Não é posição num ranking'],
+    // "o que há" não casava com nenhum gatilho e ia parar no modelo, que
+    // devolvia a definição seguida de um ranking que ninguém pediu.
+    ['o que há no índice sazonal?', 'Índice Sazonal'],
+    // O critério mudou quando os pares passaram a fixar o porte; o texto
+    // precisa mudar junto, senão a FlowIA descreve um produto que não existe.
+    ['qual o critério para dois hospitais serem pares', 'mesma faixa de leitos SUS'],
+  ]
+  for (const [pergunta, esperado] of casos) {
+    await page.getByLabel('Faça outra pergunta').fill(pergunta)
+    await page.getByRole('button', { name: 'Enviar pergunta' }).click()
+    await expect(page.getByTestId('assistant-thread')).toContainText(esperado)
+  }
+
+  expect(chamadas).toBe(0)
 })

@@ -157,8 +157,11 @@ export default function AssistantWidget() {
   function localAnswer(rawQuestion: string): Answer | null {
     const normalized = normalize(rawQuestion)
     const methodology = sourceData?.methodology
+    // "o que há no índice sazonal?" não casava com nada e ia parar no modelo,
+    // que devolvia a definição seguida de um ranking que ninguém pediu — o
+    // modo narrate do Select AI sempre consulta.
     const pedidoExplicacao =
-      /o que (e|é)|que significa|explique|defina|como interpretar|pra que serve/.test(
+      /o que (e|é|ha|tem|quer dizer)|que significa|explique|explica|defina|como (interpretar|funciona|ler|leio)|(pra|para) que serve|me diga o que/.test(
         normalized,
       )
 
@@ -289,7 +292,25 @@ export default function AssistantWidget() {
       )
     ) {
       return {
-        text: 'Há dois grupos de comparação, e você escolhe qual usar. "Mesmo tipo e porte" reúne hospitais com o mesmo tipo de unidade no CNES e a mesma faixa de leitos SUS (até 24, 25 a 59, 60 a 149, 150 a 299, 300 ou mais), em todo o estado. "Mesma região" reúne os hospitais do mesmo território. Em qualquer um deles o próprio hospital sai do grupo, pela mesma razão que o IPR exclui o hospital do benchmark regional: comparar alguém consigo mesmo puxa a mediana na direção dele. O grupo precisa de pelo menos três pares com valor calculado; abaixo disso a faixa não é publicada.',
+        text: 'Pares são hospitais da mesma faixa de leitos SUS — até 24, 25 a 59, 60 a 149, 150 a 299, 300 ou mais. O porte nunca sai do critério: é ele que torna os números comparáveis. O que você escolhe é o alcance: na mesma região, que é o padrão, ou no estado. Quando a região não tem três hospitais daquele porte, a régua sobe para o estado e a tela avisa. O próprio hospital fica sempre fora do grupo, pela mesma razão que o IPR o exclui do benchmark: comparar alguém consigo mesmo puxa a mediana na direção dele.',
+      }
+    }
+
+    // Perguntas sobre como ler um número que está na tela. O modelo leu
+    // "97 de 237 acima dos pares" como posição num ranking de 237 regiões, que
+    // não é o que está escrito — e ranking é justamente o que ele sabe fazer.
+    if (
+      /acima dos pares|de \d+ acima|\d+ de \d+/.test(normalized) &&
+      /(mapa|regiao|significa|quer dizer|como ler|o que e|entender)/.test(normalized)
+    ) {
+      return {
+        text: 'Não é posição num ranking: é uma contagem. O primeiro número são as comparações hospital-especialidade da região em que a permanência do hospital ficou acima da dos pares na mesma especialidade; o segundo são todas as comparações elegíveis da região naquela competência. "97 de 237" significa que, das 237 comparações possíveis ali, 97 ficaram acima. Quanto maior a proporção, mais frequente é a permanência acima dos pares dentro da própria região — e ela não é medida de qualidade, porque não há ajuste de risco.',
+      }
+    }
+
+    if (/participacao|concentra|percentual das internacoes da regiao|quanto.*regiao passa/.test(normalized)) {
+      return {
+        text: 'É a fatia das internações da região que passa por este hospital, na competência aberta. Ela importa para ler os demais números: um hospital que concentra a maior parte das internações costuma ser a referência da região, recebe o caso que os outros não resolvem, e permanência maior é o esperado nesse papel — não um desvio dele.',
       }
     }
 
