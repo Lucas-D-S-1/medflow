@@ -105,7 +105,7 @@ begin
              json_array(
                json_object(
                  'id' value 'new_admissions_cross_mart',
-                 'label' value 'Internacoes novas',
+                 'label' value 'Internações novas',
                  'left_label' value 'mart_indicador_regiao_mensal',
                  'left_value' value qt_internacao_nova,
                  'right_label' value 'mart_indicador_hospital_mensal',
@@ -115,7 +115,7 @@ begin
                    when qt_internacao_nova = qt_internacao_nova_hospital then 'ok'
                    else 'divergente'
                  end,
-                 'note' value 'A soma dos dois marts usa a mesma contagem de AIHs normais; continuacoes nao entram como internacao nova.'
+                 'note' value 'A soma dos dois marts usa a mesma contagem de AIHs normais; continuações não entram como internação nova.'
                  returning json
                ),
                json_object(
@@ -130,12 +130,12 @@ begin
                    when qt_paciente_dia_estimado = qt_paciente_dia_estimado_hospital then 'ok'
                    else 'divergente'
                  end,
-                 'note' value 'A soma do numerador persistido do IPH fecha entre a visao regional e a visao hospital.'
+                 'note' value 'A soma do numerador persistido do IPH fecha entre a visão regional e a visão hospital.'
                  returning json
                ),
                json_object(
                  'id' value 'stay_days_cross_mart',
-                 'label' value 'Dias de permanencia',
+                 'label' value 'Dias de permanência',
                  'left_label' value 'mart_indicador_regiao_mensal',
                  'left_value' value qt_dia_permanencia_soma,
                  'right_label' value 'mart_indicador_hospital_mensal',
@@ -145,7 +145,7 @@ begin
                    when qt_dia_permanencia_soma = qt_dia_permanencia_soma_hospital then 'ok'
                    else 'divergente'
                  end,
-                 'note' value 'Soma de qt_dia_permanencia_soma das internacoes novas; nao e sinonimo de diaria faturada nem de paciente-dia.'
+                 'note' value 'Soma de qt_dia_permanencia_soma das internações novas; não é sinônimo de diária faturada nem de paciente-dia.'
                  returning json
                )
                returning json
@@ -154,16 +154,16 @@ begin
                json_object(
                  'id' value 'aih',
                  'label' value 'AIH',
-                 'definition' value 'Autorizacao de Internacao Hospitalar, documento administrativo do SIH.',
-                 'gold_field' value 'Contagem total de AIHs nao publicada nesta Gold.',
+                 'definition' value 'Autorização de Internação Hospitalar, documento administrativo do SIH.',
+                 'gold_field' value 'Contagem total de AIHs não publicada nesta Gold.',
                  'value_status' value 'not_published',
-                 'value_note' value 'Nao usar a contagem de internacoes novas como contagem total de AIHs.'
+                 'value_note' value 'Não usar a contagem de internações novas como contagem total de AIHs.'
                  returning json
                ),
                json_object(
                  'id' value 'new_admission',
-                 'label' value 'Internacao nova',
-                 'definition' value 'AIH normal que representa uma nova internacao no recorte; continuacoes de longa permanencia ficam separadas.',
+                 'label' value 'Internação nova',
+                 'definition' value 'AIH normal que representa uma nova internação no recorte; continuações de longa permanência ficam separadas.',
                  'gold_field' value 'qt_internacao_nova',
                  'published_value' value qt_internacao_nova,
                  'value_status' value 'published',
@@ -172,31 +172,31 @@ begin
                ),
                json_object(
                  'id' value 'billed_daily',
-                 'label' value 'Diaria faturada',
+                 'label' value 'Diária faturada',
                  'definition' value 'Unidade administrativa de faturamento do SIH, associada a QT_DIARIAS na fonte.',
-                 'gold_field' value 'QT_DIARIAS nao persistida nesta Gold.',
+                 'gold_field' value 'QT_DIARIAS não persistida nesta Gold.',
                  'value_status' value 'not_published',
-                 'value_note' value 'Nao equiparar a diaria faturada a dia de permanencia ou paciente-dia.'
+                 'value_note' value 'Não equiparar a diária faturada a dia de permanência ou paciente-dia.'
                  returning json
                ),
                json_object(
                  'id' value 'length_of_stay',
                  'label' value 'Permanencia',
-                 'definition' value 'Soma dos dias de permanencia das internacoes novas, persistida em qt_dia_permanencia_soma.',
+                 'definition' value 'Soma dos dias de permanência das internações novas, persistida em qt_dia_permanencia_soma.',
                  'gold_field' value 'qt_dia_permanencia_soma',
                  'published_value' value qt_dia_permanencia_soma,
                  'value_status' value 'published',
-                 'value_note' value 'Medida administrativa de permanencia do recorte.'
+                 'value_note' value 'Medida administrativa de permanência do recorte.'
                  returning json
                ),
                json_object(
                  'id' value 'patient_day',
                  'label' value 'Paciente-dia',
-                 'definition' value 'Paciente-dia estimado por reconstrucoes das datas de entrada e saida; e o numerador persistido do IPH.',
+                 'definition' value 'Paciente-dia estimado por reconstruções das datas de entrada e saída; é o numerador persistido do IPH.',
                  'gold_field' value 'qt_paciente_dia_estimado',
                  'published_value' value qt_paciente_dia_estimado,
                  'value_status' value 'published',
-                 'value_note' value 'Pode diferir da soma de dias de permanencia por atravessamento de meses e pela regra de reconstrucoes.'
+                 'value_note' value 'Pode diferir da soma de dias de permanência por atravessamento de meses e pela regra de reconstruções.'
                  returning json
                )
                returning json
@@ -205,7 +205,7 @@ begin
                json_object(
                  'id' value 'benchmark_zero',
                  'label' value 'Benchmark zerado',
-                 'description' value 'A permanencia media do benchmark regional/CID e zero. O IPR fica nulo; nenhuma imputacao ou divisao e feita.',
+                 'description' value 'A permanência média do benchmark regional/CID é zero. O IPR fica nulo; nenhuma imputação ou divisão é feita.',
                  'count' value qt_benchmark_zero,
                  'count_label' value 'linhas hospital/CID'
                  returning json
@@ -213,7 +213,7 @@ begin
                json_object(
                  'id' value 'iph_denominator_zero',
                  'label' value 'Denominador zero do IPH',
-                 'description' value 'Nao ha leito SUS declarado no mes. O IPH fica nulo; a tela nao trata isso como ocupacao zero e nao imputa capacidade.',
+                 'description' value 'Não há leito SUS declarado no mês. O IPH fica nulo; a tela não trata isso como ocupação zero e não imputa capacidade.',
                  'count' value qt_hospital_mes_sem_leito_sus,
                  'count_label' value 'meses hospital sem leito SUS declarado'
                  returning json
@@ -221,7 +221,7 @@ begin
                json_object(
                  'id' value 'amostra_insuficiente',
                  'label' value 'Amostra insuficiente',
-                 'description' value 'O corte minimo do indicador nao foi atingido. O valor calculado nao e exibido como comparacao elegivel.',
+                 'description' value 'O corte mínimo do indicador não foi atingido. O valor calculado não é exibido como comparação elegível.',
                  'count' value qt_ipr_amostra_insuficiente,
                  'count_label' value 'linhas hospital/CID'
                  returning json
@@ -232,84 +232,84 @@ begin
                json_object(
                  'id' value 'tmh',
                  'label' value 'TMH',
-                 'expression' value 'obitos / internacoes novas x 100',
-                 'interpretation' value 'Mortalidade observada, sem ajuste de risco clinico; nao mede causalmente qualidade.'
+                 'expression' value 'óbitos / internações novas x 100',
+                 'interpretation' value 'Mortalidade observada, sem ajuste de risco clínico; não mede causalmente qualidade.'
                  returning json
                ),
                json_object(
                  'id' value 'ipr',
                  'label' value 'IPR',
-                 'expression' value 'permanencia media hospital/CID / benchmark regional/CID sem o hospital',
-                 'interpretation' value 'Sinaliza variacao para investigacao; a composicao clinica pode diferir entre pares.'
+                 'expression' value 'permanência média hospital/CID / benchmark regional/CID sem o hospital',
+                 'interpretation' value 'Sinaliza variação para investigação; a composição clínica pode diferir entre pares.'
                  returning json
                ),
                json_object(
                  'id' value 'ipe',
                  'label' value 'IPE',
-                 'expression' value 'permanencia media hospital/especialidade / benchmark regional da especialidade sem o hospital',
-                 'interpretation' value 'Mesma leitura do IPR num grao mais largo: cobre mais casos porque a especialidade tem mais volume que o CID, e continua sem ajuste de risco.'
+                 'expression' value 'permanência média hospital/especialidade / benchmark regional da especialidade sem o hospital',
+                 'interpretation' value 'Mesma leitura do IPR num grão mais largo: cobre mais casos porque a especialidade tem mais volume que o CID, e continua sem ajuste de risco.'
                  returning json
                ),
                json_object(
                  'id' value 'is',
                  'label' value 'IS',
-                 'expression' value 'internacoes novas de 2026 / media do mesmo mes em 2024 e 2025',
-                 'interpretation' value 'Comparacao sazonal historica, nao previsao definitiva.'
+                 'expression' value 'internações novas de 2026 / média do mesmo mês em 2024 e 2025',
+                 'interpretation' value 'Comparação sazonal histórica, não previsão definitiva.'
                  returning json
                ),
                json_object(
                  'id' value 'cmi',
                  'label' value 'CMI',
-                 'expression' value 'CMI nominal = soma(valor SIH aprovado das internacoes novas) / internacoes novas; CMI real = soma(valor SIH aprovado das internacoes novas) x fator de correcao IPCA da competencia / internacoes novas',
+                 'expression' value 'CMI nominal = soma(valor SIH aprovado das internações novas) / internações novas; CMI real = soma(valor SIH aprovado das internações novas) x fator de correção IPCA da competência / internações novas',
                  'reference_competence' value case
                    when cd_competencia_preco_referencia is null then null
                    else substr(cd_competencia_preco_referencia, 1, 4)
                      || '-'
                      || substr(cd_competencia_preco_referencia, 5, 2)
                  end,
-                 'interpretation' value 'O CMI real e expresso a precos da competencia de referencia e usa o fator persistido na Gold; nominal e real nao representam custo contabil completo.'
+                 'interpretation' value 'O CMI real é expresso a preços da competência de referência e usa o fator persistido na Gold; nominal e real não representam custo contábil completo.'
                  returning json
                ),
                json_object(
                  'id' value 'iph',
                  'label' value 'IPH estimado',
-                 'expression' value 'pacientes-dia reconstruidos / leitos-dia SUS declarados no CNES',
-                 'interpretation' value 'Pressao estimada sobre capacidade declarada, nao ocupacao fisica real.'
+                 'expression' value 'pacientes-dia reconstruídos / leitos-dia SUS declarados no CNES',
+                 'interpretation' value 'Pressão estimada sobre capacidade declarada, não ocupação física real.'
                  returning json
                ),
                json_object(
                  'id' value 'resident_rate',
-                 'label' value 'Taxa de internacao residente',
-                 'expression' value 'internacoes de residentes atendidos em SP / populacao x 100 mil',
-                 'interpretation' value 'Nao observa residentes atendidos fora de Sao Paulo.'
+                 'label' value 'Taxa de internação residente',
+                 'expression' value 'internações de residentes atendidos em SP / população x 100 mil',
+                 'interpretation' value 'Não observa residentes atendidos fora de São Paulo.'
                  returning json
                ),
                json_object(
                  'id' value 'observed_evasion',
-                 'label' value 'Evasao observada',
-                 'expression' value 'residentes atendidos em outra regiao paulista / residentes atendidos em SP',
-                 'interpretation' value 'Nao e evasao total nem prova de insuficiencia de oferta.'
+                 'label' value 'Evasão observada',
+                 'expression' value 'residentes atendidos em outra região paulista / residentes atendidos em SP',
+                 'interpretation' value 'Não é evasão total nem prova de insuficiência de oferta.'
                  returning json
                ),
                json_object(
                  'id' value 'attraction',
-                 'label' value 'Atracao assistencial',
-                 'expression' value 'atendimentos a nao residentes / producao da regiao',
-                 'interpretation' value 'Centros de referencia podem ter atracao esperada.'
+                 'label' value 'Atração assistencial',
+                 'expression' value 'atendimentos a não residentes / produção da região',
+                 'interpretation' value 'Centros de referência podem ter atração esperada.'
                  returning json
                ),
                json_object(
                  'id' value 'icsap',
                  'label' value 'ICSAP',
-                 'expression' value 'internacoes dos grupos da Portaria SAS/MS 221/2008 por residencia / populacao x 10 mil',
-                 'interpretation' value 'Nao prova evitabilidade individual; a proporcao oficial exige outro denominador.'
+                 'expression' value 'internações dos grupos da Portaria SAS/MS 221/2008 por residência / população x 10 mil',
+                 'interpretation' value 'Não prova evitabilidade individual; a proporção oficial exige outro denominador.'
                  returning json
                ),
                json_object(
                  'id' value 'length_of_stay',
-                 'label' value 'Permanencia media',
-                 'expression' value 'soma dos dias de permanencia / internacoes novas',
-                 'interpretation' value 'E sensivel ao perfil clinico e deve ser lida antes do IPR.'
+                 'label' value 'Permanência média',
+                 'expression' value 'soma dos dias de permanência / internações novas',
+                 'interpretation' value 'É sensível ao perfil clínico e deve ser lida antes do IPR.'
                  returning json
                )
                returning json
@@ -319,7 +319,7 @@ begin
                  'id' value 'tmh_cmi',
                  'label' value 'TMH e CMI',
                  'minimum_new_admissions' value 30,
-                 'description' value 'Classificacao somente com pelo menos 30 internacoes novas.'
+                 'description' value 'Classificação somente com pelo menos 30 internações novas.'
                  returning json
                ),
                json_object(
@@ -328,7 +328,7 @@ begin
                  'minimum_hospital_cid_cases' value 20,
                  'minimum_benchmark_cases' value 50,
                  'minimum_benchmark_hospitals' value 3,
-                 'description' value 'Exige minimo de 20 casos hospital/CID; benchmark com 50 casos e 3 hospitais. Se a permanencia media do benchmark for zero, o estado e benchmark_zero e o IPR permanece nulo.'
+                 'description' value 'Exige mínimo de 20 casos hospital/CID; benchmark com 50 casos e 3 hospitais. Se a permanência média do benchmark for zero, o estado é benchmark_zero e o IPR permanece nulo.'
                  returning json
                ),
                json_object(
@@ -337,27 +337,27 @@ begin
                  'minimum_hospital_specialty_cases' value 20,
                  'minimum_benchmark_cases' value 50,
                  'minimum_benchmark_hospitals' value 3,
-                 'description' value 'Os mesmos cortes do IPR, de proposito: a cobertura sobe de 6,9 para 63,9 por cento pelo grao, nao por afrouxar a exigencia. Se a permanencia media do benchmark for zero, o estado e benchmark_zero e o IPE permanece nulo.'
+                 'description' value 'Os mesmos cortes do IPR, de propósito: a cobertura sobe de 6,9 para 63,9 por cento pelo grão, não por afrouxar a exigência. Se a permanência média do benchmark for zero, o estado é benchmark_zero e o IPE permanece nulo.'
                  returning json
                ),
                json_object(
                  'id' value 'specialty',
-                 'label' value 'Comparacao por especialidade',
+                 'label' value 'Comparação por especialidade',
                  'minimum_hospital_month_rows' value 100,
-                 'description' value 'Agregacoes entre especialidades exigem ao menos 100 linhas hospital-mes suficientes por especialidade.'
+                 'description' value 'Agregações entre especialidades exigem ao menos 100 linhas hospital-mês suficientes por especialidade.'
                  returning json
                ),
                json_object(
                  'id' value 'cid',
-                 'label' value 'Ranking por diagnostico',
+                 'label' value 'Ranking por diagnóstico',
                  'minimum_hospital_cid_pairs' value 10,
-                 'description' value 'Exige ao menos 10 combinacoes hospital-CID suficientes por diagnostico.'
+                 'description' value 'Exige ao menos 10 combinações hospital-CID suficientes por diagnóstico.'
                  returning json
                ),
                json_object(
                  'id' value 'seasonality',
-                 'label' value 'Indice sazonal',
-                 'description' value 'Usa somente meses comparaveis de janeiro a maio de 2026 contra 2024 e 2025.'
+                 'label' value 'Índice sazonal',
+                 'description' value 'Usa somente meses comparáveis de janeiro a maio de 2026 contra 2024 e 2025.'
                  returning json
                )
                returning json
@@ -366,7 +366,7 @@ begin
                json_object(
                  'id' value 'sih_rd',
                  'label' value 'SIH/RD',
-                 'scope' value 'Internacoes novas, obitos, permanencia e valores aprovados observados em hospitais de Sao Paulo.'
+                 'scope' value 'Internações novas, óbitos, permanência e valores aprovados observados em hospitais de São Paulo.'
                  returning json
                ),
                json_object(
@@ -378,35 +378,35 @@ begin
                json_object(
                  'id' value 'ibge_censo_2022',
                  'label' value 'IBGE Censo 2022',
-                 'scope' value 'Populacao municipal usada nos denominadores territoriais.'
+                 'scope' value 'População municipal usada nos denominadores territoriais.'
                  returning json
                ),
                json_object(
                  'id' value 'ibge_ipca',
                  'label' value 'IBGE/SIDRA 1737',
-                 'scope' value 'Numero-indice e fator IPCA para valores reais, com competencia de referencia explicita.'
+                 'scope' value 'Número-índice e fator IPCA para valores reais, com competência de referência explícita.'
                  returning json
                ),
                json_object(
                  'id' value 'portaria_221_2008',
                  'label' value 'Portaria SAS/MS 221/2008',
-                 'scope' value 'Lista Brasileira de Internacoes por Condicoes Sensiveis a Atencao Primaria.'
+                 'scope' value 'Lista Brasileira de Internações por Condições Sensíveis à Atenção Primária.'
                  returning json
                )
                returning json
              ) as "sources",
              json_array(
-               'TMH nao possui ajuste de risco clinico.',
-               'A cobertura de IPR considera somente combinacoes elegiveis pelos cortes do contrato.',
-               'IPE compara permanencia observada entre hospitais da mesma regiao e especialidade, sem ajuste de risco: nao e medida de qualidade nem de desfecho.',
-               'CMI nominal e CMI real nao representam custo economico integral.',
-               'IPH usa pacientes-dia reconstruidos e leitos mensais declarados; nao e ocupacao real.',
-               'Quando o denominador do IPH e zero por ausencia de leito SUS declarado, o valor permanece nulo e nao ha imputacao.',
-               'Quando o benchmark de permanencia e zero, o estado benchmark_zero mantem o IPR nulo e nao ha imputacao.',
-               'AIH total e QT_DIARIAS nao sao publicados nos marts Gold desta tela; nao confundir AIH, internacao nova, diaria faturada, permanencia e paciente-dia.',
-               'Taxas territoriais consideram residentes de Sao Paulo atendidos em hospitais de Sao Paulo; saidas para outras UFs nao estao observadas.',
-               'A participacao de ICSAP usa todas as internacoes novas observadas de residentes no denominador; nao e a proporcao clinica oficial.',
-               'O recorte e administrativo e agregado; nao sustenta inferencia clinica individual ou causal.'
+               'TMH não possui ajuste de risco clínico.',
+               'A cobertura de IPR considera somente combinações elegíveis pelos cortes do contrato.',
+               'IPE compara permanência observada entre hospitais da mesma região e especialidade, sem ajuste de risco: não é medida de qualidade nem de desfecho.',
+               'CMI nominal e CMI real não representam custo econômico integral.',
+               'IPH usa pacientes-dia reconstruídos e leitos mensais declarados; não é ocupação real.',
+               'Quando o denominador do IPH é zero por ausência de leito SUS declarado, o valor permanece nulo e não há imputação.',
+               'Quando o benchmark de permanência é zero, o estado benchmark_zero mantém o IPR nulo e não há imputação.',
+               'AIH total e QT_DIARIAS não são publicados nos marts Gold desta tela; não confundir AIH, internação nova, diária faturada, permanência e paciente-dia.',
+               'Taxas territoriais consideram residentes de São Paulo atendidos em hospitais de São Paulo; saídas para outras UFs não estão observadas.',
+               'A participação de ICSAP usa todas as internações novas observadas de residentes no denominador; não é a proporção clínica oficial.',
+               'O recorte é administrativo e agregado; não sustenta inferência clínica individual ou causal.'
                returning json
              ) as "limitations"
         from vw_api_metodologia

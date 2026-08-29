@@ -97,3 +97,49 @@
   .decision-table tbody tr:last-child th,
   .decision-table tbody tr:last-child td { border-bottom: var(--border-subtle); }
 }
+
+/* Reconciliação e limites saíram dos colapsáveis: são as duas metades da
+   pergunta que dá título à página, e estavam a dois cliques de distância. */
+.methodology-block {
+  margin-top: var(--space-5);
+  padding: var(--space-4);
+  border: var(--border-subtle);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+}
+.methodology-block > h2 { margin: var(--space-1) 0 var(--space-2); }
+.methodology-block > p { color: var(--color-text-muted); }
+
+.reconciliation-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+.reconciliation-grid article {
+  padding: var(--space-3);
+  border: var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-soft);
+}
+.reconciliation-grid h3 { margin: 0 0 var(--space-2); font-size: var(--font-size-sm); }
+.reconciliation-values { margin: 0; color: var(--color-text-muted); font-size: var(--font-size-xs); line-height: 1.6; }
+.reconciliation-grid strong { display: block; margin-top: var(--space-2); font-size: var(--font-size-sm); }
+.reconciliation-grid strong.fecha { color: var(--color-accent-strong); }
+.reconciliation-grid strong.diverge { color: var(--color-warning-text); }
+.reconciliation-grid small { display: block; margin-top: var(--space-2); color: var(--color-text-muted); font-size: var(--font-size-xs); line-height: 1.5; }
+
+.limits-list { margin: var(--space-4) 0 0; padding-left: var(--space-4); display: grid; gap: var(--space-2); }
+.limits-list li { color: var(--color-text); font-size: var(--font-size-sm); line-height: 1.55; }
+
+.decision-details { margin-top: var(--space-4); }
+.decision-details summary {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) 0;
+  color: var(--color-accent-strong);
+  cursor: pointer;
+  font-weight: 700;
+}
+.decision-details .decision-table-wrap { margin-top: 0; }

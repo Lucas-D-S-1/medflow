@@ -3,6 +3,40 @@
 As releases seguem a política de [`VERSIONAMENTO.md`](VERSIONAMENTO.md).
 A versão da release e a versão dos contratos de dados evoluem separadamente.
 
+## 1.0.1 — 29/08/2026
+
+Correção de conteúdo, sem mudança de contrato nem de cálculo.
+
+### Metodologia
+
+A página respondia ao próprio título com as duas metades escondidas.
+**Reconciliação** e **limites** subiram para blocos visíveis: são eles que dizem
+se o número fecha e o que ele não sustenta. Ficou colapsado o que é material de
+consulta.
+
+- **cortes de amostra absorveram os estados de ausência**: o corte diz o que é
+  exigido e o estado diz quantas linhas ficaram de fora e por quê, então
+  entender um número nulo obrigava a abrir dois blocos;
+- a **matriz do Oracle** ficou a um clique: os três cartões acima já concluem o
+  que as seis colunas repetiam;
+- saiu a nota que explicava que os blocos são colapsáveis e têm rolagem interna:
+  descrevia o widget, não o dado;
+- **benchmark zerado** saiu da cobertura, porque é estado de ausência e não
+  volume, e já aparece com sua contagem no bloco de cortes; entraram
+  **hospitais** e a cobertura do **IPE**.
+
+### Ortografia
+
+Todo o texto da metodologia vem do banco, e chegava à tela **sem acento algum**:
+"TMH nao possui ajuste de risco clinico", "Internacoes novas", "permanencia
+media". Foram **70 strings** corrigidas no módulo ORDS, com teste travando a
+acentuação para que não volte em silêncio.
+
+O texto escrito no front já estava correto, e a varredura do texto renderizado
+das três páginas não achou erro de acento nem de pontuação. O que continua sem
+acento são nomes oficiais de região e hospital, como o DATASUS e o CNES os
+gravam — esses não se corrigem.
+
 ## 1.0.0 — 29/08/2026
 
 Primeira versão estável. Produto e contrato de dados fecham juntos, que era a

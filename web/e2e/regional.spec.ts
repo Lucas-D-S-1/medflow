@@ -102,13 +102,13 @@ test('renderiza a competência e a versão do contrato recebidas do Oracle', asy
   ).toBeVisible()
   await expect(page.locator('.database-decision')).toContainText('25 / 25')
   await expect(page.getByTestId('gold-updated-at')).toContainText('2026')
-  await expect(page.getByTestId('formula-cmi')).toContainText('fator de correcao IPCA')
-  await expect(page.getByTestId('formula-iph')).toContainText('Pressao estimada sobre capacidade declarada, nao ocupacao fisica real.')
+  await expect(page.getByTestId('formula-cmi')).toContainText('fator de correção IPCA')
+  await expect(page.getByTestId('formula-iph')).toContainText('Pressão estimada sobre capacidade declarada, não ocupação física real.')
   await expect(page.getByTestId('cut-ipr')).toContainText('20 casos hospital/CID')
   await expect(page.getByTestId('reconciliation-new_admissions_cross_mart')).toContainText('diferença: 0')
   await expect(page.getByTestId('definition-billed_daily')).toContainText('QT_DIARIAS')
   await expect(page.getByTestId('state-benchmark_zero')).toContainText('IPR fica nulo')
-  await expect(page.getByTestId('state-iph_denominator_zero')).toContainText('nao imputa capacidade')
+  await expect(page.getByTestId('state-iph_denominator_zero')).toContainText('não imputa capacidade')
   await expect(page.getByTestId('territorial-hierarchy')).toContainText(
     'Rede Regional de Atenção à Saúde (RRAS)',
   )
@@ -357,11 +357,14 @@ test('mantém a metodologia colapsável', async ({ page }) => {
   // A fórmula mora num bloco colapsado: conferimos que ela existe, não que
   // esteja aberta.
   await expect(
-    page.getByText('permanencia media hospital/especialidade', { exact: false }),
+    page.getByText('permanência média hospital/especialidade', { exact: false }),
   ).toHaveCount(1)
 
+  // Cinco, não seis: reconciliação e limites subiram para blocos visíveis, e
+  // cortes absorveu os estados de ausência, que são o mesmo assunto visto dos
+  // dois lados.
   const details = page.locator('.methodology-details details')
-  await expect(details).toHaveCount(6)
+  await expect(details).toHaveCount(5)
   await expect(details.first()).not.toHaveAttribute('open', '')
   await details.first().locator('summary').click()
   const detailHeight = await details.first().locator('.detail-scroll').evaluate(
@@ -403,4 +406,24 @@ test('o mapa pode colorir pelo placar que consome os seis indicadores', async ({
 
   await page.getByTestId('map-metric-sinais').click()
   await expect(page.locator('#map-title')).toContainText('Sinais acesos')
+})
+
+test('a metodologia responde as duas metades do proprio titulo', async ({ page }) => {
+  await mockLiveSource(page)
+  await page.goto('/metodologia')
+
+  // "Posso confiar no número e quais são seus limites?" — a reconciliação e as
+  // limitações respondem uma metade cada, e estavam as duas colapsadas, uma
+  // delas a dois cliques. O que ficou colapsado é material de consulta.
+  await expect(page.getByTestId('reconciliation-patient_days_cross_mart')).toBeVisible()
+  await expect(page.getByTestId('reconciliation-patient_days_cross_mart')).toContainText(
+    'diferença: 0',
+  )
+  await expect(page.getByTestId('methodology-limits')).toBeVisible()
+  await expect(page.getByTestId('methodology-limits')).toContainText('sem ajuste de risco')
+
+  // O texto da metodologia vem do banco, e chegava inteiro sem acento.
+  const prosa = await page.getByTestId('methodology-limits').innerText()
+  expect(prosa).toContain('clínico')
+  expect(prosa).not.toContain('clinico')
 })

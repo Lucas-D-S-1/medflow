@@ -1,4 +1,3 @@
-import MethodNote from '../../shared/MethodNote'
 import MetricCard from '../../shared/MetricCard'
 import SourcePanel from '../../shared/SourcePanel'
 import { useSource } from '../../shared/SourceContext'
@@ -79,14 +78,62 @@ export default function MetodologiaView() {
             <MetricCard label="Internações novas" value={formatInteger(data.coverage.new_admissions)} detail="amostra administrativa agregada" testId="coverage-admissions" />
             <MetricCard label="Pacientes-dia estimados" value={formatInteger(data.coverage.estimated_patient_days)} detail="numerador persistido do IPH" testId="coverage-patient-days" />
             <MetricCard label="Dias de permanência" value={formatInteger(data.coverage.stay_days)} detail="não equivalem a diárias faturadas" testId="coverage-stay-days" />
-            <MetricCard label="Benchmark zerado" value={formatInteger(data.coverage.benchmark_zero_rows)} detail="linhas com IPR nulo" testId="coverage-benchmark-zero" />
+            <MetricCard label="Hospitais" value={formatInteger(data.coverage.hospitals)} detail="estabelecimentos com produção" testId="coverage-hospitals" />
+            {/* Cobertura de indicador é o que esta seção responde, e a do IPE é
+                a que se questiona: ele é o mais novo e o que mais depende de
+                corte. O "benchmark zerado" saiu daqui porque é estado de
+                ausência, não cobertura, e já aparece com sua contagem no bloco
+                de cortes. */}
             <MetricCard label="IPE elegível" value={formatInteger(data.coverage.eligible_ipe_rows)} detail={`de ${formatInteger(data.coverage.specialty_month_rows)} linhas hospital/especialidade`} testId="coverage-eligible-ipe" />
           </div>
 
-          <MethodNote>
-            Os blocos abaixo são colapsáveis. Cada um mantém no máximo 45% da altura da tela e
-            possui rolagem interna quando o detalhe é longo.
-          </MethodNote>
+          {/*
+            A reconciliação era o bloco mais forte da página e estava colapsado,
+            misturado com os estados nulos. Ela é a resposta direta ao título:
+            os marts contam a mesma coisa duas vezes e a diferença tem de ser
+            zero. Quem pergunta se pode confiar no número quer ver isto, não
+            precisa procurar.
+          */}
+          <section className="methodology-block" aria-labelledby="reconciliation-title">
+            <p className="section-kicker">RECONCILIAÇÃO</p>
+            <h2 id="reconciliation-title">Os marts contam a mesma coisa duas vezes</h2>
+            <p>
+              Cada checagem soma a mesma grandeza por caminhos diferentes da Gold. A
+              diferença tem de ser zero; qualquer outro valor é divergência, e apareceria
+              aqui em vez de ficar escondido.
+            </p>
+            <div className="reconciliation-grid">
+              {data.reconciliations.map((item) => (
+                <article key={item.id} data-testid={`reconciliation-${item.id}`}>
+                  <h3>{item.label}</h3>
+                  <p className="reconciliation-values">
+                    {item.left_label}: {formatInteger(item.left_value)}
+                    <br />
+                    {item.right_label}: {formatInteger(item.right_value)}
+                  </p>
+                  <strong className={item.difference === 0 ? 'fecha' : 'diverge'}>
+                    diferença: {formatInteger(item.difference)}
+                  </strong>
+                  <small>{item.note}</small>
+                </article>
+              ))}
+            </div>
+          </section>
+
+          {/*
+            A outra metade da pergunta do título. As limitações estavam a dois
+            cliques de distância, dentro de um bloco compartilhado com as fontes
+            — e são elas que dizem o que o dado não sustenta.
+          */}
+          <section className="methodology-block" aria-labelledby="limits-title">
+            <p className="section-kicker">LIMITES</p>
+            <h2 id="limits-title">O que este dado não sustenta</h2>
+            <ul className="limits-list" data-testid="methodology-limits">
+              {data.limitations.map((limitation) => (
+                <li key={limitation}>{limitation}</li>
+              ))}
+            </ul>
+          </section>
 
           <section className="database-decision" aria-labelledby="database-decision-title">
             <div className="view-intro">
@@ -117,7 +164,12 @@ export default function MetodologiaView() {
               </article>
             </div>
 
-            <div className="decision-table-wrap">
+            {/* A matriz inteira repetia em seis colunas o que os três cartões
+                acima já concluem. Fica a um clique, como evidência de quem
+                quiser conferir a nota. */}
+            <details className="decision-details">
+              <summary>Ver a matriz completa <span>{databaseDecision.length} opções</span></summary>
+              <div className="decision-table-wrap">
               <table className="decision-table">
                 <thead>
                   <tr>
@@ -148,7 +200,8 @@ export default function MetodologiaView() {
                   ))}
                 </tbody>
               </table>
-            </div>
+              </div>
+            </details>
           </section>
 
           <div className="methodology-details">
@@ -193,8 +246,16 @@ export default function MetodologiaView() {
               </div>
             </details>
 
+            {/*
+              Corte e estado de ausência são o mesmo assunto visto dos dois
+              lados: o corte diz o que é exigido, o estado diz quantas linhas
+              ficaram de fora e por quê. Separá-los obrigava a abrir dois
+              blocos para entender um número nulo.
+            */}
             <details>
-              <summary>Cortes de amostra <span>{data.cuts.length}</span></summary>
+              <summary>
+                Cortes de amostra e ausências <span>{data.cuts.length + data.states.length}</span>
+              </summary>
               <div className="detail-scroll detail-list">
                 {data.cuts.map((cut) => (
                   <article key={cut.id} data-testid={`cut-${cut.id}`}>
@@ -202,27 +263,17 @@ export default function MetodologiaView() {
                     <p>{cut.description}</p>
                   </article>
                 ))}
-              </div>
-            </details>
-
-            <details>
-              <summary>Reconciliações e estados nulos <span>{data.reconciliations.length + data.states.length}</span></summary>
-              <div className="detail-scroll detail-list">
-                {data.reconciliations.map((item) => (
-                  <article key={item.id} data-testid={`reconciliation-${item.id}`}>
-                    <h3>{item.label} · {item.status}</h3>
-                    <p>{item.left_label}: {formatInteger(item.left_value)} · {item.right_label}: {formatInteger(item.right_value)} · diferença: {formatInteger(item.difference)}</p>
-                    <p>{item.note}</p>
-                  </article>
-                ))}
                 {data.states.map((state) => (
                   <article key={state.id} data-testid={`state-${state.id}`}>
-                    <h3>{state.label} · {formatInteger(state.count)} {state.count_label}</h3>
+                    <h3>
+                      {state.label} · {formatInteger(state.count)} {state.count_label}
+                    </h3>
                     <p>{state.description}</p>
                   </article>
                 ))}
               </div>
             </details>
+
 
             <details>
               <summary>Definições administrativas <span>{data.definitions.length}</span></summary>
@@ -239,7 +290,7 @@ export default function MetodologiaView() {
             </details>
 
             <details>
-              <summary>Fontes e limitações <span>{data.sources.length + data.limitations.length}</span></summary>
+              <summary>Fontes oficiais <span>{data.sources.length}</span></summary>
               <div className="detail-scroll detail-list">
                 {data.sources.map((source) => (
                   <article key={source.id}>
@@ -247,9 +298,6 @@ export default function MetodologiaView() {
                     <p>{source.scope}</p>
                   </article>
                 ))}
-                <ul>
-                  {data.limitations.map((limitation) => <li key={limitation}>{limitation}</li>)}
-                </ul>
               </div>
             </details>
           </div>
