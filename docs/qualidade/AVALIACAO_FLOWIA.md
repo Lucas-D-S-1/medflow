@@ -1,6 +1,6 @@
 # Avaliação da FlowIA com perguntas humanas
 
-Executada em **26/08/2026 às 11:54**, concluída em **11:59**.
+Executada em **29/08/2026 às 13:52**, concluída em **13:59**.
 
 As perguntas abaixo são deliberadamente curtas, vagas e coloquiais. O contexto da tela é enviado separadamente, como acontece no produto; nenhum prompt entrega nomes de tabelas, colunas, fórmulas ou cortes ao modelo.
 
@@ -8,42 +8,42 @@ As perguntas abaixo são deliberadamente curtas, vagas e coloquiais. O contexto 
 
 | Medida | Resultado |
 |---|---:|
-| Casos aprovados por inteiro | 0/20 |
-| SQL/dados corretos ou caso sem dado objetivo | 3/20 |
-| Narrativas que atenderam aos critérios | 4/20 |
+| Casos aprovados por inteiro | 11/20 |
+| SQL/dados corretos ou caso sem dado objetivo | 15/20 |
+| Narrativas que atenderam aos critérios | 11/20 |
 
 | Caso | Pergunta realista | SQL/dados | Narrativa | Final |
 |---|---|---|---|---|
-| F01 | até onde esses dados vão mesmo? | divergente | ok | ⚠️ |
-| F02 | onde tá mais apertado agora? | divergente | falhou | ⚠️ |
-| F03 | quem mais manda paciente pra fora? | não comparável | falhou | ⚠️ |
-| F04 | e quem mais recebe gente de fora? | não comparável | falhou | ⚠️ |
-| F05 | onde a atenção básica parece não estar segurando? | não comparável | falhou | ⚠️ |
+| F01 | até onde esses dados vão mesmo? | equivalente | ok | ✅ |
+| F02 | onde tá mais apertado agora? | equivalente | ok | ✅ |
+| F03 | quem mais manda paciente pra fora? | SQL recusado ou inválido | falhou | ⚠️ |
+| F04 | e quem mais recebe gente de fora? | SQL recusado ou inválido | falhou | ⚠️ |
+| F05 | onde a atenção básica parece não estar segurando? | divergente | falhou | ⚠️ |
 | F06 | qual hospital tá mais cheio hoje? | sem referência | falhou | ⚠️ |
-| F07 | quais hospitais estouraram a capacidade no último mês? | não comparável | falhou | ⚠️ |
-| F08 | quem segura o paciente por mais tempo? | não comparável | falhou | ⚠️ |
+| F07 | quais hospitais estouraram a capacidade no último mês? | equivalente | ok | ✅ |
+| F08 | quem segura o paciente por mais tempo? | divergente | falhou | ⚠️ |
 | F09 | qual é o pior hospital? | sem referência | falhou | ⚠️ |
-| F10 | onde morreu mais gente ultimamente? | não comparável | falhou | ⚠️ |
-| F11 | onde cada internação sai mais cara hoje? | não comparável | falhou | ⚠️ |
-| F12 | quem piorou de uns meses pra cá? | não comparável | falhou | ⚠️ |
-| F13 | quem varia muito dependendo da época? | não comparável | falhou | ⚠️ |
-| F14 | quais hospitais daqui merecem atenção primeiro? | não comparável | falhou | ⚠️ |
+| F10 | onde morreu mais gente ultimamente? | equivalente | ok | ✅ |
+| F11 | onde cada internação sai mais cara hoje? | equivalente | ok | ✅ |
+| F12 | quem piorou de uns meses pra cá? | equivalente | ok | ✅ |
+| F13 | quem varia muito dependendo da época? | equivalente | ok | ✅ |
+| F14 | quais hospitais daqui merecem atenção primeiro? | equivalente | ok | ✅ |
 | F15 | o que mais interna nesse hospital? | divergente | falhou | ⚠️ |
-| F16 | dá pra confiar nesse hospital ou a amostra é pequena? | não comparável | ok | ⚠️ |
+| F16 | dá pra confiar nesse hospital ou a amostra é pequena? | equivalente | ok | ✅ |
 | F17 | esse IPR acima de 1 é ruim? | sem referência | falhou | ⚠️ |
-| F18 | de onde vem a maior parte dos pacientes atendidos aqui? | não comparável | ok | ⚠️ |
-| F19 | subiu quanto desde o ano passado? | não comparável | ok | ⚠️ |
-| F20 | se eu só puder olhar três lugares amanhã, quais seriam? | não comparável | falhou | ⚠️ |
+| F18 | de onde vem a maior parte dos pacientes atendidos aqui? | equivalente | ok | ✅ |
+| F19 | subiu quanto desde o ano passado? | equivalente até o corte | ok | ✅ |
+| F20 | se eu só puder olhar três lugares amanhã, quais seriam? | equivalente | falhou | ⚠️ |
 
 ## F01. até onde esses dados vão mesmo?
 
 **Intenção esperada:** Entender 'até onde' como a competência cronologicamente mais recente, não o maior número de mês.
 
-**Contexto silencioso da tela:** `tela=regional; competencia=2026-06; regiao=JUNDIAI; codigo_regiao=35073; hospital_cnes=nao informado; analise_ativa=pressao hospitalar regional e tendencia`
+**Contexto silencioso da tela:** `tela=regional; competencia=202606 (formato AAAAMM, igual ao da coluna CD_COMPETENCIA); regiao=JUNDIAI; codigo_regiao=35073; hospital_cnes=nao informado; analise_ativa=pressao hospitalar regional e tendencia`
 
-**ID auditado:** 84
+**ID auditado:** 241
 
-**Conferência dos dados:** divergente — ausentes no gerado: 202606; presentes só no gerado: 35073, 35073, 35073, 35073, 35073
+**Conferência dos dados:** equivalente. mesmos 1 rótulos, na mesma ordem
 
 **Resposta de referência**
 
@@ -56,68 +56,35 @@ As perguntas abaixo são deliberadamente curtas, vagas e coloquiais. O contexto 
 **Resposta do SQL gerado**
 
 ```text
-| codigo_regiao | regiao  | competencia | pressao_hospitalar | tendencia |
-|---------------|---------|-------------|--------------------|-----------|
-| 35073         | JUNDIAI | 202512      | 0.730282           | None      |
-| 35073         | JUNDIAI | 202511      | 0.758813           | None      |
-| 35073         | JUNDIAI | 202510      | 0.766847           | None      |
-| 35073         | JUNDIAI | 202509      | 0.760558           | None      |
-| 35073         | JUNDIAI | 202508      | 0.730251           | None      |
-| 35073         | JUNDIAI | 202507      | 0.789349           | None      |
-| 35073         | JUNDIAI | 202506      | 0.812113           | None      |
-| 35073         | JUNDIAI | 202505      | 0.831094           | None      |
-| 35073         | JUNDIAI | 202504      | 0.794978           | None      |
-| 35073         | JUNDIAI | 202503      | 0.891957           | None      |
-| 35073         | JUNDIAI | 202502      | 0.838073           | None      |
-| 35073         | JUNDIAI | 202501      | 0.808852           | None      |
-| 35073         | JUNDIAI | 202412      | 0.800472           | None      |
-| 35073         | JUNDIAI | 202411      | 0.897628           | None      |
-| 35073         | JUNDIAI | 202410      | 0.913825           | None      |
-| 35073         | JUNDIAI | 202409      | 0.887063           | None      |
-| 35073         | JUNDIAI | 202408      | 0.874912           | None      |
-| 35073         | JUNDIAI | 202407      | 0.864284           | None      |
-| 35073         | JUNDIAI | 202406      | 0.833679           | None      |
-| 35073         | JUNDIAI | 202405      | 0.87918            | None      |
-| 35073         | JUNDIAI | 202404      | 0.882502           | None      |
-| 35073         | JUNDIAI | 202403      | 0.867768           | None      |
-| 35073         | JUNDIAI | 202402      | 0.83721            | None      |
-| 35073         | JUNDIAI | 202401      | 0.812041           | None      |
+| mes_competencia |
+|-----------------|
+| 202606          |
 ```
 
-**Conferência da narrativa:** ok — critérios narrativos atendidos
+**Conferência da narrativa:** ok. critérios narrativos atendidos
 
 **SQL gerado**
 
 ```sql
-SELECT
-  "MEDFLOW"."MART_INDICADOR_REGIAO_MENSAL"."CD_REGIAO_SAUDE" AS "codigo_regiao",
-  "MEDFLOW"."MART_INDICADOR_REGIAO_MENSAL"."NM_REGIAO_SAUDE" AS "regiao",
-  "MEDFLOW"."MART_INDICADOR_REGIAO_MENSAL"."CD_COMPETENCIA" AS "competencia",
-  "MEDFLOW"."MART_INDICADOR_REGIAO_MENSAL"."NR_IPH_ESTIMADO" AS "pressao_hospitalar",
-  "MEDFLOW"."MART_INDICADOR_REGIAO_MENSAL"."NR_INDICE_SAZONALIDADE" AS "tendencia"
-FROM
+SELECT 
+  MAX("CD_COMPETENCIA") AS "mes_competencia"
+FROM 
   "MEDFLOW"."MART_INDICADOR_REGIAO_MENSAL"
-WHERE
-  UPPER("MEDFLOW"."MART_INDICADOR_REGIAO_MENSAL"."NM_REGIAO_SAUDE") = UPPER('JUNDIAI')
-  AND "MEDFLOW"."MART_INDICADOR_REGIAO_MENSAL"."CD_REGIAO_SAUDE" = '35073'
-  AND "MEDFLOW"."MART_INDICADOR_REGIAO_MENSAL"."CD_COMPETENCIA" <= '2026-06'
-ORDER BY
-  "MEDFLOW"."MART_INDICADOR_REGIAO_MENSAL"."CD_COMPETENCIA" DESC
 ```
 
 **Resposta escrita**
 
-Os dados vão até junho de 2026 para a região de Jundiaí, com código de região 35073.
+Os dados vão até junho de 2026.
 
 ## F02. onde tá mais apertado agora?
 
 **Intenção esperada:** Na visão regional, interpretar apertado como maior IPH na última competência.
 
-**Contexto silencioso da tela:** `tela=regional; competencia=2026-06; regiao=JUNDIAI; codigo_regiao=35073; hospital_cnes=nao informado; analise_ativa=pressao hospitalar regional e tendencia`
+**Contexto silencioso da tela:** `tela=regional; competencia=202606 (formato AAAAMM, igual ao da coluna CD_COMPETENCIA); regiao=JUNDIAI; codigo_regiao=35073; hospital_cnes=nao informado; analise_ativa=pressao hospitalar regional e tendencia`
 
-**ID auditado:** 85
+**ID auditado:** 242
 
-**Conferência dos dados:** divergente — ausentes no gerado: JUNDIAI, FRANCO DA ROCHA, SAO JOSE DO RIO PRETO, LIMEIRA, ALTA SOROCABANA; presentes só no gerado: nenhum
+**Conferência dos dados:** equivalente. mesmos 5 rótulos, na mesma ordem
 
 **Resposta de referência**
 
@@ -134,41 +101,50 @@ Os dados vão até junho de 2026 para a região de Jundiaí, com código de regi
 **Resposta do SQL gerado**
 
 ```text
-regiao | pressao_hospitalar
-(nenhuma linha)
+| regiao                | pressao_estimada |
+|-----------------------|------------------|
+| JUNDIAI               | 67.1662          |
+| FRANCO DA ROCHA       | 59.8261          |
+| SAO JOSE DO RIO PRETO | 58.8846          |
+| LIMEIRA               | 58.5366          |
+| ALTA SOROCABANA       | 54.7752          |
 ```
 
-**Conferência da narrativa:** falhou — rótulos citados: 0/3; faltou: ao menos um dos 3 primeiros rótulos da referência
+**Conferência da narrativa:** ok. primeiros 3 rótulos narrados na ordem correta
 
 **SQL gerado**
 
 ```sql
-SELECT
-  "r"."NM_REGIAO_SAUDE" AS "regiao",
-  "r"."NR_IPH_ESTIMADO" AS "pressao_hospitalar"
-FROM
-  "MEDFLOW"."MART_INDICADOR_REGIAO_MENSAL" "r"
-WHERE
-  "r"."CD_REGIAO_SAUDE" = '35073'
-  AND "r"."CD_COMPETENCIA" = '2026-06'
-ORDER BY
-  "r"."NR_IPH_ESTIMADO" DESC
-FETCH FIRST 1 ROW ONLY
+SELECT 
+  "NM_REGIAO_SAUDE" AS "regiao",
+  "PC_IPH_ESTIMADO" AS "pressao_estimada"
+FROM 
+  "MEDFLOW"."MART_INDICADOR_REGIAO_MENSAL" 
+WHERE 
+  "CD_COMPETENCIA" = (SELECT MAX("CD_COMPETENCIA") FROM "MEDFLOW"."MART_INDICADOR_REGIAO_MENSAL")
+ORDER BY 
+  "PC_IPH_ESTIMADO" DESC NULLS LAST
+FETCH FIRST 5 ROWS ONLY
 ```
 
 **Resposta escrita**
 
-Não há informações disponíveis sobre a região com maior pressão hospitalar na competência de 2026-06. É possível que os dados não estejam disponíveis ou que haja um problema com a consulta. Se você tiver mais informações ou precisar de ajuda adicional, por favor, forneça mais detalhes.
+As regiões com maior pressão hospitalar estimada em junho de 2026 são:
+* JUNDIAI, com 67,17%
+* FRANCO DA ROCHA, com 59,83%
+* SAO JOSE DO RIO PRETO, com 58,88%
+* LIMEIRA, com 58,54%
+* ALTA SOROCABANA, com 54,78%
 
 ## F03. quem mais manda paciente pra fora?
 
 **Intenção esperada:** Usar evasão intrastadual observada percentual na competência atual.
 
-**Contexto silencioso da tela:** `tela=fluxos; competencia=2026-06; regiao=JUNDIAI; codigo_regiao=35073; hospital_cnes=nao informado; analise_ativa=fluxos assistenciais, evasao e ICSAP`
+**Contexto silencioso da tela:** `tela=fluxos; competencia=202606 (formato AAAAMM, igual ao da coluna CD_COMPETENCIA); regiao=JUNDIAI; codigo_regiao=35073; hospital_cnes=nao informado; analise_ativa=fluxos assistenciais, evasao e ICSAP`
 
-**ID auditado:** 86
+**ID auditado:** 243
 
-**Conferência dos dados:** não comparável — nenhuma coluna de rótulo textual nas duas respostas
+**Conferência dos dados:** SQL recusado ou inválido. o modelo não devolveu SQL
 
 **Resposta de referência**
 
@@ -185,45 +161,30 @@ Não há informações disponíveis sobre a região com maior pressão hospitala
 **Resposta do SQL gerado**
 
 ```text
-origem_residencia | total_pacientes_enviados
-(nenhuma linha)
+(sem resultado)
 ```
 
-**Conferência da narrativa:** falhou — rótulos citados: 0/3; faltou: ao menos um dos 3 primeiros rótulos da referência
+**Conferência da narrativa:** falhou. faltou: líderes ausentes na narrativa: JOSE BONIFACIO, PONTAL DO PARANAPANEMA, ALTA PAULISTA
 
 **SQL gerado**
 
 ```sql
-SELECT
-  "f"."NM_ORIGEM_RESIDENCIA" AS "origem_residencia",
-  SUM("f"."QT_INTERNACAO_NOVA") AS "total_pacientes_enviados"
-FROM
-  "MEDFLOW"."MART_FLUXO_ASSISTENCIAL_REGIAO_MENSAL" "f"
-WHERE
-  UPPER("f"."NM_REGIAO_SAUDE_ATENDIMENTO") = UPPER('JUNDIAI')
-  AND "f"."CD_REGIAO_SAUDE_ATENDIMENTO" = '35073'
-  AND "f"."CD_COMPETENCIA" = '2026-06'
-  AND "f"."ST_FLUXO_ASSISTENCIAL" = 'interregional_sp'
-GROUP BY
-  "f"."NM_ORIGEM_RESIDENCIA"
-ORDER BY
-  SUM("f"."QT_INTERNACAO_NOVA") DESC
-FETCH FIRST 1 ROW ONLY
+(não gerado)
 ```
 
 **Resposta escrita**
 
-Não há informações disponíveis sobre quais regiões enviam mais pacientes para fora. Isso pode ocorrer porque não há dados suficientes ou porque a pergunta não foi específica o suficiente. Se você tiver mais detalhes ou precisar de ajuda adicional, por favor, forneça mais informações.
+Nao foi possivel produzir uma consulta ranqueada segura. Reformule com um indicador disponivel. O IPH mede pressao estimada mensal, nao ocupacao de leitos em tempo real.
 
 ## F04. e quem mais recebe gente de fora?
 
 **Intenção esperada:** Inferir atração assistencial, sem exigir que o usuário repita o indicador anterior.
 
-**Contexto silencioso da tela:** `tela=fluxos; competencia=2026-06; regiao=JUNDIAI; codigo_regiao=35073; hospital_cnes=nao informado; analise_ativa=fluxos assistenciais, evasao e ICSAP`
+**Contexto silencioso da tela:** `tela=fluxos; competencia=202606 (formato AAAAMM, igual ao da coluna CD_COMPETENCIA); regiao=JUNDIAI; codigo_regiao=35073; hospital_cnes=nao informado; analise_ativa=fluxos assistenciais, evasao e ICSAP`
 
-**ID auditado:** 87
+**ID auditado:** 244
 
-**Conferência dos dados:** não comparável — nenhuma coluna de rótulo textual nas duas respostas
+**Conferência dos dados:** SQL recusado ou inválido. o modelo não devolveu SQL
 
 **Resposta de referência**
 
@@ -240,44 +201,30 @@ Não há informações disponíveis sobre quais regiões enviam mais pacientes p
 **Resposta do SQL gerado**
 
 ```text
-regiao_de_atendimento | total_pacientes_recebidos
-(nenhuma linha)
+(sem resultado)
 ```
 
-**Conferência da narrativa:** falhou — rótulos citados: 0/3; faltou: ao menos um dos 3 primeiros rótulos da referência
+**Conferência da narrativa:** falhou. faltou: líderes ausentes na narrativa: NORTE - BARRETOS, JAU, AQUIFERO GUARANI
 
 **SQL gerado**
 
 ```sql
-SELECT
-  "f"."NM_REGIAO_SAUDE_ATENDIMENTO" AS "regiao_de_atendimento",
-  SUM("f"."QT_INTERNACAO_NOVA") AS "total_pacientes_recebidos"
-FROM
-  "MEDFLOW"."MART_FLUXO_ASSISTENCIAL_REGIAO_MENSAL" "f"
-WHERE
-  "f"."CD_REGIAO_SAUDE_ATENDIMENTO" = '35073'
-  AND "f"."CD_COMPETENCIA" = '2026-06'
-  AND "f"."ST_FLUXO_ASSISTENCIAL" IN ('interregional_sp', 'entrada_outro_estado')
-GROUP BY
-  "f"."NM_REGIAO_SAUDE_ATENDIMENTO"
-ORDER BY
-  SUM("f"."QT_INTERNACAO_NOVA") DESC
-FETCH FIRST 1 ROW ONLY
+(não gerado)
 ```
 
 **Resposta escrita**
 
-Não há informações disponíveis sobre quais regiões recebem mais pacientes de fora. Isso pode ocorrer porque não há dados suficientes ou porque a pergunta não foi específica o suficiente. Se você tiver mais detalhes ou precisar de ajuda adicional, por favor, forneça mais informações.
+Nao foi possivel produzir uma consulta ranqueada segura. Reformule com um indicador disponivel. O IPH mede pressao estimada mensal, nao ocupacao de leitos em tempo real.
 
 ## F05. onde a atenção básica parece não estar segurando?
 
 **Intenção esperada:** Usar taxa territorial de ICSAP como sinal, com ressalva de que não prova falha nem evitabilidade individual.
 
-**Contexto silencioso da tela:** `tela=fluxos; competencia=2026-06; regiao=JUNDIAI; codigo_regiao=35073; hospital_cnes=nao informado; analise_ativa=fluxos assistenciais, evasao e ICSAP`
+**Contexto silencioso da tela:** `tela=fluxos; competencia=202606 (formato AAAAMM, igual ao da coluna CD_COMPETENCIA); regiao=JUNDIAI; codigo_regiao=35073; hospital_cnes=nao informado; analise_ativa=fluxos assistenciais, evasao e ICSAP`
 
-**ID auditado:** 88
+**ID auditado:** 245
 
-**Conferência dos dados:** não comparável — nenhuma coluna de rótulo textual nas duas respostas
+**Conferência dos dados:** divergente. ausentes no gerado: EXTREMO OESTE PAULISTA; presentes só no gerado: VOTUPORANGA
 
 **Resposta de referência**
 
@@ -294,71 +241,84 @@ Não há informações disponíveis sobre quais regiões recebem mais pacientes 
 **Resposta do SQL gerado**
 
 ```text
-regiao_saude | evasao_observada
-(nenhuma linha)
+| regiao                 | taxa_icsap |
+|------------------------|------------|
+| PONTAL DO PARANAPANEMA | 5.673401   |
+| JOSE BONIFACIO         | 4.831061   |
+| VOTUPORANGA            | 4.140766   |
+| CATANDUVA              | 3.384934   |
+| JALES                  | 3.224514   |
 ```
 
-**Conferência da narrativa:** falhou — rótulos citados: 0/3; faltou: icsap / atenção primária / atencao primaria; ao menos um dos 3 primeiros rótulos da referência
+**Conferência da narrativa:** falhou. faltou: líderes ausentes na narrativa: EXTREMO OESTE PAULISTA
 
 **SQL gerado**
 
 ```sql
-SELECT
-  "r"."NM_REGIAO_SAUDE" AS "regiao_saude",
-  "r"."PC_EVASAO_INTRASTADUAL_OBSERVADA" AS "evasao_observada"
-FROM
-  "MEDFLOW"."MART_INDICADOR_REGIAO_MENSAL" "r"
-WHERE
-  "r"."CD_REGIAO_SAUDE" = '35073'
-  AND "r"."CD_COMPETENCIA" = '2026-06'
-ORDER BY
-  "r"."PC_EVASAO_INTRASTADUAL_OBSERVADA" DESC
-FETCH FIRST 1 ROW ONLY
+SELECT 
+  m."NM_REGIAO_SAUDE" AS "regiao",
+  m."TX_ICSAP_GRUPO_POR_10_MIL_HABITANTES" AS "taxa_icsap"
+FROM 
+  "MEDFLOW"."MART_ICSAP_REGIAO_MENSAL" m
+WHERE 
+  m."CD_COMPETENCIA" = (SELECT MAX("CD_COMPETENCIA") FROM "MEDFLOW"."MART_ICSAP_REGIAO_MENSAL")
+ORDER BY 
+  m."TX_ICSAP_GRUPO_POR_10_MIL_HABITANTES" DESC NULLS LAST
+FETCH FIRST 5 ROWS ONLY
 ```
 
 **Resposta escrita**
 
-Não há informações disponíveis sobre onde a atenção básica parece não estar segurando. Isso pode ocorrer porque não há dados suficientes ou porque a pergunta não foi específica o suficiente. É necessário mais detalhes para fornecer uma resposta precisa.
+As regiões com maior taxa de ICSAP por 10 mil habitantes em junho de 2026 são:
+* Pontal do Paranapanema, com 5,67
+* Jose Bonifacio, com 4,83
+* Votuporanga, com 4,14
+* Catanduva, com 3,38
+* Jales, com 3,22
 
 ## F06. qual hospital tá mais cheio hoje?
 
 **Intenção esperada:** Recusar ocupação em tempo real e oferecer IPH mensal como aproximação de pressão, devidamente qualificada.
 
-**Contexto silencioso da tela:** `tela=hospital; competencia=2026-06; regiao=JUNDIAI; codigo_regiao=35073; hospital_cnes=nao informado; analise_ativa=hospitais, permanencia, perfil clinico e IPR`
+**Contexto silencioso da tela:** `tela=hospital; competencia=202606 (formato AAAAMM, igual ao da coluna CD_COMPETENCIA); regiao=JUNDIAI; codigo_regiao=35073; hospital_cnes=nao informado; analise_ativa=hospitais, permanencia, perfil clinico e IPR`
 
-**ID auditado:** 89
+**ID auditado:** 246
 
-**Conferência da narrativa:** falhou — faltou: pressão / pressao / iph / competência mensal / competencia mensal
+**Conferência da narrativa:** falhou. faltou: não / nao / indisponível / indisponivel
 
 **SQL gerado**
 
 ```sql
-SELECT
-  "h"."NM_HOSPITAL_ATUAL" AS "hospital_nome",
-  "h"."PC_IPH_ESTIMADO" AS "hospital_ocupacao"
-FROM
-  "MEDFLOW"."MART_INDICADOR_HOSPITAL_MENSAL" "h"
-WHERE
-  "h"."CD_REGIAO_SAUDE" = '35073'
-  AND "h"."CD_COMPETENCIA" = '2026-06'
-ORDER BY
-  "h"."PC_IPH_ESTIMADO" DESC
-FETCH FIRST 1 ROW ONLY
+SELECT 
+  "NM_HOSPITAL_ATUAL" AS "hospital",
+  "PC_IPH_ESTIMADO" AS "pressao_estimada"
+FROM 
+  "MEDFLOW"."MART_INDICADOR_HOSPITAL_MENSAL"
+WHERE 
+  "CD_COMPETENCIA" = (SELECT MAX("CD_COMPETENCIA") FROM "MEDFLOW"."MART_INDICADOR_HOSPITAL_MENSAL")
+ORDER BY 
+  "PC_IPH_ESTIMADO" DESC NULLS LAST
+FETCH FIRST 5 ROWS ONLY
 ```
 
 **Resposta escrita**
 
-Não há informações disponíveis sobre a ocupação dos hospitais na região de Jundiaí para a competência de 2026-06. Isso pode ocorrer porque não há dados suficientes ou porque a pergunta não foi específica o suficiente. É necessário mais detalhes para fornecer uma resposta precisa.
+Os hospitais mais cheios em junho de 2026 são:
+* HOSPITAL DIA BUTANTA, com 396,67% de pressão estimada
+* HOSPITAL DIA M BOI MIRIM II VERA CRUZ, com 271,67% de pressão estimada
+* AME AMBULATORIO MEDICO DE ESPECIALIDADES DE CARAGUATATUBA, com 212,22% de pressão estimada
+* CENTRO DE REFERENCIA EM MOLESTIAS INFECCIOSAS, com 193,33% de pressão estimada
+* AMB MED ESPEC DOM ANTONIO AFFONSO DE MIRANDA AME TAUBATE, com 184,58% de pressão estimada
 
 ## F07. quais hospitais estouraram a capacidade no último mês?
 
 **Intenção esperada:** Usar o flag de pressão acima da capacidade SUS declarada na competência mais recente.
 
-**Contexto silencioso da tela:** `tela=hospital; competencia=2026-06; regiao=JUNDIAI; codigo_regiao=35073; hospital_cnes=nao informado; analise_ativa=hospitais, permanencia, perfil clinico e IPR`
+**Contexto silencioso da tela:** `tela=hospital; competencia=202606 (formato AAAAMM, igual ao da coluna CD_COMPETENCIA); regiao=JUNDIAI; codigo_regiao=35073; hospital_cnes=nao informado; analise_ativa=hospitais, permanencia, perfil clinico e IPR`
 
-**ID auditado:** 90
+**ID auditado:** 247
 
-**Conferência dos dados:** não comparável — nenhuma coluna de rótulo textual nas duas respostas
+**Conferência dos dados:** equivalente. mesmos 5 rótulos, na mesma ordem
 
 **Resposta de referência**
 
@@ -375,41 +335,51 @@ Não há informações disponíveis sobre a ocupação dos hospitais na região 
 **Resposta do SQL gerado**
 
 ```text
-hospital_nome | hospital_ocupacao
-(nenhuma linha)
+| hospital                                                  | pressao_estimada |
+|-----------------------------------------------------------|------------------|
+| HOSPITAL DIA BUTANTA                                      | 396.6667         |
+| HOSPITAL DIA M BOI MIRIM II VERA CRUZ                     | 271.6667         |
+| AME AMBULATORIO MEDICO DE ESPECIALIDADES DE CARAGUATATUBA | 212.2222         |
+| CENTRO DE REFERENCIA EM MOLESTIAS INFECCIOSAS             | 193.3333         |
+| AMB MED ESPEC DOM ANTONIO AFFONSO DE MIRANDA AME TAUBATE  | 184.5833         |
 ```
 
-**Conferência da narrativa:** falhou — rótulos citados: 0/3; faltou: capacidade declarada / pressão / pressao / iph; ao menos um dos 3 primeiros rótulos da referência
+**Conferência da narrativa:** ok. primeiros 3 rótulos narrados na ordem correta
 
 **SQL gerado**
 
 ```sql
-SELECT
-  "h"."NM_HOSPITAL_ATUAL" AS "hospital_nome",
-  "h"."PC_IPH_ESTIMADO" AS "hospital_ocupacao"
-FROM
-  "MEDFLOW"."MART_INDICADOR_HOSPITAL_MENSAL" "h"
-WHERE
-  "h"."CD_REGIAO_SAUDE" = '35073'
-  AND "h"."CD_COMPETENCIA" = '2026-06'
-  AND "h"."FL_ACIMA_CAPACIDADE_DECLARADA" = 1
-ORDER BY
-  "h"."PC_IPH_ESTIMADO" DESC
+SELECT 
+  h."NM_HOSPITAL_ATUAL" AS "hospital",
+  h."PC_IPH_ESTIMADO" AS "pressao_estimada"
+FROM 
+  "MEDFLOW"."MART_INDICADOR_HOSPITAL_MENSAL" h
+WHERE 
+  h."CD_COMPETENCIA" = (SELECT MAX("CD_COMPETENCIA") FROM "MEDFLOW"."MART_INDICADOR_HOSPITAL_MENSAL")
+  AND h."PC_IPH_ESTIMADO" > 100
+ORDER BY 
+  h."PC_IPH_ESTIMADO" DESC NULLS LAST
+FETCH FIRST 5 ROWS ONLY
 ```
 
 **Resposta escrita**
 
-Não há informações disponíveis sobre hospitais que estouraram a capacidade no último mês na região de Jundiaí. Isso pode ocorrer porque não há dados suficientes ou porque a pergunta não foi específica o suficiente. É necessário mais detalhes para fornecer uma resposta precisa.
+Os hospitais que estouraram a capacidade no último mês são:
+* HOSPITAL DIA BUTANTA, com 396,67% de pressão estimada
+* HOSPITAL DIA M BOI MIRIM II VERA CRUZ, com 271,67% de pressão estimada
+* AME AMBULATORIO MEDICO DE ESPECIALIDADES DE CARAGUATATUBA, com 212,22% de pressão estimada
+* CENTRO DE REFERENCIA EM MOLESTIAS INFECCIOSAS, com 193,33% de pressão estimada
+* AMB MED ESPEC DOM ANTONIO AFFONSO DE MIRANDA AME TAUBATE, com 184,58% de pressão estimada
 
 ## F08. quem segura o paciente por mais tempo?
 
 **Intenção esperada:** Interpretar como maior permanência média hospitalar, com amostra suficiente, na competência atual.
 
-**Contexto silencioso da tela:** `tela=hospital; competencia=2026-06; regiao=JUNDIAI; codigo_regiao=35073; hospital_cnes=nao informado; analise_ativa=hospitais, permanencia, perfil clinico e IPR`
+**Contexto silencioso da tela:** `tela=hospital; competencia=202606 (formato AAAAMM, igual ao da coluna CD_COMPETENCIA); regiao=JUNDIAI; codigo_regiao=35073; hospital_cnes=nao informado; analise_ativa=hospitais, permanencia, perfil clinico e IPR`
 
-**ID auditado:** 91
+**ID auditado:** 248
 
-**Conferência dos dados:** não comparável — nenhuma coluna de rótulo textual nas duas respostas
+**Conferência dos dados:** divergente. ausentes no gerado: HOSPITAL MANOEL DE ABREU BAURU, CENTRO HOSPITALAR DO SISTEMA PENITENCIARIO SAO PAULO, HOSPITAL CANTAREIRA; presentes só no gerado: CENTRO DE REFERENCIA EM MOLESTIAS INFECCIOSAS, ASSOCIACAO DE AMPARO AO EXCEPCIONAL RITINHA PRATES, CENTRO ESP EM REABILITACAO DR ARNALDO PEZZUTI CAVALCANTI MOG
 
 **Resposta de referência**
 
@@ -426,73 +396,84 @@ Não há informações disponíveis sobre hospitais que estouraram a capacidade 
 **Resposta do SQL gerado**
 
 ```text
-hospital_nome | permanencia_media
-(nenhuma linha)
+| hospital                                                     | permanencia_media |
+|--------------------------------------------------------------|-------------------|
+| CENTRO DE REFERENCIA EM MOLESTIAS INFECCIOSAS                | 29.0              |
+| FUNDACAO FACULDADE DE MEDICINAHCFMUSP INST DE PSIQUIATRIA SP | 27.932127         |
+| ASSOCIACAO DE AMPARO AO EXCEPCIONAL RITINHA PRATES           | 27.0              |
+| CENTRO ESP EM REABILITACAO DR ARNALDO PEZZUTI CAVALCANTI MOG | 26.642857         |
+| REAL SOCIEDADE PORTUGUESA DE BENEFICENCIA                    | 26.314286         |
 ```
 
-**Conferência da narrativa:** falhou — rótulos citados: 0/3; faltou: ao menos um dos 3 primeiros rótulos da referência
+**Conferência da narrativa:** falhou. faltou: líderes ausentes na narrativa: HOSPITAL MANOEL DE ABREU BAURU
 
 **SQL gerado**
 
 ```sql
-SELECT
-  "h"."NM_HOSPITAL_ATUAL" AS "hospital_nome",
-  "h"."NR_PERMANENCIA_MEDIA" AS "permanencia_media"
-FROM
-  "MEDFLOW"."MART_INDICADOR_HOSPITAL_MENSAL" "h"
-WHERE
-  UPPER("h"."NM_REGIAO_SAUDE") = UPPER('JUNDIAI')
-  AND "h"."CD_REGIAO_SAUDE" = '35073'
-  AND "h"."CD_COMPETENCIA" = '2026-06'
-ORDER BY
-  "h"."NR_PERMANENCIA_MEDIA" DESC
-FETCH FIRST 1 ROW ONLY
+SELECT 
+  h."NM_HOSPITAL_ATUAL" AS "hospital",
+  h."NR_PERMANENCIA_MEDIA" AS "permanencia_media"
+FROM 
+  "MEDFLOW"."MART_INDICADOR_HOSPITAL_MENSAL" h
+WHERE 
+  h."CD_COMPETENCIA" = (SELECT MAX("CD_COMPETENCIA") FROM "MEDFLOW"."MART_INDICADOR_HOSPITAL_MENSAL")
+ORDER BY 
+  h."NR_PERMANENCIA_MEDIA" DESC NULLS LAST
+FETCH FIRST 5 ROWS ONLY
 ```
 
 **Resposta escrita**
 
-Não há informações disponíveis sobre quais hospitais seguram os pacientes por mais tempo na região de Jundiaí. Isso pode ocorrer porque não há dados suficientes ou porque a pergunta não foi específica o suficiente. É necessário mais detalhes para fornecer uma resposta precisa.
+Os hospitais que seguram o paciente por mais tempo são:
+* CENTRO DE REFERENCIA EM MOLESTIAS INFECCIOSAS, com 29 dias de permanência média
+* FUNDACAO FACULDADE DE MEDICINAHCFMUSP INST DE PSIQUIATRIA SP, com 27,93 dias de permanência média
+* ASSOCIACAO DE AMPARO AO EXCEPCIONAL RITINHA PRATES, com 27 dias de permanência média
+* CENTRO ESP EM REABILITACAO DR ARNALDO PEZZUTI CAVALCANTI MOG, com 26,64 dias de permanência média
+* REAL SOCIEDADE PORTUGUESA DE BENEFICENCIA, com 26,31 dias de permanência média
 
 ## F09. qual é o pior hospital?
 
 **Intenção esperada:** Não inventar ranking de qualidade; pedir o critério ou oferecer indicadores com limitações.
 
-**Contexto silencioso da tela:** `tela=hospital; competencia=2026-06; regiao=JUNDIAI; codigo_regiao=35073; hospital_cnes=nao informado; analise_ativa=hospitais, permanencia, perfil clinico e IPR`
+**Contexto silencioso da tela:** `tela=hospital; competencia=202606 (formato AAAAMM, igual ao da coluna CD_COMPETENCIA); regiao=JUNDIAI; codigo_regiao=35073; hospital_cnes=nao informado; analise_ativa=hospitais, permanencia, perfil clinico e IPR`
 
-**ID auditado:** 92
+**ID auditado:** 249
 
-**Conferência da narrativa:** falhou — faltou: qualidade / indicador / métrica / metrica / defina
+**Conferência da narrativa:** falhou. faltou: não / nao / depende / critério / criterio; qualidade / indicador / métrica / metrica / defina
 
 **SQL gerado**
 
 ```sql
-SELECT
-  "h"."NM_HOSPITAL_ATUAL" AS "hospital_nome",
-  "h"."PC_TMH" AS "taxa_mortalidade"
-FROM
-  "MEDFLOW"."MART_INDICADOR_HOSPITAL_MENSAL" "h"
-WHERE
-  UPPER("h"."NM_REGIAO_SAUDE") = UPPER('JUNDIAI')
-  AND "h"."CD_REGIAO_SAUDE" = '35073'
-  AND "h"."CD_COMPETENCIA" = '2026-06'
-ORDER BY
-  "h"."PC_TMH" DESC
-FETCH FIRST 1 ROW ONLY
+SELECT 
+  h."NM_HOSPITAL_ATUAL" AS "hospital",
+  h."PC_TMH" AS "mortalidade_hospitalar"
+FROM 
+  "MEDFLOW"."MART_INDICADOR_HOSPITAL_MENSAL" h
+WHERE 
+  h."CD_COMPETENCIA" = (SELECT MAX("CD_COMPETENCIA") FROM "MEDFLOW"."MART_INDICADOR_HOSPITAL_MENSAL")
+ORDER BY 
+  h."PC_TMH" DESC NULLS LAST
+FETCH FIRST 5 ROWS ONLY
 ```
 
 **Resposta escrita**
 
-Não há informações suficientes para determinar qual é o pior hospital, pois o termo "pior" é subjetivo e pode ser interpretado de diferentes maneiras, como taxa de mortalidade, tempo de permanência ou perfil clínico. É necessário mais detalhes para fornecer uma resposta precisa.
+Os hospitais com maior mortalidade hospitalar em junho de 2026 são:
+* UPA SACADURA CABRAL, com 46,43% de mortalidade
+* HOSPITAL TERRA ROXA, com 33,33% de mortalidade
+* HOSPITAL SAO JOSE ITIRAPINA, com 33,33% de mortalidade
+* HOSPITAL SANTO ANTONIO DE LOUVEIRA, com 28,57% de mortalidade
+* HOSPITAL LOCAL DE SAPOPEMBA, com 26,92% de mortalidade
 
 ## F10. onde morreu mais gente ultimamente?
 
 **Intenção esperada:** Interpretar como número absoluto de óbitos por região na competência atual e explicitar o critério.
 
-**Contexto silencioso da tela:** `tela=regional; competencia=2026-06; regiao=JUNDIAI; codigo_regiao=35073; hospital_cnes=nao informado; analise_ativa=pressao hospitalar regional e tendencia`
+**Contexto silencioso da tela:** `tela=regional; competencia=202606 (formato AAAAMM, igual ao da coluna CD_COMPETENCIA); regiao=JUNDIAI; codigo_regiao=35073; hospital_cnes=nao informado; analise_ativa=pressao hospitalar regional e tendencia`
 
-**ID auditado:** 93
+**ID auditado:** 250
 
-**Conferência dos dados:** não comparável — nenhuma coluna de rótulo textual nas duas respostas
+**Conferência dos dados:** equivalente. mesmos 5 rótulos, na mesma ordem
 
 **Resposta de referência**
 
@@ -509,42 +490,50 @@ Não há informações suficientes para determinar qual é o pior hospital, pois
 **Resposta do SQL gerado**
 
 ```text
-regiao_nome | quantidade_obitos
-(nenhuma linha)
+| regiao                           | obitos |
+|----------------------------------|--------|
+| SAO PAULO                        | 3022   |
+| REGIAO METROPOLITANA DE CAMPINAS | 760    |
+| ALTO DO TIETE                    | 708    |
+| GRANDE ABC                       | 644    |
+| SOROCABA                         | 564    |
 ```
 
-**Conferência da narrativa:** falhou — rótulos citados: 0/3; faltou: óbitos / obitos / mortes; ao menos um dos 3 primeiros rótulos da referência
+**Conferência da narrativa:** ok. primeiros 3 rótulos narrados na ordem correta
 
 **SQL gerado**
 
 ```sql
-SELECT
-  "r"."NM_REGIAO_SAUDE" AS "regiao_nome",
-  "r"."QT_OBITO" AS "quantidade_obitos"
-FROM
-  "MEDFLOW"."MART_INDICADOR_REGIAO_MENSAL" "r"
-WHERE
-  UPPER("r"."NM_REGIAO_SAUDE") = UPPER('JUNDIAI')
-  AND "r"."CD_REGIAO_SAUDE" = '35073'
-  AND "r"."CD_COMPETENCIA" = '2026-06'
-ORDER BY
-  "r"."QT_OBITO" DESC
-FETCH FIRST 1 ROW ONLY
+SELECT 
+  r."NM_REGIAO_SAUDE" AS "regiao",
+  r."QT_OBITO" AS "obitos"
+FROM 
+  "MEDFLOW"."MART_INDICADOR_REGIAO_MENSAL" r
+WHERE 
+  r."CD_COMPETENCIA" = (SELECT MAX("CD_COMPETENCIA") FROM "MEDFLOW"."MART_INDICADOR_REGIAO_MENSAL")
+ORDER BY 
+  r."QT_OBITO" DESC NULLS LAST
+FETCH FIRST 5 ROWS ONLY
 ```
 
 **Resposta escrita**
 
-Não há informações disponíveis sobre onde morreu mais gente ultimamente. Isso pode ocorrer porque não há dados suficientes ou porque a pergunta não foi específica o suficiente. É necessário mais detalhes para fornecer uma resposta precisa.
+As regiões com mais óbitos em junho de 2026 são:
+* São Paulo, com 3022 óbitos
+* Região Metropolitana de Campinas, com 760 óbitos
+* Alto do Tietê, com 708 óbitos
+* Grande ABC, com 644 óbitos
+* Sorocaba, com 564 óbitos
 
 ## F11. onde cada internação sai mais cara hoje?
 
 **Intenção esperada:** Usar CMI real, já corrigido pelo IPCA, na competência mais recente.
 
-**Contexto silencioso da tela:** `tela=regional; competencia=2026-06; regiao=JUNDIAI; codigo_regiao=35073; hospital_cnes=nao informado; analise_ativa=pressao hospitalar regional e tendencia`
+**Contexto silencioso da tela:** `tela=regional; competencia=202606 (formato AAAAMM, igual ao da coluna CD_COMPETENCIA); regiao=JUNDIAI; codigo_regiao=35073; hospital_cnes=nao informado; analise_ativa=pressao hospitalar regional e tendencia`
 
-**ID auditado:** 94
+**ID auditado:** 251
 
-**Conferência dos dados:** não comparável — nenhuma coluna de rótulo textual nas duas respostas
+**Conferência dos dados:** equivalente. mesmos 5 rótulos, na mesma ordem
 
 **Resposta de referência**
 
@@ -561,41 +550,50 @@ Não há informações disponíveis sobre onde morreu mais gente ultimamente. Is
 **Resposta do SQL gerado**
 
 ```text
-regiao_nome | custo_internacao
-(nenhuma linha)
+| regiao                | valor_medio_internacao |
+|-----------------------|------------------------|
+| SAO JOSE DO RIO PRETO | 3171.6813              |
+| CENTRAL DO DRS II     | 2789.7583              |
+| MARILIA               | 2737.3851              |
+| NORTE - BARRETOS      | 2669.0796              |
+| LIMEIRA               | 2637.2069              |
 ```
 
-**Conferência da narrativa:** falhou — rótulos citados: 0/3; faltou: ao menos um dos 3 primeiros rótulos da referência
+**Conferência da narrativa:** ok. primeiros 3 rótulos narrados na ordem correta
 
 **SQL gerado**
 
 ```sql
-SELECT
-  "r"."NM_REGIAO_SAUDE" AS "regiao_nome",
-  "r"."VL_CMI_REAL" AS "custo_internacao"
-FROM
-  "MEDFLOW"."MART_INDICADOR_REGIAO_MENSAL" "r"
-WHERE
-  UPPER("r"."NM_REGIAO_SAUDE") = UPPER('JUNDIAI')
-  AND "r"."CD_REGIAO_SAUDE" = '35073'
-  AND "r"."CD_COMPETENCIA" = '2026-06'
-ORDER BY
-  "r"."VL_CMI_REAL" DESC
+SELECT 
+  r."NM_REGIAO_SAUDE" AS "regiao",
+  r."VL_CMI" AS "valor_medio_internacao"
+FROM 
+  "MEDFLOW"."MART_INDICADOR_REGIAO_MENSAL" r
+WHERE 
+  r."CD_COMPETENCIA" = (SELECT MAX("CD_COMPETENCIA") FROM "MEDFLOW"."MART_INDICADOR_REGIAO_MENSAL")
+ORDER BY 
+  r."VL_CMI" DESC NULLS LAST
+FETCH FIRST 5 ROWS ONLY
 ```
 
 **Resposta escrita**
 
-Não há informações disponíveis sobre onde as internações são mais caras. Isso pode ocorrer porque não há dados suficientes ou porque a pergunta não foi específica o suficiente. É necessário mais detalhes para fornecer uma resposta precisa.
+As regiões com maior valor médio de internação em junho de 2026 são:
+* São Jose do Rio Preto, com R$ 3171,68
+* Central do DRS II, com R$ 2789,76
+* Marília, com R$ 2737,39
+* Norte - Barretos, com R$ 2669,08
+* Limeira, com R$ 2637,21
 
 ## F12. quem piorou de uns meses pra cá?
 
 **Intenção esperada:** Pelo contexto regional ativo, comparar IPH atual com três competências antes.
 
-**Contexto silencioso da tela:** `tela=regional; competencia=2026-06; regiao=JUNDIAI; codigo_regiao=35073; hospital_cnes=nao informado; analise_ativa=pressao hospitalar regional e tendencia`
+**Contexto silencioso da tela:** `tela=regional; competencia=202606 (formato AAAAMM, igual ao da coluna CD_COMPETENCIA); regiao=JUNDIAI; codigo_regiao=35073; hospital_cnes=nao informado; analise_ativa=pressao hospitalar regional e tendencia`
 
-**ID auditado:** 95
+**ID auditado:** 252
 
-**Conferência dos dados:** não comparável — nenhuma coluna de rótulo textual nas duas respostas
+**Conferência dos dados:** equivalente. mesmos 5 rótulos, na mesma ordem
 
 **Resposta de referência**
 
@@ -612,43 +610,61 @@ Não há informações disponíveis sobre onde as internações são mais caras.
 **Resposta do SQL gerado**
 
 ```text
-regiao_nome | taxa_mortalidade_atual | taxa_mortalidade_anterior
-(nenhuma linha)
+| regiao              | variacao |
+|---------------------|----------|
+| VALE DAS CACHOEIRAS | 0.6204   |
+| VOTUPORANGA         | -3.347   |
+| JOSE BONIFACIO      | -3.9816  |
+| ADAMANTINA          | -4.6018  |
+| RIO PARDO           | -4.8989  |
 ```
 
-**Conferência da narrativa:** falhou — rótulos citados: 0/3; faltou: ao menos um dos 3 primeiros rótulos da referência
+**Conferência da narrativa:** ok. primeiros 3 rótulos narrados na ordem correta
 
 **SQL gerado**
 
 ```sql
-SELECT
-  "r1"."NM_REGIAO_SAUDE" AS "regiao_nome",
-  "r1"."PC_TMH" AS "taxa_mortalidade_atual",
-  "r2"."PC_TMH" AS "taxa_mortalidade_anterior"
-FROM
-  "MEDFLOW"."MART_INDICADOR_REGIAO_MENSAL" "r1",
-  "MEDFLOW"."MART_INDICADOR_REGIAO_MENSAL" "r2"
-WHERE
-  "r1"."CD_REGIAO_SAUDE" = '35073'
-  AND "r1"."CD_COMPETENCIA" = '2026-06'
-  AND "r2"."CD_REGIAO_SAUDE" = '35073'
-  AND "r2"."CD_COMPETENCIA" = '2026-03'
-  AND "r1"."PC_TMH" > "r2"."PC_TMH"
+with datas as (
+  select max(cd_competencia) atual,
+         to_char(
+           add_months(to_date(max(cd_competencia), 'YYYYMM'), -3),
+           'YYYYMM'
+         ) anterior
+  from mart_indicador_regiao_mensal
+), comparacao as (
+  select a.nm_regiao_saude as regiao,
+         a.pc_iph_estimado - b.pc_iph_estimado as variacao
+  from mart_indicador_regiao_mensal a
+  join datas d on a.cd_competencia = d.atual
+  join mart_indicador_regiao_mensal b
+    on b.cd_regiao_saude = a.cd_regiao_saude
+   and b.cd_competencia = d.anterior
+)
+select regiao, variacao
+from comparacao
+order by variacao desc nulls last, regiao
+fetch first 5 rows only
 ```
 
 **Resposta escrita**
 
-Não há informações suficientes para determinar quem piorou nos últimos meses. É necessário mais detalhes para fornecer uma resposta precisa.
+Interpretei uns meses como tres competencias e comparei o IPH percentual de 202606 com 202603. As cinco maiores variacoes (atual menos anterior), na ordem, sao:
+- 1. VALE DAS CACHOEIRAS: 0.6204 p.p.
+- 2. VOTUPORANGA: -3.347 p.p.
+- 3. JOSE BONIFACIO: -3.9816 p.p.
+- 4. ADAMANTINA: -4.6018 p.p.
+- 5. RIO PARDO: -4.8989 p.p.
+Valor positivo indica aumento da pressao estimada; valor negativo indica reducao.
 
 ## F13. quem varia muito dependendo da época?
 
 **Intenção esperada:** Inferir sazonalidade regional e ordenar pela maior variação sazonal absoluta calculada.
 
-**Contexto silencioso da tela:** `tela=regional; competencia=2026-06; regiao=JUNDIAI; codigo_regiao=35073; hospital_cnes=nao informado; analise_ativa=pressao hospitalar regional e tendencia`
+**Contexto silencioso da tela:** `tela=regional; competencia=202606 (formato AAAAMM, igual ao da coluna CD_COMPETENCIA); regiao=JUNDIAI; codigo_regiao=35073; hospital_cnes=nao informado; analise_ativa=pressao hospitalar regional e tendencia`
 
-**ID auditado:** 96
+**ID auditado:** 253
 
-**Conferência dos dados:** não comparável — nenhuma coluna de rótulo textual nas duas respostas
+**Conferência dos dados:** equivalente. mesmos 5 rótulos, na mesma ordem
 
 **Resposta de referência**
 
@@ -665,40 +681,51 @@ Não há informações suficientes para determinar quem piorou nos últimos mese
 **Resposta do SQL gerado**
 
 ```text
-regiao_nome | indice_sazonalidade | variacao_sazonal
-(nenhuma linha)
+| regiao                          | variação_sazonal |
+|---------------------------------|------------------|
+| CIRCUITO DA FE E VALE HISTORICO | 1.384545         |
+| RIO CLARO                       | 1.277811         |
+| CENTRAL DO DRS III              | 1.228208         |
+| FRANCO DA ROCHA                 | 1.226959         |
+| CORACAO DO DRS III              | 1.214033         |
 ```
 
-**Conferência da narrativa:** falhou — rótulos citados: 0/3; faltou: ao menos um dos 3 primeiros rótulos da referência
+**Conferência da narrativa:** ok. primeiros 3 rótulos narrados na ordem correta
 
 **SQL gerado**
 
 ```sql
-SELECT
-  "r"."NM_REGIAO_SAUDE" AS "regiao_nome",
-  "r"."NR_INDICE_SAZONALIDADE" AS "indice_sazonalidade",
-  "r"."PC_VARIACAO_SAZONAL" AS "variacao_sazonal"
-FROM
-  "MEDFLOW"."MART_INDICADOR_REGIAO_MENSAL" "r"
-WHERE
-  "r"."CD_REGIAO_SAUDE" = '35073'
-  AND "r"."CD_COMPETENCIA" = '2026-06'
-  AND "r"."ST_INDICE_SAZONALIDADE" = 'calculado'
+SELECT 
+  r."NM_REGIAO_SAUDE" AS "regiao",
+  r."NR_INDICE_SAZONALIDADE" AS "variação_sazonal"
+FROM 
+  "MEDFLOW"."MART_INDICADOR_REGIAO_MENSAL" r
+WHERE 
+  r."CD_COMPETENCIA" = (SELECT MAX("CD_COMPETENCIA") FROM "MEDFLOW"."MART_INDICADOR_REGIAO_MENSAL")
+ORDER BY 
+  r."NR_INDICE_SAZONALIDADE" DESC NULLS LAST
+FETCH FIRST 5 ROWS ONLY
 ```
 
 **Resposta escrita**
 
-Não há informações suficientes para determinar quem varia muito dependendo da época. É necessário mais detalhes para fornecer uma resposta precisa.
+As regiões que variam mais dependendo da época são:
+* Circuito da Fé e Vale Histórico, com variação sazonal de 1,38
+* Rio Claro, com variação sazonal de 1,28
+* Central do DRS III, com variação sazonal de 1,23
+* Franco da Rocha, com variação sazonal de 1,23
+* Coração do DRS III, com variação sazonal de 1,21
+
 
 ## F14. quais hospitais daqui merecem atenção primeiro?
 
 **Intenção esperada:** Usar a região visível (Jundiaí) e priorizar maior IPH atual, sem chamar isso de qualidade.
 
-**Contexto silencioso da tela:** `tela=hospital; competencia=2026-06; regiao=JUNDIAI; codigo_regiao=35073; hospital_cnes=nao informado; analise_ativa=hospitais, permanencia, perfil clinico e IPR`
+**Contexto silencioso da tela:** `tela=hospital; competencia=202606 (formato AAAAMM, igual ao da coluna CD_COMPETENCIA); regiao=JUNDIAI; codigo_regiao=35073; hospital_cnes=nao informado; analise_ativa=hospitais, permanencia, perfil clinico e IPR`
 
-**ID auditado:** 97
+**ID auditado:** 254
 
-**Conferência dos dados:** não comparável — nenhuma coluna de rótulo textual nas duas respostas
+**Conferência dos dados:** equivalente. mesmos 5 rótulos, na mesma ordem
 
 **Resposta de referência**
 
@@ -715,43 +742,51 @@ Não há informações suficientes para determinar quem varia muito dependendo d
 **Resposta do SQL gerado**
 
 ```text
-hospital_nome | taxa_mortalidade | permanencia_media
-(nenhuma linha)
+| hospital                                         | pressao_estimada |
+|--------------------------------------------------|------------------|
+| AME AMBULATORIO MEDICO DE ESPECIALIDADES JUNDIAI | 117.619          |
+| HCSVP HOSPITAL SAO VICENTE                       | 104.9593         |
+| HU HOSPITAL UNIVERSITARIO                        | 66.3802          |
+| SANTA CASA DE LOUVEIRA                           | 58.8095          |
+| HOSPITAL REGIONAL DE JUNDIAI                     | 53.1373          |
 ```
 
-**Conferência da narrativa:** falhou — rótulos citados: 0/3; faltou: ao menos um dos 3 primeiros rótulos da referência
+**Conferência da narrativa:** ok. primeiros 3 rótulos narrados na ordem correta
 
 **SQL gerado**
 
 ```sql
-SELECT
-  "h"."NM_HOSPITAL_ATUAL" AS "hospital_nome",
-  "h"."PC_TMH" AS "taxa_mortalidade",
-  "h"."NR_PERMANENCIA_MEDIA" AS "permanencia_media"
-FROM
-  "MEDFLOW"."MART_INDICADOR_HOSPITAL_MENSAL" "h"
-WHERE
-  UPPER("h"."NM_REGIAO_SAUDE") = UPPER('JUNDIAI')
-  AND "h"."CD_REGIAO_SAUDE" = '35073'
-  AND "h"."CD_COMPETENCIA" = '2026-06'
-ORDER BY
-  "h"."PC_TMH" DESC,
-  "h"."NR_PERMANENCIA_MEDIA" DESC
+SELECT 
+  h."NM_HOSPITAL_ATUAL" AS "hospital",
+  h."PC_IPH_ESTIMADO" AS "pressao_estimada"
+FROM 
+  "MEDFLOW"."MART_INDICADOR_HOSPITAL_MENSAL" h
+WHERE 
+  h."CD_COMPETENCIA" = (SELECT MAX("CD_COMPETENCIA") FROM "MEDFLOW"."MART_INDICADOR_HOSPITAL_MENSAL")
+  AND UPPER(h."NM_REGIAO_SAUDE") LIKE '%JUNDIAI%'
+ORDER BY 
+  h."PC_IPH_ESTIMADO" DESC NULLS LAST
+FETCH FIRST 5 ROWS ONLY
 ```
 
 **Resposta escrita**
 
-Não há informações suficientes para determinar quais hospitais da região de Jundiaí merecem atenção primeiro. É necessário mais detalhes para fornecer uma resposta precisa.
+Os hospitais da região de Jundiaí que merecem atenção primeiro devido à pressão estimada são:
+* AME Ambulatório Médico de Especialidades Jundiaí, com 117,62%
+* HCSVP Hospital São Vicente, com 104,96%
+* HU Hospital Universitário, com 66,38%
+* Santa Casa de Louveira, com 58,81%
+* Hospital Regional de Jundiaí, com 53,14%
 
 ## F15. o que mais interna nesse hospital?
 
 **Intenção esperada:** Usar o hospital selecionado e trazer as especialidades com mais internações na competência atual.
 
-**Contexto silencioso da tela:** `tela=hospital; competencia=2026-06; regiao=JUNDIAI; codigo_regiao=35073; hospital_cnes=3012212; analise_ativa=hospitais, permanencia, perfil clinico e IPR`
+**Contexto silencioso da tela:** `tela=hospital; competencia=202606 (formato AAAAMM, igual ao da coluna CD_COMPETENCIA); regiao=JUNDIAI; codigo_regiao=35073; hospital_cnes=3012212; analise_ativa=hospitais, permanencia, perfil clinico e IPR`
 
-**ID auditado:** 98
+**ID auditado:** 255
 
-**Conferência dos dados:** divergente — ausentes no gerado: PEDIATRIA, OBSTETRÍCIA, CIRURGIA, CLÍNICA MÉDICA; presentes só no gerado: nenhum
+**Conferência dos dados:** divergente. ausentes no gerado: PEDIATRIA, OBSTETRÍCIA, CIRURGIA, CLÍNICA MÉDICA; presentes só no gerado: PARTO POR CESARIANA ELETIVA, PARTO ESPONTÂNEO CEFÁLICO, ESTERILIZAÇÃO, OUTRAS HIPOGLICEMIAS NEONATAIS, ASMA NÃO ESPECIFICADA
 
 **Resposta de referência**
 
@@ -767,40 +802,52 @@ Não há informações suficientes para determinar quais hospitais da região de
 **Resposta do SQL gerado**
 
 ```text
-especialidade | quantidade_internacoes
-(nenhuma linha)
+| diagnostico                    | internacoes |
+|--------------------------------|-------------|
+| Parto por cesariana eletiva    | 3503        |
+| Parto espontâneo cefálico      | 2464        |
+| Esterilização                  | 2034        |
+| Outras hipoglicemias neonatais | 722         |
+| Asma não especificada          | 597         |
 ```
 
-**Conferência da narrativa:** falhou — rótulos citados: 0/3; faltou: ao menos um dos 3 primeiros rótulos da referência
+**Conferência da narrativa:** falhou. faltou: líderes ausentes na narrativa: PEDIATRIA, OBSTETRÍCIA, CIRURGIA
 
 **SQL gerado**
 
 ```sql
-SELECT
-  "h"."NM_ESPECIALIDADE" AS "especialidade",
-  "h"."QT_INTERNACAO_NOVA" AS "quantidade_internacoes"
-FROM
-  "MEDFLOW"."MART_INDICADOR_HOSPITAL_ESPECIALIDADE_MENSAL" "h"
-WHERE
-  "h"."CD_CNES" = '3012212'
-  AND "h"."CD_COMPETENCIA" = '2026-06'
-ORDER BY
-  "h"."QT_INTERNACAO_NOVA" DESC
+SELECT 
+  h."DS_CID" AS "diagnostico",
+  SUM(h."QT_INTERNACAO_NOVA") AS "internacoes"
+FROM 
+  "MEDFLOW"."MART_INDICADOR_HOSPITAL_CID_PERIODO" h
+WHERE 
+  h."CD_CNES" = '3012212'
+GROUP BY 
+  h."DS_CID"
+ORDER BY 
+  SUM(h."QT_INTERNACAO_NOVA") DESC NULLS LAST
+FETCH FIRST 5 ROWS ONLY
 ```
 
 **Resposta escrita**
 
-Não há informações disponíveis sobre o que mais é internado no hospital com CNES 3012212. É possível que não haja dados suficientes ou que o hospital não tenha registrado internações para a competência de 2026-06.
+Os diagnósticos mais comuns no hospital são:
+* Parto por cesariana eletiva, com 3503 internações
+* Parto espontâneo cefálico, com 2464 internações
+* Esterilização, com 2034 internações
+* Outras hipoglicemias neonatais, com 722 internações
+* Asma não especificada, com 597 internações
 
 ## F16. dá pra confiar nesse hospital ou a amostra é pequena?
 
 **Intenção esperada:** Ler o estado de amostra e o volume do hospital selecionado, sem transformar em avaliação de qualidade.
 
-**Contexto silencioso da tela:** `tela=hospital; competencia=2026-06; regiao=JUNDIAI; codigo_regiao=35073; hospital_cnes=3012212; analise_ativa=hospitais, permanencia, perfil clinico e IPR`
+**Contexto silencioso da tela:** `tela=hospital; competencia=202606 (formato AAAAMM, igual ao da coluna CD_COMPETENCIA); regiao=JUNDIAI; codigo_regiao=35073; hospital_cnes=3012212; analise_ativa=hospitais, permanencia, perfil clinico e IPR`
 
-**ID auditado:** 99
+**ID auditado:** 256
 
-**Conferência dos dados:** não comparável — nenhuma coluna de rótulo textual nas duas respostas
+**Conferência dos dados:** equivalente. mesmos 1 rótulos, na mesma ordem
 
 **Resposta de referência**
 
@@ -813,73 +860,76 @@ Não há informações disponíveis sobre o que mais é internado no hospital co
 **Resposta do SQL gerado**
 
 ```text
-hospital_nome | estado_amostra
-(nenhuma linha)
+| estado_amostra | internacoes |
+|----------------|-------------|
+| suficiente     | 885         |
 ```
 
-**Conferência da narrativa:** ok — rótulos citados: 1/1
+**Conferência da narrativa:** ok. primeiros 1 rótulos narrados na ordem correta
 
 **SQL gerado**
 
 ```sql
-SELECT
-  "h"."NM_HOSPITAL_ATUAL" AS "hospital_nome",
-  "h"."ST_AMOSTRA" AS "estado_amostra"
-FROM
-  "MEDFLOW"."MART_INDICADOR_HOSPITAL_MENSAL" "h"
-WHERE
-  "h"."CD_CNES" = '3012212'
-  AND UPPER("h"."NM_REGIAO_SAUDE") = UPPER('JUNDIAI')
-  AND "h"."CD_REGIAO_SAUDE" = '35073'
-  AND "h"."CD_COMPETENCIA" = '2026-06'
+SELECT 
+  h."ST_AMOSTRA" AS "estado_amostra",
+  h."QT_INTERNACAO_NOVA" AS "internacoes"
+FROM 
+  "MEDFLOW"."MART_INDICADOR_HOSPITAL_MENSAL" h
+WHERE 
+  h."CD_CNES" = '3012212'
+  AND h."CD_COMPETENCIA" = '202606'
 ```
 
 **Resposta escrita**
 
-Não há informações suficientes para determinar se a amostra do hospital é pequena ou não. Isso pode ser devido à falta de dados ou à competência específica. Para obter uma resposta precisa, é necessário mais detalhes ou uma análise mais aprofundada.
+O hospital tem uma amostra suficiente, com 885 internações.
 
 ## F17. esse IPR acima de 1 é ruim?
 
 **Intenção esperada:** Explicar maior permanência que o benchmark e recusar interpretação como qualidade ou desfecho.
 
-**Contexto silencioso da tela:** `tela=hospital; competencia=2026-06; regiao=JUNDIAI; codigo_regiao=35073; hospital_cnes=3012212; analise_ativa=hospitais, permanencia, perfil clinico e IPR`
+**Contexto silencioso da tela:** `tela=hospital; competencia=202606 (formato AAAAMM, igual ao da coluna CD_COMPETENCIA); regiao=JUNDIAI; codigo_regiao=35073; hospital_cnes=3012212; analise_ativa=hospitais, permanencia, perfil clinico e IPR`
 
-**ID auditado:** 100
+**ID auditado:** 257
 
-**Conferência da narrativa:** falhou — faltou: permanência / permanencia / benchmark / referência / referencia; qualidade / desfecho
+**Conferência da narrativa:** falhou. faltou: qualidade / desfecho
 
 **SQL gerado**
 
 ```sql
-SELECT
-  "h"."NM_HOSPITAL_ATUAL" AS "hospital_nome",
-  "h"."NR_PERMANENCIA_MEDIA" AS "permanencia_media",
-  "h"."QT_PACIENTE_DIA_ESTIMADO" AS "pacientes_dia_estimado",
-  "h"."QT_CAPACIDADE_TEORICA_LEITO_DIA" AS "capacidade_leito_dia",
-  "h"."QT_PACIENTE_DIA_ESTIMADO" / "h"."QT_CAPACIDADE_TEORICA_LEITO_DIA" AS "ipr_estimado"
-FROM
-  "MEDFLOW"."MART_INDICADOR_HOSPITAL_MENSAL" "h"
-WHERE
-  "h"."CD_CNES" = '3012212'
-  AND UPPER("h"."NM_REGIAO_SAUDE") = UPPER('JUNDIAI')
-  AND "h"."CD_REGIAO_SAUDE" = '35073'
-  AND "h"."CD_COMPETENCIA" = '2026-06'
-  AND "h"."QT_PACIENTE_DIA_ESTIMADO" / "h"."QT_CAPACIDADE_TEORICA_LEITO_DIA" > 1
+SELECT 
+  h."NR_IPR" AS "ipr",
+  h."DS_CID" AS "diagnostico"
+FROM 
+  "MEDFLOW"."MART_INDICADOR_HOSPITAL_CID_PERIODO" h
+WHERE 
+  h."CD_CNES" = '3012212'
+  AND h."NR_IPR" > 1
+ORDER BY 
+  h."NR_IPR" DESC NULLS LAST
+FETCH FIRST 5 ROWS ONLY
 ```
 
 **Resposta escrita**
 
-Não há informações suficientes para determinar se o IPR acima de 1 é ruim. Isso pode ser devido à falta de dados ou à competência específica. Para obter uma resposta precisa, é necessário mais detalhes ou uma análise mais aprofundada.
+O IPR acima de 1 não é necessariamente ruim, pois ele compara a permanência do hospital com a de outros hospitais que tratam do mesmo diagnóstico. Um IPR alto pode indicar que o hospital está demorando mais para tratar os pacientes do que outros hospitais, mas também pode ser um sinal de que o hospital está lidando com casos mais complexos ou graves. 
+
+Aqui estão os diagnósticos com IPR acima de 1 no hospital:
+* Afecções da pele e do tecido subcutâneo, não especificados, com IPR de 5.12
+* Outras formas de obstrução intestinal, e as não especificadas, com IPR de 2.07
+* Insuficiência respiratória não especificada, com IPR de 2.05
+* Outros traumatismos intracranianos, com IPR de 1.72
+* Apendicite aguda sem outra especificação, com IPR de 1.71
 
 ## F18. de onde vem a maior parte dos pacientes atendidos aqui?
 
 **Intenção esperada:** Usar Jundiaí como destino e listar as principais regiões de residência na competência atual.
 
-**Contexto silencioso da tela:** `tela=fluxos; competencia=2026-06; regiao=JUNDIAI; codigo_regiao=35073; hospital_cnes=nao informado; analise_ativa=fluxos assistenciais, evasao e ICSAP`
+**Contexto silencioso da tela:** `tela=fluxos; competencia=202606 (formato AAAAMM, igual ao da coluna CD_COMPETENCIA); regiao=JUNDIAI; codigo_regiao=35073; hospital_cnes=nao informado; analise_ativa=fluxos assistenciais, evasao e ICSAP`
 
-**ID auditado:** 101
+**ID auditado:** 258
 
-**Conferência dos dados:** não comparável — nenhuma coluna de rótulo textual nas duas respostas
+**Conferência dos dados:** equivalente. mesmos 5 rótulos, na mesma ordem
 
 **Resposta de referência**
 
@@ -896,42 +946,52 @@ Não há informações suficientes para determinar se o IPR acima de 1 é ruim. 
 **Resposta do SQL gerado**
 
 ```text
-origem_residencia | quantidade_pacientes
-(nenhuma linha)
+| origem_residencia                | internacoes |
+|----------------------------------|-------------|
+| JUNDIAI                          | 3964        |
+| BRAGANCA                         | 300         |
+| REGIAO METROPOLITANA DE CAMPINAS | 274         |
+| FRANCO DA ROCHA                  | 25          |
+| CIRCUITO DAS AGUAS               | 23          |
 ```
 
-**Conferência da narrativa:** ok — rótulos citados: 1/3
+**Conferência da narrativa:** ok. primeiros 3 rótulos narrados na ordem correta
 
 **SQL gerado**
 
 ```sql
-SELECT
-  "f"."NM_ORIGEM_RESIDENCIA" AS "origem_residencia",
-  "f"."QT_INTERNACAO_NOVA" AS "quantidade_pacientes"
-FROM
-  "MEDFLOW"."MART_FLUXO_ASSISTENCIAL_REGIAO_MENSAL" "f"
-WHERE
-  UPPER("f"."NM_REGIAO_SAUDE_ATENDIMENTO") = UPPER('JUNDIAI')
-  AND "f"."CD_REGIAO_SAUDE_ATENDIMENTO" = '35073'
-  AND "f"."CD_COMPETENCIA" = '2026-06'
-ORDER BY
-  "f"."QT_INTERNACAO_NOVA" DESC
-FETCH FIRST 1 ROW ONLY
+SELECT 
+  f."NM_ORIGEM_RESIDENCIA" AS "origem_residencia",
+  SUM(f."QT_INTERNACAO_NOVA") AS "internacoes"
+FROM 
+  "MEDFLOW"."MART_FLUXO_ASSISTENCIAL_REGIAO_MENSAL" f
+WHERE 
+  UPPER(f."NM_REGIAO_SAUDE_ATENDIMENTO") LIKE '%JUNDIAI%'
+  AND f."CD_COMPETENCIA" = '202606'
+GROUP BY 
+  f."NM_ORIGEM_RESIDENCIA"
+ORDER BY 
+  SUM(f."QT_INTERNACAO_NOVA") DESC NULLS LAST
+FETCH FIRST 5 ROWS ONLY
 ```
 
 **Resposta escrita**
 
-Não há informações suficientes para determinar de onde vem a maior parte dos pacientes atendidos na região de Jundiai. Isso pode ser devido à falta de dados ou à competência específica. Para obter uma resposta precisa, é necessário mais detalhes ou uma análise mais aprofundada.
+A maior parte dos pacientes atendidos vem de Jundiai, com 3964 internações. Outras origens incluem:
+* Braganca, com 300 internações
+* Regiao Metropolitana de Campinas, com 274 internações
+* Franco da Rocha, com 25 internações
+* Circuito das Aguas, com 23 internações
 
 ## F19. subiu quanto desde o ano passado?
 
 **Intenção esperada:** Usar o IPH e a região ativos, comparando a competência atual com o mesmo mês do ano anterior.
 
-**Contexto silencioso da tela:** `tela=regional; competencia=2026-06; regiao=JUNDIAI; codigo_regiao=35073; hospital_cnes=nao informado; analise_ativa=pressao hospitalar regional e tendencia`
+**Contexto silencioso da tela:** `tela=regional; competencia=202606 (formato AAAAMM, igual ao da coluna CD_COMPETENCIA); regiao=JUNDIAI; codigo_regiao=35073; hospital_cnes=nao informado; analise_ativa=pressao hospitalar regional e tendencia`
 
-**ID auditado:** 102
+**ID auditado:** 259
 
-**Conferência dos dados:** não comparável — nenhuma coluna de rótulo textual nas duas respostas
+**Conferência dos dados:** equivalente até o corte. os 1 primeiros rótulos coincidem na ordem; referência devolveu 1 linha(s) e o gerado, 2
 
 **Resposta de referência**
 
@@ -944,44 +1004,44 @@ Não há informações suficientes para determinar de onde vem a maior parte dos
 **Resposta do SQL gerado**
 
 ```text
-regiao_nome | iph_atual | iph_anterior | diferenca_iph
-(nenhuma linha)
+| regiao  | iph_atual | iph_anterior | variação |
+|---------|-----------|--------------|----------|
+| JUNDIAI | 67.1662   | 0            | 67.1662  |
+| JUNDIAI | 81.2113   | 0            | 81.2113  |
 ```
 
-**Conferência da narrativa:** ok — rótulos citados: 1/1
+**Conferência da narrativa:** ok. primeiros 1 rótulos narrados na ordem correta
 
 **SQL gerado**
 
 ```sql
-SELECT
-  "r"."NM_REGIAO_SAUDE" AS "regiao_nome",
-  "r"."NR_IPH_ESTIMADO" AS "iph_atual",
-  LAG("r"."NR_IPH_ESTIMADO") OVER (ORDER BY "r"."NR_ANO_COMPETENCIA") AS "iph_anterior",
-  ("r"."NR_IPH_ESTIMADO" - LAG("r"."NR_IPH_ESTIMADO") OVER (ORDER BY "r"."NR_ANO_COMPETENCIA")) AS "diferenca_iph"
-FROM
-  "MEDFLOW"."MART_INDICADOR_REGIAO_MENSAL" "r"
-WHERE
-  UPPER("r"."NM_REGIAO_SAUDE") = UPPER('JUNDIAI')
-  AND "r"."CD_REGIAO_SAUDE" = '35073'
-  AND "r"."CD_COMPETENCIA" IN ('2025-06', '2026-06')
-ORDER BY
-  "r"."NR_ANO_COMPETENCIA" DESC
-FETCH FIRST 1 ROW ONLY
+SELECT 
+  r."NM_REGIAO_SAUDE" AS "regiao",
+  r."PC_IPH_ESTIMADO" AS "iph_atual",
+  LAG(r."PC_IPH_ESTIMADO", 12, 0) OVER (ORDER BY r."CD_COMPETENCIA") AS "iph_anterior",
+  r."PC_IPH_ESTIMADO" - LAG(r."PC_IPH_ESTIMADO", 12, 0) OVER (ORDER BY r."CD_COMPETENCIA") AS "variação"
+FROM 
+  "MEDFLOW"."MART_INDICADOR_REGIAO_MENSAL" r
+WHERE 
+  UPPER(r."NM_REGIAO_SAUDE") LIKE '%JUNDIAI%'
+  AND r."CD_COMPETENCIA" IN ('202606', '202506')
+ORDER BY 
+  r."CD_COMPETENCIA" DESC
 ```
 
 **Resposta escrita**
 
-Não há informações suficientes para determinar a variação da pressão hospitalar na região de Jundiai desde o ano passado. Isso pode ser devido à falta de dados ou à competência específica. Para obter uma resposta precisa, é necessário mais detalhes ou uma análise mais aprofundada.
+A região de Jundiai apresentou uma variação no IPH, que é um indicador de pressão hospitalar.
 
 ## F20. se eu só puder olhar três lugares amanhã, quais seriam?
 
 **Intenção esperada:** Inferir que a análise ativa é pressão regional e priorizar os três maiores IPHs, deixando claro que é triagem.
 
-**Contexto silencioso da tela:** `tela=regional; competencia=2026-06; regiao=JUNDIAI; codigo_regiao=35073; hospital_cnes=nao informado; analise_ativa=pressao hospitalar regional e tendencia`
+**Contexto silencioso da tela:** `tela=regional; competencia=202606 (formato AAAAMM, igual ao da coluna CD_COMPETENCIA); regiao=JUNDIAI; codigo_regiao=35073; hospital_cnes=nao informado; analise_ativa=pressao hospitalar regional e tendencia`
 
-**ID auditado:** 103
+**ID auditado:** 260
 
-**Conferência dos dados:** não comparável — nenhuma coluna de rótulo textual nas duas respostas
+**Conferência dos dados:** equivalente. mesmos 3 rótulos, na mesma ordem
 
 **Resposta de referência**
 
@@ -996,29 +1056,33 @@ Não há informações suficientes para determinar a variação da pressão hosp
 **Resposta do SQL gerado**
 
 ```text
-regiao_nome | pressao_hospitalar
-(nenhuma linha)
+| regiao                | pressao_estimada |
+|-----------------------|------------------|
+| JUNDIAI               | 67.1662          |
+| FRANCO DA ROCHA       | 59.8261          |
+| SAO JOSE DO RIO PRETO | 58.8846          |
 ```
 
-**Conferência da narrativa:** falhou — rótulos citados: 0/3; faltou: investig / prioriz / triagem / sinal; ao menos um dos 3 primeiros rótulos da referência
+**Conferência da narrativa:** falhou. faltou: investig / prioriz / triagem / sinal
 
 **SQL gerado**
 
 ```sql
-SELECT
-  "r"."NM_REGIAO_SAUDE" AS "regiao_nome",
-  "r"."NR_IPH_ESTIMADO" AS "pressao_hospitalar"
-FROM
-  "MEDFLOW"."MART_INDICADOR_REGIAO_MENSAL" "r"
-WHERE
-  "r"."CD_COMPETENCIA" = '2026-06'
-  AND UPPER("r"."NM_REGIAO_SAUDE") = UPPER('JUNDIAI')
-  AND "r"."CD_REGIAO_SAUDE" = '35073'
-ORDER BY
-  "r"."NR_IPH_ESTIMADO" DESC
+SELECT 
+  r."NM_REGIAO_SAUDE" AS "regiao",
+  r."PC_IPH_ESTIMADO" AS "pressao_estimada"
+FROM 
+  "MEDFLOW"."MART_INDICADOR_REGIAO_MENSAL" r
+WHERE 
+  r."CD_COMPETENCIA" = (SELECT MAX("CD_COMPETENCIA") FROM "MEDFLOW"."MART_INDICADOR_REGIAO_MENSAL")
+ORDER BY 
+  r."PC_IPH_ESTIMADO" DESC NULLS LAST
 FETCH FIRST 3 ROWS ONLY
 ```
 
 **Resposta escrita**
 
-Não há informações suficientes para determinar quais três lugares devem ser observados amanhã. É necessário mais detalhes ou uma análise mais aprofundada para fornecer uma resposta precisa.
+As três regiões com maior pressão hospitalar são: 
+* Jundiai, com 67,17% de pressão estimada
+* Franco da Rocha, com 59,83% de pressão estimada
+* São José do Rio Preto, com 58,88% de pressão estimada

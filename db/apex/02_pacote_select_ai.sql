@@ -251,6 +251,20 @@ create or replace package body medflow_select_ai as
     -- O modelo às vezes devolve o SQL em cerca de crase.
     l_sql := regexp_replace(l_sql, '^```[[:alpha:]]*[[:space:]]*', '');
     l_sql := regexp_replace(l_sql, '[[:space:]]*```$', '');
+
+    -- Envelope de desculpa do Select AI: ele avisa que não conseguiu gerar e
+    -- entrega a consulta assim mesmo, depois de "help you further:". Sem
+    -- reconhecê-lo, uma resposta utilizável era descartada como "não começa
+    -- por SELECT" — foi o que reprovava a pergunta de evasão.
+    --
+    -- O corte é neste marcador e não no primeiro SELECT do texto, porque a
+    -- própria desculpa contém a palavra: "a valid SELECT statement could not
+    -- be generated". Cortar ali executaria a frase em inglês.
+    if regexp_like(l_sql, 'help you further:', 'i') then
+      l_sql := trim(
+          regexp_replace(l_sql, '^.*help you further:[[:space:]]*', '', 1, 1, 'in'));
+    end if;
+
     return rtrim(trim(l_sql), ';');
   end;
 
@@ -508,6 +522,7 @@ fetch first 5 rows only~';
   ) return number is
     l_id        number;
     l_sql       varchar2(32767);
+    l_sql_bruto varchar2(32767);
     l_narrativa clob;
     l_recusa    varchar2(400);
     l_aviso     varchar2(4000);
@@ -646,7 +661,64 @@ fetch first 5 rows only~';
            || 'filtre com UPPER da coluna e LIKE, trocando acentos por letras '
            || 'simples, por exemplo UPPER(NM_REGIAO_SAUDE) LIKE ''%SAO PAULO%''. '
            || 'Igualdade sensivel a caixa devolve zero linha e faz parecer que '
-           || 'o dado nao existe.'
+           || 'o dado nao existe.' || chr(10)
+           -- As regras 15 a 21 saem da bateria de perguntas humanas de 29/08,
+           -- em docs/qualidade/AVALIACAO_FLOWIA.md. Cada uma corresponde a um
+           -- caso que reprovou, e todas valem para o produto, nao so para o
+           -- roteiro: sao a mesma metodologia que o slide de limites declara.
+           || '15. Glossario de fluxo assistencial, no grao regiao-competencia: '
+           || 'mandar paciente para fora, sair, escoar e evadir sao '
+           || 'PC_EVASAO_INTRASTADUAL_OBSERVADA; receber gente de fora, atrair '
+           || 'e puxar sao PC_ATRACAO_ASSISTENCIAL. Os dois sao percentuais e '
+           || 'existem: nunca responda que o dado de fluxo esta indisponivel.'
+           || chr(10)
+           || '16. OBRIGATORIO em ranking de media: filtre '
+           || 'ST_AMOSTRA = ''suficiente'' antes de ordenar, sempre que a '
+           || 'coluna existir no grao consultado. Sem esse corte, uma unidade '
+           || 'com uma internacao no mes vira recorde e ocupa o topo. Vale '
+           || 'para quem segura o paciente por mais tempo, maior permanencia, '
+           || 'maior mortalidade, internacao mais cara, maior IPR ou IPE, e '
+           || 'qualquer superlativo de media. O grao hospital-mensal ja traz '
+           || 'nome, regiao, permanencia e amostra: nao faca JOIN para obter '
+           || 'o que ja esta nele.' || chr(10)
+           || '17. Atencao basica, atencao primaria, posto de saude e nao '
+           || 'estar segurando sao ICSAP, e nunca evasao: ICSAP e internacao '
+           || 'que a atencao primaria poderia ter evitado, e evasao e o '
+           || 'paciente que se desloca para outra regiao. Sao perguntas '
+           || 'diferentes. Comparacao de ICSAP entre territorios usa taxa e '
+           || 'nao contagem: TX_ICSAP_RESIDENTE_OBSERVADA_POR_10_MIL. O '
+           || 'numero absoluto mede tamanho de populacao, e ranquear por ele '
+           || 'so encontra as regioes mais populosas. Cite ICSAP ou atencao '
+           || 'primaria na resposta, e lembre que e sinal territorial, nao '
+           || 'evitabilidade de um caso.' || chr(10)
+           || '18. O que um hospital mais interna, seu perfil e o que ele mais '
+           || 'atende pedem ESPECIALIDADE, no grao hospital-especialidade. So '
+           || 'desca a diagnostico ou CID quando a pergunta disser diagnostico, '
+           || 'CID, doenca ou procedimento.' || chr(10)
+           || '19. Nao existe ocupacao, lotacao nem dado em tempo real. Diante '
+           || 'de cheio, lotado, agora, hoje ou neste momento, comece dizendo '
+           || 'que esse dado NAO esta disponivel e so entao ofereca o IPH da '
+           || 'competencia mais recente, que e pressao estimada sobre '
+           || 'capacidade declarada. Nunca chame hospital de mais cheio.'
+           || chr(10)
+           || '20. Pior, melhor, ruim, bom e qualidade nao sao medidos: os '
+           || 'indicadores sao administrativos e sem ajuste de risco. Responda '
+           || 'que o dado NAO mede qualidade nem desfecho, peca qual indicador '
+           || 'usar e cite os disponiveis. Vale para IPR ou IPE acima de 1: e '
+           || 'permanencia maior que a dos pares, e nunca qualidade nem '
+           || 'desfecho clinico.' || chr(10)
+           || '21. Onde olhar, o que priorizar, por onde comecar e quais '
+           || 'merecem atencao sao triagem: diga explicitamente que a lista '
+           || 'prioriza investigacao e que o sinal nao conclui desempenho.'
+           || chr(10)
+           || '22. Todo ranking responde UMA competencia. Se o contexto disser '
+           || 'competencia nao informada, fixe a mais recente com '
+           || 'CD_COMPETENCIA = (SELECT MAX(CD_COMPETENCIA) FROM a mesma '
+           || 'tabela). Sem esse filtro o ranking percorre os 30 meses e '
+           || 'devolve a mesma unidade varias vezes, uma por mes, como se '
+           || 'fossem hospitais diferentes. O mesmo hospital, regiao, '
+           || 'especialidade ou diagnostico nunca pode aparecer duas vezes na '
+           || 'mesma lista.'
     end;
 
     l_ranking := eh_ranking_analitico(l_pergunta);
@@ -661,11 +733,25 @@ fetch first 5 rows only~';
     else
       consumir_cota;
 
+      -- O bruto fica guardado antes da guarda porque era exatamente o que se
+      -- perdia: quando o modelo devolvia algo que nao comeca por SELECT, a
+      -- linha auditada ficava com sql_gerado nulo e nenhum vestigio do que
+      -- ele tinha respondido. Diagnosticar exigia reproduzir a chamada.
+      -- Continua fora de sql_gerado, que so recebe SQL aprovado e executado.
       begin
-        l_sql := guardar(dbms_lob.substr(gerar(l_prompt, 'showsql'), 32000, 1));
+        l_sql_bruto := dbms_lob.substr(gerar(l_prompt, 'showsql'), 32000, 1);
+        l_sql := guardar(l_sql_bruto);
       exception
         when others then
-          l_recusa := substr(sqlerrm, 1, 400);
+          l_recusa := substr(
+              sqlerrm
+              || case when l_sql_bruto is null then ''
+                      else ' | Devolvido: '
+                           || regexp_replace(substr(l_sql_bruto, 1, 200),
+                                             '[[:space:]]+', ' ')
+                 end,
+              1,
+              400);
       end;
 
       if l_ranking and l_sql is null then
@@ -730,6 +816,18 @@ fetch first 5 rows only~';
                          then chr(10) || 'Em apelido de coluna, que vira '
                               || 'cabecalho na tela: ' || l_no_sql || '.'
                          else '' end;
+    end if;
+
+    -- O modelo declarou baixa confiança e entregou a consulta assim mesmo.
+    -- Ela passou pela guarda de somente leitura e foi executada, mas quem lê
+    -- precisa saber que veio pelo caminho degradado.
+    if l_sql is not null
+       and l_sql_bruto is not null
+       and regexp_like(l_sql_bruto, 'help you further:', 'i') then
+      l_aviso := case when l_aviso is null then '' else l_aviso || chr(10) end
+                 || 'O modelo indicou baixa confianca ao gerar esta consulta. '
+                 || 'O SQL foi conferido pela guarda de somente leitura e '
+                 || 'executado, mas confira o recorte antes de usar o numero.';
     end if;
 
     insert into select_ai_resposta (

@@ -144,6 +144,21 @@ def normalizar_texto(texto: object) -> str:
     return re.sub(r"\s+", " ", valor.lower()).strip()
 
 
+def normalizar_rotulo(texto: object) -> str:
+    """Normaliza um rótulo para comparação, ignorando também os espaços.
+
+    O CNES grava nomes com palavras coladas — `FUNDACAO FACULDADE DE
+    MEDICINAHCFMUSP INST DE PSIQUIATRIA SP` é o nome oficial, sem espaço entre
+    `MEDICINA` e `HCFMUSP`. O modelo separa as duas ao escrever, e a comparação
+    exata reprovava uma narrativa correta: os cinco hospitais eram os certos,
+    na ordem certa.
+
+    Ignorar espaço compara o mesmo nome escrito de dois jeitos, e não afrouxa a
+    conferência: trocar um hospital por outro continua reprovando.
+    """
+    return normalizar_texto(texto).replace(" ", "")
+
+
 def conferir_lideres_narrados(
     narrativa: str,
     esperados: list[str],
@@ -162,12 +177,13 @@ def conferir_lideres_narrados(
         return True, "referência sem rótulos para conferir"
 
     universo = list(dict.fromkeys([*esperados, *(candidatos or [])]))
-    texto = normalizar_texto(narrativa)
+    texto = normalizar_rotulo(narrativa)
     encontrados = []
     for rotulo in universo:
-        posicao = texto.find(normalizar_texto(rotulo))
+        alvo_rotulo = normalizar_rotulo(rotulo)
+        posicao = texto.find(alvo_rotulo)
         if posicao >= 0:
-            encontrados.append((posicao, -len(normalizar_texto(rotulo)), rotulo))
+            encontrados.append((posicao, -len(alvo_rotulo), rotulo))
     mencionados = [rotulo for _, _, rotulo in sorted(encontrados)]
 
     faltantes = [rotulo for rotulo in alvo if rotulo not in mencionados]
