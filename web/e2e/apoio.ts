@@ -124,6 +124,20 @@ export const serieRegionalAtual = acharItem(
 )
 export const especialidadeObstetricia = acharItem(specialtySnapshot, 'specialty_code', '02')
 export const especialidadePediatria = acharItem(specialtySnapshot, 'specialty_code', '07')
+/** A especialidade em que o hospital é minoria na região: o contraste da participação. */
+export const especialidadeCirurgia = acharItem(specialtySnapshot, 'specialty_code', '01')
+
+/**
+ * Participação do hospital nas internações da região naquela especialidade.
+ *
+ * Calculada aqui a partir da fixture, e não digitada, pela mesma razão de
+ * sempre: o dia em que o snapshot mudar, a asserção muda junto ou acusa.
+ */
+export function participacaoNaRegiao(item: Record<string, number | string>): number {
+  const hospital = item.new_admissions as number
+  const demais = item.benchmark_admissions as number
+  return (hospital / (hospital + demais)) * 100
+}
 /** A competência imediatamente anterior na série do hospital; a ordem é decrescente. */
 export const competenciaAnterior = itens(hospitalSeriesSnapshot)[1]
 /** IPH das regiões da macrorregião 3529, para a legenda do mapa filtrado. */

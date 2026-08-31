@@ -5,7 +5,7 @@
  * Select AI fica reservada à pergunta livre e tem contrato próprio.
  */
 
-import { expect, test } from '@playwright/test'
+import { expect, test, type Page } from '@playwright/test'
 import { mockLiveSource, pt, regiaoDestacada, snapshotCompetencia } from './apoio'
 
 test.beforeEach(async ({ page }) => {
@@ -360,4 +360,104 @@ test('perguntas sobre a leitura da tela nao vao ao modelo', async ({ page }) => 
   }
 
   expect(chamadas).toBe(0)
+})
+
+/**
+ * A pergunta que a região selecionada habilita. Escrita aqui como o usuário a
+ * vê: se o texto do produto mudar, o teste precisa falhar, porque é o texto
+ * que o Select AI recebe.
+ */
+const PERGUNTA_CONCENTRACAO =
+  'Quais hospitais concentram internações em cirurgia nesta região?'
+const PERGUNTA_TRIAGEM = 'Quais regiões devo investigar?'
+const sugestoes = (page: Page) => page.locator('.assistant-suggestions button')
+
+test('oferece a pergunta de concentração quando já existe região selecionada', async ({ page }) => {
+  await page.goto('/regional?regiao=35073')
+  await page.getByRole('button', { name: /Posso ajudar/ }).click()
+
+  // Quatro continuam sendo quatro: a pergunta de triagem territorial sai
+  // porque o clique do usuário já a respondeu.
+  await expect(sugestoes(page)).toHaveCount(4)
+  await expect(sugestoes(page).first()).toHaveText(PERGUNTA_CONCENTRACAO)
+  await expect(page.getByRole('button', { name: PERGUNTA_TRIAGEM })).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'O que é IPH?' })).toBeVisible()
+})
+
+test('sem região selecionada as sugestões regionais continuam as mesmas', async ({ page }) => {
+  await page.goto('/regional')
+  await page.getByRole('button', { name: /Posso ajudar/ }).click()
+
+  await expect(sugestoes(page)).toHaveCount(4)
+  await expect(page.getByRole('button', { name: PERGUNTA_TRIAGEM })).toBeVisible()
+  await expect(page.getByRole('button', { name: PERGUNTA_CONCENTRACAO })).toHaveCount(0)
+})
+
+test('a concentração por especialidade vai ao Select AI com a região no contexto', async ({ page }) => {
+  // O SQL da resposta é o da mart que o profile já enxerga. Ele aparece na
+  // asserção porque é o que a banca vai abrir: a pergunta só vale se o rastro
+  // mostrar de onde veio o número.
+  const sqlEsperado =
+    'select nm_hospital_atual from mart_indicador_hospital_especialidade_mensal'
+  let chamadas = 0
+  await page.route('**/api/dev/v1/assistente/perguntar', async (route) => {
+    chamadas += 1
+    expect(route.request().method()).toBe('POST')
+    expect(route.request().postDataJSON()).toEqual({
+      question: PERGUNTA_CONCENTRACAO,
+      context: {
+        route: 'regional',
+        competence: snapshotCompetencia,
+        region_code: '35073',
+        region_name: 'JUNDIAI',
+        macroregion_code: '3527',
+        macroregion_name: 'RRAS16',
+        macroregion_label: 'Rede regional 16 — Bragança e Jundiaí',
+        hospital_cnes: null,
+        active_analysis: 'pressão hospitalar regional e tendência',
+        history: [],
+      },
+    })
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        status: 'ok',
+        source: 'oracle-select-ai',
+        response_id: 51,
+        narrative:
+          'Em JUNDIAI, a cirurgia se concentra em poucos hospitais na competência.',
+        sql: sqlEsperado,
+        warning: 'Volume administrativo; não descreve fila nem agenda cirúrgica.',
+      }),
+    })
+  })
+
+  await page.goto('/regional?regiao=35073')
+  await page.getByRole('button', { name: /Posso ajudar/ }).click()
+  await page.getByRole('button', { name: PERGUNTA_CONCENTRACAO }).click()
+
+  const panel = page.locator('#medflow-assistant-panel')
+  await expect(panel).toContainText('a cirurgia se concentra em poucos hospitais')
+  await expect(panel).toContainText('não descreve fila nem agenda cirúrgica')
+  await panel.getByText('Ver SQL gerado e validado').click()
+  await expect(panel.locator('pre')).toContainText(
+    'mart_indicador_hospital_especialidade_mensal',
+  )
+  // A pergunta é ranking sobre a Gold: se uma regra local passar a respondê-la,
+  // o produto devolve definição no lugar de lista e ninguém percebe.
+  expect(chamadas).toBe(1)
+})
+
+test('a etapa hospitalar não herda a pergunta de concentração', async ({ page }) => {
+  await page.goto('/?regiao=35073#regional')
+  await page.getByRole('button', { name: /Posso ajudar/ }).click()
+  await expect(page.getByRole('button', { name: PERGUNTA_CONCENTRACAO })).toBeVisible()
+
+  await page.getByRole('link', { name: 'Hospital' }).click()
+  await expect(page.locator('#medflow-assistant-panel')).toContainText(
+    'Contexto: visão hospitalar',
+  )
+  await expect(page.getByRole('button', { name: PERGUNTA_CONCENTRACAO })).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'O que é IPE?' })).toBeVisible()
+  await expect(sugestoes(page)).toHaveCount(4)
 })

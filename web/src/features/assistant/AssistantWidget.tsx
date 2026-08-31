@@ -55,6 +55,41 @@ const quickQuestions: Record<RouteKey, string[]> = {
   ],
 }
 
+/**
+ * A pergunta que só existe depois que o usuário escolhe o território.
+ *
+ * Escolhida a região, "quais regiões devo investigar?" já foi respondida pelo
+ * próprio clique, e a pergunta seguinte da jornada deixa de ser onde e passa a
+ * ser quem: qual hospital concentra o atendimento que motivou a investigação.
+ * A resposta é ranking sobre a Gold, então ela vai ao Select AI — não há regra
+ * de produto local que a responda.
+ *
+ * **O vocabulário é o da base, de propósito.** `dim_especialidade` publica as
+ * especialidades do SIH — Cirurgia, Clínica médica, Obstetrícia, Pediatria e
+ * mais onze —, e ortopedia não é uma delas. Pedir uma especialidade que a base
+ * não tem convida o modelo a responder pela mais próxima e a narrá-la com o
+ * rótulo da pergunta, que é exatamente o segundo limite medido em 23/08/2026.
+ * Cirurgia é o grão que a Gold tem e é o que a espera por avaliação
+ * pré-cirúrgica atravessa.
+ */
+const PERGUNTA_CONCENTRACAO =
+  'Quais hospitais concentram internações em cirurgia nesta região?'
+
+/** A pergunta que a escolha da região torna obsoleta. */
+const PERGUNTA_TRIAGEM_REGIONAL = 'Quais regiões devo investigar?'
+
+/**
+ * Quatro continuam sendo quatro: a pergunta nova entra no lugar da que o
+ * clique do usuário já respondeu, e não empilhada sobre ela.
+ */
+function sugestoesPara(route: RouteKey, comRegiao: boolean): string[] {
+  if (route !== 'regional' || !comRegiao) return quickQuestions[route]
+  return [
+    PERGUNTA_CONCENTRACAO,
+    ...quickQuestions.regional.filter((item) => item !== PERGUNTA_TRIAGEM_REGIONAL),
+  ]
+}
+
 const routeNames: Record<RouteKey, string> = {
   regional: 'visão regional',
   hospital: 'visão hospitalar',
@@ -134,6 +169,11 @@ export default function AssistantWidget() {
     return sourceData.regions.items.find((item) => item.region_code === code) ?? null
   }, [location.search, sourceData])
 
+  const suggestedQuestions = useMemo(
+    () => sugestoesPara(currentRoute, selectedRegion !== null),
+    [currentRoute, selectedRegion],
+  )
+
   useEffect(() => {
     if (isOpen) window.setTimeout(() => inputRef.current?.focus(), 80)
   }, [isOpen])
@@ -164,6 +204,13 @@ export default function AssistantWidget() {
       /o que (e|é|ha|tem|quer dizer)|que significa|explique|explica|defina|como (interpretar|funciona|ler|leio)|(pra|para) que serve|me diga o que/.test(
         normalized,
       )
+
+    // "quais hospitais concentram internações em cirurgia nesta região?" é
+    // ranking, e ranking mora no banco. A regra de participação abaixo foi
+    // escrita para explicar a fatia do hospital que está aberto na tela, e sem
+    // esta ressalva ela engolia a pergunta pelo verbo "concentra" — devolvendo
+    // a definição de uma coluna no lugar da lista de hospitais.
+    const pedidoRanking = /(quais|que|quantos) (sao os )?hospitais/.test(normalized)
 
     if (pedidoExplicacao && /(\biph\b|pressao hospitalar)/.test(normalized)) {
       const regionalContext = selectedRegion
@@ -308,7 +355,10 @@ export default function AssistantWidget() {
       }
     }
 
-    if (/participacao|concentra|percentual das internacoes da regiao|quanto.*regiao passa/.test(normalized)) {
+    if (
+      !pedidoRanking &&
+      /participacao|concentra|percentual das internacoes da regiao|quanto.*regiao passa/.test(normalized)
+    ) {
       return {
         text: 'É a fatia das internações da região que passa por este hospital, na competência aberta. Ela importa para ler os demais números: um hospital que concentra a maior parte das internações costuma ser a referência da região, recebe o caso que os outros não resolvem, e permanência maior é o esperado nesse papel — não um desvio dele.',
       }
@@ -468,7 +518,7 @@ export default function AssistantWidget() {
             )}
 
             <div className="assistant-suggestions" aria-label="Perguntas sugeridas">
-              {quickQuestions[currentRoute].map((suggestion) => (
+              {suggestedQuestions.map((suggestion) => (
                 <button
                   type="button"
                   key={suggestion}

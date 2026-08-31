@@ -31,9 +31,36 @@ const MOTIVO_INELEGIVEL: Record<Exclude<SpecialtyItem['ipe_sample_status'], 'suf
   benchmark_zero: 'pares sem permanência registrada',
 }
 
+/**
+ * Quanto das internações da região naquela especialidade passa por este
+ * hospital, na competência aberta.
+ *
+ * O denominador não é cálculo novo: `benchmark_admissions` são as internações
+ * dos **demais** hospitais da região na mesma especialidade e competência, e
+ * este hospital está fora dele por construção — é assim que a Gold monta o
+ * benchmark do IPE. Somar os dois devolve o total da região, o mesmo que a
+ * carga agrupa antes de subtrair o próprio hospital. Nenhum número é digitado
+ * aqui: é a divisão de dois campos já publicados no contrato, o que mantém a
+ * coluna verdadeira também em contingência, onde não há Oracle para consultar.
+ *
+ * Concentração não é qualidade nem capacidade instalada: diz onde o volume da
+ * especialidade se acumula, e é aí que a investigação começa.
+ */
+function participacaoRegional(item: SpecialtyItem): number | null {
+  const regiao = item.new_admissions + item.benchmark_admissions
+  return regiao > 0 ? (item.new_admissions / regiao) * 100 : null
+}
+
 const COLUMNS: SortableColumn<SpecialtyItem>[] = [
   { id: 'especialidade', label: 'Especialidade', numeric: false, value: (item) => item.specialty_name },
   { id: 'internacoes', label: 'Internações', numeric: true, value: (item) => item.new_admissions },
+  {
+    id: 'participacao',
+    label: 'Participação na região',
+    hint: 'concentração, não qualidade',
+    numeric: true,
+    value: participacaoRegional,
+  },
   {
     id: 'tmh',
     label: 'Mortalidade observada (TMH)',
@@ -76,7 +103,10 @@ export default function SpecialtyTable({ data }: { data: SpecialtyResponse }) {
           <p>
             Ordene por qualquer indicador. As especialidades somam as{' '}
             {formatInteger(data.hospital.new_admissions_total)} internações do hospital na
-            competência; especialidade com amostra insuficiente não é comparável. O
+            competência; especialidade com amostra insuficiente não é comparável. A
+            participação compara essas internações com as da região inteira na mesma
+            especialidade — é onde o volume se concentra, não uma medida de qualidade
+            nem de capacidade instalada. O
             IPE divide a permanência média do hospital pela dos demais hospitais da
             mesma região na mesma especialidade, com o próprio hospital fora do
             benchmark: acima de 1 é permanência maior que a dos pares.
@@ -129,6 +159,24 @@ export default function SpecialtyTable({ data }: { data: SpecialtyResponse }) {
                     {formatInteger(item.deaths)} óbitos ·{' '}
                     {formatInteger(item.stay_days_total)} dias
                   </small>
+                </td>
+                <td
+                  data-label="Participação na região"
+                  data-testid={`especialidade-participacao-${item.specialty_code}`}
+                >
+                  <Valor
+                    valor={participacaoRegional(item)}
+                    formatar={formatPercent}
+                    ausencia="sem internação na região"
+                  />
+                  {item.new_admissions + item.benchmark_admissions > 0 && (
+                    <small>
+                      {formatInteger(item.new_admissions + item.benchmark_admissions)} na região ·{' '}
+                      {item.benchmark_hospitals === 0
+                        ? 'único hospital com a especialidade'
+                        : `${formatInteger(item.benchmark_hospitals + 1)} hospitais`}
+                    </small>
+                  )}
                 </td>
                 <td data-label="TMH">
                   <Valor valor={item.tmh_percent} formatar={formatPercent} ausencia={ausencia(item)} />

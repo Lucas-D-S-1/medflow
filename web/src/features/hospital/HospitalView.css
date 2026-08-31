@@ -138,11 +138,15 @@
 .hospital-series-table td:nth-child(6) { width: 14%; }
 .hospital-series-table td:nth-child(7) { width: 14%; }
 
-.hospital-specialty-table td:nth-child(1) { width: 30%; }
-.hospital-specialty-table td:nth-child(2) { width: 22%; }
-.hospital-specialty-table td:nth-child(3) { width: 14%; }
-.hospital-specialty-table td:nth-child(4) { width: 17%; }
-.hospital-specialty-table td:nth-child(5) { width: 17%; }
+/* Sete colunas desde que a participação na região entrou entre o volume e a
+   mortalidade: a leitura é volume → concentração → o resto. */
+.hospital-specialty-table td:nth-child(1) { width: 22%; }
+.hospital-specialty-table td:nth-child(2) { width: 15%; }
+.hospital-specialty-table td:nth-child(3) { width: 16%; }
+.hospital-specialty-table td:nth-child(4) { width: 12%; }
+.hospital-specialty-table td:nth-child(5) { width: 12%; }
+.hospital-specialty-table td:nth-child(6) { width: 12%; }
+.hospital-specialty-table td:nth-child(7) { width: 11%; }
 
 .cid-reference {
   display: flex;

@@ -11,6 +11,7 @@ import {
   cidMaisFrequente,
   competenciaAnterior,
   contextoCid,
+  especialidadeCirurgia,
   especialidadeObstetricia,
   especialidadePediatria,
   hospitalDestacado,
@@ -21,6 +22,7 @@ import {
   linhaSerieHospital,
   mockLiveSource,
   paginacao,
+  participacaoNaRegiao,
   pt,
   regionalSnapshot,
   snapshotCompetencia,
@@ -601,4 +603,51 @@ test('a participacao do hospital na regiao fica visivel', async ({ page }) => {
   await expect(page.getByTestId('peer-participacao')).toContainText(
     `${pt(participacao, 1)}%`,
   )
+})
+
+test('mostra onde a especialidade se concentra na região, e onde o hospital é minoria', async ({
+  page,
+}) => {
+  await mockLiveSource(page)
+  await page.route('**/api/dev/v1/regioes/resumo**', async (route) => {
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        ...regionalSnapshot,
+        source: 'oracle-live',
+        database_time: '2026-08-01T12:00:00-03:00',
+      }),
+    })
+  })
+
+  await page.goto(`/hospital?competencia=${snapshotCompetencia}&regiao=35073&hospital=3012212`)
+
+  // A pergunta que a FlowIA responde por ranking, aqui conferível linha a
+  // linha: o denominador é o total da região na especialidade, e ele já vem
+  // publicado — internações do hospital mais as dos demais hospitais, que é
+  // como a Gold monta o benchmark do IPE.
+  const pediatria = page.getByTestId('especialidade-participacao-07')
+  await expect(pediatria).toContainText(`${pt(participacaoNaRegiao(especialidadePediatria), 1)}%`)
+  await expect(pediatria).toContainText(
+    pt(
+      (especialidadePediatria.new_admissions as number) +
+        (especialidadePediatria.benchmark_admissions as number),
+    ),
+  )
+  await expect(pediatria).toContainText(
+    `${pt((especialidadePediatria.benchmark_hospitals as number) + 1)} hospitais`,
+  )
+
+  // O contraste é o que torna a coluna útil: o mesmo hospital que concentra a
+  // pediatria da região é minoria na cirurgia. Concentração é onde o volume
+  // está, não onde o hospital é bom.
+  const cirurgia = page.getByTestId('especialidade-participacao-01')
+  await expect(cirurgia).toContainText(`${pt(participacaoNaRegiao(especialidadeCirurgia), 1)}%`)
+  expect(participacaoNaRegiao(especialidadeCirurgia)).toBeLessThan(
+    participacaoNaRegiao(especialidadePediatria),
+  )
+
+  await expect(
+    page.getByText('é onde o volume se concentra, não uma medida de qualidade'),
+  ).toBeVisible()
 })
