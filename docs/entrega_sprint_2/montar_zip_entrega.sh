@@ -46,10 +46,12 @@ done
 # ------------------------------------------------------------- 2. link do vídeo
 # A URL é conferida DENTRO do .pptx entregue, e não num gerador.
 #
-# A trava antiga lia a constante VIDEO_URL de gerar_apresentacao.py — que
-# deixou de produzir o deck quando a revisão passou a sair do _vtime.pptx por
-# revisar_deck_time.py. Preencher a URL lá satisfazia a trava sem o link
+# A trava antiga lia a constante VIDEO_URL de gerar_apresentacao.py, um gerador
+# que já não produzia o deck. Preencher a URL lá satisfazia a trava sem o link
 # aparecer em slide nenhum, e o link no PPT é regra da FIAP, não acabamento.
+#
+# Desde 31/08 os geradores saíram e o .pptx é a fonte da verdade: a URL vai
+# escrita no slide de conclusão, pelo PowerPoint, e conferida aqui.
 if ! python3 - "$pptx" <<'PY'
 import re, sys, zipfile
 

@@ -14,7 +14,8 @@ validada**:
 - export versionado em
   [`05_aplicacao_medflow_select_ai.sql`](../../medflow/db/apex/05_aplicacao_medflow_select_ai.sql);
 - captura real em
-  [`apex_select_ai_real.png`](apresentacao/capturas/apex_select_ai_real.png),
+  `apresentacao/capturas/apex_select_ai_real.png`, que fica no disco de quem
+  gerou e saiu do índice em 31/08, quando o painel da IA no APEX deixou o deck,
   já usada no slide 16 da apresentação.
 
 O restante deste arquivo deixou de ser uma lista de pendências. Ele é o registro

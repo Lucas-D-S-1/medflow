@@ -39,7 +39,6 @@ apresentação precisa alcançá-lo.
   Até 31/08/2026 ele era gerado por roteiro; desde a revisão daquele dia a
   apresentação passou a ser trabalhada em cima do próprio arquivo, e os
   geradores saíram do repositório para não sobrescrever a edição manual.
-- **`..._vtime.pptx`** — o deck original do time, que foi a fonte do desenho.
 - **`capturar_produto.mjs`** — refaz as capturas do produto publicado.
 - **`capturar_flowia.mjs`** — faz uma pergunta real à FlowIA no site publicado e
   captura a resposta. **Cada execução gasta uma pergunta da cota diária** do
