@@ -35,12 +35,11 @@ apresentação precisa alcançá-lo.
 ### Dentro de `apresentacao/`
 
 - **`EC_Sprint_2_1TSCO_EvidenciasConstrucao_MedFlow_OmegaUrbanTech.pptx`** — o
-  deck entregue, 24 slides. **É gerado, não editado à mão.**
-- **`..._vtime.pptx`** — o deck original do time, que é a fonte do desenho.
-- **`revisar_deck_time.py`** — aplica a revisão sobre o `_vtime` e produz o deck
-  entregue. Edita texto, remove e reordena slides, insere as capturas e acerta
-  espaçamentos, **sem regenerar o desenho**. É aqui que se mexe no conteúdo do
-  deck; alterar o `.pptx` à mão é perdido na próxima execução.
+  deck entregue, 23 slides. **É a fonte da verdade, editado no PowerPoint.**
+  Até 31/08/2026 ele era gerado por roteiro; desde a revisão daquele dia a
+  apresentação passou a ser trabalhada em cima do próprio arquivo, e os
+  geradores saíram do repositório para não sobrescrever a edição manual.
+- **`..._vtime.pptx`** — o deck original do time, que foi a fonte do desenho.
 - **`capturar_produto.mjs`** — refaz as capturas do produto publicado.
 - **`capturar_flowia.mjs`** — faz uma pergunta real à FlowIA no site publicado e
   captura a resposta. **Cada execução gasta uma pergunta da cota diária** do
@@ -66,10 +65,13 @@ Elas existem porque cada uma já falhou uma vez.
 
 ### Onde a URL do vídeo entra
 
-No slide final, e ela precisa **acabar dentro do `.pptx`**. O caminho é
-acrescentar a URL pelo `revisar_deck_time.py`, como qualquer outro texto do
-deck, e regerar. Editar o `.pptx` à mão funciona até a próxima execução do
-roteiro, que sobrescreve.
+No slide final, e ela precisa **acabar dentro do `.pptx`**. Escreva a URL no
+slide de conclusão pelo PowerPoint e salve: o `.pptx` é a fonte da verdade,
+e não há mais roteiro que sobrescreva a edição.
+
+Depois de salvar, replique o arquivo na outra árvore — a regra enquanto durar
+a duplicação é *mexeu numa, copia na outra* — e rode o
+`montar_zip_entrega.sh`, que confere a URL abrindo os XML dos slides.
 
 Até 29/08/2026 a trava conferia a URL dentro de `gerar_apresentacao.py`, um
 gerador que já não produzia o deck — dava para passar na trava sem o link

@@ -65,7 +65,7 @@ if not re.search(r"https?://(www\.)?(youtube\.com|youtu\.be)/", texto):
 PY
 then
   printf '%s\n' 'ERRO: não há link do YouTube dentro do PPTX entregue.' >&2
-  printf '%s\n' '      Insira a URL no slide final e regenere o deck antes do ZIP.' >&2
+  printf '%s\n' '      Escreva a URL no slide final do .pptx, salve e rode de novo.' >&2
   exit 1
 fi
 
