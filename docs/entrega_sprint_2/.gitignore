@@ -16,25 +16,30 @@ apresentacao/capturas/jornada-5-especialidades.png
 apresentacao/capturas/metodologia-evidencia.png
 apresentacao/capturas/produto-abertura.png
 
-# O PDF de 25/08 tinha 21 páginas e saía do gerador antigo, que foi removido.
-# O deck entregue tem 24 slides e o ZIP leva o .pptx, não o .pdf.
+# O ZIP leva o .pptx, não o .pdf. Qualquer PDF aqui é exportação de
+# conferência, envelhece a cada edição do deck e não descreve a entrega.
 apresentacao/*.pdf
 
 # Aposentados em 29/08/2026. Continuam no disco de quem já os tinha, e no
 # histórico do Git, mas não descrevem mais a entrega:
 #
-# - gerar_apresentacao.py montava um deck do zero. O deck entregue passou a
-#   sair de revisar_deck_time.py, sobre o _vtime.pptx do time. Mantê-lo dava a
-#   impressão de que ainda produzia alguma coisa — e a trava do link do vídeo
-#   chegou a conferir a URL dentro dele, que era um jeito de passar na trava
-#   sem o link aparecer em slide nenhum.
+# - gerar_apresentacao.py e revisar_deck_time.py montavam o deck por código.
+#   Desde 31/08 a apresentação é editada no próprio .pptx, que passou a ser a
+#   fonte da verdade. Manter os geradores dava a impressão de que ainda
+#   produziam alguma coisa e reabria o risco de sobrescrever a edição manual.
 # - ROTEIRO_NARRATIVO.md era a narrativa daquele deck. Substituído por
 #   ROTEIRO_VIDEO_E_ENSAIO.md, que traz o texto falado e os tempos.
 # - HANDOFF_CODEX_CHROME_APEX.md era o combinado para montar a página APEX,
 #   já cumprido. O que sobrou de útil está em APEX_SELECT_AI_PASSO_A_PASSO.md.
 apresentacao/gerar_apresentacao.py
+apresentacao/revisar_deck_time.py
+apresentacao/__pycache__/
 apresentacao/ROTEIRO_NARRATIVO.md
 HANDOFF_CODEX_CHROME_APEX.md
 
 # Saída do montar_zip_entrega.sh.
 *.zip
+
+# Recortes intermediários da revisão de 31/08. Ficam no disco de quem
+# revisou; o que vale é o .pptx sem sufixo.
+apresentacao/*_revisao_*.pptx

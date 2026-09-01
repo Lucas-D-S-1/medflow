@@ -33,7 +33,7 @@ output="$script_dir/EC_Sprint_2_1TSCO_EvidenciasConstrucao_MedFlow_OmegaUrbanTec
 # A tag do código que vai no ZIP. Fica numa variável só porque estava escrita
 # duas vezes e ficou para trás: o ZIP empacotava a v0.3.1 enquanto o produto
 # apresentado já era a v1.0.1.
-source_tag="v1.0.1"
+source_tag="v1.0.2"
 
 # ---------------------------------------------------------------- 1. arquivos
 for required in "$pptx" "$spreadsheet"; do

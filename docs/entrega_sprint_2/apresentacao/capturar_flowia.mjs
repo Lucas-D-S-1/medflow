@@ -35,7 +35,7 @@ const saida = resolve(aqui, 'capturas')
 const base = (process.env.MEDFLOW_CAPTURE_BASE
   ?? 'https://lucas-d-s-1.github.io/medflow').replace(/\/+$/, '')
 const pergunta = process.env.MEDFLOW_PERGUNTA
-  ?? 'quem segura o paciente por mais tempo?'
+  ?? 'o que mais interna nesse hospital?'
 
 await mkdir(saida, { recursive: true })
 
@@ -48,12 +48,12 @@ page.on('console', (m) => { if (m.type() === 'error') console.error('  [console]
 // monta o contexto a partir do que a página já sabe, e perguntar cedo demais
 // manda "competencia=nao informada" — foi o que produziu uma primeira captura
 // com o mesmo hospital repetido cinco vezes, um por mês.
-await page.goto(`${base}/hospital?competencia=2026-06&regiao=35073&hospital=3012212`, {
+await page.goto(`${base}/?competencia=2026-06&regiao=35073&hospital=3012212#hospital`, {
   waitUntil: 'domcontentloaded',
 })
-await page
-  .locator('section[aria-labelledby="hospital-specialty-title"]')
-  .waitFor({ state: 'visible', timeout: 60_000 })
+const especialidades = page.locator('section[aria-labelledby="hospital-specialty-title"]')
+await especialidades.waitFor({ state: 'visible', timeout: 60_000 })
+await especialidades.scrollIntoViewIfNeeded()
 await page.waitForTimeout(2000)
 
 await page.getByRole('button', { name: /Posso ajudar/ }).waitFor({ timeout: 30_000 })
@@ -79,5 +79,17 @@ console.log('\n--- painel ---\n' + texto + '\n--------------')
 
 await painel.screenshot({ path: resolve(saida, 'flowia-ao-vivo.png') })
 console.log('captura: capturas/flowia-ao-vivo.png')
+
+const conversa = painel.locator('.assistant-conversation')
+await conversa.screenshot({ path: resolve(saida, 'flowia-ao-vivo-conversa.png') })
+console.log('captura: capturas/flowia-ao-vivo-conversa.png')
+
+const detalhes = painel.locator('.assistant-answer details').first()
+if (await detalhes.count()) {
+  await detalhes.locator('summary').click()
+  await page.waitForTimeout(300)
+  await detalhes.screenshot({ path: resolve(saida, 'flowia-sql-auditavel.png') })
+  console.log('captura: capturas/flowia-sql-auditavel.png')
+}
 
 await browser.close()
