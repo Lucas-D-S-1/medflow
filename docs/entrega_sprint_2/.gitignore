@@ -37,22 +37,22 @@ apresentacao/*.pdf
 #   26/08 e integralmente aplicada nas revisões de 29 e 31/08.
 # - ROTEIRO_NARRATIVO.md era a narrativa do deck antigo. Substituído por
 #   ROTEIRO_VIDEO_E_ENSAIO.md, que traz o texto falado e os tempos.
-# - HANDOFF_CODEX_CHROME_APEX.md era o combinado para montar a página APEX,
-#   já cumprido. O que sobrou de útil está em APEX_SELECT_AI_PASSO_A_PASSO.md.
+# - o handoff da página APEX era o combinado para montá-la, já cumprido. O que
+#   sobrou de útil está em APEX_SELECT_AI_PASSO_A_PASSO.md.
 apresentacao/gerar_apresentacao.py
 apresentacao/revisar_deck_time.py
 apresentacao/__pycache__/
 apresentacao/EC_Sprint_2_1TSCO_EvidenciasConstrucao_MedFlow_OmegaUrbanTech_vtime.pptx
 apresentacao/Plano Apresentação MedFlow.md
 apresentacao/ROTEIRO_NARRATIVO.md
-HANDOFF_CODEX_CHROME_APEX.md
+HANDOFF_*.md
 
 # Recortes intermediários da revisão de 31/08. Ficam no disco de quem revisou;
 # o que vale é o .pptx sem sufixo.
 apresentacao/*_revisao_*.pptx
 
-# Plano de trabalho, não entregável. Escrito em 31/08 como instrução para outro
-# agente implementar o atalho de especialidade na FlowIA; a mudança já está no
+# Plano de trabalho, não entregável. Escrito em 31/08 como instrução para
+# implementar o atalho de especialidade na FlowIA; a mudança já está no
 # produto. Fica no disco de quem for retomar.
 PLANO_FLOWIA_ESPECIALIDADE_80_20.md
 

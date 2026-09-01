@@ -530,7 +530,7 @@ Quatro defeitos, três deles no produto:
 
 **Limpeza para publicação.** O repositório saiu de 216 para 205 arquivos e de
 17,7 para 15,2 MB, com uma pergunta só: o que um avaliador ou alguém que reusa
-o projeto precisa ver? Saíram a configuração das ferramentas de IA, o material
+o projeto precisa ver? Saíram a configuração local de ferramenta, o material
 de curso da Sprint 1, a evidência da v0.1.0, um `requirements-geografia.txt`
 órfão e uma cópia congelada de um relatório que é gerado.
 

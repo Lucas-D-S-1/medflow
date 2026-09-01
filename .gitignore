@@ -45,11 +45,10 @@ truststore.jks
 *.pem
 *.key
 
-# ai-memory (gerados)
-.claude/
-.agents/
-.mcp.json
-.codex/
+# Configuração local de editor e de ferramenta de trabalho
+.vscode/
+.idea/
+*.local.json
 
 # Material de trabalho - nunca versionar
 *motor_forecast*
@@ -57,7 +56,7 @@ truststore.jks
 *x29*
 *do_aaa*
 
-# Backups gerados pelos instaladores do ai-memory
+# Backups gerados por instaladores locais
 *.bak-*
 
 # Metadados locais do Windows
@@ -73,14 +72,10 @@ Thumbs.db
 # arquivos de bloqueio do Office (Word/PowerPoint/Excel)
 ~$*
 
-# Configuração das ferramentas de IA usadas no desenvolvimento. Continuam no
-# disco de quem trabalha aqui, mas não fazem parte do que o projeto publica:
-# são instruções para o agente, não para quem avalia ou reusa o MedFlow.
-# A coautoria em si permanece registrada nos trailers dos commits.
-CLAUDE.md
-AGENTS.md
-.ai-memory.toml
-.ai-memory.toml.bak-*
+# Configuração local de editor e de ferramenta de trabalho. Fica no disco de
+# quem desenvolve; não faz parte do que o projeto publica.
+*.local.md
+.notas-locais/
 
 # Artefato de execução do `medflow inventario`, gerado sob demanda
 contracts/INVENTARIO.json

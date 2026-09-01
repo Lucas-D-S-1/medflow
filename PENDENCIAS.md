@@ -618,10 +618,10 @@ Zero links quebrados nos `.md` do repositório.
 ### Limpeza para publicação — 11/08/2026
 
 Feita depois da fatia 9, com uma pergunta só: o que um avaliador ou alguém que
-reusa o projeto precisa ver? Saíram a configuração das ferramentas de IA
-(`CLAUDE.md`, `AGENTS.md`, `.ai-memory.toml`, agora no `.gitignore` e ainda no
-disco de quem trabalha aqui), o material de curso da Sprint 1, a evidência da
-v0.1.0, um `requirements-geografia.txt` órfão e uma cópia congelada do
+reusa o projeto precisa ver? Saiu a configuração local de ferramenta (agora no
+`.gitignore` e ainda no disco de quem trabalha aqui), o material de curso da
+Sprint 1, a evidência da v0.1.0, um `requirements-geografia.txt` órfão e uma
+cópia congelada do
 relatório de validação. Que é gerado, e portanto divergia em silêncio.
 
 Os três documentos de arquitetura viraram um. Ao fundir apareceu que a tabela
