@@ -36,6 +36,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
+      - uses: actions/checkout@v7
+
       - name: Conferir se a URL do ORDS está configurada
         run: |
           if [ -z "${{ vars.ORDS_BASE_URL }}" ]; then
@@ -82,9 +84,17 @@ jobs:
 
           echo "status=$estado origem=$origem contrato=$contrato dado_ate=$ate"
 
+          # A versão sai do contrato versionado, não fica escrita aqui: entre
+          # 28/08 e 01/09 o heartbeat reprovou nove execuções corretas porque
+          # o número tinha sido esquecido em 0.3.0 enquanto o contrato já ia
+          # em 0.5.0. Um portão que dá alarme falso é um portão que se aprende
+          # a ignorar — e este existe justamente para avisar do banco dormindo.
+          esperado=$(sed -n 's/^VERSAO_CONTRATO = "\(.*\)"/\1/p' src/medflow/contratos.py)
+          [ -n "$esperado" ] || { echo "::error::não consegui ler VERSAO_CONTRATO de src/medflow/contratos.py"; exit 1; }
+
           [ "$estado" = "ok" ] || { echo "::error::status=$estado"; exit 1; }
           [ "$origem" = "oracle-live" ] || { echo "::error::origem=$origem, esperado oracle-live"; exit 1; }
-          [ "$contrato" = "0.3.0" ] || { echo "::error::contrato=$contrato, esperado 0.3.0"; exit 1; }
+          [ "$contrato" = "$esperado" ] || { echo "::error::contrato=$contrato, esperado $esperado"; exit 1; }
           [ "$ate" = "2026-06" ] || { echo "::error::dado até $ate, esperado 2026-06"; exit 1; }
 
       - name: Ler uma linha de verdade dos marts
