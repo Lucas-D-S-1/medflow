@@ -169,7 +169,6 @@ validar indicadores, corrigir dependências e executar o preflight.
 
 ### Internas
 
-- [`VALIDACAO_TECNICA.md`](VALIDACAO_TECNICA.md) — gerado a cada `make validar`
 - [`contracts/openapi.yaml`](contracts/openapi.yaml) — o contrato dos 10 endpoints
 - [`contracts/NOMENCLATURA.md`](contracts/NOMENCLATURA.md) — convenção de tabelas e colunas
 - [`db/README.md`](db/README.md) — criação, carga, publicação e diagnóstico no Oracle

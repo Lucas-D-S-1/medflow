@@ -34,7 +34,7 @@ PADRAO_COMPETENCIA = re.compile(r"^(\d{4})-(\d{2})$")
 # reconciliada ponta a ponta: Silver, Gold, carga do Oracle e 36/36 no banco.
 # O padrão precisa acompanhar o recorte entregue — um clone limpo que rode
 # `make bronze silver gold` tem de reproduzir os números publicados, não os da
-# revisão anterior. Ver PENDENCIAS.md, item 7b.
+# revisão anterior.
 PERIODO_INICIAL_PADRAO = "2024-01"
 PERIODO_FINAL_PADRAO = "2026-06"
 UF_PADRAO = "SP"

@@ -47,6 +47,9 @@ def _validar_contrato(base: Path, nome: str) -> tuple[int, int]:
 def validar(base: Path, *, publicar: bool = True) -> dict[str, int | str]:
     """Valida as três camadas e, por padrão, publica o `VALIDACAO_TECNICA.md`.
 
+    O relatório é artefato de execução e fica fora do índice: descreve a rodada
+    que acabou de acontecer, com carimbo de tempo, e não o projeto.
+
     `publicar=False` mede sem escrever. Existe para os testes: eles precisam do
     resultado medido, mas reescrever um arquivo versionado a cada `pytest`
     deixava a árvore suja em toda execução — e uma árvore sempre suja é uma

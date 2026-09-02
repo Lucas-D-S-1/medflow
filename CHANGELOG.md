@@ -1,6 +1,6 @@
 # Changelog
 
-As releases seguem a política de [`VERSIONAMENTO.md`](VERSIONAMENTO.md).
+As versões seguem SemVer, e cada uma tem uma tag anotada no repositório.
 A versão da release e a versão dos contratos de dados evoluem separadamente.
 
 ## 1.0.1 — 29/08/2026

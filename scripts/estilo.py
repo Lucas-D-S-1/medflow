@@ -4,8 +4,9 @@ Existe porque texto de projeto envelhece para dois lados: envelhece de fato,
 quando o número muda, e envelhece de forma, quando adota os maneirismos de
 quem escreve rápido. O primeiro caso os testes pegam. O segundo, não.
 
-As regras estão em `CONTRIBUTING.md`, seção "Escrita". Aqui elas viram
-verificação: sem dependência externa, sem rede, sem banco.
+As regras estão logo abaixo, em `FRASES` e nas checagens que as seguem: este
+arquivo é a própria fonte, e não a cópia de uma lista escrita em outro lugar.
+Sem dependência externa, sem rede, sem banco.
 
     make estilo            confere e falha se houver violação
     make estilo ARGS=-v    lista cada ocorrência com o trecho
@@ -29,7 +30,6 @@ RAIZ = Path(__file__).resolve().parent.parent
 # presente. Ver a nota no topo de REVISAO_REQUISITOS_E_PROPOSTA_GOLD.md.
 ISENTOS = {
     "CHANGELOG.md",
-    "CONTRIBUTING.md",  # é o próprio livro de regras; cita os padrões
     "docs/decisoes/DECISOES.md",
     "docs/decisoes/REVISAO_REQUISITOS_E_PROPOSTA_GOLD.md",
     "docs/qualidade/VALIDACAO_ORACLE_SELECT_AI.md",
@@ -136,7 +136,7 @@ def main() -> int:
                 print(f"    {n:3d}  {regra}")
 
     if total:
-        print(f"\n{total} violação(ões). Regras em CONTRIBUTING.md, seção Escrita.")
+        print(f"\n{total} violação(ões). As regras estão no topo deste arquivo.")
         print("Rode com -v para ver cada trecho.")
         return 1
 

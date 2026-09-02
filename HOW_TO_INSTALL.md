@@ -5,8 +5,7 @@ explica como preparar o ambiente, o que os comandos `make` fazem, como executar
 o projeto sem credenciais e qual é a responsabilidade de cada pasta.
 
 Para entender as decisões técnicas depois da instalação, leia também o
-[`ARQUITETURA.md`](ARQUITETURA.md). Para contribuir com código, consulte o
-[`CONTRIBUTING.md`](CONTRIBUTING.md).
+[`ARQUITETURA.md`](ARQUITETURA.md).
 
 ## 1. O projeto em uma imagem
 
@@ -213,7 +212,6 @@ medflow/
 ├── tests/                testes Python, contratos e reconciliação
 ├── web/                  aplicação React, mocks e testes Playwright
 ├── ARQUITETURA.md         desenho e decisões técnicas atuais
-├── CONTRIBUTING.md        fluxo de colaboração
 ├── Makefile               atalhos oficiais de execução
 ├── pyproject.toml         pacote Python e dependências
 └── README.md              apresentação geral do produto
@@ -284,9 +282,7 @@ de valores esperados, sem substituir o pipeline.
 
 - `README.md`: visão geral e estado do produto;
 - `ARQUITETURA.md`: fluxo técnico, decisões e status;
-- `VALIDACAO_TECNICA.md`: evidência do último portão de dados;
-- `PENDENCIAS.md`: trabalho ainda aberto;
-- `CHANGELOG.md` e `VERSIONAMENTO.md`: histórico e política de releases;
+- `CHANGELOG.md`: o que mudou a cada versão publicada;
 - `.env.example`: nomes das variáveis, sem valores secretos;
 - `.gitignore`: impede o versionamento de dados pesados, ambientes e segredos.
 

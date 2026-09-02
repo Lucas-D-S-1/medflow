@@ -63,14 +63,8 @@ Nomenclatura:
 [`contracts/NOMENCLATURA.md`](contracts/NOMENCLATURA.md).
 Contrato da API:
 [`contracts/openapi.yaml`](contracts/openapi.yaml).
-Último gate:
-[`VALIDACAO_TECNICA.md`](VALIDACAO_TECNICA.md).
 Mudanças incompatíveis:
 [`CHANGELOG.md`](CHANGELOG.md).
-Política de tags e releases:
-[`VERSIONAMENTO.md`](VERSIONAMENTO.md).
-Como contribuir:
-[`CONTRIBUTING.md`](CONTRIBUTING.md).
 
 ## Pipeline atual
 

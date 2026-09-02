@@ -79,3 +79,9 @@ Thumbs.db
 
 # Artefato de execução do `medflow inventario`, gerado sob demanda
 contracts/INVENTARIO.json
+
+# Evidência gerada por execução. Descreve a rodada, não o projeto: o
+# `VALIDACAO_TECNICA.md` é reescrito por `make validar` e traz o carimbo de
+# tempo da última execução. Versioná-lo publicava um relatório de máquina como
+# se fosse documento, e ele envelhecia entre uma execução e a seguinte.
+VALIDACAO_TECNICA.md
