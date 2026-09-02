@@ -3,9 +3,12 @@
 Cada nível prova algo que os outros não provam. Rodar só um deixa um buraco
 específico, e vale saber qual.
 
+São **273 testes** coletados, e quantos rodam depende do que a máquina tem.
 Num clone limpo, sem `.env`, sem `data/` e sem Oracle, `make test-py` fecha em
-**204 testes** passando; os demais são pulados com o motivo escrito, e nunca
-falham por ausência de credencial. É a contagem que o material da entrega cita.
+**188 passando e 85 pulados** — nenhum falha por ausência de credencial, e cada
+skip diz o motivo. Com o `.env` preenchido e as camadas materializadas, sobem
+para **204 passando**. A diferença são os testes que falam com o Oracle ao vivo
+e os que leem os Parquets.
 
 | Nível | Onde | O que garante | Precisa de |
 |---|---|---|---|
