@@ -231,11 +231,15 @@ class TestValidadorDeContrato:
 def resultado_da_validacao() -> dict[str, int | str]:
     """A validação integrada percorre 11 GB; roda uma vez por módulo.
 
-    `publicar=False` de propósito: o teste mede, mas não reescreve o
-    `VALIDACAO_TECNICA.md`. Publicar é papel do `make validar`, e um `pytest`
-    que suja a árvore em toda execução ensina a ignorar o `git status`.
+    Publica o `VALIDACAO_TECNICA.md`, e é isso que o teste do relatório confere.
+    Publicar era proibido aqui enquanto o relatório era versionado, porque um
+    `pytest` que suja a árvore em toda execução ensina a ignorar o `git status`.
+    Ele saiu do índice: é evidência de uma rodada, com carimbo de tempo, e não
+    documento do projeto. Sem árvore para sujar, a objeção deixou de existir — e
+    o teste passou a conferir o arquivo que ele mesmo acabou de gerar, em vez de
+    um que precisava estar no disco de antemão.
     """
-    return validar(Config().base, publicar=False)
+    return validar(Config().base, publicar=True)
 
 
 @precisa_de_dados
@@ -257,6 +261,9 @@ class TestBaseReal:
         literal, e continuou afirmando 29 competências depois que a 5b avançou
         o recorte para 30. Um relatório desatualizado é pior que uma asserção
         quebrada: a asserção avisa, o relatório convence.
+
+        O relatório lido aqui é o que a fixture acabou de publicar, e não um
+        arquivo do repositório: ele descreve a rodada, e a rodada é agora.
         """
         resultado = resultado_da_validacao
         relatorio = (Config().base / "VALIDACAO_TECNICA.md").read_text(encoding="utf-8")

@@ -12,7 +12,7 @@ validada**:
 - tabela `SELECT_AI_RESPOSTA` com o rastro da demonstração: ID **23**, a
   pergunta principal, e ID **24**, a pergunta-limite que dispara o aviso;
 - export versionado em
-  [`05_aplicacao_medflow_select_ai.sql`](../../medflow/db/apex/05_aplicacao_medflow_select_ai.sql);
+  [`05_aplicacao_medflow_select_ai.sql`](../../db/apex/05_aplicacao_medflow_select_ai.sql);
 - captura real em
   `apresentacao/capturas/apex_select_ai_real.png`, que fica no disco de quem
   gerou e saiu do índice em 31/08, quando o painel da IA no APEX deixou o deck,
@@ -61,7 +61,7 @@ autenticação por contas do banco, a Oracle também cria a conta de banco
 correspondente quando uma conta de desenvolvedor é criada pela interface.
 
 O arquivo
-[`01_criar_workspace.sql`](../../medflow/db/apex/01_criar_workspace.sql) fica
+[`01_criar_workspace.sql`](../../db/apex/01_criar_workspace.sql) fica
 como alternativa de infraestrutura: ele cria apenas o workspace e ainda exige
 que a conta de desenvolvimento seja configurada na Administração do APEX. Para
 o primeiro acesso, prefira o formulário acima.
@@ -98,7 +98,7 @@ Na tela **Select a Workspace**, escolher `MEDFLOW_DEMO` e abrir **App Builder**.
 3. Usar a **Home Page 1** criada pelo assistente e renomeá-la para
    `Investigar com Select AI`; os itens do roteiro usam o prefixo `P1_`.
 4. Seguir a montagem detalhada do
-   [`db/apex/README.md`](../../medflow/db/apex/README.md): textarea, botão,
+   [`db/apex/README.md`](../../db/apex/README.md): textarea, botão,
    processo PL/SQL, narrativa, relatório, aviso e SQL gerado.
 5. Colar o cabeçalho e o CSS de apresentação fornecidos na mesma pasta.
 

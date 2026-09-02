@@ -129,5 +129,5 @@ esforço, adoção e impacto ainda precisam de validação com usuários reais.
 
 O dossiê liga cada afirmação à fonte técnica. Para revisão dirigida, consulte
 também [`README.md`](../../README.md), [`ARQUITETURA.md`](../../ARQUITETURA.md),
-[`LEITURA_SELECT_AI.md`](../qualidade/LEITURA_SELECT_AI.md) e
-[`VERSIONAMENTO.md`](../../VERSIONAMENTO.md).
+[`docs/flowia/`](../flowia/README.md), que reúne a IA do produto e a prova de
+que ela acerta.
