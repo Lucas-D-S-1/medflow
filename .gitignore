@@ -89,3 +89,9 @@ VALIDACAO_TECNICA.md
 # Saída bruta do avaliador da FlowIA, sobrescrita a cada rodada. O resultado
 # que vale está em docs/flowia/AVALIACAO_20_PERGUNTAS.md, escrito à mão.
 docs/flowia/ULTIMA_EXECUCAO.md
+
+# A pasta de trabalho da Sprint 2 saiu do repositório em 01/09/2026: era material
+# de curso, e ele pertence ao repositório acadêmico privado. O que restou no
+# disco de quem trabalhou nela — decks de revisão, geradores aposentados,
+# capturas fora do deck — continua ali e não volta ao índice por descuido.
+docs/entrega_sprint_2/

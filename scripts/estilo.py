@@ -32,10 +32,6 @@ ISENTOS = {
     "CHANGELOG.md",
     "docs/pesquisa/pesquisa.md",
     "docs/flowia/REVALIDACAO_SELECT_AI.md",
-    # Estes dois catalogam os números que não podem mais aparecer, e para isso
-    # precisam escrevê-los. Conferi-los aqui acusaria a própria lista.
-    "docs/entrega_sprint_2/CRITERIOS_DE_REVISAO.md",
-    "docs/entrega_sprint_2/CONTEXTO_TIME.md",
 }
 
 FRASES = {
