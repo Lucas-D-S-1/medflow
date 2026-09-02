@@ -34,18 +34,52 @@ Cada etapa tem uma responsabilidade única:
 - **Dados pesados são reproduzíveis e ficam fora do Git.** Apenas código, contratos e pequenas referências oficiais necessárias à reprodutibilidade são versionados.
 - **Uma release só é marcada depois dos portões técnicos.** Pipeline, contratos, reconciliação, testes da API e testes do frontend precisam estar consistentes.
 
-## 3. Status atual — 27/08/2026
+### Limites de alegação
+
+Os indicadores do MedFlow são construídos sobre dado administrativo, e cada um
+sustenta menos do que o nome sugere. Esta tabela é vinculante: ela existe para
+que ninguém reintroduza a afirmação forte de boa-fé, meses depois, sem saber
+que ela já tinha sido descartada.
+
+| Fato | Leitura correta | Alegação proibida |
+|---|---|---|
+| IPH usa pacientes-dia e leitos-dia SUS declarados | pressão estimada sobre capacidade declarada | taxa de ocupação real |
+| CMI usa valores aprovados pelo SUS | valor médio aprovado por internação | custo da internação ou margem |
+| TMH é óbito sobre internação nova | mortalidade administrativa, sem ajuste de risco | prova de qualidade ruim ou causalidade |
+| IPR compara com benchmark regional elegível | sinal de permanência relativa | prova de ineficiência |
+| Fluxo é observado em SP | evasão intrastadual observada | evasão total do residente |
+| ICSAP segue a Portaria SAS/MS 221/2008 | sinal populacional indireto | internação comprovadamente evitável |
+| IS compara 2026 aos mesmos meses de 2024 e 2025 | comparação sazonal | previsão ou modelo sazonal |
+| A reconciliação campo a campo fecha | consistência no método executado | prova de impacto, causalidade ou ausência de defeito |
+| O MVP foi validado tecnicamente | viabilidade e coerência no recorte | produto validado por gestores |
+
+O caso do IPH merece o detalhe, porque é o mais fácil de dizer errado. O cálculo
+histórico `SUM(QT_DIARIAS) / (leitos_SUS × dias_do_mês)` sobrevive apenas como
+`proxy_iph_diarias_faturadas` e **não** prova ocupação física: `QT_DIARIAS` é
+faturamento, 18,76% das competências divergem do mês da saída, 15,08% das
+internações cruzam o mês, e somar na competência não distribui a ocupação pelo
+calendário. Denominador zero recebe IPH nulo, não zero.
+
+**Sobre previsibilidade.** O MedFlow não faz previsão nem aprendizado de
+máquina, e a ausência é decisão, não lacuna: prever sobre dado administrativo
+com reapresentação retroativa produz número bonito e falso. O produto entrega
+comparação sazonal contra dois anos-base e benchmark elegível, que respondem à
+mesma necessidade sem fingir precisão. O caminho honesto até previsão passa por
+série mais longa e validação com usuários.
+
+## 3. Status atual
 
 | Área | Situação |
 |---|---|
-| Bronze, Silver e Gold | Implementadas e validadas para SP, 2024-01 a 2026-06 |
-| Oracle | 12 tabelas analíticas carregadas, incluindo 3 dimensões territoriais |
+| Bronze, Silver e Gold | Implementadas e validadas para SP, 2024-01 a 2026-06, em 30 competências |
+| Contrato de dados | `0.5.0`, lido de `src/medflow/contratos.py`; nenhum consumidor crava a versão |
+| Oracle | 12 tabelas analíticas carregadas — 5 dimensões e 7 marts —, incluindo 3 dimensões territoriais |
 | Reconciliação | 8.403.103 comparações de campos entre Gold e Oracle, sem divergências |
-| API pública | `api/v1` publicada com 10 endpoints GET; amostra de 31.792 campos reconciliada sem divergências |
+| API pública | `api/v1` publicada com **dez endpoints `GET` e o `POST` governado do assistente**; amostra de 31.792 campos reconciliada sem divergências |
 | Web app | Publicado em [lucas-d-s-1.github.io/medflow](https://lucas-d-s-1.github.io/medflow/) |
-| Web app — escopo | Quatro visões: regional, fluxos, hospital e metodologia. A interface permanece nessas quatro; mudanças restritas a texto e acabamento |
-| Trabalho em curso | Onboarding para novos colaboradores e revisão final dos entregáveis da Sprint 2 |
-| Próximos portões | Revalidar o Select AI contra o produto, marcar a release `v0.3.0` e fechar apresentação e vídeo |
+| Web app — escopo | **Duas páginas**: a análise contínua, em `/#regional` e `/#hospital`, e a `/metodologia`. A etapa de fluxos saiu por decisão de produto; a matriz origem–destino continua na Gold e na API |
+| IA do produto | FlowIA publicada e aprovada em 20 de 20 na bateria de perguntas humanas; Select AI governado pelo pacote PL/SQL, que recusa SQL que não seja de leitura |
+| Próximos portões | Fechar a entrega da Sprint 2 e sustentar o link público até a banca, entre 14 e 18/09 |
 
 ## 4. Construção técnica por etapa
 
@@ -169,12 +203,11 @@ validar indicadores, corrigir dependências e executar o preflight.
 
 ### Internas
 
-- [`contracts/openapi.yaml`](contracts/openapi.yaml) — o contrato dos 10 endpoints
+- [`contracts/openapi.yaml`](contracts/openapi.yaml) — o contrato dos dez `GET` e do `POST` do assistente
 - [`contracts/NOMENCLATURA.md`](contracts/NOMENCLATURA.md) — convenção de tabelas e colunas
 - [`db/README.md`](db/README.md) — criação, carga, publicação e diagnóstico no Oracle
-- [`docs/decisoes/DECISOES.md`](docs/decisoes/DECISOES.md) — decisões de escopo, domínio e produto
-- [`docs/decisoes/REVISAO_REQUISITOS_E_PROPOSTA_GOLD.md`](docs/decisoes/REVISAO_REQUISITOS_E_PROPOSTA_GOLD.md)
 - [`docs/pesquisa/pesquisa.md`](docs/pesquisa/pesquisa.md) — validação do problema e benchmarking
+- [`docs/flowia/README.md`](docs/flowia/README.md) — a IA do produto e a prova de que ela acerta
 
 ### Oficiais
 

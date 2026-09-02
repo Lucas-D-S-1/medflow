@@ -51,10 +51,10 @@ dentro do mesmo recorte.
 
 ## Por onde continuar
 
-Proposta metodológica e revisão dos requisitos:
-[`docs/decisoes/REVISAO_REQUISITOS_E_PROPOSTA_GOLD.md`](docs/decisoes/REVISAO_REQUISITOS_E_PROPOSTA_GOLD.md).
+Fundamentação dos indicadores e validação do problema:
+[`docs/pesquisa/pesquisa.md`](docs/pesquisa/pesquisa.md).
 
-Arquitetura detalhada:
+Arquitetura detalhada, e o que cada indicador não sustenta:
 [`ARQUITETURA.md`](ARQUITETURA.md).
 Instalação e mapa do repositório:
 [`HOW_TO_INSTALL.md`](HOW_TO_INSTALL.md).
@@ -240,8 +240,8 @@ Metodologia. A área analítica não interrompe a leitura para provar o dado; as
 notas que restringem a leitura de um indicador continuam ao lado do número que
 elas limitam.
 
-Regras que o produto respeita, detalhadas em
-[`DECISOES.md`](docs/decisoes/DECISOES.md), seção 10:
+Regras que o produto respeita, com os limites de cada indicador em
+[`ARQUITETURA.md`](ARQUITETURA.md):
 
 - nenhum indicador é calculado fora da Gold — o front formata com `Intl`, não
   calcula, e não inventa faixas nem cortes;
