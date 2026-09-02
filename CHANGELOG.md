@@ -3,6 +3,60 @@
 As versões seguem SemVer, e cada uma tem uma tag anotada no repositório.
 A versão da release e a versão dos contratos de dados evoluem separadamente.
 
+## 1.0.3 — 01/09/2026
+
+Faxina do repositório de entrega. Nenhuma mudança de produto, de contrato ou de
+cálculo: o que muda é o que o repositório mostra a quem o abre para avaliá-lo.
+
+### Saiu do índice
+
+- `PENDENCIAS.md`, `VERSIONAMENTO.md` e `CONTRIBUTING.md`, que descreviam o
+  processo de trabalho e não o produto. A política de versões são as tags; as
+  regras de escrita são o `scripts/estilo.py`, que as verifica;
+- `VALIDACAO_TECNICA.md`, evidência gerada a cada `make validar`, com carimbo de
+  tempo. Continua sendo produzido, agora só no disco de quem roda;
+- as sete avaliações parciais da FlowIA, 98 KB de rodadas de depuração, e o
+  retrato do Oracle de 01/08, cujos números o recorte atual já contradizia.
+
+### Reunido
+
+- `docs/flowia/` concentra a IA do produto e a prova de que ela acerta: a
+  bateria de 20 perguntas, a revalidação executada do Select AI, a leitura dos
+  limites e a demonstração APEX. O README diz onde mora o código, que continua
+  em `src/medflow/select_ai/`, `db/apex/` e `db/select_ai/`;
+- os limites de alegação de cada indicador subiram para o `ARQUITETURA.md`, onde
+  são vinculantes em vez de arquivadas.
+
+### Corrigido
+
+- a seção de status do `ARQUITETURA.md` prometia a etapa de fluxos, removida do
+  produto, contava dez endpoints omitindo o assistente e listava a `v0.3.0` como
+  próximo marco;
+- o `db/README.md` dizia 209 colunas comentadas num ponto e 175 noutro — são
+  225 —, apontava uma pasta `sql/` inexistente e citava o contrato `0.3.0`;
+- o `src/medflow/README.md` listava cinco indicadores, sem o IPE, e omitia o
+  módulo `select_ai/`;
+- cinco links internos quebrados e os números vencidos que sobraram em prosa.
+
+### Adicionado
+
+- `NUMEROS_VENCIDOS` no `scripts/estilo.py`: a checagem de escrita passa a pegar
+  também o envelhecimento de fato, não só o de forma. Cada número que já mentiu
+  uma vez neste repositório vira violação, com o valor de hoje na mensagem.
+
+## 1.0.2 — 31/08/2026
+
+Fechamento do material da Sprint 2, sem mudança de produto.
+
+- o deck passou a **21 lâminas**, com as repetidas fundidas e o SQL auditável da
+  FlowIA na tela da evidência;
+- o `.pptx` virou a fonte da verdade: os geradores por código saíram, porque
+  manter os dois reabria o risco de sobrescrever a edição manual;
+- o roteiro do vídeo foi reescrito para abrir pelo caso, como o deck abre;
+- a trava do `montar_zip_entrega.sh` passou a procurar o link do YouTube dentro
+  do `.pptx` entregue, e não numa constante de um gerador que já não gerava
+  nada — dava para passar na trava sem o link aparecer em slide nenhum.
+
 ## 1.0.1 — 29/08/2026
 
 Correção de conteúdo, sem mudança de contrato nem de cálculo.
