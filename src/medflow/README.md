@@ -22,7 +22,7 @@ medflow bronze | silver | gold | geografia | validar | inventario
 | `config.py` | recorte, UF, caminhos e logging — tudo do ambiente |
 | `bronze/` | ingestão, conversão DBF→Parquet, manifesto e referências oficiais |
 | `silver/` | dimensões, fatos, de/paras e agregados conformados |
-| `gold.py` | os sete marts e os indicadores IPH, IPR, IS, TMH, CMI |
+| `gold.py` | os sete marts e os seis indicadores: IPH, IPR, IPE, IS, TMH e CMI |
 | `icsap.py` | os 19 grupos da Portaria SAS/MS 221/2008 |
 | `ipca.py` | número-índice do IPCA e o fator de correção do CMI real |
 | `geografia.py` | regiões, população IBGE 2022 e as malhas GeoJSON/TopoJSON |
@@ -30,6 +30,7 @@ medflow bronze | silver | gold | geografia | validar | inventario
 | `validar.py` | validação integrada das três camadas contra os contratos |
 | `inventario.py` | SHA-256 dos artefatos, para provar que nada se perdeu |
 | `oracle/` | conexão mTLS, carga da Gold e executor de SQL |
+| `select_ai/` | o roteiro de perguntas, o SQL de referência e o executor que compara as duas respostas |
 | `cli.py` | a porta de entrada de tudo acima |
 
 ## Duas regras que o código segue
