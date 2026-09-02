@@ -31,25 +31,28 @@ arquivos de conexão são ignorados pelo Git.
 | Versão | 26ai |
 | Tipo de instância | Always Free |
 | Região | Brazil East, `sa-saopaulo-1` |
-| Tenancy | `rm572207` (institucional FIAP/Oracle, usuário `rm572207@fiap.com.br`) |
+| Tenancy | institucional FIAP/Oracle; o OCID e o usuário ficam no `.env`, fora do repositório |
 | Autenticação | mTLS obrigatório, acesso seguro de qualquer lugar |
 | Criado em | 31/07/2026 |
 
-## Estado validado até 27/08/2026
+## O que está no banco
 
-- conexão mTLS validada como `MEDFLOW`;
-- 5 dimensões, 7 marts, 209 colunas comentadas e 10 índices secundários no
-  modelo aplicado na retomada;
-- **597.930 linhas** após a carga territorial: 597.018 nos marts e 912 nas
-  dimensões (597.725 linhas do estado anterior mais 205 novas linhas);
-- 39/39 métricas de reconciliação com estado `ok`, incluindo território;
-- seis verificações adicionais de integridade com zero ocorrências;
-- Resource Principal OCI habilitado para o esquema;
-- profile `MEDFLOW_GENAI` ativo com OCI Generative AI em `sa-saopaulo-1`, sincronizado com os doze objetos analíticos;
-- roteiro revalidável de 13 perguntas em cinco blocos; oito têm SQL de
-  referência executado e seis coincidiram exatamente na rodada de 23/08/2026;
-- pacote `medflow_select_ai` instalado para o assistente web e a demonstração opcional no APEX;
+- conexão mTLS como `MEDFLOW`, sem senha em arquivo versionado;
+- 5 dimensões e 7 marts, com 13 tabelas e 225 colunas comentadas, e 10 índices
+  secundários;
+- **597.930 linhas**: 597.018 nos marts e 912 nas dimensões;
+- reconciliação da carga com todas as métricas em `ok`, incluindo território, e
+  seis verificações adicionais de integridade com zero ocorrências;
+- Resource Principal OCI habilitado para o esquema, e o profile `MEDFLOW_GENAI`
+  ativo com OCI Generative AI em `sa-saopaulo-1`, sincronizado com os doze
+  objetos analíticos;
+- pacote `medflow_select_ai` instalado, servindo o assistente web e a
+  demonstração APEX;
 - heartbeat diário e `make preflight` conferindo o produto publicado.
+
+Nenhum desses números é para acreditar: `make oracle-carregar --conferir` e
+`schema/03_validar_carga.sql` os medem no banco, no momento em que você
+pergunta.
 
 As evidências atuais estão em
 [`../docs/flowia/REVALIDACAO_SELECT_AI.md`](../docs/flowia/REVALIDACAO_SELECT_AI.md),
@@ -177,8 +180,10 @@ make oracle-carregar          # ou, sem make:
 
 ### Passo 5 — reconciliação
 
-`schema/03_validar_carga.sql` compara 36 métricas contra
-`data/gold/qualidade/METADADOS.json`, contrato `0.3.0`. **Toda linha tem de
+`schema/03_validar_carga.sql` compara as métricas de reconciliação contra
+`data/gold/qualidade/METADADOS.json`. A contagem e a versão do contrato não
+ficam escritas aqui: os dois números já andaram para a frente sem esta linha
+acompanhar, e é o próprio arquivo de metadados que os carrega. **Toda linha tem de
 sair como `ok`.** Os marts partem do mesmo fato e precisam fechar no mesmo
 total de internações novas, 7.150.693 no recorte atual; se um divergir, a
 carga perdeu dado e o dashboard não deve ser construído sobre essa base.
@@ -188,13 +193,16 @@ os regenera a partir dos metadados, e exige `carregar_gold.py --conferir`
 antes: abençoar o estado do banco sem conferência independente seria só
 carimbar.
 
-### Passo 9 — Select AI
+### Passo 7 — Select AI
 
-`select_ai/04_select_ai.sql` registra o Dynamic Group, a policy IAM, a
-habilitação do Resource Principal, o profile e a bateria original. O roteiro
-atual vive em `src/medflow/select_ai/` e roda com `make select-ai-revalidar`:
-são 13 perguntas em cinco blocos, oito com comparação por execução contra SQL
-de referência. A configuração usa OCI Generative AI na própria região de São
+**O roteiro de perguntas não mora aqui.** Ele vive em
+`src/medflow/select_ai/perguntas.py` e roda com `make select-ai-revalidar`: são
+13 perguntas em cinco blocos, oito com comparação por execução contra o SQL de
+referência. A evidência e a leitura dela estão em
+[`../docs/flowia/`](../docs/flowia/README.md).
+
+O que está nesta pasta é a infraestrutura. `select_ai/04_select_ai.sql` registra
+o Dynamic Group, a policy IAM, a habilitação do Resource Principal e o profile. A configuração usa OCI Generative AI na própria região de São
 Paulo, sem chave de API externa.
 
 A página APEX continua sendo uma demonstração opcional. O pacote versionado em
@@ -225,8 +233,8 @@ demonstração ao vivo.
 
 O Select AI usa comentário de tabela e de coluna como contexto ao traduzir
 pergunta em SQL. É o que o atributo `"comments": "true"` do profile envia
-junto do prompt. Por isso `sql/02_criar_tabelas_gold.sql` comenta as 175
-colunas, e não apenas as chaves. Erros de semântica devem ser corrigidos no
+junto do prompt. Por isso `schema/02_criar_tabelas_gold.sql` comenta as 225
+colunas e as 13 tabelas, e não apenas as chaves. Erros de semântica devem ser corrigidos no
 comentário da coluna. Cortes de negócio ausentes da pergunta devem ser
 declarados explicitamente, sem ajustes por tentativa e erro.
 
@@ -238,5 +246,6 @@ tipo de imprecisão que a banca cobra.
 ## Dados
 
 Os Parquets dos marts não são versionados (`.gitignore`). Gere-os localmente
-com `notebooks/02_analise_dados.ipynb` antes da carga; os SHA-256 de
-referência estão em `data/gold/qualidade/METADADOS.json`.
+com `make pipeline` antes da carga — os notebooks narram o raciocínio, mas não
+são mais o motor. Os SHA-256 de referência estão em
+`data/gold/qualidade/METADADOS.json`.
