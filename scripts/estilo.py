@@ -32,6 +32,10 @@ ISENTOS = {
     "CHANGELOG.md",
     "docs/pesquisa/pesquisa.md",
     "docs/flowia/REVALIDACAO_SELECT_AI.md",
+    # Estes dois catalogam os números que não podem mais aparecer, e para isso
+    # precisam escrevê-los. Conferi-los aqui acusaria a própria lista.
+    "docs/entrega_sprint_2/CRITERIOS_DE_REVISAO.md",
+    "docs/entrega_sprint_2/CONTEXTO_TIME.md",
 }
 
 FRASES = {
@@ -40,6 +44,26 @@ FRASES = {
     r"é importante (notar|destacar|lembrar|ressaltar)": "'é importante notar'",
     r"\bem suma\b": "'em suma'",
     r"\b(genuinamente|verdadeiramente|absolutamente|extremamente|simplesmente|realmente)\b": "advérbio de reforço",
+}
+
+# Números que descreveram o produto e deixaram de descrever. Envelhecer de fato
+# é o defeito mais caro do material: um número isolado errado não estraga nada,
+# mas dois documentos discordando destroem a credibilidade dos dois.
+#
+# Cada entrada aqui já apareceu num documento depois de o valor ter mudado. A
+# lista é de literais sem ambiguidade; leitura datada continua legítima e mora
+# em ISENTOS.
+NUMEROS_VENCIDOS = {
+    r"597\.725": "linhas no Oracle antes da carga territorial; hoje são 597.930",
+    r"585\.296": "linhas no Oracle no recorte de 29 competências",
+    r"8\.257\.139": "comparações do recorte anterior; hoje são 8.403.103",
+    r"\b29 competências": "o recorte avançou para 30 em 09/08/2026",
+    r"\b653 hospitais": "hoje são 655",
+    r"\b185 testes": "hoje são 204",
+    # "dez endpoints" só é vencido quando omite o assistente: dizer "dez
+    # endpoints GET e o POST" é a forma correta, e não pode ser acusada.
+    r"\b(10|dez) endpoints(?!(?s:.{0,90}POST))": "omite o POST do assistente; diga 'onze' ou 'dez GET e o POST'",
+    r"\b(209|175) colunas": "o DDL da Gold comenta 225 colunas",
 }
 
 
@@ -99,6 +123,12 @@ def confere(caminho: Path) -> list[tuple[str, str]]:
             n_linha = texto.count("\n", 0, m.start())
             if livre[n_linha]:
                 achados.append((nome, texto[max(0, m.start() - 30) : m.start() + 60].replace("\n", " ")))
+
+    for padrao, motivo in NUMEROS_VENCIDOS.items():
+        for m in re.finditer(padrao, texto, re.IGNORECASE):
+            n_linha = texto.count("\n", 0, m.start())
+            if livre[n_linha]:
+                achados.append((f"número vencido — {motivo}", texto[max(0, m.start() - 40) : m.start() + 50].replace("\n", " ")))
 
     # Parágrafo com três ou mais trechos separados por ponto e vírgula é uma
     # lista escrita como texto. Vira bullets.

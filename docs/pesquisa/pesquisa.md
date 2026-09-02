@@ -9,6 +9,12 @@ se o produto evoluir depois da entrega acadêmica.
 
 O desenho técnico correspondente está em [`ARQUITETURA.md`](../../ARQUITETURA.md).
 
+> Este documento é um retrato de 01/08/2026 e não é reescrito para acompanhar o
+> produto: reescrever pesquisa a cada mudança transforma registro em opinião. O
+> produto evoluiu desde então — as quatro visões citadas aqui foram reagrupadas
+> em duas páginas, e a etapa de fluxos saiu. O estado corrente está no
+> [`ARQUITETURA.md`](../../ARQUITETURA.md).
+
 ## 1. Resposta executiva
 
 **O problema estrutural é robusto e a aderência da solução ao problema está

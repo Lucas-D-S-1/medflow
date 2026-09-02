@@ -319,7 +319,7 @@ As dimensões geográficas e os ativos GeoJSON/TopoJSON sustentam a leitura muni
 - banco `MEDFLOW` com conexão mTLS obrigatória;
 - schema de aplicação **`MEDFLOW`**, separado do usuário `ADMIN`;
 - **12 tabelas:** 5 dimensões e 7 marts;
-- 175 colunas comentadas e 10 índices secundários no modelo registrado;
+- 225 colunas comentadas e 10 índices secundários no modelo registrado;
 - **597.930 linhas** carregadas no recorte vigente;
 - 36 de 36 métricas do gate Oracle com estado `ok` e seis gates de integridade vazios;
 - views de projeção pura, sem recálculo de indicadores.

@@ -43,7 +43,8 @@ ORDS e React apenas carregam, expõem ou formatam o resultado da Gold.
 ## 7. Por que usar Oracle Autonomous AI Database e ORDS?
 
 O Oracle concentra as tabelas analíticas, as views de publicação, a API e o
-Select AI no mesmo ambiente governado. O ORDS expõe dez endpoints `GET` sobre
+Select AI no mesmo ambiente governado. O ORDS expõe dez `GET` analíticos e o
+`POST` governado do assistente, sobre
 views de projeção, sem publicar as tabelas Gold diretamente por AutoREST.
 
 ## 8. Como as quatro visões formam uma jornada?

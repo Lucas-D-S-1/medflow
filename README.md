@@ -178,7 +178,7 @@ A Gold está carregada no Autonomous AI Database 26ai `MEDFLOW`, workload
 Lakehouse, região São Paulo:
 
 - esquema de aplicação separado do `ADMIN`;
-- 5 dimensões, 7 marts, 209 colunas comentadas e 10 índices secundários;
+- 5 dimensões, 7 marts, 225 colunas comentadas e 10 índices secundários;
 - 597.930 linhas carregadas e conferidas após a migração territorial;
 - 39/39 métricas Oracle com estado `ok`, incluindo as dimensões territoriais;
 - profile `MEDFLOW_GENAI` usando OCI Generative AI por Resource Principal, sincronizado com os doze objetos analíticos;

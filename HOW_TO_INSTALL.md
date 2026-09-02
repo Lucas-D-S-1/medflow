@@ -232,9 +232,9 @@ Contém a implementação executável:
 ### `contracts/` — as promessas verificáveis
 
 Os JSONs de `contracts/dados/` descrevem schemas e colunas das três camadas.
-`openapi.yaml` define a interface dos dez endpoints. Os inventários guardam
-hashes de marcos importantes. Esses arquivos não são apenas documentação:
-testes falham quando código, dados, SQL ou API deixam de cumprir o contrato.
+`openapi.yaml` define a interface dos dez `GET` analíticos e do `POST` governado
+do assistente. Esses arquivos não são documentação: testes falham quando código,
+dados, SQL ou API deixam de cumprir o contrato.
 
 ### `data/` — resultados reproduzíveis
 

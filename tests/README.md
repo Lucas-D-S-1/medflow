@@ -3,6 +3,10 @@
 Cada nível prova algo que os outros não provam. Rodar só um deixa um buraco
 específico, e vale saber qual.
 
+Num clone limpo, sem `.env`, sem `data/` e sem Oracle, `make test-py` fecha em
+**204 testes** passando; os demais são pulados com o motivo escrito, e nunca
+falham por ausência de credencial. É a contagem que o material da entrega cita.
+
 | Nível | Onde | O que garante | Precisa de |
 |---|---|---|---|
 | unidade | `test_indicadores.py` | cada fórmula nas bordas | nada |
