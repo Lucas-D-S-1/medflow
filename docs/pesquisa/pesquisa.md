@@ -255,7 +255,7 @@ sozinhas, não garantem impacto.
 - geografia e metadados versionados;
 - ausência e denominador zero preservados, sem descarte silencioso.
 
-A volumetria de cada item está em [`VALIDACAO_TECNICA.md`](../../VALIDACAO_TECNICA.md),
+A volumetria de cada item sai de `make validar`,
 que é gerado a cada `make validar`. Este documento é argumentativo e não repete
 número: quando o recorte avança, prosa com total cravado passa a mentir, e foi o
 que aconteceu com a versão anterior desta lista.

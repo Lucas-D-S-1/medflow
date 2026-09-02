@@ -85,3 +85,7 @@ contracts/INVENTARIO.json
 # tempo da última execução. Versioná-lo publicava um relatório de máquina como
 # se fosse documento, e ele envelhecia entre uma execução e a seguinte.
 VALIDACAO_TECNICA.md
+
+# Saída bruta do avaliador da FlowIA, sobrescrita a cada rodada. O resultado
+# que vale está em docs/flowia/AVALIACAO_20_PERGUNTAS.md, escrito à mão.
+docs/flowia/ULTIMA_EXECUCAO.md

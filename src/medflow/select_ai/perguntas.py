@@ -37,7 +37,7 @@ class Pergunta:
     """Limitação do modelo já medida, documentada e aceita.
 
     Uma pergunta marcada assim pode falhar sem derrubar a execução: a falha já
-    foi analisada em `docs/qualidade/LEITURA_SELECT_AI.md` e a decisão de
+    foi analisada em `docs/flowia/LEITURA_SELECT_AI.md` e a decisão de
     produto foi conviver com ela. O que derruba é falha **nova** — pergunta sem
     marca que passou a divergir. E uma marca que para de falhar também é
     notícia: significa que a limitação foi superada e a marca deve sair.

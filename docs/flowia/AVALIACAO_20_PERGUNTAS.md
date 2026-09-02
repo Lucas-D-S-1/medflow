@@ -1,22 +1,25 @@
-# FlowIA — o resultado consolidado de 29/08/2026
+# FlowIA — a bateria de 20 perguntas humanas
 
-`AVALIACAO_FLOWIA.md` é sempre a **última execução**, e não o estado atual: cada
-rodada sobrescreve o arquivo. Em 29/08 houve mais de uma, e a última rodada
-completa ficou congelada em 11/20 antes das correções que vieram depois. Esta
-página existe para que ninguém leia aquele número como o estado do produto.
+O resultado consolidado de **29/08/2026**. As perguntas são deliberadamente
+curtas, vagas e coloquiais, como as que um gestor faria; o contexto da tela vai
+separado, e nenhum prompt entrega tabela, coluna, fórmula ou corte ao modelo.
+
+Este é o documento do resultado. A saída bruta de cada execução do avaliador
+fica em `ULTIMA_EXECUCAO.md`, que é sobrescrito a cada rodada e não é
+versionado — quem lê o repositório precisa do veredito, não do log.
 
 ## O que os 20 casos dizem hoje
 
 **20 de 20**, montados em quatro execuções do mesmo dia. Cada caso aparece aqui
 com a rodada que produziu seu veredito final.
 
-| Rodada | Casos | Resultado | Arquivo |
-|---|---|---|---|
-| 13:52 | os 20 | 11/20 | `AVALIACAO_FLOWIA.md` |
-| depois das regras 15–21 | 9 que falhavam | 5/9 | `..._PARCIAL_F03-F04-F05-F06-F08-F09-F15-F17-F20.md` |
-| depois do envelope e da regra 16 | F03 F05 F08 F17 | 2/4 | `..._PARCIAL_F03-F05-F08-F17.md` |
-| depois da regra 17 e do rótulo | F05 F08 | 2/2 | `..._PARCIAL_F05-F08.md` |
-| regressão | os 11 que já passavam | 11/11 | `..._PARCIAL_F01-F02-...-F19.md` |
+| Rodada | Casos | Resultado |
+|---|---|---|
+| 13:52, a primeira completa | os 20 | 11/20 |
+| depois das regras 15–21 | 9 que falhavam | 5/9 |
+| depois do envelope e da regra 16 | F03 F05 F08 F17 | 2/4 |
+| depois da regra 17 e do rótulo | F05 F08 | 2/2 |
+| regressão | os 11 que já passavam | 11/11 |
 
 A rodada de regressão é a que impede a leitura otimista: as regras novas podiam
 ter quebrado o que já funcionava, e **quebraram uma vez** — a regra 15, de

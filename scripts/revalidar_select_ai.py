@@ -1,7 +1,7 @@
 """Revalida o Select AI contra o produto final e grava a evidência datada.
 
 Roda o roteiro de `medflow.select_ai.perguntas` — cinco blocos, em profundidade
-crescente — e escreve `docs/qualidade/REVALIDACAO_SELECT_AI.md`.
+crescente — e escreve `docs/flowia/REVALIDACAO_SELECT_AI.md`.
 
 Onde há SQL de referência, a conferência é executada, não lida: as duas
 consultas rodam e as respostas são comparadas pela sequência ordenada de
@@ -137,7 +137,7 @@ def main() -> int:
         print(
             f"LIMITAÇÃO SUPERADA  {r.pergunta.id}: passou a bater com a "
             "referência. Remover a marca `limitacao_conhecida` e atualizar "
-            "docs/qualidade/LEITURA_SELECT_AI.md."
+            "docs/flowia/LEITURA_SELECT_AI.md."
         )
     for r in regressoes:
         detalhe = (
@@ -151,7 +151,7 @@ def main() -> int:
         return 1
     print(
         f"\nSem regressões. {len(conhecidas)} limitação(ões) conhecida(s), "
-        "analisadas em docs/qualidade/LEITURA_SELECT_AI.md."
+        "analisadas em docs/flowia/LEITURA_SELECT_AI.md."
     )
     return 0
 

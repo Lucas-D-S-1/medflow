@@ -32,7 +32,6 @@ ISENTOS = {
     "CHANGELOG.md",
     "docs/decisoes/DECISOES.md",
     "docs/decisoes/REVISAO_REQUISITOS_E_PROPOSTA_GOLD.md",
-    "docs/qualidade/VALIDACAO_ORACLE_SELECT_AI.md",
     "docs/pesquisa/pesquisa.md",
 }
 

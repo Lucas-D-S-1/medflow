@@ -588,8 +588,8 @@ Neste arquivo, `Leandro` nessa dupla com Pedro significa Leandro Lopes; Scutari 
 | estado e histórico de execução | `PENDENCIAS.md` | conclusões, pendências e evolução do recorte; números históricos não substituem o gate vigente |
 | problema, persona, proposta e validação futura | `docs/pesquisa/pesquisa.md` | evidência estrutural, soluções comparáveis, limites das alegações e ausência de validação primária |
 | fórmulas e decisões Gold | `docs/decisoes/REVISAO_REQUISITOS_E_PROPOSTA_GOLD.md` | TMH, IPR, IS, CMI, IPH, fluxos, ICSAP e permanência |
-| evidência Oracle e Select AI | `docs/qualidade/REVALIDACAO_SELECT_AI.md` | execução datada das 13 perguntas e comparações contra a referência |
-| leitura dos limites do Select AI | `docs/qualidade/LEITURA_SELECT_AI.md` | interpretação dos acertos, divergências e roteiro seguro para a banca |
+| evidência Oracle e Select AI | `docs/flowia/REVALIDACAO_SELECT_AI.md` | execução datada das 13 perguntas e comparações contra a referência |
+| leitura dos limites do Select AI | `docs/flowia/LEITURA_SELECT_AI.md` | interpretação dos acertos, divergências e roteiro seguro para a banca |
 | roteiro Select AI | `src/medflow/select_ai/perguntas.py` | cinco blocos, prompts, SQL de referência e limitações conhecidas |
 | demonstração APEX | `db/apex/README.md` | backend PL/SQL, roteiro de montagem e o export da aplicação `100` já montada |
 | contrato da API | `contracts/openapi.yaml` | rotas, parâmetros, respostas, ordenação e limitações |

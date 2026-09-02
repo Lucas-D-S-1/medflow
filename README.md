@@ -38,11 +38,10 @@ navegador em 16/08/2026. Versão pública estável:
 [`v1.0.1`](https://github.com/Lucas-D-S-1/medflow/releases/tag/v1.0.1), com
 Oracle carregado, API pública, WebApp no ar, FlowIA contextual e aprovada em 20
 de 20 na bateria de perguntas humanas, Select AI governado no ORDS, busca
-hospitalar por alias e território municipal. A
-evidência da comparação temporal final está em
-[`docs/qualidade/AVALIACAO_FLOWIA_PARCIAL_F12.md`](docs/qualidade/AVALIACAO_FLOWIA_PARCIAL_F12.md),
-e o roteiro anterior permanece em
-[`docs/qualidade/REVALIDACAO_SELECT_AI.md`](docs/qualidade/REVALIDACAO_SELECT_AI.md).
+hospitalar por alias e território municipal. A evidência da bateria está em
+[`docs/flowia/AVALIACAO_20_PERGUNTAS.md`](docs/flowia/AVALIACAO_20_PERGUNTAS.md),
+e a do roteiro de Select AI, em
+[`docs/flowia/REVALIDACAO_SELECT_AI.md`](docs/flowia/REVALIDACAO_SELECT_AI.md).
 
 **O acordo de disponibilidade.** O Autonomous Database é Always Free e para
 sozinho depois de sete dias sem atividade. Com ele no ar, a entrega é uma só,
@@ -190,9 +189,9 @@ Lakehouse, região São Paulo:
 
 Runbook e evidências:
 [`db/README.md`](db/README.md) e
-[`docs/qualidade/REVALIDACAO_SELECT_AI.md`](docs/qualidade/REVALIDACAO_SELECT_AI.md).
+[`docs/flowia/REVALIDACAO_SELECT_AI.md`](docs/flowia/REVALIDACAO_SELECT_AI.md).
 A leitura dos limites medidos está em
-[`docs/qualidade/LEITURA_SELECT_AI.md`](docs/qualidade/LEITURA_SELECT_AI.md), e
+[`docs/flowia/LEITURA_SELECT_AI.md`](docs/flowia/LEITURA_SELECT_AI.md), e
 a base versionada da demonstração APEX, em [`db/apex/`](db/apex/README.md).
 
 ### Webapp — concluído e revisado em 26/08/2026

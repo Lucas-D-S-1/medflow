@@ -21,5 +21,5 @@ contexto.
 acuse: o notebook não é coberto pelos testes. Se o número mostrado aqui
 discordar do `make validar`, o pacote é a fonte.
 
-As execuções datadas, com saída preservada como evidência, estão em
-`docs/qualidade/`.
+A evidência datada do que a IA do produto responde — a bateria de perguntas e o
+roteiro de Select AI — está em [`docs/flowia/`](../docs/flowia/README.md).

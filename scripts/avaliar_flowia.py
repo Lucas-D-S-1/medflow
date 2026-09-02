@@ -33,7 +33,7 @@ from medflow.select_ai.executar import (  # noqa: E402
 from medflow.select_ai.perguntas import Pergunta  # noqa: E402
 from medflow.select_ai.relatorio import VEREDITOS_OK, tabela  # noqa: E402
 
-SAIDA = RAIZ / "docs" / "qualidade" / "AVALIACAO_FLOWIA.md"
+SAIDA = RAIZ / "docs" / "flowia" / "ULTIMA_EXECUCAO.md"
 
 
 @dataclass(frozen=True)

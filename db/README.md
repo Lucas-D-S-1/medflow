@@ -52,9 +52,9 @@ arquivos de conexão são ignorados pelo Git.
 - heartbeat diário e `make preflight` conferindo o produto publicado.
 
 As evidências atuais estão em
-[`../docs/qualidade/REVALIDACAO_SELECT_AI.md`](../docs/qualidade/REVALIDACAO_SELECT_AI.md),
+[`../docs/flowia/REVALIDACAO_SELECT_AI.md`](../docs/flowia/REVALIDACAO_SELECT_AI.md),
 e a leitura dos limites medidos, em
-[`../docs/qualidade/LEITURA_SELECT_AI.md`](../docs/qualidade/LEITURA_SELECT_AI.md).
+[`../docs/flowia/LEITURA_SELECT_AI.md`](../docs/flowia/LEITURA_SELECT_AI.md).
 
 ## Instalação
 

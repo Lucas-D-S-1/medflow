@@ -114,7 +114,7 @@ O resultado de referência começa por `LIMEIRA`, seguido por
 
 Não encadear perguntas e não usar “taxa de ocupação” no roteiro principal. As
 limitações já medidas estão em
-[`LEITURA_SELECT_AI.md`](../../medflow/docs/qualidade/LEITURA_SELECT_AI.md).
+[`LEITURA_SELECT_AI.md`](LEITURA_SELECT_AI.md).
 
 ## 5. Critério de pronto
 

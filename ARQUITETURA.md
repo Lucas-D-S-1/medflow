@@ -172,7 +172,6 @@ validar indicadores, corrigir dependências e executar o preflight.
 - [`contracts/openapi.yaml`](contracts/openapi.yaml) — o contrato dos 10 endpoints
 - [`contracts/NOMENCLATURA.md`](contracts/NOMENCLATURA.md) — convenção de tabelas e colunas
 - [`db/README.md`](db/README.md) — criação, carga, publicação e diagnóstico no Oracle
-- [`docs/qualidade/VALIDACAO_ORACLE_SELECT_AI.md`](docs/qualidade/VALIDACAO_ORACLE_SELECT_AI.md)
 - [`docs/decisoes/DECISOES.md`](docs/decisoes/DECISOES.md) — decisões de escopo, domínio e produto
 - [`docs/decisoes/REVISAO_REQUISITOS_E_PROPOSTA_GOLD.md`](docs/decisoes/REVISAO_REQUISITOS_E_PROPOSTA_GOLD.md)
 - [`docs/pesquisa/pesquisa.md`](docs/pesquisa/pesquisa.md) — validação do problema e benchmarking

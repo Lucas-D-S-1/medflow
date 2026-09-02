@@ -13,7 +13,7 @@ apresentação precisa alcançá-lo.
 | conferir se a entrega atende as regras | [`CRITERIOS_DE_REVISAO.md`](CRITERIOS_DE_REVISAO.md) |
 | estudar para a banca | [`QA_BANCA.md`](QA_BANCA.md) |
 | checar um número antes de falar | [`CONTEXTO_TIME.md`](CONTEXTO_TIME.md) |
-| entender a página APEX | [`APEX_SELECT_AI_PASSO_A_PASSO.md`](APEX_SELECT_AI_PASSO_A_PASSO.md) |
+| entender a página APEX | [`../flowia/DEMONSTRACAO_APEX.md`](../flowia/DEMONSTRACAO_APEX.md) |
 
 ## O que é cada arquivo
 
