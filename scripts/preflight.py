@@ -11,7 +11,7 @@ necessário: abrir em janela anônima, testar em outra rede, ensaiar a fala.
     make preflight
 
 Não precisa de `.env`, wallet nem Gold local: fala com o produto publicado pelo
-mesmo caminho que o avaliador vai usar.
+mesmo caminho que qualquer visitante usa.
 """
 
 from __future__ import annotations
@@ -153,7 +153,7 @@ class Preflight:
 
     def parametro_invalido(self) -> None:
         # O 404 aqui é deliberado e documentado no openapi. Se virar 500, o
-        # comportamento mudou e a banca pode topar com isso.
+        # comportamento mudou e quem consome a API vai topar com isso.
         codigo, _ = self.buscar("/regioes/resumo?ano=1900&mes=13&limit=1")
         self.registrar(
             "Parâmetro inválido devolve 404",

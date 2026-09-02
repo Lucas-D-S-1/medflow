@@ -4,8 +4,8 @@ Executada em **23/08/2026 às 13:28** no banco `GF68E03B2A30D55_MEDFLOW`, perfil
 
 ## O que este documento prova, e como
 
-A pergunta que a banca faz sobre qualquer demonstração de texto-para-SQL é a
-mesma: *como você sabe que ele acertou?* Ler o SQL gerado e achar parecido com o
+A pergunta que qualquer um faz diante de uma demonstração de texto-para-SQL é a
+mesma: *como se sabe que ele acertou?* Ler o SQL gerado e achar parecido com o
 de referência não responde isso.
 
 Aqui a conferência é executada. Para cada pergunta com SQL de referência, as
@@ -36,7 +36,7 @@ recusa: seria reprovada.
 
 > **Este documento é a medida, não o julgamento.** Ele é gerado por execução e
 > reescrito inteiro a cada rodada. A leitura do que estes números significam,
-> incluindo o que falhou e o que fazer antes da banca, está em
+> incluindo o que falhou e como conduzir uma demonstração, está em
 > [`LEITURA_SELECT_AI.md`](LEITURA_SELECT_AI.md).
 
 ## A. Leitura direta: uma tabela, um corte

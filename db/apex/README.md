@@ -164,7 +164,7 @@ select medflow_select_ai.sql_da_resposta(:P1_ID) from dual
 select medflow_select_ai.narrativa_da_resposta(:P1_ID) from dual
 ```
 
-### Acabamento de produto para a banca
+### Acabamento de produto
 
 Usar a ordem abaixo na página. Ela acompanha a pergunta que a pessoa faz, em
 vez de acompanhar os componentes técnicos do APEX:
@@ -195,8 +195,8 @@ Depois de montar, vale rodar estas duas: elas mostram os dois lados:
    `taxa_ocupacao_leitos`, que vira cabeçalho na tela. O aviso precisa
    aparecer dizendo exatamente isso.
 
-A segunda é a mais importante para a banca: mostra que o produto sabe onde o
-modelo erra, em vez de torcer para ninguém perguntar.
+A segunda é a mais importante: mostra que o produto sabe onde o modelo erra,
+em vez de esconder o limite.
 
 ## O rastro
 

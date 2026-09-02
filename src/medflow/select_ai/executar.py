@@ -22,7 +22,7 @@ from medflow.select_ai.perguntas import Pergunta
 PERFIL = "MEDFLOW_GENAI"
 LIMITE_LINHAS = 50
 
-# Termos que a banca cobra. O IPH é pressão estimada sobre capacidade SUS
+# Termos que o produto não pode afirmar. O IPH é pressão estimada sobre capacidade SUS
 # declarada, e a base é mensal por competência.
 TERMOS_PROIBIDOS = (
     "ocupação real",
@@ -284,9 +284,8 @@ def varrer_termos(*textos: str) -> tuple[str, ...]:
     Dentro do `narrate`, mencionar não é afirmar. Uma ocorrência só conta como
     violação quando aparece afirmativamente — sem negação na janela anterior — e
     o texto não traz em nenhum lugar a ressalva que corrige o sentido. É a
-    diferença entre "a taxa de ocupação foi de 78%", que é a alegação que a
-    banca derruba, e "esta base não mede taxa de ocupação", que é o que se quer
-    ouvir.
+    diferença entre "a taxa de ocupação foi de 78%", que o dado não sustenta, e
+    "esta base não mede taxa de ocupação", que é a leitura correta.
     """
     junto = " ".join(t.lower() for t in textos if t)
     if not junto:

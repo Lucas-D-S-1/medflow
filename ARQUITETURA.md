@@ -79,7 +79,7 @@ série mais longa e validação com usuários.
 | Web app | Publicado em [lucas-d-s-1.github.io/medflow](https://lucas-d-s-1.github.io/medflow/) |
 | Web app — escopo | **Duas páginas**: a análise contínua, em `/#regional` e `/#hospital`, e a `/metodologia`. A etapa de fluxos saiu por decisão de produto; a matriz origem–destino continua na Gold e na API |
 | IA do produto | FlowIA publicada e aprovada em 20 de 20 na bateria de perguntas humanas; Select AI governado pelo pacote PL/SQL, que recusa SQL que não seja de leitura |
-| Próximos portões | Fechar a entrega da Sprint 2 e sustentar o link público até a banca, entre 14 e 18/09 |
+| Próximos portões | Sustentar o link público e o banco ativo, e medir utilidade com usuários reais |
 
 ## 4. Construção técnica por etapa
 
@@ -147,7 +147,7 @@ continua de pé pelo snapshot e diz na tela que está em contingência.
 ### Preflight da apresentação
 
 A parte automatizável roda num comando, `make preflight`, que fala com o
-produto publicado pelo mesmo caminho que o avaliador usa: sem `.env`, wallet
+produto publicado pelo mesmo caminho que qualquer visitante usa: sem `.env`, wallet
 ou Gold local. São doze verificações: Oracle ao vivo, versão do contrato,
 competência mais recente, os endpoints de cada visão, as 62 regiões carregadas,
 o 404 documentado para parâmetro inválido e o link público abrindo.
@@ -163,8 +163,8 @@ O que a máquina não checa continua na mão, e o comando imprime a lista no fim
 
 ### Manter o banco acordado
 
-O Always Free para sozinho depois de sete dias sem atividade, e entre a entrega
-e a banca há treze dias em que ninguém necessariamente abre o produto. O
+O Always Free para sozinho depois de sete dias sem atividade, e um produto
+público passa dias sem visita sem que isso tenha nada de anormal. O
 workflow `.github/workflows/heartbeat.yml` roda todo dia às 09h10 UTC, lê o
 `/status` e uma linha real dos marts pelo módulo público, e confere o site no
 Pages. Chamada ao ORDS executa SQL, e SQL conta como atividade.

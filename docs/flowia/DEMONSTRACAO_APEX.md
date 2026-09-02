@@ -20,7 +20,7 @@ validada**:
 
 O restante deste arquivo deixou de ser uma lista de pendências. Ele é o registro
 reproduzível do caminho percorrido: o que permite remontar o workspace do zero
-caso a instância precise ser recriada antes da banca.
+caso a instância precise ser recriada.
 
 ## Links
 

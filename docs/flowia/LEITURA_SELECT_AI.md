@@ -11,7 +11,7 @@ A primeira versão fazia cinco perguntas, todas agregação de uma tabela só, e
 passava nas cinco. O problema é que uma demonstração que só faz perguntas
 fáceis não mede a ferramenta: mede a facilidade das perguntas. E a conferência
 entre o SQL gerado e o de referência era feita a olho, o que responde mal à
-única pergunta que a banca vai fazer: *como você sabe que ele acertou?*
+única pergunta que importa: *como se sabe que ele acertou?*
 
 O roteiro atual tem treze perguntas em cinco blocos de dificuldade crescente,
 oito delas com SQL de referência conferido **por execução**: as duas consultas
@@ -60,8 +60,8 @@ proibir o vocabulário nome por nome, e o comentário da tabela regional passou 
 instruir a resposta correta. O SQL melhorou; a narrativa não. **O `COMMENT ON`
 governa bem a geração de SQL e mal a redação da resposta.**
 
-Isto é exatamente o erro que a banca cobra, e é a razão pela qual a decisão de
-arquitetura de não expor o Select AI como chat público se sustenta. As telas do
+É por isso que a decisão de arquitetura de não expor o Select AI como chat
+público se sustenta. As telas do
 produto usam consultas determinísticas sobre a Gold; o Select AI é demonstração
 controlada, com o SQL revisado antes da narrativa. Este achado não contradiz
 essa decisão. É a evidência que a justifica.
@@ -107,12 +107,12 @@ acerto em alarme. Duas correções:
 As duas regras estão fixadas em `tests/test_select_ai.py`, junto com o guarda
 que decide se o SQL vindo do modelo pode tocar o banco.
 
-## O que fazer antes da banca
+## Como conduzir uma demonstração ao vivo
 
 1. **Não encadear perguntas.** Cada uma autossuficiente, pelo achado 3.
 2. **Não perguntar por "taxa de ocupação"** no roteiro apresentado, e ter a
-   correção na ponta da língua se alguém da banca perguntar assim: o achado 2
-   diz que o modelo vai aceitar o termo.
+   correção pronta se alguém perguntar assim: o achado 2 diz que o modelo
+   aceita o termo sem contestar.
 3. **Preferir as perguntas do bloco A e a B3**, que passaram na conferência por
    execução, e apresentar B1 e B2 como o que são: o limite honesto da
    ferramenta, com o SQL de referência ao lado mostrando a resposta correta.

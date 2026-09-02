@@ -4,8 +4,8 @@
 -- ORDEM IMPORTA: rode este roteiro logo depois da carga, não no fim do
 -- projeto. O Select AI depende de um provedor de LLM alcançável a partir do
 -- banco, e essa é a única dependência do MVP que pode simplesmente não estar
--- disponível na tenancy. Descobrir isso em agosto é barato; descobrir na
--- semana da banca, não.
+-- disponível na tenancy. Descobrir isso cedo é barato; descobrir com o produto
+-- no ar, não.
 --
 -- Regra de ouro do challenge: nenhuma pergunta vai para o Select AI antes de
 -- a resposta estar validada em SQL convencional. A seção 4 traz o SQL de
@@ -109,8 +109,8 @@ select ai chat em uma frase, o que e o indice de pressao hospitalar;
 --
 -- Não é organização por organização. Aqui as perguntas eram texto: alguém
 -- rodava, olhava o showsql, achava parecido com o SQL de referência e seguia.
--- "Achei parecido" não responde a única pergunta que a banca faz, que é como
--- se sabe que o modelo acertou.
+-- "Achei parecido" não responde a única pergunta que importa, que é como se
+-- sabe que o modelo acertou.
 --
 -- No roteiro executável, cada pergunta com SQL de referência roda as duas
 -- consultas contra este banco e compara as respostas pela sequência ordenada

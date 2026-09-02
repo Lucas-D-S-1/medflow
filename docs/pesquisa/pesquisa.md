@@ -475,7 +475,7 @@ Nunca preencher `X`, `Y` ou `N` com estimativa.
 - frequência real da rotina;
 - necessidade de exportar ou compartilhar uma visão;
 - linguagem de IPH, TMH e IPR;
-- valor do Select AI para usuário, além do valor demonstrativo para a banca.
+- valor do Select AI para o usuário, além do valor demonstrativo.
 
 ### Não construir ainda
 
@@ -499,7 +499,7 @@ Nunca preencher `X`, `Y` ou `N` com estimativa.
 | ranking virar julgamento | dano reputacional e interpretação indevida | amostra, benchmark, linguagem de investigação e contexto local |
 | dado administrativo parecer clínico | conclusão incorreta sobre qualidade | caveats na mesma tela e teste de compreensão |
 | promessa de tempo real | quebra de confiança | mostrar competência e data de extração |
-| prova técnica dominar a narrativa | banca não identifica valor de negócio | abrir apresentação com decisão e usuário; arquitetura entra como sustentação |
+| prova técnica dominar a narrativa | o valor de negócio não fica visível | abrir pela decisão e pelo usuário; arquitetura entra como sustentação |
 | Select AI gerar resposta inadequada | fragilidade na demonstração | SQL de referência, `showsql`, revisão e roteiro controlado |
 
 ## 13. Estrutura recomendada da narrativa final

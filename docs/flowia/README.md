@@ -5,8 +5,8 @@ dela está o **Select AI** do Autonomous Database, que traduz pergunta em SQL
 contra a Gold. Esta pasta guarda a evidência de que essa tradução acerta; o
 código que a executa mora em outro lugar, e a tabela abaixo diz onde.
 
-**Por quê separado.** A pergunta que a banca faz sobre qualquer demonstração de
-texto-para-SQL é sempre a mesma: *como você sabe que ele acertou?* Ler o SQL
+**Por quê separado.** A pergunta que qualquer um faz diante de uma demonstração
+de texto-para-SQL é sempre a mesma: *como se sabe que ele acertou?* Ler o SQL
 gerado e achar parecido com o de referência não responde isso. Aqui a
 conferência é executada.
 

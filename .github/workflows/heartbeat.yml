@@ -1,8 +1,8 @@
 # Mantém o Autonomous Database acordado e avisa quando ele não está.
 #
-# O Always Free para sozinho depois de 7 dias sem atividade. Entre a entrega,
-# em 01/09, e a banca, entre 14 e 18/09, há treze dias em que ninguém
-# necessariamente abre o produto — tempo mais que suficiente para o banco
+# O Always Free para sozinho depois de 7 dias sem atividade, e um produto
+# público passa dias sem visita sem que isso tenha nada de anormal — tempo mais
+# que suficiente para o banco
 # dormir e o link público, que vale 10% da nota, responder erro no dia da
 # apresentação.
 #

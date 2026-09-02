@@ -218,8 +218,9 @@ externa do MVP.** Preserve o Dynamic Group `MedFlowADBGenAI`, a policy
 
 **Always Free hiberna por inatividade.** O workflow
 `.github/workflows/heartbeat.yml` executa SQL diariamente para mantê-lo ativo e
-falha de forma visível se ele já estiver parado. Na véspera e no dia da banca,
-rode também `make preflight`; a automação não substitui essa conferência.
+falha de forma visível se ele já estiver parado. Antes de qualquer demonstração
+ao vivo, rode também `make preflight`: a automação não substitui essa
+conferência.
 
 ## Por que um esquema separado do ADMIN
 
@@ -240,8 +241,9 @@ declarados explicitamente, sem ajustes por tentativa e erro.
 
 Caso concreto: o comentário de `nr_iph_estimado` diz explicitamente que o
 índice é pressão estimada sobre capacidade declarada, e **não** ocupação real
-de leito. Essa distinção é decisão de contrato do projeto e é exatamente o
-tipo de imprecisão que a banca cobra.
+de leito. Essa distinção é decisão de contrato do projeto: confundir os dois
+transforma um sinal de pressão estimada em uma afirmação sobre ocupação física
+que o dado não sustenta.
 
 ## Dados
 

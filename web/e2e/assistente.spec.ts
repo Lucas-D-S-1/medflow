@@ -395,7 +395,7 @@ test('sem região selecionada as sugestões regionais continuam as mesmas', asyn
 
 test('a concentração por especialidade vai ao Select AI com a região no contexto', async ({ page }) => {
   // O SQL da resposta é o da mart que o profile já enxerga. Ele aparece na
-  // asserção porque é o que a banca vai abrir: a pergunta só vale se o rastro
+  // asserção porque é o que dá auditoria à resposta: a pergunta só vale se o rastro
   // mostrar de onde veio o número.
   const sqlEsperado =
     'select nm_hospital_atual from mart_indicador_hospital_especialidade_mensal'

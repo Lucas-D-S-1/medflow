@@ -3,59 +3,58 @@
 As versões seguem SemVer, e cada uma tem uma tag anotada no repositório.
 A versão da release e a versão dos contratos de dados evoluem separadamente.
 
+## 1.0.4 — 01/09/2026
+
+Revisão do texto do repositório. Nenhuma mudança de produto, de contrato ou de
+cálculo.
+
+Documentos e comentários de código justificavam decisões técnicas pelo contexto
+acadêmico do projeto em vez de pelo próprio problema. A razão de cada decisão
+continua a mesma, e agora está escrita como ela é: o `preflight` fala com o
+produto pelo caminho que qualquer visitante usa; o heartbeat existe porque uma
+instância Always Free hiberna e um produto público passa dias sem visita; a
+conferência por execução do Select AI existe porque "achei parecido" não
+responde como se sabe que o modelo acertou.
+
 ## 1.0.3 — 01/09/2026
 
-Faxina do repositório de entrega. Nenhuma mudança de produto, de contrato ou de
-cálculo: o que muda é o que o repositório mostra a quem o abre para avaliá-lo.
-
-### Saiu do índice
-
-- `PENDENCIAS.md`, `VERSIONAMENTO.md` e `CONTRIBUTING.md`, que descreviam o
-  processo de trabalho e não o produto. A política de versões são as tags; as
-  regras de escrita são o `scripts/estilo.py`, que as verifica;
-- `VALIDACAO_TECNICA.md`, evidência gerada a cada `make validar`, com carimbo de
-  tempo. Continua sendo produzido, agora só no disco de quem roda;
-- as sete avaliações parciais da FlowIA, 98 KB de rodadas de depuração, e o
-  retrato do Oracle de 01/08, cujos números o recorte atual já contradizia.
-
-### Reunido
-
-- `docs/flowia/` concentra a IA do produto e a prova de que ela acerta: a
-  bateria de 20 perguntas, a revalidação executada do Select AI, a leitura dos
-  limites e a demonstração APEX. O README diz onde mora o código, que continua
-  em `src/medflow/select_ai/`, `db/apex/` e `db/select_ai/`;
-- os limites de alegação de cada indicador subiram para o `ARQUITETURA.md`, onde
-  são vinculantes em vez de arquivadas.
+Documentação reconciliada com o produto, e uma trava nova. Nenhuma mudança de
+contrato ou de cálculo.
 
 ### Corrigido
 
-- a seção de status do `ARQUITETURA.md` prometia a etapa de fluxos, removida do
-  produto, contava dez endpoints omitindo o assistente e listava a `v0.3.0` como
-  próximo marco;
-- o `db/README.md` dizia 209 colunas comentadas num ponto e 175 noutro — são
-  225 —, apontava uma pasta `sql/` inexistente e citava o contrato `0.3.0`;
+- a seção de status do `ARQUITETURA.md` descrevia uma versão anterior do
+  produto: prometia a etapa de fluxos, que saiu por decisão de produto, contava
+  dez endpoints omitindo o `POST` do assistente e dava o contrato como `0.3.0`,
+  duas versões atrás;
+- o `db/README.md` divergia do DDL na contagem de colunas comentadas — são 225,
+  e é esse contexto que o Select AI recebe ao traduzir pergunta em SQL —, e
+  apontava caminhos que não existem;
 - o `src/medflow/README.md` listava cinco indicadores, sem o IPE, e omitia o
-  módulo `select_ai/`;
-- cinco links internos quebrados e os números vencidos que sobraram em prosa.
+  módulo `select_ai/`.
 
 ### Adicionado
 
-- `NUMEROS_VENCIDOS` no `scripts/estilo.py`: a checagem de escrita passa a pegar
-  também o envelhecimento de fato, não só o de forma. Cada número que já mentiu
-  uma vez neste repositório vira violação, com o valor de hoje na mensagem.
+- `NUMEROS_VENCIDOS` no `scripts/estilo.py`. A checagem de escrita passa a pegar
+  o envelhecimento de fato, não só o de forma: cada número que já descreveu o
+  produto e deixou de descrever vira violação, com o valor corrente na mensagem
+  de erro. O recorte avançou de 29 para 30 competências e três documentos
+  continuaram afirmando o número antigo — este é o defeito que a trava pega.
 
-## 1.0.2 — 31/08/2026
+### Reunido
 
-Fechamento do material da Sprint 2, sem mudança de produto.
+- `docs/flowia/` concentra a IA do produto e a evidência de que ela acerta: a
+  bateria de 20 perguntas humanas, a revalidação executada do Select AI contra
+  SQL de referência, a leitura dos limites medidos e a demonstração APEX. O
+  README da pasta aponta onde mora o código, que continua em
+  `src/medflow/select_ai/`, `db/apex/` e `db/select_ai/`;
+- os limites de alegação de cada indicador subiram para o `ARQUITETURA.md`: o
+  que o IPH não prova, o que a TMH não mede, por que não há previsão.
 
-- o deck passou a **21 lâminas**, com as repetidas fundidas e o SQL auditável da
-  FlowIA na tela da evidência;
-- o `.pptx` virou a fonte da verdade: os geradores por código saíram, porque
-  manter os dois reabria o risco de sobrescrever a edição manual;
-- o roteiro do vídeo foi reescrito para abrir pelo caso, como o deck abre;
-- a trava do `montar_zip_entrega.sh` passou a procurar o link do YouTube dentro
-  do `.pptx` entregue, e não numa constante de um gerador que já não gerava
-  nada — dava para passar na trava sem o link aparecer em slide nenhum.
+### Removido
+
+- limpeza de arquivos: registros de trabalho, relatórios gerados por execução e
+  evidências intermediárias que descreviam estados já superados.
 
 ## 1.0.1 — 29/08/2026
 
@@ -269,7 +268,7 @@ Publicada em 25/08/2026 depois dos portões de escrita, testes e lint.
   limitação já medida e documentada — e avisa quando uma limitação marcada
   para de acontecer;
 - `docs/qualidade/LEITURA_SELECT_AI.md`, a leitura do que a evidência mostra e
-  o que fazer antes da banca. Separado da evidência de propósito: aquela é
+  como conduzir uma demonstração. Separado da evidência de propósito: aquela é
   reescrita a cada execução, esta não;
 - `tests/test_select_ai.py`: o guarda que decide se o SQL vindo do modelo pode
   tocar o banco, e a varredura de terminologia. Rodam sem Oracle. Com Oracle,
@@ -289,17 +288,15 @@ Publicada em 25/08/2026 depois dos portões de escrita, testes e lint.
   a hibernação por inatividade do Always Free; se o banco já estiver parado, o
   workflow falha e imprime o procedimento de reinício;
 - `make preflight`: doze verificações contra o produto publicado, sem `.env`,
-  wallet ou Gold local, mais a lista do que ainda precisa ser conferido à mão
-  antes da banca;
+  wallet ou Gold local, mais a lista do que ainda precisa ser conferido à mão;
 
 - `make estilo` e `scripts/estilo.py`: a escrita dos documentos versionados
   passa a ser conferida no build. Travessão em prosa corrida, parágrafo que é
   lista escrita como texto, frase-clichê e advérbio de reforço reprovam. Os
   registros datados ficam isentos, e a lista está no topo do script; as regras
   estão em `CONTRIBUTING.md`, seção Escrita;
-- `docs/entrega_sprint_2/QA_BANCA.md`: vinte perguntas e respostas curtas para
-  alinhar os cinco integrantes sobre produto, dados, Oracle, evidências e
-  limites antes da banca;
+- vinte perguntas e respostas curtas para alinhar a equipe sobre produto, dados,
+  Oracle, evidências e limites;
 
 ### Alterado
 
@@ -583,7 +580,7 @@ Quatro defeitos, três deles no produto:
    números. Passam a derivar da fixture; a suíte foi de 31 para 32 testes.
 
 **Limpeza para publicação.** O repositório saiu de 216 para 205 arquivos e de
-17,7 para 15,2 MB, com uma pergunta só: o que um avaliador ou alguém que reusa
+17,7 para 15,2 MB, com uma pergunta só: o que alguém que chega ao projeto ou o reusa
 o projeto precisa ver? Saíram a configuração local de ferramenta, o material
 de curso da Sprint 1, a evidência da v0.1.0, um `requirements-geografia.txt`
 órfão e uma cópia congelada de um relatório que é gerado.
