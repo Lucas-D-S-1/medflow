@@ -1,8 +1,8 @@
-"""O roteiro da demonstração de Select AI do MedFlow.
+"""A suíte de validação do Select AI do MedFlow.
 
 Cinco blocos, em profundidade crescente. Os três primeiros trazem SQL de
 referência: a resposta é validada em SQL convencional antes de a pergunta ir ao
-modelo, e o roteiro compara as duas execuções. Os dois últimos não têm
+modelo, e a suíte compara as duas execuções. Os dois últimos não têm
 referência porque não perguntam por um número — testam o que o modelo faz
 quando a pergunta é uma armadilha, quando depende do turno anterior, e quando
 ele não tem os dados na frente.
@@ -15,7 +15,7 @@ from dataclasses import dataclass
 
 @dataclass(frozen=True)
 class Pergunta:
-    """Uma pergunta do roteiro.
+    """Uma pergunta da suíte.
 
     `rotulo` é a coluna que carrega a resposta de negócio — o nome da região, da
     especialidade, do diagnóstico. É por ela que a comparação entre o SQL gerado

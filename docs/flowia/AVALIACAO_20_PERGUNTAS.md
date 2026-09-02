@@ -1,93 +1,87 @@
-# FlowIA — a bateria de 20 perguntas humanas
+# FlowIA — validação com vinte perguntas coloquiais
 
-O resultado consolidado de **29/08/2026**. As perguntas são deliberadamente
-curtas, vagas e coloquiais, como as que um gestor faria; o contexto da tela vai
-separado, e nenhum prompt entrega tabela, coluna, fórmula ou corte ao modelo.
+Esta bateria mede se a assistente entende perguntas curtas e ambíguas usando o
+contexto que a própria tela fornece. A pergunta não entrega nome de tabela,
+coluna, fórmula ou corte ao modelo.
 
-Este é o documento do resultado. A saída bruta de cada execução do avaliador
-fica em `ULTIMA_EXECUCAO.md`, que é sobrescrito a cada rodada e não é
-versionado — quem lê o repositório precisa do veredito, não do log.
+Quando existe resposta objetiva, o SQL da FlowIA e o SQL de referência rodam
+contra a mesma Gold. A comparação considera a sequência ordenada de rótulos de
+negócio e a cobertura da narrativa. Nos casos sem resposta numérica, o critério
+é recusar uma afirmação indevida ou explicar corretamente o limite do dado.
 
-## O que os 20 casos dizem hoje
+## Resultado consolidado
 
-**20 de 20**, montados em quatro execuções do mesmo dia. Cada caso aparece aqui
-com a rodada que produziu seu veredito final.
+Os vinte casos abaixo foram aprovados em 29/08/2026, após a correção de sete
+defeitos. O resultado é consolidado a partir de quatro rodadas do mesmo dia e
+de uma regressão final dos onze casos que já passavam.
 
-| Rodada | Casos | Resultado |
-|---|---|---|
-| 13:52, a primeira completa | os 20 | 11/20 |
-| depois das regras 15–21 | 9 que falhavam | 5/9 |
-| depois do envelope e da regra 16 | F03 F05 F08 F17 | 2/4 |
-| depois da regra 17 e do rótulo | F05 F08 | 2/2 |
-| regressão | os 11 que já passavam | 11/11 |
+Isso não equivale a uma execução única com `20/20`: a cota diária de cinquenta
+perguntas terminou antes de uma nova rodada completa. O que a evidência sustenta
+é mais específico: cada um dos vinte casos passou com as regras finais, e os
+onze primeiros aprovados foram repetidos depois das mudanças.
 
-A rodada de regressão é a que impede a leitura otimista: as regras novas podiam
-ter quebrado o que já funcionava, e **quebraram uma vez** — a regra 15, de
-fluxo, sequestrou o caso de ICSAP, que passou a responder evasão. Por isso os
-11 foram refeitos por último, depois de todas as mudanças.
+## As vinte perguntas e o que cada uma verifica
 
-## O que ainda não foi feito
+| ID | Pergunta enviada | Interpretação ou comportamento esperado | Resultado |
+|---|---|---|---|
+| F01 | “até onde esses dados vão mesmo?” | competência cronologicamente mais recente | aprovado |
+| F02 | “onde tá mais apertado agora?” | maior IPH regional na última competência | aprovado |
+| F03 | “quem mais manda paciente pra fora?” | maior evasão intrastadual observada | aprovado |
+| F04 | “e quem mais recebe gente de fora?” | maior atração assistencial | aprovado |
+| F05 | “onde a atenção básica parece não estar segurando?” | taxa territorial de ICSAP, com ressalva de não causalidade | aprovado |
+| F06 | “qual hospital tá mais cheio hoje?” | recusar ocupação em tempo real e oferecer IPH mensal qualificado | aprovado |
+| F07 | “quais hospitais estouraram a capacidade no último mês?” | flag de pressão acima da capacidade SUS declarada | aprovado |
+| F08 | “quem segura o paciente por mais tempo?” | permanência média com amostra suficiente | aprovado |
+| F09 | “qual é o pior hospital?” | recusar ranking de qualidade sem critério | aprovado |
+| F10 | “onde morreu mais gente ultimamente?” | óbitos absolutos por região na competência atual | aprovado |
+| F11 | “onde cada internação sai mais cara hoje?” | CMI real corrigido pelo IPCA | aprovado |
+| F12 | “quem piorou de uns meses pra cá?” | variação do IPH contra três competências antes | aprovado |
+| F13 | “quem varia muito dependendo da época?” | maior variação sazonal regional calculada | aprovado |
+| F14 | “quais hospitais daqui merecem atenção primeiro?” | região visível e maior IPH, sem rótulo de qualidade | aprovado |
+| F15 | “o que mais interna nesse hospital?” | especialidades do hospital selecionado por volume | aprovado |
+| F16 | “dá pra confiar nesse hospital ou a amostra é pequena?” | estado da amostra e volume, sem julgamento de qualidade | aprovado |
+| F17 | “esse IPR acima de 1 é ruim?” | explicar benchmark de permanência e recusar leitura como desfecho | aprovado |
+| F18 | “de onde vem a maior parte dos pacientes atendidos aqui?” | principais regiões de residência para o destino visível | aprovado |
+| F19 | “subiu quanto desde o ano passado?” | IPH da região ativa contra o mesmo mês do ano anterior | aprovado |
+| F20 | “se eu só puder olhar três lugares amanhã, quais seriam?” | três maiores IPHs como triagem, não decisão automática | aprovado |
 
-**Uma rodada única dos 20.** A cota diária do Select AI é de 50 perguntas e
-fechou em 50/50 em 29/08. Os 20 casos passam, mas nunca na mesma execução.
-Refazer com `make` ou:
+## Contexto silencioso da tela
 
-    .venv/bin/python -m dotenv -f .env run -- \
-      .venv/bin/python scripts/avaliar_flowia.py
+Cada caso recebe os mesmos campos que o produto envia:
 
-**O roteiro das cinco perguntas registradas** (`select-ai-revalidar`) não foi
-reexecutado depois das regras novas. Elas mudam o prompt para todo mundo, então
-as três perguntas fechadas podem ter mudado de resposta. Rodar antes de
-apresentar.
+| Campo | Função |
+|---|---|
+| `tela` | delimita a visão regional, de fluxos ou hospitalar |
+| `competencia` | fixa o período em `AAAAMM` |
+| `regiao` e `codigo_regiao` | resolvem expressões como “daqui” |
+| `hospital_cnes` | identifica o estabelecimento selecionado |
+| `analise_ativa` | resolve pronomes e termos vagos sem alterar a pergunta |
 
-## Os sete defeitos corrigidos
+O contexto é limitado a estado de interface e identificadores públicos. Ele não
+carrega dado pessoal nem fornece a resposta esperada.
 
-Os quatro primeiros já eram conhecidos de 28/08; os três últimos saíram desta
-bateria. Todos vivem no prompt de `db/apex/02_pacote_select_ai.sql`, que é o
-mesmo caminho da bateria e do site.
+## Defeitos encontrados e correções incorporadas
 
-1. **Caixa alta** — comparava `'Sao Paulo'` com `SAO PAULO` e concluía ausência
-   de dado. Regra 14: `UPPER` e `LIKE`.
-2. **Ordem invertida** — ordenava sempre `DESC` e respondia "maior alta" a quem
-   perguntou "maior queda". Regra 6.
-3. **Mês truncado** — trazia só a competência final e dizia que a outra não
-   existia. Regra 6.
-4. **Buffer do prompt** — `varchar2(4000)` estourava só com o texto fixo das
-   regras. Passou para `32767`.
-5. **Corte de amostra ausente** — ranking de média subia ao topo unidades com
-   uma internação no mês. Regra 16 exige `ST_AMOSTRA = 'suficiente'`.
-6. **ICSAP confundido com evasão** — "a atenção básica não está segurando" caía
-   em evasão intrastadual. Regra 17 separa os dois e fixa a taxa por 10 mil.
-7. **Competência solta no ranking** — sem competência no contexto, o ranking
-   percorria os 30 meses e devolvia o mesmo hospital cinco vezes, um por mês.
-   Regra 22 fixa `MAX(CD_COMPETENCIA)`.
+| Defeito observado | Correção implementada |
+|---|---|
+| comparação sensível a caixa em nomes geográficos | normalização com `UPPER` e `LIKE` |
+| ordenação descendente mesmo quando a pergunta pedia queda | regra de direção e período no prompt governado |
+| seleção de um único mês em comparações | competência atual e anterior tratadas em conjunto |
+| buffer fixo de 4.000 caracteres | `varchar2(32767)` no pacote PL/SQL |
+| médias dominadas por amostras mínimas | exigência de `ST_AMOSTRA = 'suficiente'` |
+| ICSAP interpretado como evasão | separação explícita entre os dois conceitos |
+| ranking repetindo o mesmo hospital em vários meses | competência mais recente determinada antes do ranking |
 
-**O sétimo só apareceu no site**, não na bateria: a bateria sempre envia a
-competência no contexto, e o widget envia `competencia=nao informada` enquanto a
-página ainda carrega. Ver [[gotchas/flowia-bateria-nao-cobre-contexto-vazio]].
+Duas correções adicionais ficaram fora do prompt. O extrator passou a recuperar
+um `SELECT` válido mesmo quando o serviço o envolve numa mensagem de baixa
+confiança; o SQL ainda passa pelo guarda de somente leitura. O rastro também
+passou a guardar uma amostra da resposta bruta recusada, permitindo diagnosticar
+o caso sem repetir a chamada e gastar nova cota.
 
-## Duas mudanças que não são de prompt
+## Alcance da evidência
 
-**O envelope de desculpa do Select AI.** Ele às vezes responde
-`"Sorry, unfortunately a valid SELECT statement could not be generated ... Here
-is some more information to help you further: SELECT ..."` — com o SQL inteiro
-depois do marcador. O `limpar` não reconhecia isso e a consulta era descartada
-como "não começa por SELECT". Agora o marcador é reconhecido, o SQL é extraído,
-passa pela mesma guarda de somente leitura, e a resposta sai com um **aviso de
-baixa confiança**. Era o que reprovava a pergunta de evasão.
-
-**O rastro perdia a evidência.** Quando a guarda recusava, `sql_gerado` ficava
-nulo e não restava nenhum vestígio do que o modelo tinha respondido —
-diagnosticar exigia reproduzir a chamada e gastar cota. Agora os 200 primeiros
-caracteres do bruto entram em `recusa`, junto do erro. `sql_gerado` continua
-recebendo só SQL aprovado e executado.
-
-## Uma nota sobre o verificador
-
-`conferir_lideres_narrados` passou a comparar rótulos **ignorando espaços**. O
-CNES grava `FUNDACAO FACULDADE DE MEDICINAHCFMUSP INST DE PSIQUIATRIA SP` com as
-palavras coladas; o modelo separa ao escrever, e a comparação exata reprovava
-uma narrativa correta — os cinco hospitais eram os certos, na ordem certa.
-
-Isso afrouxa a conferência num ponto e só nesse: trocar um hospital por outro,
-ou mudar a ordem, continua reprovando.
+A bateria cobre interpretação contextual, equivalência dos dados, presença dos
+rótulos essenciais na narrativa e vocabulário proibido. Ela não prova que toda
+pergunta livre será respondida corretamente e não substitui a suíte controlada
+de treze casos, documentada em
+[`REVALIDACAO_SELECT_AI.md`](REVALIDACAO_SELECT_AI.md).

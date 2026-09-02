@@ -1,19 +1,20 @@
 # O que a revalidação do Select AI mostrou
 
-Leitura escrita à mão sobre a evidência de
-[`REVALIDACAO_SELECT_AI.md`](REVALIDACAO_SELECT_AI.md), que é gerada por
-execução e reescrita a cada rodada. Este documento é o julgamento; aquele é a
-medida. Atualizado em 23/08/2026.
+Análise dos resultados resumidos em
+[`REVALIDACAO_SELECT_AI.md`](REVALIDACAO_SELECT_AI.md). Os dois documentos
+são curados: um apresenta os casos e resultados; este discute causas e
+consequências arquiteturais. A saída integral da execução é local e não é
+versionada. Atualizado em 23/08/2026.
 
-## Por que o roteiro antigo não servia
+## Por que a primeira bateria não servia
 
 A primeira versão fazia cinco perguntas, todas agregação de uma tabela só, e
-passava nas cinco. O problema é que uma demonstração que só faz perguntas
-fáceis não mede a ferramenta: mede a facilidade das perguntas. E a conferência
+passava nas cinco. O problema é que uma bateria que só faz perguntas fáceis não
+mede a ferramenta: mede a facilidade das perguntas. E a conferência
 entre o SQL gerado e o de referência era feita a olho, o que responde mal à
 única pergunta que importa: *como se sabe que ele acertou?*
 
-O roteiro atual tem treze perguntas em cinco blocos de dificuldade crescente,
+A suíte atual tem treze perguntas em cinco blocos de dificuldade crescente,
 oito delas com SQL de referência conferido **por execução**: as duas consultas
 rodam e as respostas são comparadas pela sequência ordenada de rótulos. Os
 outros cinco casos não perguntam por um número. Perguntam o que o modelo faz
@@ -60,11 +61,10 @@ proibir o vocabulário nome por nome, e o comentário da tabela regional passou 
 instruir a resposta correta. O SQL melhorou; a narrativa não. **O `COMMENT ON`
 governa bem a geração de SQL e mal a redação da resposta.**
 
-É por isso que a decisão de arquitetura de não expor o Select AI como chat
-público se sustenta. As telas do
-produto usam consultas determinísticas sobre a Gold; o Select AI é demonstração
-controlada, com o SQL revisado antes da narrativa. Este achado não contradiz
-essa decisão. É a evidência que a justifica.
+É por isso que a decisão de arquitetura de não deixar o Select AI comandar as
+visões principais se sustenta. As telas do produto usam consultas
+determinísticas sobre a Gold; perguntas livres passam por guarda, avisos e
+rastro. Este achado não contradiz essa decisão. É a evidência que a justifica.
 
 ### 3. A conversa não sobrevive ao turno seguinte
 
@@ -73,8 +73,8 @@ perfil tem `conversation` ligado, mas o seguimento perdeu o indicador e devolveu
 CMI e TMH de várias regiões. Pelo `DBMS_CLOUD_AI.GENERATE`, cada chamada se
 comporta como pergunta isolada.
 
-Consequência prática: **na apresentação, não encadear perguntas.** Cada pergunta
-do roteiro precisa ser autossuficiente.
+Consequência prática: **o contrato não depende do turno anterior.** Cada
+pergunta precisa ser autossuficiente e recebe o contexto estruturado da tela.
 
 ### 4. O que funcionou bem
 
@@ -84,7 +84,7 @@ do roteiro precisa ser autossuficiente.
   mensais. Perguntado pelo Rio de Janeiro, respondeu que o recorte é São Paulo.
   Nos dois casos ele preferiu não responder a inventar, que é o comportamento
   desejado.
-- **E1 é a melhor peça da demonstração.** A mesma pergunta vai ao `chat`, sem os
+- **E1 é a evidência mais clara da ancoragem.** A mesma pergunta vai ao `chat`, sem os
   dados, e ao `narrate`, com eles. Sem os dados, o modelo diz que não tem como
   saber e sugere procurar a Secretaria Estadual, o Ministério e o DATASUS. Com
   os dados, responde `LIMEIRA, 78,46%`. A distância entre as duas respostas é o
@@ -107,13 +107,14 @@ acerto em alarme. Duas correções:
 As duas regras estão fixadas em `tests/test_select_ai.py`, junto com o guarda
 que decide se o SQL vindo do modelo pode tocar o banco.
 
-## Como conduzir uma demonstração ao vivo
+## Consequências incorporadas ao produto
 
-1. **Não encadear perguntas.** Cada uma autossuficiente, pelo achado 3.
-2. **Não perguntar por "taxa de ocupação"** no roteiro apresentado, e ter a
-   correção pronta se alguém perguntar assim: o achado 2 diz que o modelo
-   aceita o termo sem contestar.
-3. **Preferir as perguntas do bloco A e a B3**, que passaram na conferência por
-   execução, e apresentar B1 e B2 como o que são: o limite honesto da
-   ferramenta, com o SQL de referência ao lado mostrando a resposta correta.
-4. **Levar E1.** É o caso que explica, sem jargão, o que o Select AI acrescenta.
+1. Cada pergunta é autossuficiente e recebe contexto estruturado; o backend não
+   promete memória implícita de conversa.
+2. “Taxa de ocupação” dispara ressalva porque o dado sustenta IPH, não ocupação
+   física.
+3. Casos com agregação anterior ao ranking permanecem na suíte de regressão e
+   não viram consultas determinísticas da interface.
+4. O contraste entre `chat` e `narrate` permanece como teste da ancoragem na
+   Gold.
+5. SQL, narrativa, aviso e resultado ficam ligados pelo mesmo ID de auditoria.

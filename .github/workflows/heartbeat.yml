@@ -1,10 +1,9 @@
 # Mantém o Autonomous Database acordado e avisa quando ele não está.
 #
 # O Always Free para sozinho depois de 7 dias sem atividade, e um produto
-# público passa dias sem visita sem que isso tenha nada de anormal — tempo mais
-# que suficiente para o banco
-# dormir e o link público, que vale 10% da nota, responder erro no dia da
-# apresentação.
+# público passa dias sem visita sem que isso tenha nada de anormal — tempo
+# suficiente para o banco dormir e a aplicação deixar de consultar a fonte
+# Oracle ao vivo.
 #
 # A ARQUITETURA.md descreve este heartbeat desde sempre, e a tabela de riscos
 # conta com ele. Ele não existia.
@@ -137,8 +136,8 @@ jobs:
 
           Se o contrato ou a competência vieram diferentes do esperado, alguém
           recarregou o banco com outro recorte. Aí não é infraestrutura: confira
-          a carga antes da apresentação.
+          a carga antes de promover ou demonstrar essa versão.
 
-          O passo a passo completo está em db/README.md.
+          O diagnóstico completo está em db/README.md.
           AJUDA
           exit 1

@@ -34,13 +34,13 @@ disponível e validado: **2024-01 a 2026-06 (30 meses)**.
 
 Site estático no GitHub Pages falando direto com o Autonomous Database pelo
 módulo ORDS público `api/v1`, somente leitura. Publicado e conferido no
-navegador em 16/08/2026. Versão pública estável:
-[`v1.0.1`](https://github.com/Lucas-D-S-1/medflow/releases/tag/v1.0.1), com
-Oracle carregado, API pública, WebApp no ar, FlowIA contextual e aprovada em 20
-de 20 na bateria de perguntas humanas, Select AI governado no ORDS, busca
+navegador em 16/08/2026. O histórico de versões está em
+[`Releases`](https://github.com/Lucas-D-S-1/medflow/releases), com Oracle
+carregado, API pública, WebApp no ar, FlowIA contextual e vinte casos aprovados
+na validação consolidada de perguntas humanas, Select AI governado no ORDS, busca
 hospitalar por alias e território municipal. A evidência da bateria está em
 [`docs/flowia/AVALIACAO_20_PERGUNTAS.md`](docs/flowia/AVALIACAO_20_PERGUNTAS.md),
-e a do roteiro de Select AI, em
+e a da validação controlada do Select AI, em
 [`docs/flowia/REVALIDACAO_SELECT_AI.md`](docs/flowia/REVALIDACAO_SELECT_AI.md).
 
 **O acordo de disponibilidade.** O Autonomous Database é Always Free e para
@@ -172,7 +172,7 @@ Também são gerados:
 - `mapa_regiao_saude_sp.geojson`;
 - `mapa_regiao_saude_sp.topojson`.
 
-### Oracle e Select AI — carga validada e roteiro revalidado
+### Oracle e Select AI — carga e comportamento validados
 
 A Gold está carregada no Autonomous AI Database 26ai `MEDFLOW`, workload
 Lakehouse, região São Paulo:
@@ -182,7 +182,7 @@ Lakehouse, região São Paulo:
 - 597.930 linhas carregadas e conferidas após a migração territorial;
 - 39/39 métricas Oracle com estado `ok`, incluindo as dimensões territoriais;
 - profile `MEDFLOW_GENAI` usando OCI Generative AI por Resource Principal, sincronizado com os doze objetos analíticos;
-- roteiro de 13 perguntas em cinco blocos, oito com SQL de referência conferido
+- suíte de 13 perguntas em cinco blocos, oito com SQL de referência conferido
   por execução. Na rodada de 23/08/2026, seis das oito coincidiram exatamente;
   as divergências e as limitações de narrativa/conversação estão registradas,
   não escondidas.
@@ -224,8 +224,8 @@ investigação inteira, e a URL preserva o recorte para abrir e compartilhar.
 | assistente flutuante | acompanha a etapa visível e o recorte ativo | respostas locais; fallback `POST assistente/perguntar` |
 
 A etapa abre em **panorama**: nenhuma região selecionada, as 62 comparáveis no
-mapa. Escolher um território é ato do usuário — pelo mapa ou pelo seletor abaixo
-dele — e clicar de novo na região escolhida volta ao panorama.
+mapa. Escolher um território é ato do usuário, pelo mapa ou pelo seletor abaixo
+dele. Clicar de novo na região escolhida volta ao panorama.
 
 Cada indicador do hospital aberto aparece com a **distribuição dos pares**:
 faixa interquartil, mediana e a posição dele. Dois grupos alternáveis, mesmo

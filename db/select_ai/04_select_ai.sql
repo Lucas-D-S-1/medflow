@@ -100,10 +100,10 @@ select dbms_cloud_ai.get_profile() as profile_ativo from dual;
 select ai chat em uma frase, o que e o indice de pressao hospitalar;
 
 -- ---------------------------------------------------------------------
--- 4. O roteiro da demonstração
+-- 4. A suíte de validação
 -- ---------------------------------------------------------------------
 -- As perguntas saíram deste arquivo. Elas vivem agora em
--- src/medflow/select_ai/perguntas.py, e o roteiro inteiro é executado por
+-- src/medflow/select_ai/perguntas.py, e a suíte inteira é executada por
 --
 --     make select-ai-revalidar
 --
@@ -112,7 +112,7 @@ select ai chat em uma frase, o que e o indice de pressao hospitalar;
 -- "Achei parecido" não responde a única pergunta que importa, que é como se
 -- sabe que o modelo acertou.
 --
--- No roteiro executável, cada pergunta com SQL de referência roda as duas
+-- Na suíte executável, cada pergunta com SQL de referência roda as duas
 -- consultas contra este banco e compara as respostas pela sequência ordenada
 -- de rótulos — a lista de regiões, de especialidades, de diagnósticos. É o que
 -- a pergunta de negócio pede, e é o que precisa bater. O comando sai com
@@ -131,9 +131,10 @@ select ai chat em uma frase, o que e o indice de pressao hospitalar;
 -- guarda e a varredura de terminologia estão fixados em
 -- tests/test_select_ai.py e rodam sem Oracle.
 --
--- A evidência datada da última execução fica em
--- docs/qualidade/REVALIDACAO_SELECT_AI.md, e a leitura do que ela significa,
--- em docs/qualidade/LEITURA_SELECT_AI.md.
+-- O log datado da última execução fica em
+-- docs/flowia/ULTIMA_REVALIDACAO.md, fora do índice. O resumo dos resultados
+-- e sua análise ficam em docs/flowia/REVALIDACAO_SELECT_AI.md e
+-- docs/flowia/LEITURA_SELECT_AI.md.
 
 -- ---------------------------------------------------------------------
 -- 5. Quando o modelo erra
@@ -157,4 +158,4 @@ select ai chat em uma frase, o que e o indice de pressao hospitalar;
 --
 -- Isso não é motivo para esconder o Select AI: é o motivo pelo qual ele é
 -- demonstração controlada e as telas do produto usam consultas determinísticas
--- sobre a Gold. Os detalhes estão em docs/qualidade/LEITURA_SELECT_AI.md.
+-- sobre a Gold. Os detalhes estão em docs/flowia/LEITURA_SELECT_AI.md.

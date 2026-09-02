@@ -1,7 +1,7 @@
-"""Revalida o Select AI contra o produto final e grava a evidência datada.
+"""Revalida o Select AI contra o produto final e grava o log local da rodada.
 
-Roda o roteiro de `medflow.select_ai.perguntas` — cinco blocos, em profundidade
-crescente — e escreve `docs/flowia/REVALIDACAO_SELECT_AI.md`.
+Roda a suíte de `medflow.select_ai.perguntas` — cinco blocos, em profundidade
+crescente — e escreve `docs/flowia/ULTIMA_REVALIDACAO.md`.
 
 Onde há SQL de referência, a conferência é executada, não lida: as duas
 consultas rodam e as respostas são comparadas pela sequência ordenada de
@@ -39,7 +39,7 @@ from medflow.select_ai.executar import (  # noqa: E402
     varrer_termos,
 )
 
-SAIDA = RAIZ / "docs" / "qualidade" / "REVALIDACAO_SELECT_AI.md"
+SAIDA = RAIZ / "docs" / "flowia" / "ULTIMA_REVALIDACAO.md"
 
 
 def responder(cursor, bloco: str, pergunta) -> Resposta:

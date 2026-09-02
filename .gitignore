@@ -89,6 +89,7 @@ VALIDACAO_TECNICA.md
 # Saída bruta do avaliador da FlowIA, sobrescrita a cada rodada. O resultado
 # que vale está em docs/flowia/AVALIACAO_20_PERGUNTAS.md, escrito à mão.
 docs/flowia/ULTIMA_EXECUCAO.md
+docs/flowia/ULTIMA_REVALIDACAO.md
 
 # Na pasta de entrega ficam só os entregáveis: o deck, o arquivo de links e o
 # pacote enviado. Tudo o mais que existe ali é material de trabalho — decks de

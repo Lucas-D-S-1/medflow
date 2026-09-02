@@ -31,7 +31,6 @@ RAIZ = Path(__file__).resolve().parent.parent
 ISENTOS = {
     "CHANGELOG.md",
     "docs/pesquisa/pesquisa.md",
-    "docs/flowia/REVALIDACAO_SELECT_AI.md",
 }
 
 FRASES = {

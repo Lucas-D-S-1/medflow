@@ -54,7 +54,7 @@ consulta de leitura, e executa em transação declarada somente leitura.
 
 | | |
 |---|---:|
-| Perguntas no roteiro | {len(respostas)} |
+| Perguntas na suíte | {len(respostas)} |
 | Com SQL de referência, conferidas por execução | {len(conferidas)} |
 | Respostas equivalentes à referência | {len(ok)} de {len(conferidas)} |
 | Respostas com termo proibido afirmado | {len(com_termo)} |
@@ -67,9 +67,9 @@ real. Mencionar não é afirmar: uma ocorrência só conta quando aparece sem
 negação e sem ressalva, senão a recusa correta, que precisa nomear o que
 recusa, seria reprovada.
 
-> **Este documento é a medida, não o julgamento.** Ele é gerado por execução e
-> reescrito inteiro a cada rodada. A leitura do que estes números significam,
-> incluindo o que falhou e como conduzir uma demonstração, está em
+> **Este documento é o log da rodada.** Ele é gerado por execução e reescrito
+> inteiro a cada rodada. A leitura curada do que estes números significam,
+> incluindo o que falhou e as consequências para o produto, está em
 > [`LEITURA_SELECT_AI.md`](LEITURA_SELECT_AI.md).
 """
 

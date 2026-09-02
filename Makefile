@@ -122,7 +122,7 @@ apex-verificar:  ## confere APEX, pacote Select AI e workspace sem escrever
 preflight:  ## conferência de 10 minutos antes de apresentar; não precisa de .env
 	$(PY) scripts/preflight.py
 
-select-ai-revalidar:  ## roda o roteiro de Select AI e regrava a evidência datada
+select-ai-revalidar:  ## roda a suíte do Select AI e grava o log local da rodada
 	$(DOTENV) $(PY) scripts/revalidar_select_ai.py
 
 oracle-carregar:  ## carga idempotente da Gold no Autonomous Database

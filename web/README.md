@@ -16,8 +16,8 @@ ancoradas no mesmo endereço; descer a página é estreitar o recorte. Metodolog
 Competência e território ficam numa barra de contexto que acompanha a
 investigação inteira; os filtros locais permanecem locais. Tudo na URL, para
 abrir e compartilhar o recorte. Os caminhos antigos são reescritos para as âncoras
-equivalentes, com o recorte intacto, antes do app montar — um só escritor da URL, para não competir com a
-normalização do contexto.
+equivalentes, com o recorte intacto, antes do app montar. Há um só escritor da
+URL, para não competir com a normalização do contexto.
 
 **Como preparar**, a partir da raiz do repositório:
 

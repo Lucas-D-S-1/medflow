@@ -144,7 +144,7 @@ continua de pé pelo snapshot e diz na tela que está em contingência.
 | Select AI gera SQL incorreto | comparação com o SQL de referência | não executar nem narrar; usar o SQL validado |
 | competência mais recente parcial | metadado de corte e reprocessamento | rotular a competência e evitar linguagem de tempo real |
 
-### Preflight da apresentação
+### Preflight do produto público
 
 A parte automatizável roda num comando, `make preflight`, que fala com o
 produto publicado pelo mesmo caminho que qualquer visitante usa: sem `.env`, wallet
@@ -158,8 +158,8 @@ O que a máquina não checa continua na mão, e o comando imprime a lista no fim
 2. testar um filtro regional e um par hospital/CID elegível;
 3. simular a contingência e conferir o selo de origem na tela;
 4. abrir o link em outra rede ou no celular, fora do wi-fi da sala;
-5. executar o roteiro controlado do Select AI uma vez, sem plateia;
-6. guardar screenshots ou um vídeo curto como última contingência visual.
+5. executar um caso controlado do Select AI e conferir SQL, narrativa e aviso;
+6. registrar visualmente a versão publicada como evidência de recuperação.
 
 ### Manter o banco acordado
 

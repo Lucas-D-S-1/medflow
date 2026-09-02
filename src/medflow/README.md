@@ -30,7 +30,7 @@ medflow bronze | silver | gold | geografia | validar | inventario
 | `validar.py` | validação integrada das três camadas contra os contratos |
 | `inventario.py` | SHA-256 dos artefatos, para provar que nada se perdeu |
 | `oracle/` | conexão mTLS, carga da Gold e executor de SQL |
-| `select_ai/` | o roteiro de perguntas, o SQL de referência e o executor que compara as duas respostas |
+| `select_ai/` | a suíte de perguntas, o SQL de referência e o executor que compara as duas respostas |
 | `cli.py` | a porta de entrada de tudo acima |
 
 ## Duas regras que o código segue

@@ -5,7 +5,7 @@ específico, e vale saber qual.
 
 São **273 testes** coletados, e quantos rodam depende do que a máquina tem.
 Num clone limpo, sem `.env`, sem `data/` e sem Oracle, `make test-py` fecha em
-**188 passando e 85 pulados** — nenhum falha por ausência de credencial, e cada
+**188 passando e 85 pulados**; nenhum falha por ausência de credencial, e cada
 skip diz o motivo. Com o `.env` preenchido e as camadas materializadas, sobem
 para **204 passando**. A diferença são os testes que falam com o Oracle ao vivo
 e os que leem os Parquets.

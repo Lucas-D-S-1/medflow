@@ -55,7 +55,7 @@ class TestConfig:
         """O padrão do código tem de bater com o manifesto que gerou a Gold.
 
         Divergir aqui significa que `make bronze silver gold` num clone limpo
-        produz um recorte diferente do que está no Oracle e na apresentação —
+        produz um recorte diferente do que está no Oracle e no produto publicado —
         o defeito que esta asserção existe para tornar barulhento.
         """
         manifesto = Config().base / "data" / "bronze" / "MANIFESTO.json"

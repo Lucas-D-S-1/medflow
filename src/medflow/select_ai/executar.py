@@ -1,7 +1,7 @@
-"""Executa o roteiro de Select AI e mede o que o modelo devolveu.
+"""Executa a suíte de Select AI e mede o que o modelo devolveu.
 
 A validação não é lendo o SQL gerado e achando parecido. Para cada pergunta com
-referência, o roteiro executa as duas consultas e compara as respostas: a
+referência, a suíte executa as duas consultas e compara as respostas: a
 sequência ordenada de rótulos que cada uma produziu. É isso que a pergunta de
 negócio pede — quais regiões, em que ordem — e é isso que precisa bater.
 

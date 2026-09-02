@@ -201,7 +201,7 @@ class Preflight:
             "  - testar um filtro regional e um par hospital/CID elegível;\n"
             "  - simular a contingência e conferir o selo de origem na tela;\n"
             "  - abrir o link em outra rede ou no celular, fora do wi-fi da sala;\n"
-            "  - rodar o roteiro do Select AI uma vez, sem plateia;\n"
+            "  - executar um caso controlado do Select AI e conferir SQL, narrativa e aviso;\n"
             "  - guardar screenshots ou um vídeo curto como última contingência."
         )
         return 1 if falhas else 0

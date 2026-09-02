@@ -1,4 +1,4 @@
-"""O guarda de leitura e a varredura de terminologia do roteiro de Select AI.
+"""O guarda de leitura e a varredura de terminologia da suíte de Select AI.
 
 Estes dois controles são o que separa a evidência de uma captura de tela: o
 primeiro decide se o SQL do modelo pode tocar o banco, o segundo decide se a
@@ -222,7 +222,7 @@ class TestParidadeComOPlSql:
     """As duas implementações da mesma regra têm de concordar.
 
     O guarda de leitura e a varredura de terminologia existem duas vezes: em
-    Python, para o roteiro de `make select-ai-revalidar`, e em PL/SQL, para a
+    Python, para a suíte de `make select-ai-revalidar`, e em PL/SQL, para a
     página APEX que chama `medflow_select_ai`. Regra duplicada é regra que
     diverge em silêncio, e a divergência aqui apareceria como o APEX aceitando
     o que o roteiro recusa, ou o contrário.

@@ -21,5 +21,6 @@ contexto.
 acuse: o notebook não é coberto pelos testes. Se o número mostrado aqui
 discordar do `make validar`, o pacote é a fonte.
 
-A evidência datada do que a IA do produto responde — a bateria de perguntas e o
-roteiro de Select AI — está em [`docs/flowia/`](../docs/flowia/README.md).
+A validação da IA do produto está em
+[`docs/flowia/`](../docs/flowia/README.md), com a bateria de perguntas e a
+suíte controlada do Select AI.

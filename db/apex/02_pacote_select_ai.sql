@@ -12,9 +12,9 @@
 -- livres usam duas geracoes do modelo (`showsql` e `narrate`). As regiões
 -- leem sempre da mesma linha, pelo id, sem novas chamadas na renderizacao.
 --
--- As garantias são as mesmas do roteiro em scripts/revalidar_select_ai.py, e
+-- As garantias são as mesmas da suíte em scripts/revalidar_select_ai.py, e
 -- existem porque o Select AI erra de maneiras conhecidas e medidas
--- (docs/qualidade/LEITURA_SELECT_AI.md):
+-- (docs/flowia/LEITURA_SELECT_AI.md):
 --
 --   1. SQL vindo do modelo é entrada não confiável. Só executa se for
 --      consulta de leitura;
@@ -295,7 +295,7 @@ create or replace package body medflow_select_ai as
   -- Rankings sem limite ampliam a carga enviada ao NARRATE e permitem que a
   -- prosa esconda os primeiros colocados no meio de dezenas de linhas. A
   -- classificacao e deliberadamente semantica: vale para qualquer indicador,
-  -- nao apenas para uma pergunta do roteiro de avaliacao.
+  -- nao apenas para uma pergunta da suite de avaliacao.
   function eh_ranking_analitico(p_pergunta in varchar2) return boolean is
   begin
     return regexp_like(
@@ -663,9 +663,9 @@ fetch first 5 rows only~';
            || 'Igualdade sensivel a caixa devolve zero linha e faz parecer que '
            || 'o dado nao existe.' || chr(10)
            -- As regras 15 a 21 saem da bateria de perguntas humanas de 29/08,
-           -- em docs/qualidade/AVALIACAO_FLOWIA.md. Cada uma corresponde a um
+           -- em docs/flowia/AVALIACAO_20_PERGUNTAS.md. Cada uma corresponde a um
            -- caso que reprovou, e todas valem para o produto, nao so para o
-           -- roteiro: sao a mesma metodologia que o slide de limites declara.
+           -- suite: sao a mesma metodologia que o contrato de limites declara.
            || '15. Glossario de fluxo assistencial, no grao regiao-competencia: '
            || 'mandar paciente para fora, sair, escoar e evadir sao '
            || 'PC_EVASAO_INTRASTADUAL_OBSERVADA; receber gente de fora, atrair '

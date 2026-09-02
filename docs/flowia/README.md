@@ -1,53 +1,70 @@
-# `docs/flowia/` — a IA do produto, e a prova de que ela acerta
+# FlowIA — arquitetura, governança e validação
 
-**O quê.** A **FlowIA** é a assistente que responde dentro do site. Por baixo
-dela está o **Select AI** do Autonomous Database, que traduz pergunta em SQL
-contra a Gold. Esta pasta guarda a evidência de que essa tradução acerta; o
-código que a executa mora em outro lugar, e a tabela abaixo diz onde.
+A FlowIA é a camada conversacional do MedFlow. Ela recebe uma pergunta curta
+em português e o contexto analítico que já está visível na aplicação, consulta
+a camada Gold no Oracle Autonomous AI Database e devolve uma narrativa com o
+resultado e suas ressalvas.
 
-**Por quê separado.** A pergunta que qualquer um faz diante de uma demonstração
-de texto-para-SQL é sempre a mesma: *como se sabe que ele acertou?* Ler o SQL
-gerado e achar parecido com o de referência não responde isso. Aqui a
-conferência é executada.
+O Select AI participa da tradução de texto para SQL. Ele não recebe confiança
+implícita: o SQL gerado passa por um guarda de leitura, roda em transação
+somente leitura e deixa rastro antes de qualquer resultado chegar à interface.
 
-## Onde está o código
+## Fluxo técnico
 
-Nada nesta pasta executa. O que roda:
+1. O webapp envia a pergunta e um contexto limitado: visão ativa, competência,
+   região, hospital e análise selecionada.
+2. O pacote `MEDFLOW_SELECT_AI` limita a entrada e acrescenta as regras do
+   modelo semântico.
+3. `DBMS_CLOUD_AI.GENERATE` produz o SQL candidato.
+4. O backend extrai o `SELECT`, recusa comandos de escrita e bloqueia termos
+   incompatíveis com o contrato analítico.
+5. A consulta aprovada roda contra as views e os marts Gold.
+6. A narrativa é produzida a partir do resultado e passa pela mesma verificação
+   terminológica.
+7. Pergunta, contexto, SQL, narrativa, aviso e motivo de recusa são gravados em
+   `SELECT_AI_RESPOSTA`.
 
-| Papel | Onde |
+O resultado exibido, o SQL auditável e os avisos leem a mesma linha de rastro.
+Isso evita que componentes da tela façam chamadas independentes e descrevam
+consultas diferentes.
+
+## Componentes implementados
+
+| Responsabilidade | Implementação |
 |---|---|
-| O roteiro de perguntas e o SQL de referência | `src/medflow/select_ai/perguntas.py` |
-| O executor e o relatório | `src/medflow/select_ai/` e `scripts/revalidar_select_ai.py` |
-| O avaliador da bateria de 20 perguntas | `scripts/avaliar_flowia.py` |
-| O backend governado do assistente | `db/apex/02_pacote_select_ai.sql` |
-| A infraestrutura do Select AI: Dynamic Group, policy, profile | `db/select_ai/` |
+| Contexto enviado pelo webapp | `web/src/` e contrato `POST /assistente` |
+| Orquestração, guarda e auditoria | `db/apex/02_pacote_select_ai.sql` |
+| Perfil semântico do Select AI | `db/select_ai/` |
+| Casos controlados e SQL de referência | `src/medflow/select_ai/perguntas.py` |
+| Executor e comparador | `src/medflow/select_ai/executar.py` |
+| Perguntas coloquiais da FlowIA | `scripts/avaliar_flowia.py` |
+| Paridade entre Python e PL/SQL | `tests/test_select_ai.py` |
+| Aplicação APEX exportada | `db/apex/05_aplicacao_medflow_select_ai.sql` |
 
-```bash
-make select-ai-revalidar              # roda o roteiro e regrava a evidência
-.venv/bin/python -m dotenv -f .env run -- \
-  .venv/bin/python scripts/avaliar_flowia.py F12   # um subconjunto da bateria
-```
+## Evidências curadas
 
-**A cota do Select AI é de 50 perguntas por dia.** Uma bateria completa gasta
-20. Confira quanto sobrou antes de repetir; o avaliador aceita um subconjunto
-justamente para isso.
+| Documento | Evidência apresentada |
+|---|---|
+| [`AVALIACAO_20_PERGUNTAS.md`](AVALIACAO_20_PERGUNTAS.md) | as vinte perguntas coloquiais, a interpretação esperada e o resultado consolidado |
+| [`REVALIDACAO_SELECT_AI.md`](REVALIDACAO_SELECT_AI.md) | os treze casos técnicos, o método de comparação e as limitações observadas |
+| [`LEITURA_SELECT_AI.md`](LEITURA_SELECT_AI.md) | análise das causas, alcance dos comentários semânticos e consequências para o produto |
+| [`DEMONSTRACAO_APEX.md`](DEMONSTRACAO_APEX.md) | arquitetura da implementação APEX e o rastro de uma resposta |
 
-## O que cada documento prova
+As saídas brutas das ferramentas ficam em `ULTIMA_EXECUCAO.md` e
+`ULTIMA_REVALIDACAO.md`. Elas são locais e ignoradas pelo Git. O repositório
+versiona a leitura técnica dos resultados, não o log de uma máquina.
 
-| Documento | O que prova | Como foi escrito |
-|---|---|---|
-| [`AVALIACAO_20_PERGUNTAS.md`](AVALIACAO_20_PERGUNTAS.md) | a FlowIA responde 20 de 20 perguntas humanas — curtas, vagas e coloquiais | à mão, consolidando quatro execuções de 29/08 |
-| [`REVALIDACAO_SELECT_AI.md`](REVALIDACAO_SELECT_AI.md) | as 13 perguntas do roteiro geram SQL que devolve a mesma resposta do SQL de referência, rodando os dois contra o mesmo banco | gerado por execução |
-| [`LEITURA_SELECT_AI.md`](LEITURA_SELECT_AI.md) | o julgamento sobre a evidência acima: o que ela mostra, onde o modelo erra e qual é o roteiro seguro | à mão |
-| [`DEMONSTRACAO_APEX.md`](DEMONSTRACAO_APEX.md) | a página APEX de demonstração, montada e validada no Oracle | à mão |
+## Limites assumidos
 
-A separação entre os dois primeiros e o terceiro é deliberada: a evidência é a
-medida, e envelhece a cada execução; a leitura é o julgamento, e é onde as
-limitações ficam escritas em vez de escondidas.
+- A base é mensal por competência; a FlowIA não afirma tempo real.
+- IPH mede pressão estimada sobre a capacidade SUS declarada, não ocupação
+  física de leitos.
+- O modelo pode falhar quando precisa agregar antes de ranquear.
+- Cada pergunta é autossuficiente; chamadas isoladas de
+  `DBMS_CLOUD_AI.GENERATE` não preservam com segurança o turno anterior.
+- A bateria consolidada aprovou os vinte casos, mas eles não passaram juntos em
+  uma única rodada por causa da cota diária do Select AI.
 
-## Um limite declarado
-
-A bateria de 20 passa, mas **nunca passou inteira numa única execução** — a
-cota diária fechou em 50/50 no dia em que os últimos casos foram corrigidos. O
-`AVALIACAO_20_PERGUNTAS.md` mostra quais rodadas produziram cada veredito,
-inclusive a de regressão, que é a que impede a leitura otimista.
+Esses limites determinam a arquitetura: as visões principais usam consultas
+determinísticas; a FlowIA acrescenta investigação em linguagem natural com
+guarda, rastreabilidade e avisos explícitos.

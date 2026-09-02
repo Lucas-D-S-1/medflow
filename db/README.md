@@ -3,15 +3,15 @@
 **Este diretório é o servidor da aplicação.** Não há Node nem Python entre a
 tela e o banco: o ORDS publica os endpoints direto do Autonomous Database, e as
 nove views mais os módulos ORDS daqui não são "scripts auxiliares do Oracle",
-são o código de servidor do produto. Menos peças, menos coisa para cair na
-apresentação, e o dado nunca é recalculado fora do banco.
+são o código de servidor do produto. Menos peças reduzem a superfície
+operacional, e o dado nunca é recalculado fora do banco.
 
 | Pasta | Papel |
 |---|---|
 | `schema/` | usuário, modelo dimensional e reconciliação da carga |
 | `views/` | nove views de projeção pura, uma por fatia do produto |
 | `ords/` | módulos REST; o `03` redefine o de trabalho, o `04` clona o público |
-| `select_ai/` | perguntas da demonstração e o SQL de referência |
+| `select_ai/` | perfil semântico, casos de validação e SQL de referência |
 | `apex/` | pacote PL/SQL governado, compartilhado pelo assistente web, e workspace opcional |
 
 O contrato do que esses handlers expõem está em
@@ -104,7 +104,7 @@ SQLcl.
 | 7 | Habilitar o Select AI e instalar o pacote governado | `db/select_ai/04_select_ai.sql` + `db/apex/02_pacote_select_ai.sql` | `ADMIN` + `MEDFLOW` |
 | 8 | Publicar o módulo de trabalho | `executar_sql.py db/ords/03_modulo_medflow_dev.sql` | `MEDFLOW` |
 | 9 | Publicar o módulo público | `make ords-publicar` | `MEDFLOW` |
-| 10 | Montar a demonstração APEX opcional | `db/apex/README.md` | `ADMIN` + `MEDFLOW` |
+| 10 | Importar a interface APEX opcional | `db/apex/05_aplicacao_medflow_select_ai.sql` | `ADMIN` + `MEDFLOW` |
 
 Em uma instância que já estava no modelo anterior, use
 `make oracle-migrar-territorio` em vez de recriar o schema. Depois, carregue só
@@ -195,7 +195,7 @@ carimbar.
 
 ### Passo 7 — Select AI
 
-**O roteiro de perguntas não mora aqui.** Ele vive em
+**A suíte de perguntas não mora aqui.** Ela vive em
 `src/medflow/select_ai/perguntas.py` e roda com `make select-ai-revalidar`: são
 13 perguntas em cinco blocos, oito com comparação por execução contra o SQL de
 referência. A evidência e a leitura dela estão em
@@ -209,26 +209,25 @@ A página APEX continua sendo uma demonstração opcional. O pacote versionado e
 [`apex/`](apex/README.md), porém, agora é também o backend do assistente web:
 limita a pergunta, guarda a rodada e recusa SQL que não seja de leitura.
 
-## Dois avisos que valem nota
+## Dois riscos operacionais
 
 **Select AI foi revalidado em 23/08/2026, mas continua sendo uma dependência
 externa do MVP.** Preserve o Dynamic Group `MedFlowADBGenAI`, a policy
-`use generative-ai-family` e o Resource Principal. Antes da apresentação, rode
-`make select-ai-revalidar` e use perguntas autossuficientes do roteiro aprovado.
+`use generative-ai-family` e o Resource Principal. Uma verificação ao vivo
+deve usar perguntas autossuficientes da suíte validada.
 
 **Always Free hiberna por inatividade.** O workflow
 `.github/workflows/heartbeat.yml` executa SQL diariamente para mantê-lo ativo e
-falha de forma visível se ele já estiver parado. Antes de qualquer demonstração
-ao vivo, rode também `make preflight`: a automação não substitui essa
-conferência.
+falha de forma visível se ele já estiver parado. Antes de uma verificação
+externa, `make preflight` confirma o caminho público; a automação não substitui
+essa conferência.
 
 ## Por que um esquema separado do ADMIN
 
 O `ADMIN` é a conta de administração do Autonomous Database. A Gold vive no
 esquema `MEDFLOW`, com quota e privilégios mínimos. Isso mantém a modelagem
 explícita, evita que o `ADMIN` acumule objeto de aplicação e permite habilitar
-o esquema no Database Actions sem expor a conta administrativa numa
-demonstração ao vivo.
+o esquema no Database Actions sem expor a conta administrativa na interface.
 
 ## Por que os COMMENT ON importam
 
@@ -248,6 +247,6 @@ que o dado não sustenta.
 ## Dados
 
 Os Parquets dos marts não são versionados (`.gitignore`). Gere-os localmente
-com `make pipeline` antes da carga — os notebooks narram o raciocínio, mas não
+com `make pipeline` antes da carga. Os notebooks narram o raciocínio, mas não
 são mais o motor. Os SHA-256 de referência estão em
 `data/gold/qualidade/METADADOS.json`.

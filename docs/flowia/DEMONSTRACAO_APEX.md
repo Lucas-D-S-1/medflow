@@ -1,127 +1,98 @@
-# APEX + Select AI — como a demonstração foi montada
+# FlowIA no Oracle APEX — implementação técnica
 
-Estado conferido no Oracle em 25/08/2026, com a demonstração **concluída e
-validada**:
+A aplicação APEX demonstra o mesmo caminho governado usado pela FlowIA no
+webapp: pergunta em português, SQL gerado pelo Select AI, resultado consultado
+na Gold, narrativa e rastro auditável.
 
-- APEX **26.1.3** disponível no Autonomous Database;
-- pacote `MEDFLOW_SELECT_AI` válido;
-- workspace `MEDFLOW_DEMO`, schema de parsing `MEDFLOW`, conta de
-  desenvolvimento `MEDFLOW_DEV`;
-- aplicação **MedFlow — Select AI**, App **100**, Página **1 — Investigar com
-  Select AI**;
-- tabela `SELECT_AI_RESPOSTA` com o rastro da demonstração: ID **23**, a
-  pergunta principal, e ID **24**, a pergunta-limite que dispara o aviso;
-- export versionado em
-  [`05_aplicacao_medflow_select_ai.sql`](../../db/apex/05_aplicacao_medflow_select_ai.sql);
-- captura real em
-  `apresentacao/capturas/apex_select_ai_real.png`, que fica no disco de quem
-  gerou e saiu do índice em 31/08, quando o painel da IA no APEX deixou o deck,
-  já usada no slide 16 da apresentação.
+O APEX é uma segunda interface para o backend, não uma segunda implementação.
+As regras ficam no pacote `MEDFLOW_SELECT_AI`, dentro do schema `MEDFLOW`.
 
-O restante deste arquivo deixou de ser uma lista de pendências. Ele é o registro
-reproduzível do caminho percorrido: o que permite remontar o workspace do zero
-caso a instância precise ser recriada.
+## Estado implementado
 
-## Links
+| Componente | Estado |
+|---|---|
+| Oracle APEX | 26.1.3 no Autonomous Database |
+| Workspace | `MEDFLOW_DEMO`, schema de parsing `MEDFLOW` |
+| Aplicação | App 100, página “Investigar com Select AI” |
+| Backend | pacote `MEDFLOW_SELECT_AI` válido |
+| Auditoria | tabela `SELECT_AI_RESPOSTA` |
+| Artefato reproduzível | `db/apex/05_aplicacao_medflow_select_ai.sql` |
 
-- Administração direta do APEX (alternativa; o SSO pode terminar em 404 antes
-  do primeiro workspace):  
-  <https://gf68e03b2a30d55-medflow.adb.sa-saopaulo-1.oraclecloudapps.com/ords/apex_admin>
-- Acesso geral ao APEX, depois de criar o workspace:  
-  <https://gf68e03b2a30d55-medflow.adb.sa-saopaulo-1.oraclecloudapps.com/ords/apex>
-- Produto público MedFlow:  
-  <https://lucas-d-s-1.github.io/medflow/>
-- Repositório e arquivos do APEX:  
-  <https://github.com/Lucas-D-S-1/medflow/tree/main/db/apex>
-- Procedimento oficial da Oracle para criar workspace no Autonomous Database:  
-  <https://docs.oracle.com/en/cloud/paas/autonomous-database/serverless/adbsb/apex-create-workspace.html>
-- Procedimento oficial para abrir o App Builder:  
-  <https://docs.oracle.com/en/cloud/paas/autonomous-database/serverless/adbsb/apex-access-appbuilder.html>
+O export da aplicação contém a página, seus itens, regiões, processos e estilos.
+O workspace é infraestrutura da instância e permanece separado do código da
+aplicação.
 
-## 1. Criar o workspace — precisa do ADMIN
+## Componentes versionados
 
-O caminho principal evita a rota do APEX que apresentou 404 depois do SSO:
+| Arquivo | Papel técnico |
+|---|---|
+| `01_criar_workspace.sql` | declaração opcional da associação entre workspace e schema |
+| `02_pacote_select_ai.sql` | orquestração, guarda de SQL, narrativa, avisos e auditoria |
+| `03_estilo_apresentacao.css` | identidade visual da interface APEX |
+| `04_cabecalho_apresentacao.html` | contexto curto exibido antes da pergunta |
+| `05_aplicacao_medflow_select_ai.sql` | export completo e importável do App 100 |
 
-1. No Console OCI, abrir o Autonomous Database `MEDFLOW`.
-2. Abrir o menu **Database actions** e escolher **View all database actions**.
-3. Confirmar que a sessão está como **`ADMIN`**. Se estiver como `MEDFLOW`,
-   sair e entrar com o usuário de banco `ADMIN` e a senha do `ADMIN`.
-4. No Launchpad, abrir **Administration → APEX Workspaces**.
-5. No canto superior direito, escolher **Create Workspace**.
-6. Preencher:
-   - **Workspace name:** `MEDFLOW_DEMO`;
-   - **Database user:** selecionar o schema existente `MEDFLOW`;
-   - **APEX Administrator:** `MEDFLOW_DEV`;
-   - e-mail e senha forte local nos campos solicitados.
-7. Não registrar a senha no Git, na apresentação ou neste arquivo.
-8. Clicar em **Create**.
+## Ciclo de uma pergunta
 
-A criação feita pela interface configura o workspace e sua conta inicial. Na
-autenticação por contas do banco, a Oracle também cria a conta de banco
-correspondente quando uma conta de desenvolvedor é criada pela interface.
+1. A página envia `P1_PERGUNTA` ao pacote.
+2. `medflow_select_ai.responder` cria uma única rodada e devolve seu
+   identificador.
+3. O pacote interpreta intenções governadas ou solicita ao Select AI um SQL
+   candidato.
+4. O SQL passa pelo extrator e pelo guarda de somente leitura.
+5. A consulta aprovada roda na mesma transação e seu resultado alimenta a
+   narrativa.
+6. A linha auditada recebe pergunta, SQL, narrativa, aviso e recusa.
+7. Relatório, narrativa e SQL colapsável consultam o mesmo identificador.
 
-O arquivo
-[`01_criar_workspace.sql`](../../db/apex/01_criar_workspace.sql) fica
-como alternativa de infraestrutura: ele cria apenas o workspace e ainda exige
-que a conta de desenvolvimento seja configurada na Administração do APEX. Para
-o primeiro acesso, prefira o formulário acima.
+Uma única rodada por pergunta impede que a tabela e o texto da página sejam
+produzidos por chamadas diferentes ao modelo.
 
-### Por que o login direto dá 404
+## Contrato exposto à página
 
-- a senha é aceita pelo SSO;
-- o callback segue para `/ords/r/apex/instance-admin/administration-services`;
-- em seguida o ORDS redireciona para `/ords/r/apex/instance-admin/f`, que
-  responde 404;
-- com `MEDFLOW`, isso também é coerente com a ausência do workspace e do papel
-  `APEX_ADMINISTRATOR_ROLE`.
+| Chamada | Resultado |
+|---|---|
+| `responder(pergunta, contexto)` | grava a rodada e devolve o ID |
+| `sql_da_resposta(id)` | SQL aprovado pelo guarda |
+| `narrativa_da_resposta(id)` | explicação produzida a partir do resultado |
+| `aviso_da_resposta(id)` | ressalva metodológica ou nulo |
 
-Esse encadeamento foi reproduzido em 23/08/2026 com a conta `MEDFLOW`, sem
-expor a senha. Se acontecer também com `ADMIN`, usar **Database Actions → APEX
-Workspaces**, que não depende da página `instance-admin`.
+O APEX não calcula indicador, não monta SQL e não repete regras de segurança.
+Ele apresenta o que o pacote já validou.
 
-## 2. Entrar no App Builder
+## Governança
 
-Depois de criar o workspace, reabrir o link geral do APEX e entrar com a conta
-criada pela interface:
+- O SQL do modelo é entrada não confiável e só executa quando o comando é de
+  leitura.
+- A sessão de validação é declarada somente leitura.
+- A varredura terminológica cobre narrativa e aliases do SQL, porque o alias
+  vira cabeçalho visível no relatório.
+- A pergunta tem limite de tamanho e o contexto contém somente estado da tela.
+- Credenciais, wallet e configuração da conta APEX não fazem parte do export.
+- O rastro fica fora da Gold e não altera os fatos nem os indicadores.
 
-```text
-usuário de banco: MEDFLOW_DEV
-workspace:        MEDFLOW_DEMO
-```
+## Evidências de comportamento
 
-Na tela **Select a Workspace**, escolher `MEDFLOW_DEMO` e abrir **App Builder**.
+Dois casos representam as garantias principais:
 
-## 3. Criar a aplicação e a página
+| Pergunta | Comportamento observado |
+|---|---|
+| “quais as cinco regiões de saúde com maior índice de pressão hospitalar médio em 2026” | consulta executada, resultado tabular, narrativa e SQL auditável |
+| “qual a taxa de ocupação de leitos de cada região em 2026” | o uso indevido de “ocupação” é sinalizado; o MedFlow mede IPH, uma pressão estimada |
 
-1. **App Builder → Create → New Application**.
-2. Nome: `MedFlow — Select AI`.
-3. Usar a **Home Page 1** criada pelo assistente e renomeá-la para
-   `Investigar com Select AI`; os itens do roteiro usam o prefixo `P1_`.
-4. Seguir a montagem detalhada do
-   [`db/apex/README.md`](../../db/apex/README.md): textarea, botão,
-   processo PL/SQL, narrativa, relatório, aviso e SQL gerado.
-5. Colar o cabeçalho e o CSS de apresentação fornecidos na mesma pasta.
+A segunda pergunta é deliberadamente adversarial. Ela verifica se a interface
+expõe a limitação sem transformar um indicador de pressão em afirmação sobre
+ocupação física.
 
-## 4. Pergunta segura para a demonstração
+## Limite de produto
 
-```text
-quais as cinco regioes de saude com maior indice de pressao hospitalar medio em 2026
-```
+As telas analíticas do MedFlow continuam baseadas em consultas determinísticas.
+O Select AI acrescenta exploração em linguagem natural, com custo, variabilidade
+e erros conhecidos. A página APEX torna esse mecanismo visível e auditável; ela
+não substitui os indicadores contratados pelo produto.
 
-O resultado de referência começa por `LIMEIRA`, seguido por
-`FRANCO DA ROCHA`, `JUNDIAI`, `SAO JOSE DO RIO PRETO` e
-`ALTO VALE DO PARAIBA`.
-
-Não encadear perguntas e não usar “taxa de ocupação” no roteiro principal. As
-limitações já medidas estão em
-[`LEITURA_SELECT_AI.md`](LEITURA_SELECT_AI.md).
-
-## 5. Critério de pronto
-
-- a pergunta grava uma única linha em `SELECT_AI_RESPOSTA`;
-- narrativa, relatório e SQL usam o mesmo `P1_ID`;
-- o SQL aparece colapsado, como evidência sob demanda;
-- termos fora da metodologia fazem a região de aviso aparecer;
-- o resultado é descrito como demonstração controlada, nunca como chat público;
-- a captura da página pronta já está no slide 16 do PPT; falta apenas
-  gravá-la no vídeo da apresentação.
+A implementação detalhada do pacote está em
+[`db/apex/README.md`](../../db/apex/README.md). Os resultados das baterias de
+validação estão em
+[`AVALIACAO_20_PERGUNTAS.md`](AVALIACAO_20_PERGUNTAS.md) e
+[`REVALIDACAO_SELECT_AI.md`](REVALIDACAO_SELECT_AI.md).

@@ -9,14 +9,14 @@ ficam fora daqui: aquilo é `src/`, `contracts/` e `db/`.
 | [`flowia/`](flowia/README.md) | a IA do produto e a prova de que ela acerta | ao perguntar como se sabe que o Select AI acertou |
 | `entrega_sprint_2/` | o que foi entregue: o deck, os links e o pacote em `original/` | ao conferir o que a versão entregue continha |
 
-## Evidência é datada, e continua datada
+## Evidência bruta e documentação curada
 
-`flowia/REVALIDACAO_SELECT_AI.md` registra uma execução, com a data e o banco em
-que ela aconteceu. **Não é reescrito para caber no presente**: transformar
-registro em opinião é a forma mais barata de perder a credibilidade do
-conjunto. Quando o mundo muda, o caminho é executar de novo e datar de novo, não
-editar o retrato.
+`flowia/REVALIDACAO_SELECT_AI.md` apresenta o método, os treze casos e os
+resultados medidos. A saída integral de uma rodada fica em
+`flowia/ULTIMA_REVALIDACAO.md`, fora do índice. A mesma separação vale para a
+bateria de vinte perguntas: o documento curado é
+`AVALIACAO_20_PERGUNTAS.md`; o log local é `ULTIMA_EXECUCAO.md`.
 
-O que descreve o **agora** não mora em documento: sai de `make validar`, de
-`make preflight` e da reconciliação no banco, que medem o estado no momento em
-que você pergunta.
+O repositório preserva método, decisões e limites. O estado operacional do
+momento sai de `make validar`, de `make preflight` e da reconciliação no
+banco.
