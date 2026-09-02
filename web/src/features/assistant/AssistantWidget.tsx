@@ -210,7 +210,24 @@ export default function AssistantWidget() {
     // escrita para explicar a fatia do hospital que está aberto na tela, e sem
     // esta ressalva ela engolia a pergunta pelo verbo "concentra" — devolvendo
     // a definição de uma coluna no lugar da lista de hospitais.
-    const pedidoRanking = /(quais|que|quantos) (sao os )?hospitais/.test(normalized)
+    //
+    // Reconhecer só "quais hospitais" não bastava: pedir o mesmo ranking com
+    // outra sintaxe caía de novo na definição. Medido no site publicado,
+    // "onde se concentram as internações cirúrgicas desta região?" respondia
+    // localmente em 0,8s com a fatia de um hospital — texto correto para outra
+    // pergunta. As três formas que faltavam:
+    //
+    //   "quais os cinco hospitais com mais..."  contagem entre o pronome e o
+    //                                           substantivo
+    //   "onde se concentram as internações..."  sujeito implícito
+    //   "ranking de hospitais por..."           sem verbo interrogativo
+    //
+    // O limite de caracteres entre o pronome e "hospitais" existe para não
+    // capturar frase longa em que as duas palavras só coincidem.
+    const pedidoRanking =
+      /(quais|que|quantos)\b[a-z0-9 ]{0,24}\bhospitais\b/.test(normalized) ||
+      /\bonde\b[a-z0-9 ]{0,30}\b(concentra|interna)/.test(normalized) ||
+      /\branking\b[a-z0-9 ]{0,20}\bhospita/.test(normalized)
 
     if (pedidoExplicacao && /(\biph\b|pressao hospitalar)/.test(normalized)) {
       const regionalContext = selectedRegion
@@ -254,7 +271,11 @@ export default function AssistantWidget() {
       }
     }
 
-    if (/investigar|priorizar|maiores regioes|ranking/.test(normalized)) {
+    // `ranking` sozinho tambem trazia para ca o pedido de ranking de
+    // hospitais, que e outra pergunta: esta regra ordena REGIOES por IPH.
+    // "ranking de regioes" continua caindo aqui; "ranking de hospitais" vai
+    // ao modelo, que e quem tem o grao hospitalar.
+    if (!pedidoRanking && /investigar|priorizar|maiores regioes|ranking/.test(normalized)) {
       const leaders = sourceData?.regions.items
         .slice()
         .sort((left, right) => right.iph_percent - left.iph_percent)

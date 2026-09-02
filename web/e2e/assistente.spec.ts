@@ -448,6 +448,50 @@ test('a concentração por especialidade vai ao Select AI com a região no conte
   expect(chamadas).toBe(1)
 })
 
+test('pedido de ranking escrito de outras formas também vai ao Select AI', async ({ page }) => {
+  // A regra local de participação existe para explicar a fatia do hospital
+  // aberto na tela, e casa pelo verbo "concentra". Reconhecer só
+  // "quais hospitais" deixava passar as formas abaixo: medido no site
+  // publicado, "onde se concentram as internações cirúrgicas desta região?"
+  // respondia localmente com a definição da coluna, texto correto para outra
+  // pergunta. Cada formulação aqui é uma que já falhou.
+  const formulacoes = [
+    'Onde se concentram as internações cirúrgicas desta região?',
+    'Quais os cinco hospitais com mais internações em cirurgia?',
+    'Ranking de hospitais por internações em cirurgia na região',
+  ]
+
+  for (const pergunta of formulacoes) {
+    let chamadas = 0
+    await page.route('**/api/dev/v1/assistente/perguntar', async (route) => {
+      chamadas += 1
+      await route.fulfill({
+        contentType: 'application/json',
+        body: JSON.stringify({
+          status: 'ok',
+          source: 'oracle-select-ai',
+          response_id: 77,
+          narrative: 'Lista de hospitais vinda da Gold.',
+          sql: 'select nm_hospital_atual from mart_indicador_hospital_especialidade_mensal',
+          warning: null,
+        }),
+      })
+    })
+
+    await page.goto('/regional?regiao=35073')
+    await page.getByRole('button', { name: /Posso ajudar/ }).click()
+    const panel = page.locator('#medflow-assistant-panel')
+    await panel.getByRole('textbox').fill(pergunta)
+    await panel.getByRole('textbox').press('Enter')
+
+    await expect(panel).toContainText('Lista de hospitais vinda da Gold.')
+    // Zero significa que uma regra local engoliu o ranking e devolveu
+    // definição no lugar da lista.
+    expect(chamadas, `"${pergunta}" não chegou ao Select AI`).toBe(1)
+    await page.unroute('**/api/dev/v1/assistente/perguntar')
+  }
+})
+
 test('a etapa hospitalar não herda a pergunta de concentração', async ({ page }) => {
   await page.goto('/?regiao=35073#regional')
   await page.getByRole('button', { name: /Posso ajudar/ }).click()
