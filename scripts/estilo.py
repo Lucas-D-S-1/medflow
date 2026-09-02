@@ -29,7 +29,6 @@ RAIZ = Path(__file__).resolve().parent.parent
 # Documentos que descrevem um estado datado não são reescritos para caber no
 # presente: reescrever evidência a cada mudança transforma registro em opinião.
 ISENTOS = {
-    "CHANGELOG.md",
     "docs/pesquisa/pesquisa.md",
 }
 

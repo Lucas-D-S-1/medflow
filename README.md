@@ -56,14 +56,10 @@ Fundamentação dos indicadores e validação do problema:
 
 Arquitetura detalhada, e o que cada indicador não sustenta:
 [`ARQUITETURA.md`](ARQUITETURA.md).
-Instalação e mapa do repositório:
-[`HOW_TO_INSTALL.md`](HOW_TO_INSTALL.md).
 Nomenclatura:
 [`contracts/NOMENCLATURA.md`](contracts/NOMENCLATURA.md).
 Contrato da API:
 [`contracts/openapi.yaml`](contracts/openapi.yaml).
-Mudanças incompatíveis:
-[`CHANGELOG.md`](CHANGELOG.md).
 
 ## Pipeline atual
 
@@ -266,8 +262,8 @@ conferidos contra os parquets.
 
 Isso deixou de ser um evento manual: `make reconciliar-completo` reproduz a
 varredura, e `make reconciliar` roda a amostra em segundos. O método está em
-[`tests/reconciliacao/README.md`](tests/reconciliacao/README.md); a cobertura
-por endpoint, no [`CHANGELOG.md`](CHANGELOG.md).
+[`tests/reconciliacao/README.md`](tests/reconciliacao/README.md), junto da
+cobertura por endpoint.
 
 Para rodar o webapp em desenvolvimento, com o `.env` da raiz configurado:
 

@@ -118,7 +118,7 @@ manter essa fronteira explícita.
 - o CORS é restrito aos domínios conhecidos e não é tratado como autenticação;
 - logs não registram segredo nem payload sensível;
 - cada publicação registra versão, competência e hash;
-- mudança de fórmula exige novo contrato, entrada no changelog e revalidação;
+- mudança de fórmula exige nova versão do contrato e revalidação;
 - o Select AI roda em ambiente controlado, e o SQL gerado é revisado antes de
   qualquer narrativa.
 
