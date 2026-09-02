@@ -1,6 +1,6 @@
-/* MedFlow — acabamento da página APEX usada na banca.
- * Cole em Page Designer > CSS > Inline. As classes abaixo são adicionadas
- * às regiões conforme db/apex/README.md; nenhuma regra altera o resultado.
+/* Identidade visual da interface APEX do MedFlow.
+ * As classes abaixo pertencem às regiões exportadas no App 100; nenhuma regra
+ * altera dados, consultas ou narrativa.
  */
 
 :root {

@@ -202,7 +202,7 @@ class Preflight:
             "  - simular a contingência e conferir o selo de origem na tela;\n"
             "  - abrir o link em outra rede ou no celular, fora do wi-fi da sala;\n"
             "  - executar um caso controlado do Select AI e conferir SQL, narrativa e aviso;\n"
-            "  - guardar screenshots ou um vídeo curto como última contingência."
+            "  - registrar visualmente a versão publicada como evidência de recuperação."
         )
         return 1 if falhas else 0
 

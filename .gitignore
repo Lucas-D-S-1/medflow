@@ -86,7 +86,7 @@ contracts/INVENTARIO.json
 # se fosse documento, e ele envelhecia entre uma execução e a seguinte.
 VALIDACAO_TECNICA.md
 
-# Saída bruta do avaliador da FlowIA, sobrescrita a cada rodada. O resultado
+# Saída bruta da bateria da FlowIA, sobrescrita a cada rodada. O resultado
 # que vale está em docs/flowia/AVALIACAO_20_PERGUNTAS.md, escrito à mão.
 docs/flowia/ULTIMA_EXECUCAO.md
 docs/flowia/ULTIMA_REVALIDACAO.md
