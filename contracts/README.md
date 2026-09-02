@@ -14,18 +14,11 @@ delas, porque parece autoridade.
 | `openapi.yaml` | os 10 GET analíticos e o POST governado do assistente: parâmetros, envelope, itens e erros | `tests/test_openapi.py` |
 | `NOMENCLATURA.md` | prefixos semânticos e `snake_case` | `validar.py` |
 
-## Os inventários de migração saíram em 25/08/2026
+## O inventário é gerado sob demanda
 
-`INVENTARIO_PRE_MIGRACAO.json` e `INVENTARIO_PRE_REORG.json` congelavam o
-estado de julho e o da fatia 0 para provar que as migrações daquele período não
-perderam arquivo. As duas migrações terminaram, e a revisão de requisitos manda
-regenerar o recorte de 2022-2023 em vez de conservá-lo, então a conferência de
-preservação por SHA-256 deixou de existir em `validar.py`.
-
-`medflow inventario` continua gerando um inventário sob demanda, agora em
-`contracts/INVENTARIO.json`, que é gitignored por ser artefato de execução. A
-proveniência do estado anterior segue no histórico do Git e na tag
-`pre-reorg`.
+`medflow inventario` escreve `contracts/INVENTARIO.json`, que fica fora do
+índice por ser artefato de execução: ele descreve a árvore no momento em que
+rodou, e não uma promessa que alguém deva honrar.
 
 ## O contrato da API descreve o observável
 

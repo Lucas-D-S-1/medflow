@@ -34,14 +34,14 @@ preserva os nomes originais para garantir fidelidade e rastreabilidade.
 
 ## Compatibilidade
 
-A migração entre o contrato `0.1.x` e `0.2.0` está registrada em
-`contratos/MAPEAMENTO_COLUNAS_ORIGEM_SILVER.csv`. Mudanças de nome, tipo,
+A origem de cada coluna da Silver está em
+[`dados/MAPEAMENTO_COLUNAS_ORIGEM_SILVER.csv`](dados/MAPEAMENTO_COLUNAS_ORIGEM_SILVER.csv).
+Mudanças de nome, tipo,
 granularidade ou caminho de tabela são incompatíveis e exigem incremento da
 versão secundária ou principal do contrato.
 
-## Referência acadêmica
+## Origem das regras
 
-As regras foram adaptadas das páginas 31–38 de
-`00_fases/fase_2/capitulos/Cap 4 - Do Modelo ao Banco Projeto Físico
-Relacional_RevFinal.pdf`. O conteúdo sobre dicionário de dados está nas páginas
-57–60 do mesmo capítulo.
+As convenções seguem a prática usual de modelagem dimensional para projeto
+físico relacional: prefixo semântico no nome da coluna, `snake_case`, e o mesmo
+conceito com o mesmo nome em todas as tabelas.

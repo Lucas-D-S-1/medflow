@@ -27,11 +27,6 @@ Bronze, Silver e Gold mudam legitimamente quando o recorte avança, e as
 garantias que valem para elas são mais fortes que um hash: contratos,
 manifesto e invariantes conferidos a cada `make validar`.
 
-O recorte de 2022-2023 e as figuras daquela fase ficavam em `legado/` e em
-`docs/qualidade/figuras/legado/`, cobertos por uma checagem de preservação por
-SHA-256. Saíram em 25/08/2026: a revisão de requisitos manda regenerar aquele
-recorte, e o histórico do Git preserva a proveniência.
-
 ## Por que 12 MB de referência estão versionados
 
 `bronze/origem/referencias/` guarda a malha municipal do IBGE, o CSV de regiões
