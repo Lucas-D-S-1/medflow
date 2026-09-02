@@ -60,12 +60,32 @@ begin
   if qt_profile > 0 then
     dbms_cloud_ai.drop_profile(profile_name => 'MEDFLOW_GENAI');
   end if;
+  -- Sobre o modelo fixado abaixo, dois limites medidos em 02/09/2026:
+  --
+  -- 1. Nao use um modelo google.*: nesta versao do DBMS_CLOUD_AI o endpoint
+  --    sai como `...oci.my$cloud_domain/...`, com o placeholder interno
+  --    literal, e toda chamada morre em ORA-20404. Verificado com
+  --    gemini-2.5-flash, enquanto meta.* e cohere.* respondem normalmente.
+  --
+  -- 2. Modelo e timeout do cliente sao uma decisao so. Medindo as MESMAS dez
+  --    perguntas contra a Gold em 02/09/2026, contando como acerto apenas o
+  --    SQL que devolve linhas e a narrativa que nao contradiz o dado:
+  --
+  --      llama-3.3-70b     8/10 acertos   pior latencia 36,3s
+  --      llama-4-scout     3/10 acertos   pior latencia 32,2s
+  --
+  --    O scout e mais rapido e erra quase tres vezes mais. Por isso o modelo
+  --    e o 3.3 e o cliente espera 45s (ASSISTANT_TIMEOUT_MS em
+  --    web/src/lib/api/assistente.ts). Trocar um sem o outro degrada: com
+  --    teto de 20s o 3.3 entrega 1/10, porque o navegador desiste de resposta
+  --    correta que estava a caminho.
   dbms_cloud_ai.create_profile(
       profile_name => 'MEDFLOW_GENAI',
       description  => 'Select AI sobre os doze objetos analíticos do MedFlow',
       attributes   => '{"provider": "oci",
                         "credential_name": "OCI$RESOURCE_PRINCIPAL",
                         "region": "sa-saopaulo-1",
+                        "model": "meta.llama-3.3-70b-instruct",
                         "comments": true,
                         "constraints": true,
                         "conversation": true,

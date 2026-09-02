@@ -329,8 +329,12 @@ comment on column mart_indicador_regiao_mensal.qt_hospital_especialidade_ipe_aci
 comment on column mart_indicador_regiao_mensal.pc_hospital_especialidade_ipe_acima_referencia is 'Percentual das combinacoes hospital-especialidade elegiveis da regiao com IPE maior que 1. Nulo quando nenhuma e elegivel.';
 
 comment on table mart_indicador_hospital_especialidade_mensal is
-  'Fato mensal por hospital e especialidade do SIH: TMH e CMI. Uma linha por CNES, especialidade e competencia. Para ranquear especialidades por mortalidade, filtre st_amostra igual a suficiente, agrupe por nm_especialidade, exija pelo menos 100 linhas hospital-mes por especialidade, calcule a media de pc_tmh e ordene da maior para a menor.';
-comment on column mart_indicador_hospital_especialidade_mensal.cd_cnes is 'Codigo de sete digitos do estabelecimento no CNES.';
+  'Fato mensal por hospital e especialidade do SIH: TMH e CMI. Uma linha por CNES, especialidade e competencia. ATENCAO: esta tabela identifica o hospital SOMENTE por CD_CNES. Ela NAO tem NM_HOSPITAL_ATUAL nem nenhuma outra coluna com o nome do hospital -- usar NM_HOSPITAL_ATUAL aqui causa ORA-00904. Para mostrar o nome, junte com MART_INDICADOR_HOSPITAL_MENSAL usando CD_CNES E CD_COMPETENCIA nas duas condicoes do join; juntar so por CD_CNES multiplica cada linha pelo numero de competencias e infla as somas. Volume se soma com SUM(QT_INTERNACAO_NOVA), nunca com COUNT(*). Para ranquear especialidades por mortalidade, filtre st_amostra igual a suficiente, agrupe por nm_especialidade, exija pelo menos 100 linhas hospital-mes por especialidade, calcule a media de pc_tmh e ordene da maior para a menor.';
+-- Esta tabela nao tem o nome do hospital, e o modelo inventava
+-- `h.NM_HOSPITAL_ATUAL` aqui, quebrando com ORA-00904. O comentario passa
+-- a dizer onde o nome vive e como juntar: por CNES **e competencia**, senao
+-- uma linha mensal cruza com as 30 competencias e o volume infla 30 vezes.
+comment on column mart_indicador_hospital_especialidade_mensal.cd_cnes is 'Codigo de sete digitos do estabelecimento no CNES. Esta tabela NAO tem o nome do hospital: ele esta em MART_INDICADOR_HOSPITAL_MENSAL.NM_HOSPITAL_ATUAL. Para exibir o nome, junte por CD_CNES E TAMBEM POR CD_COMPETENCIA -- juntar so por CD_CNES multiplica cada linha mensal pelo numero de competencias e infla qualquer soma.';
 comment on column mart_indicador_hospital_especialidade_mensal.nr_ipe is 'Indice de Permanencia por Especialidade: permanencia media do hospital nesta especialidade dividida pela permanencia media dos demais hospitais da mesma regiao na mesma especialidade e competencia. Acima de 1 significa permanencia maior que a dos pares. Nulo quando st_amostra_ipe nao e suficiente. Nao e nota de qualidade nem medida de desfecho: compara permanencia observada sem ajuste de risco clinico.';
 comment on column mart_indicador_hospital_especialidade_mensal.st_amostra_ipe is 'Elegibilidade do nr_ipe: suficiente, benchmark_zero ou amostra_insuficiente. Suficiente exige 20 internacoes no hospital, 50 no benchmark, 3 outros hospitais e permanencia do benchmark maior que zero.';
 comment on column mart_indicador_hospital_especialidade_mensal.qt_internacao_benchmark_especialidade is 'Internacoes novas dos demais hospitais da regiao na mesma especialidade e competencia. Exclui este hospital.';
@@ -338,7 +342,13 @@ comment on column mart_indicador_hospital_especialidade_mensal.qt_dia_permanenci
 comment on column mart_indicador_hospital_especialidade_mensal.qt_hospital_benchmark_especialidade is 'Quantidade de outros hospitais que compoem o benchmark da especialidade.';
 comment on column mart_indicador_hospital_especialidade_mensal.nr_permanencia_media_benchmark_especialidade is 'Permanencia media dos demais hospitais da regiao na mesma especialidade e competencia, em dias.';
 comment on column mart_indicador_hospital_especialidade_mensal.cd_especialidade_sih is 'Codigo de especialidade da internacao no SIH.';
-comment on column mart_indicador_hospital_especialidade_mensal.nm_especialidade is 'Descricao da especialidade do SIH, por exemplo clinica cirurgica, clinica medica ou UTI.';
+-- Os valores vao literais porque o Select AI filtra por igualdade e copia a
+-- grafia do comentario. A versao anterior dizia "por exemplo clinica
+-- cirurgica, clinica medica ou UTI": nenhum dos tres existe na coluna, e o
+-- modelo gerava `= 'clinica cirurgica'`, que devolve zero linha e vira
+-- "nenhum hospital encontrado" na narrativa. Acento e caixa fazem parte do
+-- dado. Se a lista mudar, este comentario muda junto.
+comment on column mart_indicador_hospital_especialidade_mensal.nm_especialidade is 'Descricao da especialidade do SIH. SEMPRE compare sem depender de acento, assim: UPPER(CONVERT(NM_ESPECIALIDADE,''US7ASCII'')) = UPPER(''obstetricia''). Comparar direto com igualdade ou so com UPPER devolve ZERO linha para todo valor acentuado -- UPPER(NM_ESPECIALIDADE)=UPPER(''obstetricia'') nao casa com ''Obstetrícia''. NLS_SORT=BINARY_AI tambem nao resolve aqui. Os 15 valores, na grafia gravada: ''Cirurgia'', ''Clínica médica'', ''Pediatria'', ''Obstetrícia'', ''Hospital-dia (cirúrgico)'', ''Psiquiatria'', ''Crônicos'', ''Saúde mental - clínico'', ''Intercorrência pós-transplante - hospital-dia'', ''Tisiologia'', ''Saúde mental - hospital-dia'', ''Aids - hospital-dia'', ''Reabilitação'', ''Geriatria - hospital-dia'', ''Fibrose cística - hospital-dia''. Nao existe UTI nem ortopedia nesta coluna: para especialidade fora da lista, responda que a base nao a publica.';
 comment on column mart_indicador_hospital_especialidade_mensal.cd_regiao_saude is 'Codigo oficial de cinco digitos da regiao de saude do hospital.';
 comment on column mart_indicador_hospital_especialidade_mensal.nm_regiao_saude is 'Nome oficial da regiao de saude do hospital.';
 comment on column mart_indicador_hospital_especialidade_mensal.cd_macrorregiao_saude is 'Codigo oficial da macrorregiao de saude.';
@@ -346,7 +356,10 @@ comment on column mart_indicador_hospital_especialidade_mensal.nm_macrorregiao_s
 comment on column mart_indicador_hospital_especialidade_mensal.nr_ano_competencia is 'Ano da competencia de processamento.';
 comment on column mart_indicador_hospital_especialidade_mensal.nr_mes_competencia is 'Componente de mes (1 a 12), nao ordena competencias entre anos. Nunca use MAX desta coluna para achar o dado mais recente; use MAX(CD_COMPETENCIA).';
 comment on column mart_indicador_hospital_especialidade_mensal.cd_competencia is 'Competencia AAAAMM e chave cronologica. Para o dado mais recente, use MAX(CD_COMPETENCIA) e filtre por ela.';
-comment on column mart_indicador_hospital_especialidade_mensal.qt_internacao_nova is 'Quantidade de internacoes novas, identificadas por AIH normal.';
+-- Volume se soma. O modelo usava COUNT(*), que conta linhas hospital-mes
+-- (uma por CNES/especialidade/competencia) e devolvia 1 para todo mundo,
+-- virando "todos tem apenas uma internacao" na narrativa.
+comment on column mart_indicador_hospital_especialidade_mensal.qt_internacao_nova is 'Quantidade de internacoes novas, identificadas por AIH normal. E a metrica de volume desta tabela: para "quantas internacoes", "quais concentram mais" ou qualquer ranking por tamanho, use SUM(QT_INTERNACAO_NOVA). NUNCA use COUNT(*): o grao e uma linha por CNES, especialidade e competencia, entao COUNT(*) conta combinacoes, nao internacoes.';
 comment on column mart_indicador_hospital_especialidade_mensal.qt_obito is 'Quantidade de obitos em internacoes novas.';
 comment on column mart_indicador_hospital_especialidade_mensal.qt_dia_permanencia_soma is 'Soma dos dias de permanencia das internacoes novas.';
 comment on column mart_indicador_hospital_especialidade_mensal.vl_aprovado_internacao_nova_soma is 'Soma nominal em reais dos valores aprovados para internacoes novas.';

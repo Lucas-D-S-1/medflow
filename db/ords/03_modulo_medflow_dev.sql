@@ -2034,6 +2034,27 @@ begin
           end if;
           return null;
         end;
+
+        -- O modelo lia 202606 e narrava "junho de 2024": acertava a consulta
+        -- e errava o ano na frase. Mandar o mes por extenso junto do AAAAMM
+        -- tira a leitura do numero das maos dele.
+        function competencia_extenso return varchar2 is
+          l_valor varchar2(200);
+          l_mes   pls_integer;
+          l_meses constant varchar2(200) :=
+            'janeiro,fevereiro,marco,abril,maio,junho,julho,agosto,setembro,outubro,novembro,dezembro';
+        begin
+          l_valor := competencia_aaaamm;
+          if l_valor is null then
+            return null;
+          end if;
+          l_mes := to_number(substr(l_valor, 5, 2));
+          return regexp_substr(l_meses, '[^,]+', 1, l_mes) || ' de ' || substr(l_valor, 1, 4);
+        exception
+          when others then
+            return null;
+        end;
+
       begin
         begin
           l_body := json_object_t.parse(:body_text);
@@ -2042,7 +2063,11 @@ begin
             l_context := l_body.get_object('context');
             l_context_text := 'tela=' || nvl(contexto('route'), 'nao informada')
               || '; competencia=' || nvl(competencia_aaaamm, 'nao informada')
-              || ' (formato AAAAMM, igual ao da coluna CD_COMPETENCIA)'
+              || ' (formato AAAAMM, igual ao da coluna CD_COMPETENCIA'
+              || nvl2(competencia_extenso,
+                      '; por extenso: ' || competencia_extenso
+                      || '. Use este mes e este ano ao escrever a resposta', '')
+              || ')'
               || '; regiao=' || nvl(contexto('region_name'), 'nao informada')
               || '; codigo_regiao=' || nvl(contexto('region_code'), 'nao informado')
               || '; rede_regional=' || nvl(contexto('macroregion_label'), 'nao informada')
@@ -2065,13 +2090,26 @@ begin
         when others then
           if sqlcode = -20003 then
             l_status := 429;
-            l_message := 'O limite diario da demonstracao foi atingido.';
+            l_message := 'O limite diário da demonstração foi atingido.';
+          elsif sqlcode = -20009 then
+            -- Cota da origem, nao a coletiva. A distincao importa para quem
+            -- le: a demonstracao continua no ar para os outros visitantes.
+            -- Sem "de hoje": o saldo por origem e acumulado e nao se renova.
+            l_status := 429;
+            l_message := 'Você atingiu o limite de perguntas livres desta '
+              || 'demonstração. Os atalhos e as telas continuam disponíveis.';
+          elsif sqlcode = -20010 then
+            -- Orcamento global esgotado. Aqui nao adianta o visitante voltar
+            -- depois, e a mensagem nao pode sugerir que adianta.
+            l_status := 429;
+            l_message := 'A demonstração atingiu o limite de consultas '
+              || 'previsto. As telas e os atalhos continuam disponíveis.';
           elsif sqlcode in (-20002, -20004, -20007, -20008) then
             l_status := 400;
             l_message := substr(sqlerrm, instr(sqlerrm, ':') + 2);
           else
             l_status := 503;
-            l_message := 'O Oracle Select AI nao respondeu agora.';
+            l_message := 'O Oracle Select AI não respondeu agora.';
           end if;
 
           :status_code := l_status;

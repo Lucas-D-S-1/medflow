@@ -65,10 +65,33 @@ export class AssistantRequestError extends Error {
   }
 }
 
+/**
+ * O prazo é medido, não arbitrado.
+ *
+ * Uma pergunta livre são duas gerações do Select AI (`showsql` e `narrate`)
+ * sobre um modelo semântico de 22 mil caracteres, e isso não cabe nos 3s dos
+ * endpoints determinísticos. Medindo dez perguntas contra o Oracle em
+ * 02/09/2026, com `meta.llama-3.3-70b-instruct`, as respostas corretas se
+ * distribuíram assim:
+ *
+ *     18,1s  20,2s  20,6s  21,9s  22,9s  23,3s  24,8s        36,3s
+ *
+ * Sete se agrupam entre 18 e 25s, e uma — justamente a pergunta sugerida da
+ * tela regional, sobre concentração por especialidade — fica isolada em 36s.
+ * Com o teto anterior de 20s, o Oracle respondia certo e o navegador desistia
+ * antes: a tela exibia "não respondeu agora" para 8 das 10. Um teto de 35s
+ * ainda cortaria a de 36,3s.
+ *
+ * 45s cobre a distribuição inteira com margem. É muita espera, e por isso o
+ * widget mostra estado de carregamento; o que não se pode é desistir de uma
+ * resposta que estava a caminho.
+ */
+const ASSISTANT_TIMEOUT_MS = 45_000
+
 export async function askOracleSelectAi(
   question: string,
   context: AssistantContext,
-  timeoutMs = 20_000,
+  timeoutMs = ASSISTANT_TIMEOUT_MS,
 ): Promise<AssistantResponse> {
   const controller = new AbortController()
   const timeout = window.setTimeout(() => controller.abort(), timeoutMs)

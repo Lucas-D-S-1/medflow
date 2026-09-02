@@ -105,11 +105,117 @@ when not matched then insert (dia, perguntas) values (r.dia, r.perguntas);
 comment on table select_ai_cota is
   'Cota atomica do assistente: tentativas por dia, inclusive quando o servico GenAI falha.';
 
+-- A cota diaria protege o ritmo, mas nao o total: 50 perguntas por dia, todo
+-- dia, sao dezenas de dolares por mes. As duas tabelas abaixo existem para o
+-- gasto ter um fim, e nao apenas um ritmo.
+--
+-- SELECT_AI_COTA_IP e por origem e **acumulada, nao diaria**: cada visitante
+-- tem um saldo que nao se renova. Impede que a mesma pessoa volte todo dia e
+-- consuma a demonstracao inteira sozinha.
+declare
+  ja_existe number;
+  tem_dia   number;
+begin
+  select count(*) into ja_existe
+  from   user_tables
+  where  table_name = 'SELECT_AI_COTA_IP';
+
+  if ja_existe = 0 then
+    execute immediate q'[
+      create table select_ai_cota_ip (
+        ip         varchar2(45) not null,
+        perguntas  number(6) default 0 not null,
+        primeira_em timestamp with local time zone default systimestamp not null,
+        ultima_em   timestamp with local time zone default systimestamp not null,
+        constraint pk_select_ai_cota_ip primary key (ip),
+        constraint ck_select_ai_cota_ip_nao_neg check (perguntas >= 0)
+      )]';
+  else
+    -- Migracao da versao diaria para a acumulada: soma o historico por IP em
+    -- vez de descarta-lo, senao quem ja gastou hoje ganharia saldo novo.
+    select count(*) into tem_dia
+    from   user_tab_columns
+    where  table_name = 'SELECT_AI_COTA_IP'
+    and    column_name = 'DIA';
+
+    if tem_dia > 0 then
+      execute immediate q'[
+        create table select_ai_cota_ip_nova (
+          ip         varchar2(45) not null,
+          perguntas  number(6) default 0 not null,
+          primeira_em timestamp with local time zone default systimestamp not null,
+          ultima_em   timestamp with local time zone default systimestamp not null,
+          constraint pk_select_ai_cota_ip_nova primary key (ip),
+          constraint ck_select_ai_cota_ip_nova_nn check (perguntas >= 0)
+        )]';
+      execute immediate q'[
+        insert into select_ai_cota_ip_nova (ip, perguntas, primeira_em, ultima_em)
+        select ip, sum(perguntas), systimestamp, systimestamp
+        from   select_ai_cota_ip
+        group  by ip]';
+      execute immediate 'drop table select_ai_cota_ip';
+      execute immediate 'alter table select_ai_cota_ip_nova rename to select_ai_cota_ip';
+      execute immediate 'alter table select_ai_cota_ip rename constraint pk_select_ai_cota_ip_nova to pk_select_ai_cota_ip';
+    end if;
+  end if;
+end;
+/
+
+comment on table select_ai_cota_ip is
+  'Cota acumulada por origem, sem renovacao diaria. IP lido de x-real-ip, que o balanceador da OCI sobrescreve.';
+
+-- O teto global e a ultima trava: quando o acumulado de perguntas livres
+-- equivale ao orcamento definido, o Select AI para para todo mundo. Nao e
+-- alerta, e bloqueio -- diferente do budget da OCI, que so manda e-mail.
+declare
+  ja_existe number;
+begin
+  select count(*) into ja_existe
+  from   user_tables
+  where  table_name = 'SELECT_AI_TETO';
+
+  if ja_existe = 0 then
+    execute immediate q'[
+      create table select_ai_teto (
+        id        number(1) default 1 not null,
+        perguntas number(8) default 0 not null,
+        desde     timestamp with local time zone default systimestamp not null,
+        constraint pk_select_ai_teto primary key (id),
+        constraint ck_select_ai_teto_linha_unica check (id = 1),
+        constraint ck_select_ai_teto_nao_neg check (perguntas >= 0)
+      )]';
+    execute immediate 'insert into select_ai_teto (id, perguntas) values (1, 0)';
+    commit;
+  end if;
+end;
+/
+
+comment on table select_ai_teto is
+  'Teto global acumulado de perguntas livres. Ao atingir o limite, o assistente bloqueia ate a constante ser elevada.';
+
 create or replace package medflow_select_ai as
 
   -- Perfil criado por db/select_ai/04_select_ai.sql.
   c_perfil constant varchar2(30) := 'MEDFLOW_GENAI';
   c_limite_perguntas_dia constant pls_integer := 50;
+
+  -- Os dois tetos abaixo sao dinheiro convertido em perguntas, nao palpite.
+  -- Cada pergunta livre envia o modelo semantico inteiro em duas geracoes,
+  -- cerca de 47 mil caracteres. No meta.llama-3.3-70b-instruct, cobrado a
+  -- US$ 0,0018 por 10 mil caracteres, isso da US$ 0,0085 por pergunta.
+  --
+  -- Se o modelo mudar, os dois numeros mudam junto: sao a divisao do teto em
+  -- dolares pelo preco da pergunta.
+
+  -- Por visitante, ACUMULADO e sem renovacao diaria: 11 x 0,0085 = US$ 0,094,
+  -- o teto de US$ 0,10 por pessoa. Diario nao serviria -- a mesma pessoa
+  -- voltaria todo dia e o gasto por visitante nao teria fim.
+  c_limite_perguntas_ip constant pls_integer := 11;
+
+  -- Global, ultima trava: 1176 x 0,0085 = US$ 9,996, o orcamento de US$ 10.
+  -- Ao atingir, o assistente bloqueia para todos ate esta constante subir.
+  -- Diferente do budget da OCI, que apenas avisa por e-mail, este barra.
+  c_teto_perguntas_total constant pls_integer := 1176;
 
   -- Faz UMA rodada auditada, governada ou via Select AI, grava a linha e
   -- devolve o id. É o que o processo do APEX chama no submit da página.
@@ -122,6 +228,17 @@ create or replace package medflow_select_ai as
   -- visível para auditoria, mas só depois de passar por GUARDAR.
   function json_da_resposta(p_id in number) return clob;
   function perguntas_hoje return pls_integer;
+
+  -- A origem da chamada, para a cota por IP. Le `x-real-ip`, que o balanceador
+  -- da OCI reescreve a cada requisicao. REMOTE_ADDR nao serve: o ORDS o
+  -- preenche com o primeiro valor de X-Forwarded-For, que o cliente envia e
+  -- portanto forja. Fora de contexto web devolve 'local'.
+  function ip_cliente return varchar2;
+  function perguntas_ip(p_ip in varchar2 default null) return pls_integer;
+
+  -- Quanto ja se gastou do teto global, para a tela de metodologia e para
+  -- quem for auditar o custo sem abrir o console da OCI.
+  function perguntas_no_teto return pls_integer;
 
   -- As três regiões da página leem daqui, pelo id. Nenhuma chama o modelo.
   --
@@ -455,9 +572,105 @@ fetch first 5 rows only~';
     return l_total;
   end perguntas_hoje;
 
+  -- `x-real-ip` e reescrito pelo balanceador da OCI a cada requisicao, entao
+  -- o cliente nao consegue dita-lo. Foi verificado contra o ORDS publicado:
+  -- enviando `X-Real-IP: 5.6.7.8` junto com `X-Forwarded-For: 1.2.3.4`, esta
+  -- funcao continuou devolvendo o endereco real, enquanto REMOTE_ADDR passou
+  -- a valer 1.2.3.4. Por isso a cota por origem nao pode se apoiar nele.
+  function ip_cliente return varchar2 is
+    l_ip varchar2(200);
+  begin
+    l_ip := owa_util.get_cgi_env('x-real-ip');
+    l_ip := trim(l_ip);
+    if l_ip is null then
+      return 'local';
+    end if;
+    return substr(l_ip, 1, 45);
+  exception
+    when others then
+      -- Chamada fora de contexto web: script de revalidacao, job, SQL direto.
+      return 'local';
+  end ip_cliente;
+
+  function perguntas_ip(p_ip in varchar2 default null) return pls_integer is
+    l_total pls_integer;
+    l_ip    varchar2(45) := nvl(p_ip, ip_cliente);
+  begin
+    select coalesce(max(perguntas), 0)
+      into l_total
+      from select_ai_cota_ip
+     where ip = l_ip;
+    return l_total;
+  end perguntas_ip;
+
+  function perguntas_no_teto return pls_integer is
+    l_total pls_integer;
+  begin
+    select coalesce(max(perguntas), 0) into l_total from select_ai_teto where id = 1;
+    return l_total;
+  end perguntas_no_teto;
+
+  -- Consome a cota da origem. Roda dentro da transacao autonoma de
+  -- CONSUMIR_COTA, antes das demais: estourar aqui nao pode gastar nem o
+  -- saldo coletivo nem o orcamento, porque a pergunta nao chega a ser feita.
+  --
+  -- Acumulado, nao diario: nao ha `where dia = ...`. O saldo do visitante
+  -- nunca se renova.
+  procedure consumir_cota_ip(p_ip in varchar2) is
+  begin
+    update select_ai_cota_ip
+       set perguntas = perguntas + 1,
+           ultima_em = systimestamp
+     where ip = p_ip
+       and perguntas < c_limite_perguntas_ip;
+
+    if sql%rowcount = 0 then
+      begin
+        insert into select_ai_cota_ip (ip, perguntas)
+        values (p_ip, 1);
+      exception
+        when dup_val_on_index then
+          update select_ai_cota_ip
+             set perguntas = perguntas + 1,
+                 ultima_em = systimestamp
+           where ip = p_ip
+             and perguntas < c_limite_perguntas_ip;
+
+          if sql%rowcount = 0 then
+            raise_application_error(
+              -20009,
+              'O limite de perguntas desta origem foi atingido.');
+          end if;
+      end;
+    end if;
+  end consumir_cota_ip;
+
+  -- O orcamento. Ultima trava antes de chamar o modelo: quando o acumulado
+  -- global chega ao teto, ninguem mais consome GenAI ate a constante subir.
+  procedure consumir_teto is
+  begin
+    update select_ai_teto
+       set perguntas = perguntas + 1
+     where id = 1
+       and perguntas < c_teto_perguntas_total;
+
+    if sql%rowcount = 0 then
+      raise_application_error(
+        -20010,
+        'O orcamento da demonstracao foi atingido.');
+    end if;
+  end consumir_teto;
+
   procedure consumir_cota is
     pragma autonomous_transaction;
   begin
+    -- Ordem deliberada, da trava mais especifica para a mais ampla: origem,
+    -- depois orcamento, depois ritmo diario. Qualquer uma que barre levanta
+    -- excecao, e o EXCEPTION no fim desfaz as anteriores -- nenhuma pergunta
+    -- recusada consome saldo de nenhum dos tres contadores.
+    consumir_cota_ip(ip_cliente);
+    consumir_teto;
+
     update select_ai_cota
        set perguntas = perguntas + 1
      where dia = trunc(current_date)
@@ -475,7 +688,7 @@ fetch first 5 rows only~';
              and perguntas < c_limite_perguntas_dia;
 
           if sql%rowcount = 0 then
-            raise_application_error(-20003, 'O limite diario da demonstracao foi atingido.');
+            raise_application_error(-20003, 'O limite diário da demonstração foi atingido.');
           end if;
       end;
     end if;
@@ -545,11 +758,11 @@ fetch first 5 rows only~';
     end if;
 
     if length(l_pergunta) > 300 then
-      raise_application_error(-20004, 'A pergunta deve ter no maximo 300 caracteres.');
+      raise_application_error(-20004, 'A pergunta deve ter no máximo 300 caracteres.');
     end if;
 
     if length(l_contexto) > 4000 then
-      raise_application_error(-20008, 'O contexto deve ter no maximo 4000 caracteres.');
+      raise_application_error(-20008, 'O contexto deve ter no máximo 4000 caracteres.');
     end if;
 
     l_prompt := case

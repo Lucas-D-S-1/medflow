@@ -114,7 +114,11 @@ paths:
       description: |
         A interface resolve localmente as perguntas conceituais conhecidas e
         envia para esta rota somente perguntas livres. O pacote limita a 300
-        caracteres e 50 perguntas por dia. Cada pergunta livre usa duas
+        caracteres e aplica duas cotas simultâneas: 50 perguntas por dia no
+        total por dia, 11 acumuladas por origem e um teto global de 1176. A segunda existe para que um único
+        visitante não esgote a demonstração — o endereço vem de `x-real-ip`,
+        reescrito pelo balanceador, e não de `REMOTE_ADDR`, que o cliente
+        forja. Cada pergunta livre usa duas
         gerações (`showsql` e `narrate`) da mesma rodada auditada, e a rota só
         devolve SQL que passou pelo guarda de leitura — no máximo 100 gerações
         por dia por este endpoint.
@@ -164,7 +168,10 @@ paths:
             application/json:
               schema: { $ref: "#/components/schemas/AssistantError" }
         "429":
-          description: Limite diário de 50 perguntas atingido.
+          description: |
+            Cota diária atingida: 50 no total, 11 acumuladas para esta origem, ou o teto global da demonstração. A
+            mensagem distingue os dois casos, porque só o segundo deixa a
+            demonstração disponível para os demais visitantes.
           content:
             application/json:
               schema: { $ref: "#/components/schemas/AssistantError" }
