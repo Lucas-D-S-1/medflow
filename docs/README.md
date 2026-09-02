@@ -7,6 +7,7 @@ ficam fora daqui: aquilo é `src/`, `contracts/` e `db/`.
 |---|---|---|
 | [`pesquisa/`](pesquisa/pesquisa.md) | desk research sobre indicadores hospitalares e territoriais, e a validação do problema | ao questionar a metodologia de um índice |
 | [`flowia/`](flowia/README.md) | a IA do produto e a prova de que ela acerta | ao perguntar como se sabe que o Select AI acertou |
+| `entrega_sprint_2/` | o que foi entregue: o deck, os links e o pacote em `original/` | ao conferir o que a versão entregue continha |
 
 ## Evidência é datada, e continua datada
 

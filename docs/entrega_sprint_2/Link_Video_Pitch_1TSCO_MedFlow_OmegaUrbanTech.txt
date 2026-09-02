@@ -1,0 +1,21 @@
+﻿ENTERPRISE CHALLENGE FIAP x ORACLE 2026 - SPRINT 2
+Turma: 1TSCOA
+
+NOME DA EQUIPE: Omega Urban Tech
+NOME DO PROJETO: MedFlow
+
+VIDEO PITCH (YouTube - acesso publico)
+https://www.youtube.com/watch?v=Hum7fgOejyI
+
+APLICACAO EM FUNCIONAMENTO
+https://lucas-d-s-1.github.io/medflow
+
+REPOSITORIO TECNICO E CODIGO-FONTE
+https://github.com/Lucas-D-S-1/medflow
+
+INTEGRANTES (ordem alfabetica)
+RM 571872 - Carol Oliveira
+RM 569353 - Leandro Lopes
+RM 568671 - Leandro Scutari (representante do grupo)
+RM 572207 - Lucas Lima
+RM 568683 - Pedro Padovan

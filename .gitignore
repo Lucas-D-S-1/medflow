@@ -90,8 +90,18 @@ VALIDACAO_TECNICA.md
 # que vale está em docs/flowia/AVALIACAO_20_PERGUNTAS.md, escrito à mão.
 docs/flowia/ULTIMA_EXECUCAO.md
 
-# A pasta de trabalho da Sprint 2 saiu do repositório em 01/09/2026: era material
-# de curso, e ele pertence ao repositório acadêmico privado. O que restou no
-# disco de quem trabalhou nela — decks de revisão, geradores aposentados,
-# capturas fora do deck — continua ali e não volta ao índice por descuido.
-docs/entrega_sprint_2/
+# Na pasta de entrega ficam só os entregáveis: o deck, o arquivo de links e o
+# pacote enviado. Tudo o mais que existe ali é material de trabalho — decks de
+# revisão, geradores aposentados, capturas fora do deck, roteiros internos — e
+# mora no repositório acadêmico privado, que é onde material de curso pertence.
+#
+# A regra é uma lista de permissão, e não de bloqueio: o padrão é ficar de fora,
+# e cada entregável é admitido pelo nome. Barrar por nome deixa o que ninguém
+# previu entrar por descuido, que foi como os geradores voltaram uma vez.
+docs/entrega_sprint_2/*
+!docs/entrega_sprint_2/Link_Video_Pitch_1TSCO_MedFlow_OmegaUrbanTech.txt
+!docs/entrega_sprint_2/original/
+!docs/entrega_sprint_2/apresentacao/
+docs/entrega_sprint_2/apresentacao/*
+!docs/entrega_sprint_2/apresentacao/EC_Sprint_2_1TSCO_EvidenciasConstrucao_MedFlow_OmegaUrbanTech.pptx
+!docs/entrega_sprint_2/apresentacao/EC_Sprint_2_1TSCO_EvidenciasConstrucao_MedFlow_OmegaUrbanTech.pdf
