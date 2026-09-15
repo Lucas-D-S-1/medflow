@@ -515,6 +515,13 @@ test('trocar especialidade invalida resposta remota pendente e preserva resposta
   const summary = page.getByTestId('specialty-summary')
   await expect(summary).toContainText(/Pediatria/i)
   await page.getByRole('button', { name: /Posso ajudar/ }).click()
+  // O hash pode chegar antes de o observador da página contínua promover a
+  // seção hospitalar. Se o teste preencher durante essa transição, o efeito
+  // que limpa a pergunta ao trocar de etapa vence a digitação e desabilita o
+  // envio. Espere o mesmo contexto que o usuário vê antes de interagir.
+  await expect(page.locator('#medflow-assistant-panel')).toContainText(
+    'Contexto: visão hospitalar',
+  )
 
   const input = page.getByLabel('Faça outra pergunta')
   await input.fill('PERGUNTA CONCLUÍDA NA ESPECIALIDADE A')
