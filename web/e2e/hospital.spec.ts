@@ -11,6 +11,7 @@ import {
   cidMaisFrequente,
   competenciaAnterior,
   contextoCid,
+  escolherCompetencia,
   especialidadeCirurgia,
   especialidadeObstetricia,
   especialidadePediatria,
@@ -19,6 +20,7 @@ import {
   hospitalSemAmostra,
   hospitalSeriesSnapshot,
   itens,
+  acharItem,
   linhaSerieHospital,
   mockLiveSource,
   paginacao,
@@ -27,6 +29,7 @@ import {
   regionalSnapshot,
   snapshotCompetencia,
   snapshotCompetenciaBR,
+  specialtySnapshot,
   totalInternacoesDoHospital,
 } from './apoio'
 
@@ -590,8 +593,8 @@ test('a participacao do hospital na regiao fica visivel', async ({ page }) => {
     `/hospital?competencia=${snapshotCompetencia}&regiao=35073&hospital=2786435`,
   )
 
-  // Quem concentra a maior parte das internações não é um par entre iguais: é
-  // a referência, e permanência maior é o esperado nesse papel.
+  // A participação descreve concentração observada; não é um rótulo de papel
+  // assistencial nem uma conclusão sobre gravidade ou permanência.
   const total = itens(hospitalListSnapshot).reduce(
     (soma, item) => soma + (item.new_admissions as number),
     0,
@@ -650,4 +653,115 @@ test('mostra onde a especialidade se concentra na região, e onde o hospital é 
   await expect(
     page.getByText('é onde o volume se concentra, não uma medida de qualidade'),
   ).toBeVisible()
+})
+
+test('o resumo invalida hospital e competência anteriores antes de mostrar a nova linha', async ({
+  page,
+}) => {
+  await mockLiveSource(page)
+  const hospitalInicial = acharItem(hospitalListSnapshot, 'cnes', '3012212')
+
+  await page.goto(`/?competencia=${snapshotCompetencia}&regiao=35073&hospital=3012212#hospital`)
+  const resumo = page.getByTestId('specialty-summary')
+  await expect(resumo).toContainText(hospitalInicial.hospital_name as string)
+
+  const competenciaNova = '2025-05'
+  await escolherCompetencia(page, competenciaNova)
+  await expect(resumo).toContainText('05/2025')
+  await expect(resumo).not.toContainText(snapshotCompetenciaBR)
+
+  const outroHospital = acharItem(hospitalListSnapshot, 'cnes', '2786435')
+  await page.getByTestId('hospital-select-2786435').click()
+  await expect(resumo).toContainText(outroHospital.hospital_name as string)
+  await expect(resumo).not.toContainText(hospitalInicial.hospital_name as string)
+})
+
+test('o helper e a tela explicam zero, nulo e amostra insuficiente no resumo', async ({ page }) => {
+  await mockLiveSource(page)
+  await page.route('**/api/dev/v1/hospitais/*/especialidades**', async (route) => {
+    const url = new URL(route.request().url())
+    const cnes = url.pathname.match(/hospitais\/(\d{7})\/especialidades$/)?.[1] ?? ''
+    const year = Number(url.searchParams.get('ano'))
+    const month = Number(url.searchParams.get('mes'))
+    const base = specialtySnapshot.items as Record<string, unknown>[]
+    const edgeItems = [
+      {
+        ...base[0],
+        specialty_code: '98',
+        specialty_name: 'Amostra insuficiente',
+        new_admissions: 10,
+        benchmark_admissions: 20,
+        average_stay_days: 4,
+        average_stay_benchmark: 5,
+        benchmark_hospitals: 2,
+        ipe: null,
+        ipe_sample_status: 'amostra_insuficiente',
+        sample_status: 'amostra_insuficiente',
+      },
+      {
+        ...base[1],
+        specialty_code: '99',
+        specialty_name: 'Permanência nula',
+        new_admissions: 5,
+        benchmark_admissions: 0,
+        average_stay_days: null,
+        average_stay_benchmark: 0,
+        benchmark_hospitals: 1,
+        ipe: null,
+        ipe_sample_status: 'benchmark_zero',
+        sample_status: 'amostra_insuficiente',
+      },
+      {
+        ...base[2],
+        specialty_code: '00',
+        specialty_name: 'Sem internação',
+        new_admissions: 0,
+        benchmark_admissions: 0,
+        average_stay_days: null,
+        average_stay_benchmark: null,
+        benchmark_hospitals: 0,
+        ipe: null,
+        ipe_sample_status: 'amostra_insuficiente',
+        sample_status: 'amostra_insuficiente',
+      },
+    ]
+    edgeItems.sort((left, right) =>
+      Number(right.new_admissions) - Number(left.new_admissions),
+    )
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        ...specialtySnapshot,
+        source: 'oracle-live',
+        data_through: `${year}-${String(month).padStart(2, '0')}`,
+        filters: { cnes, year, month },
+        hospital: { ...(specialtySnapshot.hospital as object), cnes },
+        items: edgeItems.map((item) => ({ ...item, cnes })),
+        pagination: { limit: 200, offset: 0, count: edgeItems.length, has_more: false, order: 'new_admissions_desc' },
+      }),
+    })
+  })
+
+  await page.goto(`/?competencia=${snapshotCompetencia}&regiao=35073&hospital=3012212#hospital`)
+  const resumo = page.getByTestId('specialty-summary')
+  await expect(resumo.getByTestId('specialty-summary-sample')).toContainText(
+    'Amostra insuficiente',
+  )
+
+  await resumo.getByTestId('specialty-summary-select').selectOption('00')
+  await expect(resumo.getByTestId('specialty-summary-share')).toContainText('sem comparação')
+  await expect(resumo.getByTestId('specialty-summary-local-stay')).toContainText(
+    'Sem internação nova',
+  )
+  await expect(resumo.getByTestId('specialty-summary-reference')).toContainText('sem comparação')
+
+  await resumo.getByTestId('specialty-summary-select').selectOption('99')
+  await expect(resumo.getByTestId('specialty-summary-local-stay')).toContainText('não calculada')
+  await expect(resumo.getByTestId('specialty-summary-reference')).toContainText('sem comparação')
+  await expect(resumo.getByTestId('specialty-summary-reference')).not.toContainText('0 dias')
+
+  await resumo.getByTestId('specialty-summary-select').selectOption('98')
+  await expect(resumo.getByTestId('specialty-summary-reference')).toContainText(
+    'não há posição ou conclusão',
+  )
 })

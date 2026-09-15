@@ -20,7 +20,7 @@ const LABELS: Record<MetricId, { label: string; format: (value: number) => strin
   iph: { label: 'Pressão sobre leitos (IPH)', format: formatPercent },
   tmh: { label: 'Mortalidade observada (TMH)', format: formatPercent },
   stay: { label: 'Permanência média', format: (value) => `${formatDecimal(value)} dias` },
-  cmi: { label: 'Custo médio por internação (CMI real)', format: formatCurrency },
+  cmi: { label: 'Valor médio aprovado pelo SUS (CMI real)', format: formatCurrency },
   ipe: {
     label: 'Permanência ante os pares (IPE)',
     format: (value) => formatDecimal(value),
@@ -77,9 +77,8 @@ export default function HospitalPeers({
   const rebaixado = mode !== modoPedido
   const group = grupoDe(mode)
 
-  // Quanto da região passa por este hospital. Um hospital que concentra a maior
-  // parte das internações não é um par entre iguais: ele é a referência, e
-  // recebe o que os outros não resolvem.
+  // Quanto da região passa por este hospital. A participação descreve volume
+  // observado; não define papel assistencial, gravidade ou complexidade.
   const internacoesDaRegiao = regionHospitals.reduce(
     (total, item) => total + item.new_admissions,
     0,
@@ -140,15 +139,6 @@ export default function HospitalPeers({
         <p className="peer-caveat" data-testid="peer-rebaixado">
           Em {regionName} não há {MIN_PEERS} hospitais na faixa de {group.porte} para
           comparar, então a régua subiu para o estado, no mesmo porte.
-        </p>
-      )}
-
-      {participacao !== null && participacao >= 40 && (
-        <p className="peer-caveat" data-testid="peer-referencia">
-          Este hospital concentra {formatPercent(participacao)} das internações da
-          região. Concentração assim costuma vir com o papel de referência, que
-          recebe o caso que os demais não resolvem — e permanência maior é o
-          esperado nesse papel, não um desvio dele.
         </p>
       )}
 

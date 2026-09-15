@@ -9,8 +9,10 @@
 --
 -- Uma pergunta gera **uma** rodada auditada, gravada numa linha. Intencoes
 -- governadas podem derivar SQL e narrativa diretamente da Gold; perguntas
--- livres usam duas geracoes do modelo (`showsql` e `narrate`). As regiões
--- leem sempre da mesma linha, pelo id, sem novas chamadas na renderizacao.
+-- livres usam duas geracoes distintas do modelo (`showsql` e `narrate`). Mesmo
+-- com instrucoes para preservar o SQL, as duas geracoes nao garantem a mesma
+-- execucao matematica; as regioes leem o SQL auditado e a narrativa da mesma
+-- linha, pelo id, sem novas chamadas na renderizacao.
 --
 -- As garantias são as mesmas da suíte em scripts/revalidar_select_ai.py, e
 -- existem porque o Select AI erra de maneiras conhecidas e medidas
@@ -967,11 +969,23 @@ fetch first 5 rows only~';
               400);
       end;
 
-      if l_ranking and l_sql is null then
-        l_narrativa := to_clob(
-            'Nao foi possivel produzir uma consulta ranqueada segura. '
-            || 'Reformule com um indicador disponivel. O IPH mede pressao '
-            || 'estimada mensal, nao ocupacao de leitos em tempo real.');
+      -- `showsql` e `narrate` sao geracoes separadas. Este portao universal
+      -- precisa terminar a rodada quando nao existe SQL auditavel: narrar sem
+      -- consulta permitiria ao modelo responder por conhecimento proprio.
+      if l_sql is null then
+        l_recusa := nvl(
+            l_recusa,
+            'Consulta recusada: o modelo nao devolveu SQL de leitura.');
+        if l_ranking then
+          l_narrativa := to_clob(
+              'Nao foi possivel produzir uma consulta ranqueada segura. '
+              || 'Reformule com um indicador disponivel. O IPH mede pressao '
+              || 'estimada mensal, nao ocupacao de leitos em tempo real.');
+        else
+          l_narrativa := to_clob(
+              'Nao foi possivel produzir uma consulta de leitura segura. '
+              || 'Reformule a pergunta com um indicador disponivel.');
+        end if;
       elsif l_ranking and not ranking_tem_ordem_e_limite(l_sql) then
         l_recusa := 'Ranking recusado: a consulta precisa de ORDER BY e limite '
                     || 'externo entre 1 e 5 linhas.';

@@ -33,6 +33,23 @@ type SourceData = {
   regions: RegionalSummaryResponse
 }
 
+/** Contexto mínimo, publicado pela visão hospitalar, que a FlowIA pode ler. */
+export type HospitalSpecialtySummary = {
+  cnes: string
+  hospitalName: string
+  specialtyCode: string
+  specialtyName: string
+  competence: string
+  newAdmissions: number
+  benchmarkAdmissions: number
+  regionalSharePercent: number | null
+  averageStayDays: number | null
+  averageStayBenchmark: number | null
+  benchmarkHospitals: number
+  sampleStatus: 'suficiente' | 'amostra_insuficiente'
+  ipeSampleStatus: 'suficiente' | 'amostra_insuficiente' | 'benchmark_zero'
+}
+
 export type SourceState =
   | { kind: 'loading' }
   | { kind: 'live'; data: SourceData }
@@ -64,6 +81,13 @@ type SourceContextValue = {
   /** Nome do hospital aberto, para o direcionador acompanhar o recorte. */
   selectedHospitalName: string | null
   reportHospitalName: (name: string | null) => void
+  /** Resumo da especialidade aberta; nulo durante qualquer transição. */
+  hospitalSummary: HospitalSpecialtySummary | null
+  reportHospitalSummary: (summary: HospitalSpecialtySummary | null) => void
+  /** Solicitação local dos botões do resumo, consumida pela FlowIA. */
+  pendingAssistantQuestion: string | null
+  requestAssistantQuestion: (question: string) => void
+  clearAssistantQuestion: () => void
 }
 
 export type RegionalComparison = {
@@ -112,6 +136,8 @@ export function SourceProvider({ children }: { children: ReactNode }) {
     useState<RegionalComparison>(EMPTY_COMPARISON)
   const comparisonRequest = useRef<AbortController | null>(null)
   const [selectedHospitalName, setSelectedHospitalName] = useState<string | null>(null)
+  const [hospitalSummary, setHospitalSummary] = useState<HospitalSpecialtySummary | null>(null)
+  const [pendingAssistantQuestion, setPendingAssistantQuestion] = useState<string | null>(null)
   const reloadGeneration = useRef(0)
 
   const sourceData =
@@ -143,6 +169,19 @@ export function SourceProvider({ children }: { children: ReactNode }) {
       ? requestedCompetence
       : sourceData?.status.data_through ?? ''
 
+  const reportHospitalSummary = useCallback(
+    (summary: HospitalSpecialtySummary | null) => {
+      setHospitalSummary(summary)
+    },
+    [],
+  )
+  const requestAssistantQuestion = useCallback((question: string) => {
+    setPendingAssistantQuestion(question)
+  }, [])
+  const clearAssistantQuestion = useCallback(() => {
+    setPendingAssistantQuestion(null)
+  }, [])
+
   const reload = useCallback(async () => {
     const generation = reloadGeneration.current + 1
     reloadGeneration.current = generation
@@ -153,6 +192,8 @@ export function SourceProvider({ children }: { children: ReactNode }) {
     }
     setSourceState({ kind: 'loading' })
     setRegionalLoadState('loading')
+    setHospitalSummary(null)
+    setPendingAssistantQuestion(null)
 
     try {
       const requested = new URLSearchParams(window.location.search).get('competencia')
@@ -381,13 +422,18 @@ export function SourceProvider({ children }: { children: ReactNode }) {
   const setSharedCompetence = useCallback(
     (competence: string) => {
       if (isFallback || !COMPETENCE_PATTERN.test(competence)) return
+      const competenceChanged = sharedCompetence !== competence
       setSearchParams((current) => {
         const next = new URLSearchParams(current)
         next.set('competencia', competence)
         return next
       })
+      if (competenceChanged) {
+        setHospitalSummary(null)
+        setPendingAssistantQuestion(null)
+      }
     },
-    [isFallback, setSearchParams],
+    [isFallback, setSearchParams, sharedCompetence],
   )
 
   const setSharedRegion = useCallback(
@@ -403,6 +449,8 @@ export function SourceProvider({ children }: { children: ReactNode }) {
           next.delete('hospital')
           return next
         })
+        setHospitalSummary(null)
+        setPendingAssistantQuestion(null)
         return
       }
       if (!REGION_CODE_PATTERN.test(regionCode)) return
@@ -419,6 +467,8 @@ export function SourceProvider({ children }: { children: ReactNode }) {
         next.delete('hospital')
         return next
       })
+      setHospitalSummary(null)
+      setPendingAssistantQuestion(null)
     },
     [isFallback, setSearchParams, sourceData],
   )
@@ -450,6 +500,13 @@ export function SourceProvider({ children }: { children: ReactNode }) {
           ? currentRegion
           : nextRegion
       const preservesCurrentRegion = regionToUse === currentRegion
+      const selectedHospitalCode = searchParams.get('hospital') ?? ''
+      const summaryIdentityCompatible =
+        hospitalSummary === null ||
+        (hospitalSummary.cnes === selectedHospitalCode &&
+          hospitalSummary.competence === sharedCompetence)
+      const changesSummaryIdentity =
+        !preservesCurrentRegion || !summaryIdentityCompatible
       setSearchParams((current) => {
         const next = new URLSearchParams(current)
         next.set('macrorregiao', macroregionCode)
@@ -463,8 +520,20 @@ export function SourceProvider({ children }: { children: ReactNode }) {
         }
         return next
       })
+      if (changesSummaryIdentity) {
+        setHospitalSummary(null)
+        setPendingAssistantQuestion(null)
+      }
     },
-    [isFallback, setSearchParams, sharedRegionCode, sourceData],
+    [
+      hospitalSummary,
+      isFallback,
+      searchParams,
+      setSearchParams,
+      sharedCompetence,
+      sharedRegionCode,
+      sourceData,
+    ],
   )
 
   return (
@@ -484,6 +553,11 @@ export function SourceProvider({ children }: { children: ReactNode }) {
         regionalComparison,
         selectedHospitalName,
         reportHospitalName: setSelectedHospitalName,
+        hospitalSummary,
+        reportHospitalSummary,
+        pendingAssistantQuestion,
+        requestAssistantQuestion,
+        clearAssistantQuestion,
       }}
     >
       {children}

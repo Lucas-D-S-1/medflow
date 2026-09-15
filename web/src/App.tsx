@@ -1,6 +1,6 @@
 import { Link, Navigate, NavLink, Route, Routes, useLocation } from 'react-router-dom'
 import { SourceProvider } from './shared/SourceContext'
-import AnalisePage from './features/analise/AnalisePage'
+import AnalisePage, { ANCHOR_REQUEST_EVENT } from './features/analise/AnalisePage'
 import AssistantWidget from './features/assistant/AssistantWidget'
 import MetodologiaView from './features/metodologia/MetodologiaView'
 import { useActiveSection } from './shared/useActiveSection'
@@ -15,7 +15,7 @@ const SECTION_IDS = SECTIONS.map((section) => section.id)
 function Shell() {
   const location = useLocation()
   const onAnalysis = location.pathname === '/'
-  const activeSection = useActiveSection(SECTION_IDS, onAnalysis, location.hash)
+  const activeSection = useActiveSection(SECTION_IDS, onAnalysis)
   const { selectedHospitalName, sourceState, sharedRegionCode } = useSource()
   const selectedRegionName =
     sourceState.kind === 'live' || sourceState.kind === 'fallback'
@@ -80,6 +80,14 @@ function Shell() {
               <Link
                 key={section.id}
                 to={{ pathname: '/', search: location.search, hash: `#${section.id}` }}
+                onClick={(event) => {
+                  if (onAnalysis && location.hash === `#${section.id}`) {
+                    event.preventDefault()
+                    window.dispatchEvent(
+                      new CustomEvent<string>(ANCHOR_REQUEST_EVENT, { detail: section.id }),
+                    )
+                  }
+                }}
                 className={onAnalysis && activeSection === section.id ? 'active' : undefined}
                 aria-current={
                   onAnalysis && activeSection === section.id ? 'true' : undefined

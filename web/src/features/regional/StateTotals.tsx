@@ -127,7 +127,7 @@ export default function StateTotals({
           testId="state-total-stay"
         />
         <MetricCard
-          label="CMI nominal"
+          label="Valor médio aprovado pelo SUS (CMI nominal)"
           value={aggregate.cmiNominal === null ? 'sem base' : formatCurrency(aggregate.cmiNominal)}
           detail="valor aprovado sobre internações"
           testId="state-total-cmi"

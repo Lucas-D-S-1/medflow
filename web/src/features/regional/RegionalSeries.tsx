@@ -47,11 +47,11 @@ const INDICATORS: Record<IndicatorId, IndicatorConfig> = {
     note: 'Mortalidade observada sem ajuste de risco; não mede causalmente qualidade.',
   },
   cmi: {
-    label: 'CMI nominal',
+    label: 'Valor médio aprovado pelo SUS (CMI nominal)',
     value: (item) => item.cmi_nominal,
     format: formatCurrency,
     detail: (item) => `${formatInteger(item.new_admissions)} internações novas`,
-    note: 'Valor SIH aprovado médio nominal; não representa custo contábil completo.',
+    note: 'Valor SIH aprovado médio nominal; não representa o gasto total do atendimento.',
   },
   ipe: {
     label: 'Ante os pares (IPE)',

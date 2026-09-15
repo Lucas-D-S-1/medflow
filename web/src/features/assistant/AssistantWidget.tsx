@@ -9,6 +9,8 @@ import {
 } from '../../lib/api/assistente'
 import { useSource } from '../../shared/SourceContext'
 import { formatRegionalNetwork } from '../../shared/territory'
+import { formatDecimal, formatInteger, formatPercent, formatPeriod } from '../../shared/format'
+import { SUMMARY_QUESTIONS } from '../hospital/specialtySummary'
 import './AssistantWidget.css'
 
 type RouteKey = 'regional' | 'hospital' | 'metodologia'
@@ -132,7 +134,13 @@ function AssistantRobot({ compact = false }: { compact?: boolean }) {
 
 export default function AssistantWidget() {
   const location = useLocation()
-  const { sourceState } = useSource()
+  const {
+    sourceState,
+    sharedCompetence,
+    hospitalSummary,
+    pendingAssistantQuestion,
+    clearAssistantQuestion,
+  } = useSource()
   const [isOpen, setIsOpen] = useState(false)
   const [question, setQuestion] = useState('')
   // O fio inteiro, não a última rodada. Guardar só uma fazia a pergunta
@@ -147,7 +155,6 @@ export default function AssistantWidget() {
   const activeSection = useActiveSection(
     ANALYSIS_SECTIONS,
     location.pathname === '/',
-    location.hash,
   )
   const currentRoute: RouteKey = location.pathname.startsWith('/metodologia')
     ? 'metodologia'
@@ -169,6 +176,18 @@ export default function AssistantWidget() {
     return sourceData.regions.items.find((item) => item.region_code === code) ?? null
   }, [location.search, sourceData])
 
+  const activeHospitalSummary = useMemo(() => {
+    if (
+      !hospitalSummary ||
+      (sourceState.kind !== 'live' && sourceState.kind !== 'fallback') ||
+      hospitalSummary.competence !== sharedCompetence
+    ) {
+      return null
+    }
+    const params = new URLSearchParams(location.search)
+    return params.get('hospital') === hospitalSummary.cnes ? hospitalSummary : null
+  }, [hospitalSummary, location.search, sharedCompetence, sourceState.kind])
+
   const suggestedQuestions = useMemo(
     () => sugestoesPara(currentRoute, selectedRegion !== null),
     [currentRoute, selectedRegion],
@@ -177,6 +196,13 @@ export default function AssistantWidget() {
   useEffect(() => {
     if (isOpen) window.setTimeout(() => inputRef.current?.focus(), 80)
   }, [isOpen])
+
+  useEffect(() => {
+    if (!pendingAssistantQuestion) return
+    setIsOpen(true)
+    void ask(pendingAssistantQuestion)
+    clearAssistantQuestion()
+  }, [clearAssistantQuestion, pendingAssistantQuestion])
 
   // Mudar de etapa não apaga a conversa: quem estava investigando território e
   // desce para hospital continua a mesma investigação, e perder o fio ali era
@@ -195,6 +221,16 @@ export default function AssistantWidget() {
   }, [isOpen, isLoading, thread.length, pendingQuestion])
 
   function localAnswer(rawQuestion: string): Answer | null {
+    const answer = localAnswerBody(rawQuestion)
+    if (!answer || sourceState.kind !== 'fallback') return answer
+    const competence = sharedCompetence && formatPeriod(sharedCompetence)
+    return {
+      ...answer,
+      text: `${answer.text} Fonte: snapshot de contingência${competence ? ` até ${competence}` : ''}; esta resposta local não consultou o Oracle.`,
+    }
+  }
+
+  function localAnswerBody(rawQuestion: string): Answer | null {
     const normalized = normalize(rawQuestion)
     const methodology = sourceData?.methodology
     // "o que há no índice sazonal?" não casava com nada e ia parar no modelo,
@@ -229,6 +265,45 @@ export default function AssistantWidget() {
       /\bonde\b[a-z0-9 ]{0,30}\b(concentra|interna)/.test(normalized) ||
       /\branking\b[a-z0-9 ]{0,20}\bhospita/.test(normalized)
 
+    const perguntaResumo = SUMMARY_QUESTIONS.find(
+      (question) => normalized === normalize(question),
+    )
+    if (perguntaResumo) {
+      if (!activeHospitalSummary) {
+        return {
+          text: 'Selecione um hospital para abrir o resumo da especialidade e responder a esta pergunta.',
+        }
+      }
+
+      if (perguntaResumo === SUMMARY_QUESTIONS[0]) {
+        const participacao = activeHospitalSummary.regionalSharePercent === null
+          ? 'a participação regional não pode ser calculada porque não há internações no denominador publicado'
+          : `${formatPercent(activeHospitalSummary.regionalSharePercent)} das internações da especialidade na região`
+        return {
+          text: `No resumo de ${activeHospitalSummary.hospitalName} em ${activeHospitalSummary.specialtyName}, há ${formatInteger(activeHospitalSummary.newAdmissions)} internações novas e ${participacao}. Volume e participação evidenciam concentração observada e sugerem discutir com a equipe o papel deste hospital no atendimento da região. Isso não demonstra papel de referência, gravidade, complexidade ou causalidade. O propósito é apoiar a discussão sobre a capacidade de resposta da rede.`,
+        }
+      }
+
+      if (perguntaResumo === SUMMARY_QUESTIONS[1]) {
+        const permanencia = activeHospitalSummary.averageStayDays === null
+          ? 'A permanência local não foi calculada neste recorte.'
+          : `A permanência local observada é ${formatDecimal(activeHospitalSummary.averageStayDays)} dias.`
+        const referencia =
+          activeHospitalSummary.ipeSampleStatus === 'suficiente' &&
+          activeHospitalSummary.averageStayBenchmark !== null &&
+          activeHospitalSummary.benchmarkHospitals > 0
+            ? ` A referência observada dos demais hospitais é ${formatDecimal(activeHospitalSummary.averageStayBenchmark)} dias em ${formatInteger(activeHospitalSummary.benchmarkHospitals)} hospitais.`
+            : ' Não há comparação de permanência publicada para os demais hospitais nesta linha.'
+        return {
+          text: `${permanencia}${referencia} Antes de interpretar, verifique o perfil e a gravidade dos atendimentos, comorbidades, transferências e fatores operacionais associados à permanência. O indicador não é ajustado por risco: diferença observada não demonstra causa, recomendação clínica ou redução estimada.`,
+        }
+      }
+
+      return {
+        text: `Para avaliar uma mudança na rede a partir de ${activeHospitalSummary.hospitalName} e ${activeHospitalSummary.specialtyName}, faltam o perfil e a gravidade dos atendimentos, a ocupação real, a capacidade operacional, as filas e a validação com os gestores. O resumo mostra volume e permanência observados; não estima efeito, redução ou causalidade.`,
+      }
+    }
+
     if (pedidoExplicacao && /(\biph\b|pressao hospitalar)/.test(normalized)) {
       const regionalContext = selectedRegion
         ? ` Na competência selecionada, ${selectedRegion.region_name} apresenta IPH estimado de ${selectedRegion.iph_percent.toLocaleString('pt-BR', { maximumFractionDigits: 1 })}%.`
@@ -246,7 +321,7 @@ export default function AssistantWidget() {
 
     if (pedidoExplicacao && /(\bcmi\b|custo medio|valor medio)/.test(normalized)) {
       return {
-        text: 'CMI é o Custo Médio da Internação. O CMI nominal divide o valor SIH aprovado das internações novas pelo número de internações; o CMI real aplica o fator de correção IPCA da competência. São valores administrativos aprovados, não o custo econômico total do atendimento.',
+        text: 'CMI é o valor médio aprovado pelo SUS por internação. O CMI nominal divide o valor SIH aprovado das internações novas pelo número de internações; o CMI real aplica o fator de correção IPCA da competência. São valores administrativos aprovados, não o gasto total do atendimento.',
       }
     }
 
@@ -287,9 +362,13 @@ export default function AssistantWidget() {
       }
     }
 
-    if (/interpretar.*mapa|mapa.*interpretar|cores.*mapa/.test(normalized)) {
+    if (
+      /interpretar.*mapa|mapa.*interpretar|cor(?:es)? .*mapa|mapa.*cor|escuro.*mapa|mapa.*sinais|sinais.*mapa/.test(
+        normalized,
+      )
+    ) {
       return {
-        text: 'Os tons mais escuros indicam IPH estimado mais alto na competência escolhida. Selecione uma região para ver valor, amostra e tendência; compare também internações e leitos declarados antes de priorizar uma análise.',
+        text: 'O mapa tem dois modos. No placar de sinais, que é o padrão, cada região acende um sinal quando fica no quintil mais alto do recorte visível: pressão sobre leitos (IPH estimado), mortalidade observada (TMH), permanência média, valor médio aprovado pelo SUS (CMI), atendidos fora da região e ICSAP. Tons mais escuros nesse modo significam mais sinais acesos, não IPH por si só. No modo IPH estimado, a cor mostra a escala relativa por percentis do IPH. Nenhum modo é nota de qualidade ou ocupação real; selecione a região para ver os valores e limites.',
       }
     }
 
@@ -381,7 +460,7 @@ export default function AssistantWidget() {
       /participacao|concentra|percentual das internacoes da regiao|quanto.*regiao passa/.test(normalized)
     ) {
       return {
-        text: 'É a fatia das internações da região que passa por este hospital, na competência aberta. Ela importa para ler os demais números: um hospital que concentra a maior parte das internações costuma ser a referência da região, recebe o caso que os outros não resolvem, e permanência maior é o esperado nesse papel — não um desvio dele.',
+        text: 'É a fatia das internações observadas da região que passa por este hospital, na competência aberta. Ela evidencia concentração de volume e ajuda a discutir a capacidade de resposta da rede, mas não identifica papel de referência, gravidade, complexidade, qualidade ou causa, nem autoriza concluir sobre a permanência.',
       }
     }
 
@@ -399,7 +478,7 @@ export default function AssistantWidget() {
 
     if (/sinais? acesos|quintil|placar|quantos sinais|indice de priorizacao/.test(normalized)) {
       return {
-        text: 'O placar conta em quantos dos seis indicadores a região está no quintil mais alto do recorte visível: pressão sobre leitos, mortalidade observada, permanência média, custo médio, atendidos fora da região e ICSAP. É contagem de sinais, não nota de qualidade — IPH, TMH e CMI são declarados no próprio produto como não sendo medidas de qualidade, e somá-los numa nota afirmaria o que cada um deles nega. Os cortes saem do recorte que está na tela: filtrar uma rede regional muda os limiares.',
+        text: 'O placar conta em quantos dos seis indicadores a região está no quintil mais alto do recorte visível: pressão sobre leitos (IPH estimado), mortalidade observada (TMH), permanência média, valor médio aprovado pelo SUS (CMI), atendidos fora da região e ICSAP. É contagem de sinais, não nota de qualidade — IPH, TMH e CMI não são medidas de qualidade. Os cortes saem do recorte que está na tela: filtrar uma rede regional muda os limiares.',
       }
     }
 
@@ -466,12 +545,22 @@ export default function AssistantWidget() {
       return
     }
 
+    if (sourceState.kind !== 'live') {
+      registrar(cleanQuestion, {
+        text:
+          sourceState.kind === 'fallback'
+            ? `A FlowIA está usando o snapshot de contingência até ${formatPeriod(sharedCompetence)}. Perguntas livres ficam desabilitadas sem Oracle; use as explicações locais. Esta resposta não consultou o Oracle.`
+            : 'A fonte ainda está carregando. Selecione uma explicação local depois que o recorte estiver pronto; nenhuma pergunta livre foi enviada.',
+      })
+      return
+    }
+
     setIsLoading(true)
     try {
       const params = new URLSearchParams(location.search)
       const context: AssistantContext = {
         route: currentRoute,
-        competence: sourceData?.status.data_through ?? null,
+        competence: sharedCompetence || null,
         region_code: selectedRegion?.region_code ?? params.get('regiao'),
         region_name: selectedRegion?.region_name ?? null,
         macroregion_code: selectedRegion?.macroregion_code ?? null,

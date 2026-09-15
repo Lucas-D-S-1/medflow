@@ -6,7 +6,14 @@
  */
 
 import { expect, test, type Page } from '@playwright/test'
-import { mockLiveSource, pt, regiaoDestacada, snapshotCompetencia } from './apoio'
+import {
+  escolherCompetencia,
+  mockLiveSource,
+  pt,
+  regiaoDestacada,
+  snapshotCompetencia,
+  snapshotCompetenciaBR,
+} from './apoio'
 
 test.beforeEach(async ({ page }) => {
   await mockLiveSource(page)
@@ -61,7 +68,7 @@ test('explica TMH, CMI e IS localmente sem chamar a IA', async ({ page }) => {
 
   const casos = [
     ['O que é TMH?', 'Taxa de Mortalidade Hospitalar'],
-    ['O que é CMI?', 'Custo Médio da Internação'],
+    ['O que é CMI?', 'valor médio aprovado pelo SUS'],
     ['O que é IS?', 'Índice Sazonal'],
   ] as const
 
@@ -128,6 +135,64 @@ test('envia somente pergunta livre ao Oracle Select AI e mostra SQL auditável',
   await panel.getByText('Ver SQL gerado e validado').click()
   await expect(panel.locator('pre')).toContainText('select nm_regiao_saude')
   await expect(panel).toContainText('assistente da análise')
+})
+
+test('envia a competência compartilhada, não data_through do status, ao Select AI', async ({ page }) => {
+  const competenciaSelecionada = '2025-05'
+  let competenciaEnviada: string | null = null
+
+  await page.route('**/api/dev/v1/assistente/perguntar', async (route) => {
+    competenciaEnviada = (route.request().postDataJSON() as { context: { competence: string | null } }).context.competence
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        status: 'ok',
+        source: 'oracle-select-ai',
+        response_id: 44,
+        narrative: 'Resposta do recorte selecionado.',
+        sql: null,
+        warning: null,
+      }),
+    })
+  })
+
+  await page.goto(`/?competencia=${snapshotCompetencia}&regiao=35073`)
+  await escolherCompetencia(page, competenciaSelecionada)
+  await page.getByRole('button', { name: /Posso ajudar/ }).click()
+  await page.getByLabel('Faça outra pergunta').fill('Quais sinais merecem uma análise conjunta?')
+  await page.getByRole('button', { name: 'Enviar pergunta' }).click()
+
+  await expect(page.getByTestId('assistant-thread')).toContainText('Resposta do recorte selecionado.')
+  expect(competenciaEnviada).toBe(competenciaSelecionada)
+  expect(competenciaEnviada).not.toBe(snapshotCompetencia)
+})
+
+test('perguntas sobre publicação usam data_through do status, mesmo com outra competência selecionada', async ({ page }) => {
+  let chamadas = 0
+  await page.route('**/api/dev/v1/assistente/perguntar', async (route) => {
+    chamadas += 1
+    await route.abort()
+  })
+
+  const competenciaSelecionada = '2025-05'
+  await page.goto(`/?competencia=${snapshotCompetencia}&regiao=35073`)
+  await escolherCompetencia(page, competenciaSelecionada)
+  await page.getByRole('button', { name: /Posso ajudar/ }).click()
+
+  const enviar = async (pergunta: string) => {
+    await page.getByLabel('Faça outra pergunta').fill(pergunta)
+    await page.getByRole('button', { name: 'Enviar pergunta' }).click()
+    return page.locator('.assistant-answer').last()
+  }
+
+  const ultimaPublicacao = await enviar('Até quando vão os dados publicados?')
+  await expect(ultimaPublicacao).toContainText(snapshotCompetenciaBR)
+  await expect(ultimaPublicacao).not.toContainText('05/2025')
+
+  const defasagem = await enviar('Por que existe a defasagem M-2?')
+  await expect(defasagem).toContainText(snapshotCompetenciaBR)
+  await expect(defasagem).not.toContainText('05/2025')
+  expect(chamadas).toBe(0)
 })
 
 test('não confunde pergunta analítica sobre pressão com pedido de definição', async ({ page }) => {
@@ -504,4 +569,95 @@ test('a etapa hospitalar não herda a pergunta de concentração', async ({ page
   await expect(page.getByRole('button', { name: PERGUNTA_CONCENTRACAO })).toHaveCount(0)
   await expect(page.getByRole('button', { name: 'O que é IPE?' })).toBeVisible()
   await expect(sugestoes(page)).toHaveCount(4)
+})
+
+test('os três botões do resumo são locais e nunca fazem POST', async ({ page }) => {
+  let chamadas = 0
+  await page.route('**/api/dev/v1/assistente/perguntar', async (route) => {
+    chamadas += 1
+    await route.abort()
+  })
+
+  await page.goto(`/?competencia=${snapshotCompetencia}&regiao=35073&hospital=3012212#hospital`)
+  const resumo = page.getByTestId('specialty-summary')
+  await expect(resumo).toBeVisible()
+
+  const perguntas = [
+    ['Qual é o papel deste hospital no atendimento da região?', 'concentração observada'],
+    ['O que preciso verificar antes de interpretar essa permanência?', 'não é ajustado por risco'],
+    ['Que informações faltam para avaliar uma mudança na rede?', 'ocupação real'],
+  ] as const
+  for (const [pergunta, resposta] of perguntas) {
+    await resumo.getByRole('button', { name: pergunta }).click()
+    await expect(page.getByTestId('assistant-thread')).toContainText(resposta)
+  }
+
+  expect(chamadas).toBe(0)
+})
+
+test('preserva o resumo ao repetir a competência e selecionar a RRAS da região', async ({ page }) => {
+  let chamadas = 0
+  await page.route('**/api/dev/v1/assistente/perguntar', async (route) => {
+    chamadas += 1
+    await route.abort()
+  })
+
+  await page.goto(`/?competencia=${snapshotCompetencia}&regiao=35073&hospital=3012212#hospital`)
+  const resumo = page.getByTestId('specialty-summary')
+  await expect(resumo).toContainText('HU HOSPITAL UNIVERSITARIO')
+  await expect(resumo).toContainText('Pediatria')
+
+  // Repetir o mês selecionado não muda a identidade do resumo.
+  await escolherCompetencia(page, snapshotCompetencia)
+  await expect(resumo).toContainText('HU HOSPITAL UNIVERSITARIO')
+  await expect(resumo).toContainText('Pediatria')
+
+  // A RRAS16 preserva Jundiaí e o hospital aberto; o seletor começa sem
+  // macrorregião porque a URL compartilha a região diretamente.
+  await page.getByTestId('global-macroregion').selectOption('3527')
+  await expect(page).toHaveURL(/macrorregiao=3527/)
+  await expect(page).toHaveURL(/regiao=35073/)
+  await expect(page).toHaveURL(/hospital=3012212/)
+  await expect(resumo).toContainText('HU HOSPITAL UNIVERSITARIO')
+  await expect(resumo).toContainText('Pediatria')
+
+  await page.getByTestId('global-macroregion').selectOption('')
+  await expect(page).not.toHaveURL(/macrorregiao=/)
+  await expect(page).toHaveURL(/regiao=35073/)
+  await expect(page).toHaveURL(/hospital=3012212/)
+  await expect(resumo).toContainText('HU HOSPITAL UNIVERSITARIO')
+  await expect(resumo).toContainText('Pediatria')
+
+  await resumo
+    .getByRole('button', { name: 'Qual é o papel deste hospital no atendimento da região?' })
+    .click()
+  await expect(page.getByTestId('assistant-thread')).toContainText(
+    'No resumo de HU HOSPITAL UNIVERSITARIO em Pediatria',
+  )
+  expect(chamadas).toBe(0)
+})
+
+test('snapshot mantém perguntas locais identificadas e recusa pergunta livre sem POST', async ({ page }) => {
+  let chamadas = 0
+  await page.route('**/api/dev/v1/status', async (route) => {
+    await route.abort('connectionfailed')
+  })
+  await page.route('**/api/dev/v1/assistente/perguntar', async (route) => {
+    chamadas += 1
+    await route.abort()
+  })
+
+  await page.goto('/?regiao=35073&hospital=3012212#hospital')
+  const resumo = page.getByTestId('specialty-summary')
+  await expect(resumo).toBeVisible()
+  await resumo
+    .getByRole('button', { name: 'Qual é o papel deste hospital no atendimento da região?' })
+    .click()
+  await expect(page.getByTestId('assistant-thread')).toContainText('snapshot de contingência')
+  await expect(page.getByTestId('assistant-thread')).toContainText('não consultou o Oracle')
+
+  await page.getByLabel('Faça outra pergunta').fill('uma pergunta livre sem fixture')
+  await page.getByRole('button', { name: 'Enviar pergunta' }).click()
+  await expect(page.getByTestId('assistant-thread')).toContainText('Perguntas livres ficam desabilitadas')
+  expect(chamadas).toBe(0)
 })

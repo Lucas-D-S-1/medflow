@@ -21,7 +21,7 @@ const COLUMNS: {
   { id: 'iph', label: 'Pressão sobre leitos (IPH)', numeric: true, value: (item) => item.iph_percent },
   { id: 'tmh', label: 'Mortalidade observada (TMH)', numeric: true, value: (item) => item.tmh_percent },
   { id: 'stay', label: 'Permanência média', numeric: true, value: (item) => item.average_stay_days },
-  { id: 'cmi', label: 'Custo médio por internação (CMI real)', numeric: true, value: (item) => item.cmi_real },
+  { id: 'cmi', label: 'Valor médio aprovado pelo SUS (CMI real)', numeric: true, value: (item) => item.cmi_real },
   // A mediana entre as especialidades comparáveis do hospital. Ordenar por ela
   // responde "quem fica mais tempo que os pares", que é outra pergunta que
   // nenhuma das colunas acima respondia.
@@ -218,7 +218,7 @@ export default function HospitalTable({
                     motivo={motivoAusencia(item, 'derivado')}
                   />
                 </td>
-                <td data-label="CMI real">
+                <td data-label="Valor médio aprovado pelo SUS (CMI real)">
                   <Valor
                     valor={item.cmi_real}
                     formatar={formatCurrency}

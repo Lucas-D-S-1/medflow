@@ -4,6 +4,14 @@ import HospitalView from '../hospital/HospitalView'
 import RegionalView from '../regional/RegionalView'
 import './AnalisePage.css'
 
+export const ANCHOR_REQUEST_EVENT = 'medflow-anchor-request'
+
+function anchorIsReady(target: HTMLElement, id: string) {
+  // The hospital section exists while its state panel is loading, but its
+  // position is not final until the current hospital list has arrived.
+  return id !== 'hospital' || target.dataset.anchorReady === 'true'
+}
+
 /**
  * A investigação inteira em uma página. Descer é estreitar o recorte:
  * território e, em seguida, os estabelecimentos onde o sinal se concentra. O
@@ -12,26 +20,41 @@ import './AnalisePage.css'
 export default function AnalisePage() {
   const { hash } = useLocation()
 
-  // A âncora precisa esperar a seção existir: as duas carregam dados e só
-  // ganham altura depois da primeira resposta. Sem isso, abrir um link com
-  // #hospital rola para uma posição que ainda não é a da seção.
+  // A âncora precisa esperar a seção real existir: #hospital também existe como
+  // placeholder durante o carregamento, mas sua posição só é confiável depois
+  // da lista da competência atual.
   useEffect(() => {
-    if (!hash) return
-    const id = hash.slice(1)
-
-    let frame = 0
-    let attempts = 0
-    const tryScroll = () => {
+    let pendingAnchor: string | null = null
+    const scrollIfReady = (id: string) => {
       const target = document.getElementById(id)
-      if (target) {
-        target.scrollIntoView({ block: 'start' })
+      if (!target || !anchorIsReady(target, id)) {
+        pendingAnchor = id
         return
       }
-      if (attempts++ < 60) frame = requestAnimationFrame(tryScroll)
+      pendingAnchor = null
+      target.scrollIntoView({ block: 'start' })
     }
-    frame = requestAnimationFrame(tryScroll)
+    const onAnchorRequest = (event: Event) => {
+      const id = (event as CustomEvent<string>).detail
+      if (id) scrollIfReady(id)
+    }
 
-    return () => cancelAnimationFrame(frame)
+    const observer = new MutationObserver(() => {
+      if (pendingAnchor) scrollIfReady(pendingAnchor)
+    })
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['data-anchor-ready'],
+    })
+    window.addEventListener(ANCHOR_REQUEST_EVENT, onAnchorRequest)
+    if (hash) scrollIfReady(hash.slice(1))
+
+    return () => {
+      window.removeEventListener(ANCHOR_REQUEST_EVENT, onAnchorRequest)
+      observer.disconnect()
+    }
   }, [hash])
 
   return (

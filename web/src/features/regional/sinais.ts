@@ -23,7 +23,7 @@ export const SIGNALS: { id: SignalId; label: string; value: (item: RegionalSumma
   { id: 'iph', label: 'pressão sobre leitos', value: (item) => item.iph_percent },
   { id: 'tmh', label: 'mortalidade observada', value: (item) => item.tmh_percent },
   { id: 'stay', label: 'permanência média', value: (item) => item.average_stay_days },
-  { id: 'cmi', label: 'custo médio', value: (item) => item.cmi_nominal },
+  { id: 'cmi', label: 'valor médio aprovado pelo SUS', value: (item) => item.cmi_nominal },
   { id: 'evasion', label: 'atendidos fora da região', value: (item) => item.observed_evasion_percent },
   {
     id: 'icsap',

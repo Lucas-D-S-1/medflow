@@ -48,6 +48,61 @@ test('o direcionador marca a etapa escolhida sem trocar de tela', async ({ page 
   await expect(page.locator('#regional')).toHaveCount(1)
 })
 
+test('âncora hospital espera o carregamento e o mesmo link rola de novo', async ({ page }) => {
+  await mockLiveSource(page)
+  const atraso = () => new Promise((resolve) => setTimeout(resolve, 1800))
+  await page.route('**/api/dev/v1/status', async (route) => {
+    await atraso()
+    await route.fallback()
+  })
+  await page.route('**/api/dev/v1/metodologia', async (route) => {
+    await atraso()
+    await route.fallback()
+  })
+  await page.route('**/api/dev/v1/regioes/resumo**', async (route) => {
+    await atraso()
+    await route.fallback()
+  })
+  await page.route('**/api/dev/v1/hospitais?**', async (route) => {
+    await atraso()
+    await route.fallback()
+  })
+
+  await page.goto(
+    `/?competencia=${snapshotCompetencia}&regiao=35073&hospital=3012212#hospital`,
+  )
+  await expect(page.getByTestId('hospital-list-loading')).toBeVisible()
+  await expect(page.locator('#hospital')).toHaveAttribute('data-anchor-ready', 'true')
+  const chromeHeight = (await page.locator('.topbar').boundingBox())?.height ?? 0
+  const anchorMargin = await page.locator('#hospital').evaluate((element) =>
+    Number.parseFloat(
+      (globalThis as unknown as {
+        getComputedStyle: (target: unknown) => { scrollMarginTop: string }
+      }).getComputedStyle(element).scrollMarginTop,
+    ),
+  )
+  await expect
+    .poll(async () => {
+      const box = await page.locator('#hospital').boundingBox()
+      return Math.abs(box?.y ?? 9999)
+    })
+    .toBeLessThan(chromeHeight + anchorMargin + 8)
+  expect(
+    await page.evaluate(() => (globalThis as unknown as { scrollY: number }).scrollY),
+  ).toBeGreaterThan(0)
+
+  await page.evaluate(() =>
+    (globalThis as unknown as { scrollTo: (x: number, y: number) => void }).scrollTo(0, 0),
+  )
+  await page.getByTestId('anchor-hospital').click()
+  await expect
+    .poll(async () => {
+      const box = await page.locator('#hospital').boundingBox()
+      return Math.abs(box?.y ?? 9999)
+    })
+    .toBeLessThan(chromeHeight + anchorMargin + 8)
+})
+
 // Saíram daqui os dois testes do painel de comportamento sazonal. O painel foi
 // removido do produto por ser repetição: o índice sazonal já vive na série
 // mensal, ao lado da curva que ele qualifica, e lá ele responde a pergunta que

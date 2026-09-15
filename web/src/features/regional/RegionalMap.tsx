@@ -305,7 +305,7 @@ export default function RegionalMap({
               </dd>
             </div>
             <div>
-              <dt>CMI nominal</dt>
+              <dt>Valor médio aprovado pelo SUS (CMI nominal)</dt>
               <dd>
                 {cardItem.cmi_nominal.toLocaleString('pt-BR', {
                   style: 'currency',

@@ -90,12 +90,29 @@ export default function HospitalView() {
   const selectedRegion = sharedRegionCode
 
   const list = listState.kind === 'ready' ? listState.data : null
+  const listMatchesSelection =
+    list !== null &&
+    list.data_through === selectedCompetence &&
+    list.filters.region_code === selectedRegion
   // Um CNES só vale como selecionado se estiver na lista carregada. Assim a URL
   // nunca faz a tela abrir o detalhe de um hospital que não é deste recorte.
   const selectedCnes =
-    CNES_PATTERN.test(urlHospital) && list?.items.some((item) => item.cnes === urlHospital)
+    listMatchesSelection &&
+    CNES_PATTERN.test(urlHospital) &&
+    list?.items.some((item) => item.cnes === urlHospital)
       ? urlHospital
       : ''
+  const selectedHospital = list?.items.find((item) => item.cnes === selectedCnes) ?? null
+  const specialtyData =
+    specialtyState.kind === 'ready' &&
+    specialtyState.data.filters.cnes === selectedCnes &&
+    specialtyState.data.data_through === selectedCompetence
+      ? specialtyState.data
+      : null
+  const hospitalAnchorReady =
+    sourceState.kind === 'empty' ||
+    sourceState.kind === 'error' ||
+    (sourceData !== null && (!selectedRegion || listMatchesSelection))
 
   // A lista estadual só é buscada quando há um hospital aberto: ela existe
   // para montar o grupo de pares por tipo e porte, e ninguém paga por ela
@@ -330,6 +347,7 @@ export default function HospitalView() {
       id="hospital"
       className="analysis-section hospital-page"
       aria-labelledby="hospital-section-title"
+      data-anchor-ready={hospitalAnchorReady ? 'true' : undefined}
     >
       <div className="view-intro">
         <div>
@@ -436,7 +454,8 @@ export default function HospitalView() {
 
           {seriesState.kind === 'ready' && <HospitalSeries data={seriesState.data} />}
 
-          {specialtyState.kind === 'loading' && (
+          {(specialtyState.kind === 'loading' ||
+            (specialtyState.kind === 'ready' && !specialtyData && selectedCnes)) && (
             <StatePanel kind="loading" title="Carregando especialidades" testId="especialidade-loading">
               Buscando o perfil por especialidade do hospital na competência.
             </StatePanel>
@@ -461,7 +480,12 @@ export default function HospitalView() {
               contrato. A série e a lista acima não foram afetadas.
             </StatePanel>
           )}
-          {specialtyState.kind === 'ready' && <SpecialtyTable data={specialtyState.data} />}
+          {specialtyData && selectedHospital && (
+            <SpecialtyTable
+              data={specialtyData}
+              hospitalName={selectedHospital.hospital_name}
+            />
+          )}
 
           {cidState.kind === 'loading' && (
             <StatePanel kind="loading" title="Carregando diagnósticos" testId="cid-loading">

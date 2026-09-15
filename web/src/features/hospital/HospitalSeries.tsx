@@ -68,7 +68,7 @@ const COLUMNS: SortableColumn<HospitalSeriesPoint>[] = [
     numeric: true,
     value: (ponto) => ponto.average_stay_days,
   },
-  { id: 'cmi', label: 'CMI real', numeric: true, value: (ponto) => ponto.cmi_real },
+  { id: 'cmi', label: 'Valor médio aprovado pelo SUS (CMI real)', numeric: true, value: (ponto) => ponto.cmi_real },
   {
     id: 'ipe',
     label: 'Ante os pares (IPE)',
@@ -102,7 +102,7 @@ export default function HospitalSeries({ data }: { data: HospitalSeriesResponse 
           <p>
             CNES {data.hospital.cnes} · {data.hospital.unit_type_name} ·{' '}
             {data.hospital.region_name}. Ordene por qualquer indicador; abre na
-            competência mais recente, e o CMI real está a preços de{' '}
+            competência mais recente, e o valor médio aprovado pelo SUS (CMI real) está a preços de{' '}
             {formatPeriod(data.data_through)}.
           </p>
         </div>
@@ -168,7 +168,7 @@ export default function HospitalSeries({ data }: { data: HospitalSeriesResponse 
                     ausencia={motivo(ponto, 'derivado')}
                   />
                 </td>
-                <td data-label="CMI real">
+                <td data-label="Valor médio aprovado pelo SUS (CMI real)">
                   <Valor
                     valor={ponto.cmi_real}
                     formatar={formatCurrency}

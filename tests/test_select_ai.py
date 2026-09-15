@@ -73,6 +73,22 @@ def test_ranking_governado_limita_resultado_e_trata_falha_da_narrativa():
         assert garantia in pacote
 
 
+def test_sql_nulo_recusa_antes_de_gerar_narrativa():
+    """O pacote não pode narrar uma pergunta sem SQL auditável."""
+    pacote = (RAIZ / "db" / "apex" / "02_pacote_select_ai.sql").read_text(
+        encoding="utf-8"
+    )
+
+    geracao_sql = pacote.index("l_sql := guardar(l_sql_bruto);")
+    gate = pacote.index("if l_sql is null then", geracao_sql)
+    narrate = pacote.index("gerar(l_prompt_narrativa, 'narrate')", gate)
+    trecho_gate = pacote[gate:narrate]
+
+    assert "l_recusa := nvl" in trecho_gate
+    assert "Consulta recusada" in trecho_gate
+    assert gate < narrate
+
+
 def test_comparacao_mensal_nao_faz_aritmetica_direta_em_aaaamm():
     pacote = (RAIZ / "db" / "apex" / "02_pacote_select_ai.sql").read_text(
         encoding="utf-8"

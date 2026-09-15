@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import type { SpecialtyItem, SpecialtyResponse } from './hospitalEspecialidades'
 import {
   SortableHeader,
@@ -5,6 +6,14 @@ import {
   type SortableColumn,
 } from '../../shared/useSortableRows'
 import { formatCurrency, formatDecimal, formatInteger, formatPercent, formatPeriod } from '../../shared/format'
+import { useSource } from '../../shared/SourceContext'
+import {
+  SUMMARY_QUESTIONS,
+  comparisonAbsence,
+  regionalShare,
+  selectInitialSpecialty,
+  toHospitalSpecialtySummary,
+} from './specialtySummary'
 
 function Valor({
   valor,
@@ -46,9 +55,8 @@ const MOTIVO_INELEGIVEL: Record<Exclude<SpecialtyItem['ipe_sample_status'], 'suf
  * Concentração não é qualidade nem capacidade instalada: diz onde o volume da
  * especialidade se acumula, e é aí que a investigação começa.
  */
-function participacaoRegional(item: SpecialtyItem): number | null {
-  const regiao = item.new_admissions + item.benchmark_admissions
-  return regiao > 0 ? (item.new_admissions / regiao) * 100 : null
+function participacaoRegional(item: SpecialtyItem) {
+  return regionalShare(item)
 }
 
 const COLUMNS: SortableColumn<SpecialtyItem>[] = [
@@ -71,7 +79,7 @@ const COLUMNS: SortableColumn<SpecialtyItem>[] = [
   { id: 'permanencia', label: 'Permanência média', numeric: true, value: (item) => item.average_stay_days },
   {
     id: 'cmi',
-    label: 'Custo médio por internação (CMI real)',
+    label: 'Valor médio aprovado pelo SUS (CMI real)',
     numeric: true,
     value: (item) => item.cmi_real,
   },
@@ -84,7 +92,181 @@ const COLUMNS: SortableColumn<SpecialtyItem>[] = [
   },
 ]
 
-export default function SpecialtyTable({ data }: { data: SpecialtyResponse }) {
+function SpecialtySummary({
+  data,
+  hospitalName,
+}: {
+  data: SpecialtyResponse
+  hospitalName: string
+}) {
+  const {
+    reportHospitalSummary,
+    requestAssistantQuestion,
+    clearAssistantQuestion,
+  } = useSource()
+  const initial = selectInitialSpecialty(data.items)
+  const [selectedCode, setSelectedCode] = useState(initial?.specialty_code ?? '')
+
+  useEffect(() => {
+    setSelectedCode(selectInitialSpecialty(data.items)?.specialty_code ?? '')
+  }, [data.data_through, data.filters.cnes, data.items])
+
+  const selected = data.items.find((item) => item.specialty_code === selectedCode) ?? initial
+
+  useEffect(() => {
+    if (!selected) {
+      reportHospitalSummary(null)
+      return
+    }
+    reportHospitalSummary(
+      toHospitalSpecialtySummary(selected, hospitalName, data.data_through),
+    )
+    return () => reportHospitalSummary(null)
+  }, [data.data_through, hospitalName, reportHospitalSummary, selected])
+
+  if (!selected) return null
+
+  const share = regionalShare(selected)
+  const regionalAdmissions = selected.new_admissions + selected.benchmark_admissions
+  const absence = comparisonAbsence(selected)
+  const comparisonAvailable =
+    selected.average_stay_days !== null &&
+    selected.average_stay_benchmark !== null &&
+    selected.benchmark_hospitals > 0 &&
+    selected.ipe_sample_status === 'suficiente'
+
+  return (
+    <section
+      className="specialty-summary"
+      aria-labelledby="specialty-summary-title"
+      data-testid="specialty-summary"
+    >
+      <div className="specialty-summary-heading">
+        <div>
+          <p className="section-kicker">RESUMO DO ATENDIMENTO</p>
+          <h3 id="specialty-summary-title">{hospitalName} · {selected.specialty_name}</h3>
+          <p>
+            Competência {formatPeriod(data.data_through)}. Concentração do atendimento e
+            pontos para discutir com a equipe, apoiando a capacidade de resposta da rede.
+          </p>
+        </div>
+        <label className="specialty-summary-selector">
+          Especialidade do resumo
+          <select
+            value={selected.specialty_code}
+            data-testid="specialty-summary-select"
+            onChange={(event) => {
+              // Retire a linha anterior no mesmo evento da seleção: a FlowIA
+              // nunca pode responder usando a especialidade que acabou de ser
+              // trocada enquanto o novo relatório ainda é publicado.
+              reportHospitalSummary(null)
+              clearAssistantQuestion()
+              setSelectedCode(event.target.value)
+            }}
+          >
+            {data.items.map((item) => (
+              <option key={item.specialty_code} value={item.specialty_code}>
+                {item.specialty_name}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+
+      <dl className="specialty-summary-grid">
+        <div>
+          <dt>Internações novas</dt>
+          <dd>{formatInteger(selected.new_admissions)}</dd>
+        </div>
+        <div data-testid="specialty-summary-share">
+          <dt>Participação regional</dt>
+          <dd>
+            {share === null ? (
+              <em className="valor-ausente">sem comparação</em>
+            ) : (
+              <strong>{formatPercent(share)}</strong>
+            )}
+          </dd>
+          <small>
+            {share === null
+              ? 'Não há internações do hospital nem dos demais hospitais nesta especialidade.'
+              : `${formatInteger(regionalAdmissions)} internações na região (hospital + demais).`}
+          </small>
+        </div>
+        <div data-testid="specialty-summary-local-stay">
+          <dt>Permanência local</dt>
+          <dd>
+            {selected.average_stay_days === null ? (
+              <em className="valor-ausente">não calculada</em>
+            ) : (
+              <strong>{formatDecimal(selected.average_stay_days)} dias</strong>
+            )}
+          </dd>
+          <small>
+            {selected.average_stay_days === null
+              ? absence ?? 'Não há denominador publicado para esta permanência.'
+              : 'Permanência observada, sem ajuste de risco.'}
+          </small>
+        </div>
+        <div data-testid="specialty-summary-reference">
+          <dt>Referência dos demais hospitais</dt>
+          <dd>
+            {comparisonAvailable ? (
+              <strong>{formatDecimal(selected.average_stay_benchmark!)} dias</strong>
+            ) : (
+              <em className="valor-ausente">sem comparação</em>
+            )}
+          </dd>
+          <small>
+            {comparisonAvailable
+              ? `Média de permanência observada na mesma especialidade e no mesmo mês (${formatPeriod(data.data_through)}), com este hospital excluído; ${formatInteger(selected.benchmark_hospitals)} hospitais da região.`
+              : absence ?? 'Amostra insuficiente para publicar a referência.'}
+          </small>
+        </div>
+      </dl>
+
+      {selected.sample_status === 'amostra_insuficiente' && (
+        <p className="specialty-summary-caveat" data-testid="specialty-summary-sample">
+          Amostra insuficiente para TMH e CMI; esses indicadores não sustentam comparação
+          nesta especialidade.
+        </p>
+      )}
+
+      <div className="specialty-summary-checks">
+        <h4>O que verificar com a equipe</h4>
+        <p>
+          Verifique o perfil dos atendimentos, a gravidade e as comorbidades, além dos
+          fatores associados à permanência, como transferências, fluxo de cuidado,
+          disponibilidade de leitos e organização das altas.
+        </p>
+        <p>
+          A permanência não é ajustada por risco: a diferença observada não demonstra
+          causa, recomendação clínica ou redução estimada.
+        </p>
+      </div>
+
+      <div className="specialty-summary-actions" aria-label="Perguntas sobre o atendimento">
+        {SUMMARY_QUESTIONS.map((question) => (
+          <button
+            key={question}
+            type="button"
+            onClick={() => requestAssistantQuestion(question)}
+          >
+            {question}
+          </button>
+        ))}
+      </div>
+    </section>
+  )
+}
+
+export default function SpecialtyTable({
+  data,
+  hospitalName,
+}: {
+  data: SpecialtyResponse
+  hospitalName: string
+}) {
   const { sorted, sortBy, descending, toggleSort } = useSortableRows(
     data.items,
     COLUMNS,
@@ -94,6 +276,7 @@ export default function SpecialtyTable({ data }: { data: SpecialtyResponse }) {
 
   return (
     <section className="hospital-panel" aria-labelledby="hospital-specialty-title">
+      <SpecialtySummary data={data} hospitalName={hospitalName} />
       <div className="block-heading">
         <div>
           <p className="section-kicker">PERFIL POR ESPECIALIDADE</p>
@@ -187,14 +370,14 @@ export default function SpecialtyTable({ data }: { data: SpecialtyResponse }) {
                     formatar={formatDecimal}
                     ausencia={ausencia(item)}
                   />
-                  {item.benchmark_hospitals > 0 && (
+                  {item.benchmark_hospitals > 0 && item.average_stay_benchmark !== null && (
                     <small>
-                      pares: {formatDecimal(item.average_stay_benchmark ?? 0)} em{' '}
+                      pares: {formatDecimal(item.average_stay_benchmark)} em{' '}
                       {formatInteger(item.benchmark_hospitals)} hospitais
                     </small>
                   )}
                 </td>
-                <td data-label="CMI real">
+                <td data-label="Valor médio aprovado pelo SUS (CMI real)">
                   <Valor valor={item.cmi_real} formatar={formatCurrency} ausencia={ausencia(item)} />
                 </td>
                 <td data-label="IPE">
