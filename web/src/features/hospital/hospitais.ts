@@ -92,7 +92,7 @@ export type HospitalListResponse = {
   items: HospitalItem[]
 }
 
-type HospitalListRequest = {
+export type HospitalListRequest = {
   year: number
   month: number
   regionCode: string
@@ -377,6 +377,59 @@ export async function fetchHospitals(
   } finally {
     window.clearTimeout(timeout)
     options.signal?.removeEventListener('abort', abortFromCaller)
+  }
+}
+
+/**
+ * Materializa a lista canônica do recorte antes de qualquer busca local. O
+ * endpoint é paginado; filtrar apenas a primeira página faria a interface
+ * afirmar que pesquisou toda a região sem ter esse universo em memória.
+ */
+export async function fetchAllHospitals(
+  request: Omit<HospitalListRequest, 'search'>,
+  options: Omit<FetchOptions, 'limit' | 'offset'> = {},
+): Promise<HospitalListResponse> {
+  const pageSize = 200
+  const maxPages = 10
+  let first: HospitalListResponse | null = null
+  const items: HospitalItem[] = []
+
+  for (let page = 0; page < maxPages; page += 1) {
+    const response = await fetchHospitals(request, {
+      ...options,
+      limit: pageSize,
+      offset: page * pageSize,
+    })
+    if (!first) first = response
+    else if (
+      response.data_through !== first.data_through ||
+      response.filters.region_code !== first.filters.region_code ||
+      response.pagination.count !== first.pagination.count
+    ) {
+      throw new HospitalContractError()
+    }
+    items.push(...response.items)
+    if (!response.pagination.has_more) break
+  }
+
+  if (
+    !first ||
+    items.length !== first.pagination.count ||
+    new Set(items.map((item) => item.cnes)).size !== items.length
+  ) {
+    throw new HospitalContractError()
+  }
+
+  return {
+    ...first,
+    pagination: {
+      ...first.pagination,
+      limit: Math.max(items.length, 1),
+      offset: 0,
+      count: items.length,
+      has_more: false,
+    },
+    items,
   }
 }
 

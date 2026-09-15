@@ -29,7 +29,7 @@ test('@live renderiza os números reais do Oracle pelo proxy relativo', async ({
   // não o estado inicial da tela — esse tem teste próprio em pagina-continua.
   await page.goto('/?regiao=35073')
 
-  await expect(page.getByTestId('regional-count')).toHaveText('62 de 62 regiões', {
+  await expect(page.locator('.regional-map-shape')).toHaveCount(62, {
     timeout: 15_000,
   })
   await expect(page.getByTestId('regional-selected-name')).toHaveText('JUNDIAI')
@@ -237,7 +237,7 @@ test('preserva filtros na URL e ignora resposta atrasada de outra competência',
   await escolherCompetencia(page, '2025-04')
   await escolherCompetencia(page, '2025-05')
 
-  await expect(page.getByTestId('regional-context-note')).toContainText('05/2025')
+  await expect.poll(() => competenciaVisivel(page)).toBe('2025-05')
   await expect(page).toHaveURL(/competencia=2025-05/)
   await expect(page).toHaveURL(/macrorregiao=3527/)
   await expect(page).toHaveURL(/regiao=35073/)
@@ -259,7 +259,6 @@ test('mostra ausência legítima no recorte e não trata o workspace como seçã
   await page.goto('/regional?macrorregiao=9999')
 
   await expect(page.locator('.regional-workspace')).toHaveJSProperty('tagName', 'DIV')
-  await expect(page.getByTestId('regional-count')).toHaveText('0 de 62 regiões')
   await expect(page.getByTestId('regional-no-items')).toContainText('Nenhuma região no recorte')
   await expect(page.getByTestId('regional-no-items')).toContainText(
     'Isso é ausência legítima, não erro da fonte.',
@@ -281,6 +280,7 @@ test('não cria rolagem horizontal em notebook ou tela estreita', async ({ page 
 
   for (const viewport of [
     { width: 1280, height: 800 },
+    { width: 768, height: 1024 },
     { width: 390, height: 800 },
   ]) {
     await page.setViewportSize(viewport)

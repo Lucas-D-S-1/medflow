@@ -9,6 +9,12 @@ import { expect, test } from '@playwright/test'
 import { itens, mockLiveSource, pt, regionalSnapshot, snapshotCompetencia } from './apoio'
 
 test('reúne território e hospital em uma página só', async ({ page }) => {
+  const consoleErrors: string[] = []
+  const pageErrors: string[] = []
+  page.on('console', (message) => {
+    if (message.type() === 'error') consoleErrors.push(message.text())
+  })
+  page.on('pageerror', (error) => pageErrors.push(error.message))
   await mockLiveSource(page)
   await page.goto('/')
 
@@ -20,6 +26,8 @@ test('reúne território e hospital em uma página só', async ({ page }) => {
   // As perguntas saem dos títulos; a disposição dos dados é que as provoca.
   await expect(page.getByRole('heading', { name: /Onde devo investigar primeiro/ })).toHaveCount(0)
   await expect(page.getByRole('heading', { name: /O que explica o sinal da região/ })).toHaveCount(0)
+  expect(consoleErrors).toEqual([])
+  expect(pageErrors).toEqual([])
 })
 
 test('mantém válidos os caminhos antigos, com o recorte intacto', async ({ page }) => {
@@ -103,6 +111,63 @@ test('âncora hospital espera o carregamento e o mesmo link rola de novo', async
     .toBeLessThan(chromeHeight + anchorMargin + 8)
 })
 
+test('CTA regional preserva o recorte, espera o hospital e rola de novo', async ({ page }) => {
+  await mockLiveSource(page)
+  const atraso = () => new Promise((resolve) => setTimeout(resolve, 800))
+  await page.route('**/api/dev/v1/status', async (route) => {
+    await atraso()
+    await route.fallback()
+  })
+  await page.route('**/api/dev/v1/metodologia', async (route) => {
+    await atraso()
+    await route.fallback()
+  })
+  await page.route('**/api/dev/v1/regioes/resumo**', async (route) => {
+    await atraso()
+    await route.fallback()
+  })
+  await page.route('**/api/dev/v1/hospitais?**', async (route) => {
+    await atraso()
+    await route.fallback()
+  })
+
+  await page.goto(`/?competencia=${snapshotCompetencia}&regiao=35073`)
+  await expect(page.getByTestId('hospital-list-loading')).toBeVisible()
+  const cta = page.getByRole('button', { name: 'Ver hospitais da região ↓' })
+  await cta.click()
+
+  await expect(page.locator('#hospital')).toHaveAttribute('data-anchor-ready', 'true')
+  await expect(page.locator('#hospital')).toBeFocused()
+  const params = new URL(page.url()).searchParams
+  expect(params.get('competencia')).toBe(snapshotCompetencia)
+  expect(params.get('regiao')).toBe('35073')
+  expect(params.get('hospital')).toBeNull()
+
+  const chromeHeight = (await page.locator('.topbar').boundingBox())?.height ?? 0
+  const anchorMargin = await page.locator('#hospital').evaluate((element) =>
+    Number.parseFloat(
+      (globalThis as unknown as {
+        getComputedStyle: (target: unknown) => { scrollMarginTop: string }
+      }).getComputedStyle(element).scrollMarginTop,
+    ),
+  )
+  const atHospital = async () => {
+    const box = await page.locator('#hospital').boundingBox()
+    return Math.abs(box?.y ?? 9999)
+  }
+  await expect.poll(atHospital).toBeLessThan(chromeHeight + anchorMargin + 8)
+  expect(
+    await page.evaluate(() => (globalThis as unknown as { scrollY: number }).scrollY),
+  ).toBeGreaterThan(0)
+
+  await page.evaluate(() =>
+    (globalThis as unknown as { scrollTo: (x: number, y: number) => void }).scrollTo(0, 0),
+  )
+  await cta.click()
+  await expect(page.locator('#hospital')).toBeFocused()
+  await expect.poll(atHospital).toBeLessThan(chromeHeight + anchorMargin + 8)
+})
+
 // Saíram daqui os dois testes do painel de comportamento sazonal. O painel foi
 // removido do produto por ser repetição: o índice sazonal já vive na série
 // mensal, ao lado da curva que ele qualifica, e lá ele responde a pergunta que
@@ -158,7 +223,7 @@ test('o hover no mapa mostra os valores da região, e o clique propaga', async (
   await expect(cartao).toContainText('JUNDIAI')
   await expect(cartao).toContainText('IPH estimado')
   await expect(cartao).toContainText('Internações novas')
-  await expect(cartao).toContainText('MoM')
+  await expect(cartao).toContainText('Em relação a')
 
   await alvo.click()
   await expect(page).toHaveURL(/regiao=35073/)
@@ -189,6 +254,11 @@ test('o panorama mostra os totais do recorte, somados e não promediados', async
   await expect(page.getByTestId('state-total-admissions')).toContainText(
     pt(soma('new_admissions')),
   )
+  const stateAdmissions = page.getByTestId('state-total-admissions').locator('..')
+  await expect(stateAdmissions).toContainText('Em relação a maio/2026')
+  await expect(stateAdmissions).toContainText('Em relação a junho/2025')
+  await expect(stateAdmissions).not.toContainText('MoM')
+  await expect(stateAdmissions).not.toContainText('YoY')
 
   // A razão é total sobre total. A média simples dos percentuais das 62
   // regiões dá outro número, porque trataria uma região de 4 mil internações

@@ -11,11 +11,18 @@ import { useSource } from '../../shared/SourceContext'
 import { formatRegionalNetwork } from '../../shared/territory'
 import { formatDecimal, formatInteger, formatPercent, formatPeriod } from '../../shared/format'
 import { SUMMARY_QUESTIONS } from '../hospital/specialtySummary'
+import { isComparableStay } from '../hospital/specialtyMetrics'
+import type { HospitalSpecialtySummary } from '../../shared/SourceContext'
+import {
+  assistantContextKey,
+  isCurrentSpecialtySummary,
+} from './assistantContext'
 import './AssistantWidget.css'
 
 type RouteKey = 'regional' | 'hospital' | 'metodologia'
 type Answer = {
   text: string
+  contextLabel?: string
   sql?: string | null
   warning?: string | null
 }
@@ -25,6 +32,12 @@ type Exchange = {
   id: number
   question: string
   answer: Answer
+}
+
+type ActiveRemoteRequest = {
+  generation: number
+  contextKey: string
+  controller: AbortController
 }
 
 /**
@@ -38,58 +51,13 @@ const HISTORY_TURNS = 2
 
 
 const quickQuestions: Record<RouteKey, string[]> = {
-  regional: [
-    'O que é IPH?',
-    'O que é uma rede regional?',
-    'Quais regiões devo investigar?',
-    'Como interpretar o mapa?',
-  ],
-  hospital: [
-    'Qual o critério para dois hospitais serem pares?',
-    'O que é IPE?',
-    'Qual a diferença entre IPE e IPR?',
-    'Como comparar hospitais corretamente?',
-  ],
+  regional: ['O que são os sinais?', 'O que é IPH?'],
+  hospital: [...SUMMARY_QUESTIONS],
   metodologia: [
     'De onde vêm os dados?',
     'Por que os dados são M-2?',
     'Por que usar Oracle Autonomous Database?',
   ],
-}
-
-/**
- * A pergunta que só existe depois que o usuário escolhe o território.
- *
- * Escolhida a região, "quais regiões devo investigar?" já foi respondida pelo
- * próprio clique, e a pergunta seguinte da jornada deixa de ser onde e passa a
- * ser quem: qual hospital concentra o atendimento que motivou a investigação.
- * A resposta é ranking sobre a Gold, então ela vai ao Select AI — não há regra
- * de produto local que a responda.
- *
- * **O vocabulário é o da base, de propósito.** `dim_especialidade` publica as
- * especialidades do SIH — Cirurgia, Clínica médica, Obstetrícia, Pediatria e
- * mais onze —, e ortopedia não é uma delas. Pedir uma especialidade que a base
- * não tem convida o modelo a responder pela mais próxima e a narrá-la com o
- * rótulo da pergunta, que é exatamente o segundo limite medido em 23/08/2026.
- * Cirurgia é o grão que a Gold tem e é o que a espera por avaliação
- * pré-cirúrgica atravessa.
- */
-const PERGUNTA_CONCENTRACAO =
-  'Quais hospitais concentram internações em cirurgia nesta região?'
-
-/** A pergunta que a escolha da região torna obsoleta. */
-const PERGUNTA_TRIAGEM_REGIONAL = 'Quais regiões devo investigar?'
-
-/**
- * Quatro continuam sendo quatro: a pergunta nova entra no lugar da que o
- * clique do usuário já respondeu, e não empilhada sobre ela.
- */
-function sugestoesPara(route: RouteKey, comRegiao: boolean): string[] {
-  if (route !== 'regional' || !comRegiao) return quickQuestions[route]
-  return [
-    PERGUNTA_CONCENTRACAO,
-    ...quickQuestions.regional.filter((item) => item !== PERGUNTA_TRIAGEM_REGIONAL),
-  ]
 }
 
 const routeNames: Record<RouteKey, string> = {
@@ -138,6 +106,7 @@ export default function AssistantWidget() {
     sourceState,
     sharedCompetence,
     hospitalSummary,
+    selectedHospitalName,
     pendingAssistantQuestion,
     clearAssistantQuestion,
   } = useSource()
@@ -150,6 +119,9 @@ export default function AssistantWidget() {
   const [isLoading, setIsLoading] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
   const bodyRef = useRef<HTMLDivElement>(null)
+  const launcherRef = useRef<HTMLButtonElement>(null)
+  const requestGeneration = useRef(0)
+  const activeRemoteRequest = useRef<ActiveRemoteRequest | null>(null)
   // A FlowIA acompanha a etapa visível, não a rota: na página contínua as
   // três seções dividem o mesmo endereço.
   const activeSection = useActiveSection(
@@ -187,11 +159,31 @@ export default function AssistantWidget() {
     const params = new URLSearchParams(location.search)
     return params.get('hospital') === hospitalSummary.cnes ? hospitalSummary : null
   }, [hospitalSummary, location.search, sharedCompetence, sourceState.kind])
+  const activeHospitalSummaryRef = useRef(activeHospitalSummary)
+  activeHospitalSummaryRef.current = activeHospitalSummary
+  const sharedCompetenceRef = useRef(sharedCompetence)
+  sharedCompetenceRef.current = sharedCompetence
 
-  const suggestedQuestions = useMemo(
-    () => sugestoesPara(currentRoute, selectedRegion !== null),
-    [currentRoute, selectedRegion],
-  )
+  const currentContextKey = useMemo(() => {
+    const params = new URLSearchParams(location.search)
+    return assistantContextKey({
+      route: currentRoute,
+      competence: sharedCompetence,
+      regionCode: selectedRegion?.region_code ?? params.get('regiao') ?? '',
+      hospitalCnes: params.get('hospital') ?? '',
+      specialtyCode: activeHospitalSummary?.specialtyCode ?? '',
+    })
+  }, [
+    activeHospitalSummary?.specialtyCode,
+    currentRoute,
+    location.search,
+    selectedRegion?.region_code,
+    sharedCompetence,
+  ])
+  const currentContextKeyRef = useRef(currentContextKey)
+  currentContextKeyRef.current = currentContextKey
+
+  const suggestedQuestions = quickQuestions[currentRoute]
 
   useEffect(() => {
     if (isOpen) window.setTimeout(() => inputRef.current?.focus(), 80)
@@ -199,10 +191,60 @@ export default function AssistantWidget() {
 
   useEffect(() => {
     if (!pendingAssistantQuestion) return
-    setIsOpen(true)
-    void ask(pendingAssistantQuestion)
-    clearAssistantQuestion()
-  }, [clearAssistantQuestion, pendingAssistantQuestion])
+    if (
+      pendingAssistantQuestion.specialtySummary &&
+      !isCurrentSpecialtySummary(
+        pendingAssistantQuestion.specialtySummary,
+        activeHospitalSummary,
+      )
+    ) {
+      clearAssistantQuestion()
+      return
+    }
+    // Consome no proximo frame para que uma troca de recorte no mesmo gesto
+    // invalide o pedido antes de produzir texto com o snapshot anterior. A
+    // limpeza do efeito cancela este frame quando o resumo ativo muda.
+    const frame = window.requestAnimationFrame(() => {
+      const requestedSummary = pendingAssistantQuestion.specialtySummary
+      if (requestedSummary) {
+        const params = new URLSearchParams(window.location.search)
+        const urlCompetence = params.get('competencia') ?? sharedCompetenceRef.current
+        if (
+          params.get('hospital') !== requestedSummary.cnes ||
+          urlCompetence !== requestedSummary.competence ||
+          !isCurrentSpecialtySummary(
+            requestedSummary,
+            activeHospitalSummaryRef.current,
+          )
+        ) {
+          clearAssistantQuestion()
+          return
+        }
+      }
+      setIsOpen(true)
+      void ask(
+        pendingAssistantQuestion.question,
+        pendingAssistantQuestion.specialtySummary,
+      )
+      clearAssistantQuestion()
+    })
+    return () => window.cancelAnimationFrame(frame)
+  }, [activeHospitalSummary, clearAssistantQuestion, pendingAssistantQuestion])
+
+  useEffect(() => {
+    const active = activeRemoteRequest.current
+    if (!active || active.contextKey === currentContextKey) return
+    activeRemoteRequest.current = null
+    active.controller.abort()
+    setIsLoading(false)
+    setPendingQuestion(null)
+  }, [currentContextKey])
+
+  useEffect(() => () => {
+    const active = activeRemoteRequest.current
+    activeRemoteRequest.current = null
+    active?.controller.abort()
+  }, [])
 
   // Mudar de etapa não apaga a conversa: quem estava investigando território e
   // desce para hospital continua a mesma investigação, e perder o fio ali era
@@ -220,17 +262,44 @@ export default function AssistantWidget() {
     if (body) body.scrollTop = body.scrollHeight
   }, [isOpen, isLoading, thread.length, pendingQuestion])
 
-  function localAnswer(rawQuestion: string): Answer | null {
-    const answer = localAnswerBody(rawQuestion)
-    if (!answer || sourceState.kind !== 'fallback') return answer
+  function contextLabel(summary?: HospitalSpecialtySummary) {
+    if (summary) {
+      return `${summary.hospitalName} · ${summary.specialtyName} · ${formatPeriod(summary.competence)}`
+    }
+    const period = /^\d{4}-(0[1-9]|1[0-2])$/.test(sharedCompetence)
+      ? formatPeriod(sharedCompetence)
+      : 'período ainda não carregado'
+    if (currentRoute === 'hospital' && selectedHospitalName) {
+      return `${selectedHospitalName} · ${period}`
+    }
+    if (selectedRegion) {
+      return `${selectedRegion.region_name} · ${period}`
+    }
+    return `${routeNames[currentRoute]} · ${period}`
+  }
+
+  function localAnswer(
+    rawQuestion: string,
+    requestedSummary?: HospitalSpecialtySummary,
+  ): Answer | null {
+    const answer = localAnswerBody(rawQuestion, requestedSummary)
+    if (!answer) return null
+    const contextualAnswer = {
+      ...answer,
+      contextLabel: answer.contextLabel ?? contextLabel(requestedSummary),
+    }
+    if (sourceState.kind !== 'fallback') return contextualAnswer
     const competence = sharedCompetence && formatPeriod(sharedCompetence)
     return {
-      ...answer,
-      text: `${answer.text} Fonte: snapshot de contingência${competence ? ` até ${competence}` : ''}; esta resposta local não consultou o Oracle.`,
+      ...contextualAnswer,
+      text: `${contextualAnswer.text} Fonte: snapshot de contingência${competence ? ` até ${competence}` : ''}; esta resposta local não consultou o Oracle.`,
     }
   }
 
-  function localAnswerBody(rawQuestion: string): Answer | null {
+  function localAnswerBody(
+    rawQuestion: string,
+    requestedSummary?: HospitalSpecialtySummary,
+  ): Answer | null {
     const normalized = normalize(rawQuestion)
     const methodology = sourceData?.methodology
     // "o que há no índice sazonal?" não casava com nada e ia parar no modelo,
@@ -269,38 +338,50 @@ export default function AssistantWidget() {
       (question) => normalized === normalize(question),
     )
     if (perguntaResumo) {
-      if (!activeHospitalSummary) {
+      const summary = requestedSummary
+        ? isCurrentSpecialtySummary(requestedSummary, activeHospitalSummary)
+          ? requestedSummary
+          : null
+        : activeHospitalSummary
+      if (!summary) {
         return {
           text: 'Selecione um hospital para abrir o resumo da especialidade e responder a esta pergunta.',
+          contextLabel: contextLabel(),
         }
       }
 
       if (perguntaResumo === SUMMARY_QUESTIONS[0]) {
-        const participacao = activeHospitalSummary.regionalSharePercent === null
-          ? 'a participação regional não pode ser calculada porque não há internações no denominador publicado'
-          : `${formatPercent(activeHospitalSummary.regionalSharePercent)} das internações da especialidade na região`
+        const hospitalShare = summary.hospitalSharePercent === null
+          ? 'sem participação hospitalar calculável'
+          : `${formatPercent(summary.hospitalSharePercent)} das internações ${summary.hospitalShareCoverage === 'complete' ? 'do hospital' : 'nas especialidades disponíveis'}`
+        const regionShare = summary.regionalSharePercent === null
+          ? 'sem participação regional calculável'
+          : `${formatPercent(summary.regionalSharePercent)} das internações regionais da especialidade`
+        const stay = summary.averageStayDays === null ||
+          !Number.isFinite(summary.averageStayDays) ||
+          summary.averageStayDays < 0
+          ? 'A permanência local não foi calculada.'
+          : isComparableStay(
+              summary.ipeSampleStatus,
+              summary.averageStayDays,
+              summary.averageStayBenchmark,
+              summary.benchmarkHospitals,
+            )
+            ? `A permanência foi ${formatDecimal(summary.averageStayDays)} dias, ante ${formatDecimal(summary.averageStayBenchmark!)} em ${formatInteger(summary.benchmarkHospitals)} outros hospitais.`
+            : summary.ipeSampleStatus === 'amostra_insuficiente'
+              ? `A permanência local foi ${formatDecimal(summary.averageStayDays)} dias; a amostra é insuficiente para comparação.`
+              : summary.ipeSampleStatus === 'benchmark_zero'
+                ? `A permanência local foi ${formatDecimal(summary.averageStayDays)} dias; os demais hospitais não têm permanência registrada para formar a referência.`
+                : `A permanência local foi ${formatDecimal(summary.averageStayDays)} dias, sem referência válida publicada.`
         return {
-          text: `No resumo de ${activeHospitalSummary.hospitalName} em ${activeHospitalSummary.specialtyName}, há ${formatInteger(activeHospitalSummary.newAdmissions)} internações novas e ${participacao}. Volume e participação evidenciam concentração observada e sugerem discutir com a equipe o papel deste hospital no atendimento da região. Isso não demonstra papel de referência, gravidade, complexidade ou causalidade. O propósito é apoiar a discussão sobre a capacidade de resposta da rede.`,
-        }
-      }
-
-      if (perguntaResumo === SUMMARY_QUESTIONS[1]) {
-        const permanencia = activeHospitalSummary.averageStayDays === null
-          ? 'A permanência local não foi calculada neste recorte.'
-          : `A permanência local observada é ${formatDecimal(activeHospitalSummary.averageStayDays)} dias.`
-        const referencia =
-          activeHospitalSummary.ipeSampleStatus === 'suficiente' &&
-          activeHospitalSummary.averageStayBenchmark !== null &&
-          activeHospitalSummary.benchmarkHospitals > 0
-            ? ` A referência observada dos demais hospitais é ${formatDecimal(activeHospitalSummary.averageStayBenchmark)} dias em ${formatInteger(activeHospitalSummary.benchmarkHospitals)} hospitais.`
-            : ' Não há comparação de permanência publicada para os demais hospitais nesta linha.'
-        return {
-          text: `${permanencia}${referencia} Antes de interpretar, verifique o perfil e a gravidade dos atendimentos, comorbidades, transferências e fatores operacionais associados à permanência. O indicador não é ajustado por risco: diferença observada não demonstra causa, recomendação clínica ou redução estimada.`,
+          text: `${summary.specialtyName} teve ${formatInteger(summary.newAdmissions)} internações: ${hospitalShare} e ${regionShare}. ${stay} A comparação é descritiva, sem ajuste de risco, e não demonstra causa ou qualidade.`,
+          contextLabel: contextLabel(summary),
         }
       }
 
       return {
-        text: `Para avaliar uma mudança na rede a partir de ${activeHospitalSummary.hospitalName} e ${activeHospitalSummary.specialtyName}, faltam o perfil e a gravidade dos atendimentos, a ocupação real, a capacidade operacional, as filas e a validação com os gestores. O resumo mostra volume e permanência observados; não estima efeito, redução ou causalidade.`,
+        text: `Verifique perfil e gravidade dos casos, comorbidades, transferências, fluxo de altas e capacidade operacional em ${summary.specialtyName}. Confirme também cobertura e qualidade do registro com a equipe local. Estes dados não provam falta de profissionais nem sustentam, sozinhos, contratação ou mudança assistencial.`,
+        contextLabel: contextLabel(summary),
       }
     }
 
@@ -472,13 +553,13 @@ export default function AssistantWidget() {
 
     if (/hospital.?dia|permanencia.*menos de um dia|giro|396|iph.*acima de 100/.test(normalized)) {
       return {
-        text: 'Em unidades com permanência média abaixo de um dia o IPH deixa de medir ocupação. Ele divide pacientes-dia por leitos-dia declarados, e a reconstrução do SIH atribui ao menos um dia por internação — num hospital-dia o paciente não passa a noite, então o índice passa a medir giro sobre capacidade. O Hospital Dia Butantã aparece com 396,7% tendo usado 20 dos 60 leitos-dia disponíveis. Comparar com unidades do mesmo tipo mantém a comparação justa, mas não transforma o número em taxa de ocupação, e a tela avisa isso.',
+        text: 'Em unidades com permanência média abaixo de um dia o IPH deixa de medir ocupação. Ele divide pacientes-dia por leitos-dia declarados, e a reconstrução do SIH atribui ao menos um dia por internação — num hospital-dia o paciente não passa a noite, então o índice passa a medir giro sobre capacidade. O Hospital Dia Butantã aparece com 396,7% tendo usado 20 dos 60 leitos-dia disponíveis. Comparar com hospitais da mesma faixa de leitos SUS mantém o critério de porte, mas não transforma o número em taxa de ocupação, e a tela avisa isso.',
       }
     }
 
-    if (/sinais? acesos|quintil|placar|quantos sinais|indice de priorizacao/.test(normalized)) {
+    if (/o que sao os sinais|sinais? acesos|quintil|placar|quantos sinais|indice de priorizacao/.test(normalized)) {
       return {
-        text: 'O placar conta em quantos dos seis indicadores a região está no quintil mais alto do recorte visível: pressão sobre leitos (IPH estimado), mortalidade observada (TMH), permanência média, valor médio aprovado pelo SUS (CMI), atendidos fora da região e ICSAP. É contagem de sinais, não nota de qualidade — IPH, TMH e CMI não são medidas de qualidade. Os cortes saem do recorte que está na tela: filtrar uma rede regional muda os limiares.',
+        text: 'Os sinais indicam quais dos seis indicadores estão no grupo de valores mais altos do recorte visível, a partir do percentil 80: pressão sobre leitos (IPH estimado), mortalidade observada (TMH), permanência média, valor médio aprovado pelo SUS (CMI), atendidos fora da região e ICSAP. São uma triagem comparativa para investigar, não ranking ou nota de qualidade. Filtrar uma rede regional muda os limiares.',
       }
     }
 
@@ -532,14 +613,24 @@ export default function AssistantWidget() {
     setPendingQuestion(null)
   }
 
-  async function ask(rawQuestion: string) {
+  async function ask(
+    rawQuestion: string,
+    requestedSummary?: HospitalSpecialtySummary,
+  ) {
     const cleanQuestion = rawQuestion.trim().slice(0, 300)
     if (!cleanQuestion || isLoading) return
+    if (
+      requestedSummary &&
+      !isCurrentSpecialtySummary(requestedSummary, activeHospitalSummary)
+    ) {
+      return
+    }
+    const usedContextLabel = contextLabel(requestedSummary)
 
     setPendingQuestion(cleanQuestion)
     setQuestion('')
 
-    const deterministic = localAnswer(cleanQuestion)
+    const deterministic = localAnswer(cleanQuestion, requestedSummary)
     if (deterministic) {
       registrar(cleanQuestion, deterministic)
       return
@@ -551,10 +642,21 @@ export default function AssistantWidget() {
           sourceState.kind === 'fallback'
             ? `A FlowIA está usando o snapshot de contingência até ${formatPeriod(sharedCompetence)}. Perguntas livres ficam desabilitadas sem Oracle; use as explicações locais. Esta resposta não consultou o Oracle.`
             : 'A fonte ainda está carregando. Selecione uma explicação local depois que o recorte estiver pronto; nenhuma pergunta livre foi enviada.',
+        contextLabel: usedContextLabel,
       })
       return
     }
 
+    const generation = requestGeneration.current + 1
+    requestGeneration.current = generation
+    const controller = new AbortController()
+    const remoteRequest: ActiveRemoteRequest = {
+      generation,
+      contextKey: currentContextKey,
+      controller,
+    }
+    activeRemoteRequest.current?.controller.abort()
+    activeRemoteRequest.current = remoteRequest
     setIsLoading(true)
     try {
       const params = new URLSearchParams(location.search)
@@ -572,13 +674,31 @@ export default function AssistantWidget() {
         active_analysis: routeAnalysis[currentRoute],
         history: historyForRequest(),
       }
-      const response = await askOracleSelectAi(cleanQuestion, context)
+      const response = await askOracleSelectAi(
+        cleanQuestion,
+        context,
+        undefined,
+        controller.signal,
+      )
+      if (
+        activeRemoteRequest.current !== remoteRequest ||
+        currentContextKeyRef.current !== remoteRequest.contextKey
+      ) {
+        return
+      }
       registrar(cleanQuestion, {
         text: response.narrative,
+        contextLabel: usedContextLabel,
         sql: response.sql,
         warning: response.warning,
       })
     } catch (error) {
+      if (
+        activeRemoteRequest.current !== remoteRequest ||
+        currentContextKeyRef.current !== remoteRequest.contextKey
+      ) {
+        return
+      }
       // O cliente já distingue cota estourada, contrato inválido e tempo
       // esgotado. Trocar tudo por uma frase única fazia o produto parecer
       // incapaz quando o problema era outro, e apagava a pista do diagnóstico.
@@ -587,15 +707,24 @@ export default function AssistantWidget() {
           error instanceof AssistantRequestError
             ? `${error.message} Tente uma das sugestões abaixo.`
             : 'Não consegui responder essa pergunta agora. Tente uma das sugestões.',
+        contextLabel: usedContextLabel,
       })
     } finally {
-      setIsLoading(false)
+      if (activeRemoteRequest.current === remoteRequest) {
+        activeRemoteRequest.current = null
+        setIsLoading(false)
+      }
     }
   }
 
   function submit(event: FormEvent) {
     event.preventDefault()
     void ask(question)
+  }
+
+  function closeAssistant() {
+    setIsOpen(false)
+    window.requestAnimationFrame(() => launcherRef.current?.focus())
   }
 
   return (
@@ -612,7 +741,7 @@ export default function AssistantWidget() {
             <button
               className="assistant-close"
               type="button"
-              onClick={() => setIsOpen(false)}
+              onClick={closeAssistant}
               aria-label="Fechar assistente"
             >
               ×
@@ -647,6 +776,9 @@ export default function AssistantWidget() {
                     <p className="assistant-question">{turn.question}</p>
                     <article className="assistant-answer">
                       <span>FlowIA</span>
+                      <small className="assistant-answer-context">
+                        Contexto usado: {turn.answer.contextLabel}
+                      </small>
                       <p>{turn.answer.text}</p>
                       {turn.answer.warning && (
                         <p className="assistant-warning">{turn.answer.warning}</p>
@@ -697,11 +829,13 @@ export default function AssistantWidget() {
 
       {!isOpen && (
         <button
+          ref={launcherRef}
           className="assistant-launcher"
           type="button"
           onClick={() => setIsOpen(true)}
           aria-expanded="false"
           aria-controls="medflow-assistant-panel"
+          aria-label="Abrir FlowIA — Posso ajudar?"
         >
           <AssistantRobot />
           <span>

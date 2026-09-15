@@ -11,11 +11,11 @@ import StateTotals from './StateTotals'
 import { aggregateRegions } from './agregado'
 import { aggregateVariation, computeSignals, variation } from './sinais'
 import StatePanel from '../../shared/StatePanel'
-import { useSource } from '../../shared/SourceContext'
+import { shiftCompetence, useSource } from '../../shared/SourceContext'
 import {
   formatInteger,
   formatPercent,
-  formatPeriod,
+  formatPeriodLong,
 } from '../../shared/format'
 import { formatRegionalNetwork } from '../../shared/territory'
 import './RegionalView.css'
@@ -24,7 +24,11 @@ type SeriesState =
   | { kind: 'idle' | 'loading' | 'empty' | 'error' | 'snapshot-missing' }
   | { kind: 'ready'; data: RegionalSeriesResponse }
 
-export default function RegionalView() {
+type RegionalViewProps = {
+  onViewHospitals: () => void
+}
+
+export default function RegionalView({ onViewHospitals }: RegionalViewProps) {
   const {
     sourceState,
     regionalLoadState,
@@ -34,6 +38,7 @@ export default function RegionalView() {
     sharedMacroregionCode,
     setSharedRegion,
     regionalComparison,
+    requestAssistantQuestion,
   } = useSource()
   const [seriesState, setSeriesState] = useState<SeriesState>({ kind: 'idle' })
   // O mapa pode colorir por um indicador isolado ou pelo placar que consome os
@@ -92,6 +97,10 @@ export default function RegionalView() {
   )
   const aggregateMom = aggregateVariation(visibleItems, regionalComparison.previous)
   const aggregateYoy = aggregateVariation(visibleItems, regionalComparison.yearAgo)
+  const comparisonPeriods = {
+    previous: formatPeriodLong(shiftCompetence(selectedCompetence, -1)),
+    yearAgo: formatPeriodLong(shiftCompetence(selectedCompetence, -12)),
+  }
   const scopeLabel = selectedMacroregion
     ? formatRegionalNetwork(
         visibleItems[0]?.macroregion_name ?? '',
@@ -145,9 +154,11 @@ export default function RegionalView() {
         <div className="view-intro">
           <div>
             <p className="section-kicker">TERRITÓRIO</p>
-            <h2 id="regional-title">Sinais regionais</h2>
+            <h1 id="regional-title">Sinais regionais</h1>
           </div>
         </div>
+
+        <GlobalContextBar />
 
         {sourceState.kind === 'loading' && (
           <StatePanel kind="loading" title="Carregando visão regional" testId="regional-loading">
@@ -177,18 +188,6 @@ export default function RegionalView() {
 
         {regionalData && (
           <>
-            <p
-              className="regional-context-note"
-              data-testid="regional-context-note"
-              data-competence={regionalData.data_through}
-            >
-              {formatPeriod(selectedCompetence)} ·{' '}
-              <span data-testid="regional-count">
-                {formatInteger(visibleItems.length)} de {formatInteger(regionalData.pagination.count)} regiões
-              </span>{' '}
-              no território compartilhado.
-            </p>
-
             {visibleItems.length === 0 && (
               <StatePanel kind="empty" title="Nenhuma região no recorte" testId="regional-no-items">
                 Isso é ausência legítima, não erro da fonte.
@@ -209,7 +208,7 @@ export default function RegionalView() {
                       <p className="section-kicker">MAPA DE SINAIS</p>
                       <h3 id="map-title">
                         {mapMetric === 'sinais'
-                          ? 'Sinais acesos por região'
+                          ? 'Sinais por região'
                           : 'IPH estimado por percentis'}
                       </h3>
                       <div className="map-metric" role="radiogroup" aria-label="O que a cor mostra">
@@ -222,7 +221,7 @@ export default function RegionalView() {
                             onClick={() => setMapMetric(candidate)}
                             data-testid={`map-metric-${candidate}`}
                           >
-                            {candidate === 'sinais' ? 'Placar de sinais' : 'IPH estimado'}
+                            {candidate === 'sinais' ? 'Sinais' : 'IPH'}
                           </button>
                         ))}
                       </div>
@@ -249,11 +248,13 @@ export default function RegionalView() {
                     formatPercent={formatPercent}
                     signals={signals}
                     variations={variations}
+                    competence={formatPeriodLong(selectedCompetence)}
+                    comparisonPeriods={comparisonPeriods}
+                    onAskLocal={requestAssistantQuestion}
+                    onViewHospitals={onViewHospitals}
                     colorBy={mapMetric}
                   />
                 </section>
-
-                <GlobalContextBar />
 
                 {!selectedItem && (
                   <StateTotals

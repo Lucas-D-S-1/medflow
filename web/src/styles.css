@@ -36,6 +36,7 @@ h3 { margin: 0; font-size: var(--font-size-lg); }
 p { line-height: 1.6; text-wrap: pretty; }
 
 .app-shell { min-height: 100vh; }
+.analysis-section[tabindex='-1']:focus { outline: none; }
 /*
  * O chrome inteiro grudado ocupava 260px — 29% de uma tela de 900px — e o
  * filtro de contexto respondia por 188px disso, cobrindo a análise durante a

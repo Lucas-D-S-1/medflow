@@ -78,11 +78,16 @@ test('sincroniza competência e território entre URL, barra global e rotas', as
   await expect(page).toHaveURL(/busca=teste/)
   await expect(page).toHaveURL(/elegiveis=0/)
 
-  await page.getByTestId('global-search').fill('Ermelino Matarazzo')
-  await page.getByTestId('global-search').press('Enter')
-  await expect(page).toHaveURL(/#hospital$/)
-  await expect(page).toHaveURL(/busca=Ermelino\+Matarazzo|busca=Ermelino%20Matarazzo/)
-  await expect(page).not.toHaveURL(/hospital=3012212/)
+  // Limpar só a região conserva a rede como recorte do mapa; cada filtro tem
+  // seu próprio controle de limpeza.
+  await page.getByTestId('global-region').selectOption('')
+  await expect(page.getByTestId('global-macroregion')).toHaveValue('3529')
+  expect(new URL(page.url()).searchParams.get('regiao')).toBeNull()
+
+  // A busca rápida global saiu da superfície. Nome/CNES pertence à lista
+  // hospitalar e o filtro já existente continua preservado na URL.
+  await expect(page.getByTestId('global-search')).toHaveCount(0)
+  await expect(page).toHaveURL(/busca=teste/)
 })
 
 test('trava o contexto global inteiro no fallback de snapshot', async ({ page }) => {

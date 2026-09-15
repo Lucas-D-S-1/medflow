@@ -2,12 +2,14 @@ import MetricCard from '../../shared/MetricCard'
 import type { RegionalAggregate } from './agregado'
 import type { RegionSignals } from './sinais'
 import { SIGNALS } from './sinais'
+import { shiftCompetence } from '../../shared/SourceContext'
 import {
   formatCurrency,
   formatDecimal,
   formatInteger,
   formatPercent,
   formatPeriod,
+  formatPeriodLong,
 } from '../../shared/format'
 import './StateTotals.css'
 
@@ -27,7 +29,7 @@ function percent(value: number | null) {
 
 /** Ausência de comparação não é variação de zero, e o texto diz isso. */
 function variationText(value: number | null) {
-  if (value === null) return 'sem comparação'
+  if (value === null) return 'sem comparação disponível'
   if (Math.abs(value) < 0.0005) return '0,0%'
   return `${value > 0 ? '+' : '−'}${formatPercent(Math.abs(value) * 100)}`
 }
@@ -50,6 +52,8 @@ export default function StateTotals({
   // quantos territórios pedem atenção, sem ordenar ninguém como "pior".
   const litThreshold = Math.ceil(SIGNALS.length / 2)
   const manySignals = [...signals.values()].filter((item) => item.count >= litThreshold).length
+  const previousPeriod = formatPeriodLong(shiftCompetence(competence, -1))
+  const yearAgoPeriod = formatPeriodLong(shiftCompetence(competence, -12))
 
   return (
     <section className="state-totals" aria-labelledby="state-totals-title">
@@ -80,24 +84,23 @@ export default function StateTotals({
       </div>
 
       <div className="state-totals-grid">
-        <MetricCard
-          label="Internações novas"
-          value={formatInteger(aggregate.newAdmissions)}
-          detail={`${formatInteger(aggregate.hospitalsWithAdmissions)} hospitais com produção`}
-          testId="state-total-admissions"
-        />
-        <MetricCard
-          label="MoM"
-          value={variationText(mom)}
-          detail="internações contra a competência anterior"
-          testId="state-total-mom"
-        />
-        <MetricCard
-          label="YoY"
-          value={variationText(yoy)}
-          detail="internações contra o mesmo mês do ano anterior"
-          testId="state-total-yoy"
-        />
+        <article className="metric-card state-admissions-card">
+          <span>Internações novas</span>
+          <strong data-testid="state-total-admissions">
+            {formatInteger(aggregate.newAdmissions)}
+          </strong>
+          <small>{formatInteger(aggregate.hospitalsWithAdmissions)} hospitais com produção</small>
+          <dl aria-label="Comparações de internações novas">
+            <div>
+              <dt>Em relação a {previousPeriod}</dt>
+              <dd data-testid="state-total-mom">{variationText(mom)}</dd>
+            </div>
+            <div>
+              <dt>Em relação a {yearAgoPeriod}</dt>
+              <dd data-testid="state-total-yoy">{variationText(yoy)}</dd>
+            </div>
+          </dl>
+        </article>
         <MetricCard
           label="Regiões com metade dos sinais"
           value={`${formatInteger(manySignals)} de ${formatInteger(aggregate.regions)}`}

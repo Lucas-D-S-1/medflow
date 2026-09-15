@@ -92,8 +92,15 @@ export async function askOracleSelectAi(
   question: string,
   context: AssistantContext,
   timeoutMs = ASSISTANT_TIMEOUT_MS,
+  callerSignal?: AbortSignal,
 ): Promise<AssistantResponse> {
   const controller = new AbortController()
+  const abortFromCaller = () => controller.abort()
+  if (callerSignal?.aborted) {
+    controller.abort()
+  } else {
+    callerSignal?.addEventListener('abort', abortFromCaller, { once: true })
+  }
   const timeout = window.setTimeout(() => controller.abort(), timeoutMs)
 
   try {
@@ -138,5 +145,6 @@ export async function askOracleSelectAi(
     throw new AssistantRequestError()
   } finally {
     window.clearTimeout(timeout)
+    callerSignal?.removeEventListener('abort', abortFromCaller)
   }
 }

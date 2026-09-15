@@ -1,7 +1,7 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import {
-  fetchHospitals,
+  fetchAllHospitals,
   getHospitalListSnapshot,
   HospitalAbsentCompetenceError,
   type HospitalListResponse,
@@ -27,14 +27,13 @@ import {
 import CidTable from './CidTable'
 import HospitalPeers from './HospitalPeers'
 import { fetchStatewideHospitals, type PeerHospital } from './pares'
-import type { HospitalItem } from './hospitais'
 import HospitalSeries from './HospitalSeries'
 import HospitalTable from './HospitalTable'
 import SpecialtyTable from './SpecialtyTable'
-import MethodNote from '../../shared/MethodNote'
 import StatePanel from '../../shared/StatePanel'
 import { COMPETENCE_PATTERN, useSource } from '../../shared/SourceContext'
-import { formatPeriod } from '../../shared/format'
+import { requestAnalysisAnchor } from '../../shared/analysisNavigation'
+import { formatInteger, formatPeriod } from '../../shared/format'
 import './HospitalView.css'
 
 type ListState =
@@ -65,6 +64,8 @@ export default function HospitalView() {
   const [seriesState, setSeriesState] = useState<SeriesState>({ kind: 'idle' })
   const [specialtyState, setSpecialtyState] = useState<SpecialtyState>({ kind: 'idle' })
   const [cidState, setCidState] = useState<CidState>({ kind: 'idle' })
+  const [historyOpen, setHistoryOpen] = useState(false)
+  const [diagnosticsOpen, setDiagnosticsOpen] = useState(false)
   const listRequest = useRef<AbortController | null>(null)
   const seriesRequest = useRef<AbortController | null>(null)
   const specialtyRequest = useRef<AbortController | null>(null)
@@ -74,11 +75,8 @@ export default function HospitalView() {
     sourceState.kind === 'live' || sourceState.kind === 'fallback'
       ? sourceState.data
       : null
-  const isFallback = sourceState.kind === 'fallback'
-
   const urlHospital = searchParams.get('hospital') ?? ''
   const urlSearch = searchParams.get('busca') ?? ''
-  const apiSearch = urlSearch.trim()
   // O recorte de elegíveis vive na URL como os demais filtros, e vem ligado por
   // padrão: sem ele a lista abre em diagnósticos que não têm IPR calculável.
   // O recorte de elegíveis continua na URL para links já compartilhados, mas
@@ -113,6 +111,13 @@ export default function HospitalView() {
     sourceState.kind === 'empty' ||
     sourceState.kind === 'error' ||
     (sourceData !== null && (!selectedRegion || listMatchesSelection))
+
+  // Trocar hospital fecha o histórico. Recarregar o mesmo CNES por mudança de
+  // competência desmonta o detalhe por instantes, mas preserva a escolha.
+  useEffect(() => {
+    setHistoryOpen(false)
+    setDiagnosticsOpen(false)
+  }, [urlHospital])
 
   // A lista estadual só é buscada quando há um hospital aberto: ela existe
   // para montar o grupo de pares por tipo e porte, e ninguém paga por ela
@@ -173,12 +178,11 @@ export default function HospitalView() {
     const controller = new AbortController()
     listRequest.current = controller
     setListState({ kind: 'loading' })
-    void fetchHospitals(
+    void fetchAllHospitals(
       {
         year: Number(match[1]),
         month: Number(match[2]),
         regionCode: selectedRegion,
-        search: apiSearch.length >= 2 ? apiSearch : undefined,
       },
       { signal: controller.signal },
     )
@@ -193,7 +197,7 @@ export default function HospitalView() {
       })
 
     return () => controller.abort()
-  }, [selectedCompetence, selectedRegion, sourceState.kind, apiSearch])
+  }, [selectedCompetence, selectedRegion, sourceState.kind])
 
   // A série é do hospital inteiro, não da competência: trocar o mês não a
   // refaz. Ela só depende do CNES selecionado.
@@ -330,16 +334,25 @@ export default function HospitalView() {
     })
   }
 
-  function updateHospitalSearch(value: string) {
+  const updateHospitalSearch = useCallback((value: string) => {
     setSearchParams((current) => {
       const next = new URLSearchParams(current)
       if (value) next.set('busca', value)
       else next.delete('busca')
-      // A busca muda o conjunto da lista: o detalhe anterior não deve parecer
-      // pertencer ao resultado novo enquanto a API responde.
-      next.delete('hospital')
       return next
     })
+  }, [setSearchParams])
+
+  function selectHospital(cnes: string) {
+    updateParam('hospital', cnes)
+    requestAnalysisAnchor('hospital-detail')
+  }
+
+  function clearHospital() {
+    updateParam('hospital', '')
+    setHistoryOpen(false)
+    setDiagnosticsOpen(false)
+    requestAnalysisAnchor('hospital-list')
   }
 
   return (
@@ -348,6 +361,7 @@ export default function HospitalView() {
       className="analysis-section hospital-page"
       aria-labelledby="hospital-section-title"
       data-anchor-ready={hospitalAnchorReady ? 'true' : undefined}
+      tabIndex={-1}
     >
       <div className="view-intro">
         <div>
@@ -402,57 +416,72 @@ export default function HospitalView() {
           )}
 
           {list && (
-            <>
-              <MethodNote>
-                O IPH estimado usa paciente-dia estimado sobre leito-dia declarado no
-                CNES: acima de 100% indica divergência entre produção e capacidade
-                declarada, não ocupação real acima do teto físico. Hospital com amostra
-                insuficiente não é comparável.
-              </MethodNote>
-
-              {/* A tabela é renderizada mesmo sem resultado. Ela carrega o
-                  campo de busca: escondê-la quando o filtro não casa fazia o
-                  usuário perder o próprio campo e ficar sem como apagar o que
-                  digitou. */}
-              <HospitalTable
-                search={urlSearch}
-                onSearchChange={updateHospitalSearch}
-                searchDisabled={isFallback}
-                data={list}
-                selectedCnes={selectedCnes}
-                onSelect={(cnes) => updateParam('hospital', cnes)}
-              />
-            </>
-          )}
-
-          {seriesState.kind === 'loading' && (
-            <StatePanel kind="loading" title="Carregando série" testId="serie-loading">
-              Buscando o histórico mensal do hospital selecionado.
-            </StatePanel>
-          )}
-          {seriesState.kind === 'absent' && (
-            <StatePanel kind="empty" title="Hospital sem série publicada" testId="serie-absent">
-              A fonte respondeu normalmente, mas não há série publicada para o CNES
-              selecionado.
-            </StatePanel>
-          )}
-          {seriesState.kind === 'error' && (
-            <StatePanel kind="error" title="Série do hospital indisponível" testId="serie-error">
-              O endpoint da série não respondeu ou devolveu conteúdo fora do contrato. A
-              lista de hospitais acima não foi afetada.
-            </StatePanel>
-          )}
-          {selectedCnes && list && (
-            <HospitalPeers
-              hospital={list.items.find((item) => item.cnes === selectedCnes) as HospitalItem}
-              regionName={list.region.region_name ?? 'esta região'}
-              regionHospitals={list.items}
-              statewide={statewide}
-              statewideFailed={statewideFailed}
+            /* A tabela usa sempre a lista canônica completa; busca e
+               ordenação são apenas projeções locais desse mesmo universo. */
+            <HospitalTable
+              search={urlSearch}
+              onSearchChange={updateHospitalSearch}
+              searchDisabled={false}
+              data={list}
+              selectedCnes={selectedCnes}
+              onSelect={selectHospital}
             />
           )}
 
-          {seriesState.kind === 'ready' && <HospitalSeries data={seriesState.data} />}
+          {selectedHospital && list && (
+            <div
+              id="hospital-detail"
+              className="hospital-detail"
+              data-anchor-ready="true"
+              tabIndex={-1}
+            >
+              <HospitalPeers
+                hospital={selectedHospital}
+                competence={selectedCompetence}
+                regionName={list.region.region_name ?? 'esta região'}
+                regionHospitals={list.items}
+                statewide={statewide}
+                statewideFailed={statewideFailed}
+                snapshotLimited={sourceState.kind === 'fallback'}
+                onChangeHospital={clearHospital}
+              />
+
+              <section className="hospital-history" aria-labelledby="hospital-history-title">
+                <button
+                  type="button"
+                  aria-expanded={historyOpen}
+                  aria-controls="hospital-history-content"
+                  onClick={() => setHistoryOpen((current) => !current)}
+                >
+                  <span>
+                    <small>EVOLUÇÃO</small>
+                    <strong id="hospital-history-title">Evolução mensal do hospital</strong>
+                  </span>
+                  <span aria-hidden="true">{historyOpen ? '−' : '+'}</span>
+                </button>
+                {historyOpen && (
+                  <div id="hospital-history-content" className="hospital-history-content">
+                    {seriesState.kind === 'loading' && (
+                      <StatePanel kind="loading" title="Carregando série" testId="serie-loading">
+                        Buscando o histórico mensal do hospital selecionado.
+                      </StatePanel>
+                    )}
+                    {seriesState.kind === 'absent' && (
+                      <StatePanel kind="empty" title="Hospital sem série publicada" testId="serie-absent">
+                        Não há série publicada para o CNES selecionado.
+                      </StatePanel>
+                    )}
+                    {seriesState.kind === 'error' && (
+                      <StatePanel kind="error" title="Série do hospital indisponível" testId="serie-error">
+                        O histórico não respondeu; a comparação com pares permanece válida.
+                      </StatePanel>
+                    )}
+                    {seriesState.kind === 'ready' && <HospitalSeries data={seriesState.data} />}
+                  </div>
+                )}
+              </section>
+            </div>
+          )}
 
           {(specialtyState.kind === 'loading' ||
             (specialtyState.kind === 'ready' && !specialtyData && selectedCnes)) && (
@@ -487,32 +516,59 @@ export default function HospitalView() {
             />
           )}
 
-          {cidState.kind === 'loading' && (
-            <StatePanel kind="loading" title="Carregando diagnósticos" testId="cid-loading">
-              Buscando o índice de permanência relativa por diagnóstico.
-            </StatePanel>
+          {selectedHospital && (
+            <section className="hospital-history hospital-diagnostics" aria-labelledby="hospital-diagnostics-title">
+              <button
+                type="button"
+                aria-expanded={diagnosticsOpen}
+                aria-controls="hospital-diagnostics-content"
+                data-testid="diagnostics-toggle"
+                onClick={() => setDiagnosticsOpen((current) => !current)}
+              >
+                <span>
+                  <small>DIAGNÓSTICOS</small>
+                  <strong id="hospital-diagnostics-title">
+                    Diagnósticos · período agregado
+                  </strong>
+                  <span className="diagnostics-period">
+                    {formatInteger(sourceData.methodology.coverage.competencies)} competências
+                    até {formatPeriod(sourceData.status.data_through)}
+                  </span>
+                </span>
+                <span aria-hidden="true">{diagnosticsOpen ? '−' : '+'}</span>
+              </button>
+              {diagnosticsOpen && (
+                <div id="hospital-diagnostics-content" className="hospital-history-content">
+                  {cidState.kind === 'loading' && (
+                    <StatePanel kind="loading" title="Carregando diagnósticos" testId="cid-loading">
+                      Buscando o índice de permanência relativa por diagnóstico.
+                    </StatePanel>
+                  )}
+                  {cidState.kind === 'absent' && (
+                    <StatePanel kind="empty" title="Sem diagnóstico publicado" testId="cid-absent">
+                      A fonte respondeu normalmente, mas não há diagnóstico publicado para esse
+                      hospital no período agregado.
+                    </StatePanel>
+                  )}
+                  {cidState.kind === 'error' && (
+                    <StatePanel kind="error" title="Diagnósticos indisponíveis" testId="cid-error">
+                      O endpoint de diagnósticos não respondeu ou devolveu conteúdo fora do
+                      contrato. Os blocos acima não foram afetados.
+                    </StatePanel>
+                  )}
+                  {cidState.kind === 'ready' &&
+                    (cidState.data.items.length === 0 ? (
+                      <StatePanel kind="empty" title="Nenhum diagnóstico no recorte" testId="cid-empty">
+                        A fonte respondeu normalmente, mas não observou diagnóstico para esse
+                        hospital neste recorte.
+                      </StatePanel>
+                    ) : (
+                      <CidTable data={cidState.data} eligibleOnly={eligibleOnly} />
+                    ))}
+                </div>
+              )}
+            </section>
           )}
-          {cidState.kind === 'absent' && (
-            <StatePanel kind="empty" title="Sem diagnóstico publicado" testId="cid-absent">
-              A fonte respondeu normalmente, mas não há diagnóstico publicado para esse
-              hospital no período agregado.
-            </StatePanel>
-          )}
-          {cidState.kind === 'error' && (
-            <StatePanel kind="error" title="Diagnósticos indisponíveis" testId="cid-error">
-              O endpoint de diagnósticos não respondeu ou devolveu conteúdo fora do
-              contrato. Os blocos acima não foram afetados.
-            </StatePanel>
-          )}
-          {cidState.kind === 'ready' &&
-            (cidState.data.items.length === 0 ? (
-              <StatePanel kind="empty" title="Nenhum diagnóstico no recorte" testId="cid-empty">
-                A fonte respondeu normalmente, mas não observou diagnóstico para esse
-                hospital neste recorte.
-              </StatePanel>
-            ) : (
-              <CidTable data={cidState.data} eligibleOnly={eligibleOnly} />
-            ))}
         </>
       )}
     </section>

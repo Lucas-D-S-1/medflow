@@ -9,6 +9,7 @@ type PositionBarProps = {
   format: (value: number) => string
   peerLabel: string
   testId?: string
+  showLegend?: boolean
 }
 
 /**
@@ -26,6 +27,7 @@ export default function PositionBar({
   format,
   peerLabel,
   testId,
+  showLegend = true,
 }: PositionBarProps) {
   // A escala vai de p10 a p90 para que a metade central ocupe espaço legível;
   // valores fora disso ancoram nas pontas e são anunciados no texto.
@@ -35,7 +37,12 @@ export default function PositionBar({
   const at = (candidate: number) => (span <= 0 ? 50 : ((candidate - floor) / span) * 100)
 
   return (
-    <div className="position-bar" data-testid={testId}>
+    <div
+      className="position-bar"
+      data-testid={testId}
+      role={showLegend ? undefined : 'img'}
+      aria-label={showLegend ? undefined : `${format(value)}; mediana ${format(distribution.median)}; metade central entre ${format(distribution.p25)} e ${format(distribution.p75)}; ${distribution.count} ${peerLabel}`}
+    >
       <div className="position-track" aria-hidden="true">
         <span
           className="position-box"
@@ -44,7 +51,7 @@ export default function PositionBar({
         <span className="position-median" style={{ left: `${at(distribution.median)}%` }} />
         <span className="position-marker" style={{ left: `${at(value)}%` }} />
       </div>
-      <p className="position-legend">
+      {showLegend && <p className="position-legend">
         <strong>
           {percentile >= 50
             ? `acima de ${Math.round(percentile)}% dos pares`
@@ -57,7 +64,7 @@ export default function PositionBar({
         <small>
           {distribution.count} {peerLabel}
         </small>
-      </p>
+      </p>}
     </div>
   )
 }

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { HospitalItem, HospitalListResponse } from './hospitais'
+import { filterHospitals } from './hospitalSearch'
 import StatePanel from '../../shared/StatePanel'
 import { formatCurrency, formatDecimal, formatInteger, formatPercent } from '../../shared/format'
 
@@ -76,8 +77,8 @@ export default function HospitalTable({
   const [draft, setDraft] = useState(search)
   const pushed = useRef(search)
 
-  // Mudança vinda de fora — a busca rápida do topo, um link colado — reposiciona
-  // o campo. Mudança que este componente acabou de empurrar, não.
+  // Mudança vinda de fora — link colado, back/forward — reposiciona o campo.
+  // Mudança que este componente acabou de empurrar, não.
   useEffect(() => {
     if (search !== pushed.current) {
       pushed.current = search
@@ -100,7 +101,7 @@ export default function HospitalTable({
   const column = COLUMNS.find((candidate) => candidate.id === sortBy) as (typeof COLUMNS)[number]
   const items = useMemo(() => {
     const direction = descending ? -1 : 1
-    return [...data.items].sort((left, right) => {
+    return [...filterHospitals(data.items, draft)].sort((left, right) => {
       const a = column.value(left)
       const b = column.value(right)
       // Indicador não calculado vai para o fim em qualquer direção: ausência
@@ -113,7 +114,7 @@ export default function HospitalTable({
       }
       return (a - b) * direction || left.hospital_name.localeCompare(right.hospital_name, 'pt-BR')
     })
-  }, [column, data.items, descending])
+  }, [column, data.items, descending, draft])
 
   function toggleSort(id: ColumnId) {
     if (id === sortBy) {
@@ -260,33 +261,44 @@ export default function HospitalTable({
   }
 
   return (
-    <section className="hospital-panel" aria-labelledby="hospital-list-title">
+    <section
+      id="hospital-list"
+      className="hospital-panel"
+      aria-labelledby="hospital-list-title"
+      tabIndex={-1}
+    >
       <div className="block-heading">
         <div>
-          <p className="section-kicker">HOSPITAIS DA REGIÃO</p>
-          <h2 id="hospital-list-title">{data.region.region_name}</h2>
-          <p>
-            Ordene por qualquer indicador para achar o extremo que interessa.
-            Selecione um hospital para abrir a série, o perfil por especialidade
-            e a comparação por diagnóstico.
-          </p>
+          <p className="section-kicker">HOSPITAIS</p>
+          <h2 id="hospital-list-title">Hospitais de {data.region.region_name}</h2>
         </div>
         <div className="hospital-list-tools">
-          <label className="hospital-inline-search">
-            <span>Filtrar</span>
-            <input
-              type="search"
-              value={draft}
-              minLength={2}
-              maxLength={120}
-              placeholder="Nome ou alias"
-              disabled={searchDisabled}
-              data-testid="hospital-search"
-              onChange={(event) => setDraft(event.target.value)}
-            />
-          </label>
+          <div className="hospital-inline-search">
+            <label htmlFor="hospital-search">Nome ou CNES</label>
+            <div>
+              <input
+                id="hospital-search"
+                type="search"
+                value={draft}
+                maxLength={120}
+                placeholder="Nome ou CNES"
+                disabled={searchDisabled}
+                data-testid="hospital-search"
+                onChange={(event) => setDraft(event.target.value)}
+              />
+              {draft && (
+                <button
+                  type="button"
+                  onClick={() => setDraft('')}
+                  aria-label="Limpar busca de hospital"
+                >
+                  Limpar
+                </button>
+              )}
+            </div>
+          </div>
           <strong data-testid="hospital-count">
-            {formatInteger(items.length)} de {formatInteger(data.pagination.count)} hospitais
+            {formatInteger(items.length)} de {formatInteger(data.items.length)} hospitais
           </strong>
         </div>
       </div>
@@ -297,11 +309,11 @@ export default function HospitalTable({
       {items.length === 0 ? (
         <StatePanel
           kind="empty"
-          title={search ? 'Nenhum hospital com esse termo' : 'Nenhum hospital no recorte'}
+          title={draft.trim() ? 'Nenhum hospital com esse termo' : 'Nenhum hospital no recorte'}
           testId="hospital-empty"
         >
-          {search
-            ? `A busca por "${search}" não encontrou hospital por nome ou alias nesta região e competência. Limpe o campo acima para ver a lista inteira.`
+          {draft.trim()
+            ? `A busca por "${draft.trim()}" não encontrou hospital por nome ou CNES nesta região e competência.`
             : 'A fonte respondeu normalmente, mas não observou hospital com produção nessa região e competência.'}
         </StatePanel>
       ) : (

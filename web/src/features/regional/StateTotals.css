@@ -41,8 +41,30 @@
   margin-top: var(--space-4);
 }
 
+.state-admissions-card { grid-column: span 2; }
+.state-admissions-card dl {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2);
+  margin: var(--space-3) 0 0;
+  padding-top: var(--space-3);
+  border-top: var(--border-subtle);
+}
+.state-admissions-card dt { color: var(--color-text-muted); font-size: var(--font-size-xs); }
+.state-admissions-card dd {
+  margin: var(--space-1) 0 0;
+  color: var(--color-heading);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
 .state-totals-note {
   margin: var(--space-3) 0 0;
   color: var(--color-text-muted);
   font-size: var(--font-size-xs);
+}
+
+@media (max-width: 560px) {
+  .state-admissions-card { grid-column: auto; }
+  .state-admissions-card dl { grid-template-columns: 1fr; }
 }

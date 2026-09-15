@@ -34,6 +34,10 @@ type RegionalMapProps = {
    *  o IPH é um deles isolado. */
   colorBy?: 'iph' | 'sinais'
   variations?: Map<string, { mom: number | null; yoy: number | null }>
+  competence: string
+  comparisonPeriods: { previous: string; yearAgo: string }
+  onAskLocal: (question: string) => void
+  onViewHospitals: () => void
 }
 
 const mapData = JSON.parse(regionalMapAsset) as MapFeatureCollection
@@ -82,7 +86,7 @@ function geometryPath(geometry: MapGeometry) {
 
 /** Ausência de comparação não é variação de zero, e o texto diz isso. */
 function formatVariation(value: number | null) {
-  if (value === null) return 'sem comparação'
+  if (value === null) return 'sem comparação disponível'
   const percent = Math.abs(value * 100).toLocaleString('pt-BR', {
     minimumFractionDigits: 1,
     maximumFractionDigits: 1,
@@ -111,6 +115,10 @@ export default function RegionalMap({
   onHoverChange,
   signals,
   variations,
+  competence,
+  comparisonPeriods,
+  onAskLocal,
+  onViewHospitals,
   colorBy = 'iph',
 }: RegionalMapProps) {
   const [ownHoveredCode, setOwnHoveredCode] = useState('')
@@ -164,8 +172,29 @@ export default function RegionalMap({
   // O ponteiro passa a servir para comparar outra região sem perder a escolha.
   const selectedItem = itemsByRegion.get(selectedRegionCode)
   const cardItem = hoveredItem ?? selectedItem
-  const cardIsSelection = !hoveredItem && Boolean(selectedItem)
+  const cardIsSelection = Boolean(
+    selectedItem && cardItem?.region_code === selectedItem.region_code,
+  )
   const cardSignals = cardItem ? signals?.get(cardItem.region_code) : undefined
+
+  function formatSignalNumber(value: number, signalId: (typeof SIGNALS)[number]['id']) {
+    if (signalId === 'cmi') {
+      return value.toLocaleString('pt-BR', {
+        style: 'currency',
+        currency: 'BRL',
+        maximumFractionDigits: 0,
+      })
+    }
+    if (signalId === 'stay') {
+      return `${value.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} dias`
+    }
+    return formatPercent(value)
+  }
+
+  function formatSignalValue(item: RegionalSummaryItem, signalId: (typeof SIGNALS)[number]['id']) {
+    const signal = SIGNALS.find((candidate) => candidate.id === signalId)
+    return formatSignalNumber(signal?.value(item) ?? 0, signalId)
+  }
 
   function toneFor(item: RegionalSummaryItem | undefined) {
     if (!item) return 'is-muted'
@@ -279,67 +308,99 @@ export default function RegionalMap({
                 : `${formatInteger(cardItem.municipality_count)} municípios`}
             </span>
           </div>
-          <dl>
-            <div>
-              <dt>IPH estimado</dt>
-              <dd>{formatPercent(cardItem.iph_percent)}</dd>
-            </div>
-            <div>
-              <dt>Internações novas</dt>
-              <dd>{formatInteger(cardItem.new_admissions)}</dd>
-            </div>
-            <div>
-              <dt>TMH observado</dt>
-              <dd>{formatPercent(cardItem.tmh_percent)}</dd>
-            </div>
-            <div>
-              <dt>Permanência média</dt>
-              <dd>{cardItem.average_stay_days.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} dias</dd>
-            </div>
-            <div>
-              <dt>Acima dos pares (IPE)</dt>
-              <dd data-testid="map-card-ipe">
-                {cardItem.ipe_eligible_pairs === 0
-                  ? 'sem comparação elegível'
-                  : `${formatInteger(cardItem.ipe_above_reference)} de ${formatInteger(cardItem.ipe_eligible_pairs)}`}
-              </dd>
-            </div>
-            <div>
-              <dt>Valor médio aprovado pelo SUS (CMI nominal)</dt>
-              <dd>
-                {cardItem.cmi_nominal.toLocaleString('pt-BR', {
-                  style: 'currency',
-                  currency: 'BRL',
-                  maximumFractionDigits: 0,
-                })}
-              </dd>
-            </div>
-            <div>
-              <dt>Atendidos fora da região</dt>
-              <dd>{formatPercent(cardItem.observed_evasion_percent)}</dd>
-            </div>
-            <div>
-              <dt>ICSAP</dt>
-              <dd>{formatPercent(cardItem.icsap_share_of_observed_resident_admissions_percent)}</dd>
-            </div>
-            <div>
-              <dt>MoM · mês anterior</dt>
-              <dd>{formatVariation(variations?.get(cardItem.region_code)?.mom ?? null)}</dd>
-            </div>
-            <div>
-              <dt>YoY · mesmo mês do ano anterior</dt>
-              <dd>{formatVariation(variations?.get(cardItem.region_code)?.yoy ?? null)}</dd>
-            </div>
-          </dl>
-          {cardSignals && (
-            <p className="map-hover-signals" data-testid="regional-map-signals">
-              <strong>
-                {cardSignals.count} de {cardSignals.total} sinais no quintil mais alto
-              </strong>
-              {cardSignals.count > 0 && (
-                <span>{cardSignals.lit.map(signalLabel).join(' · ')}</span>
-              )}
+          <p className="map-card-competence">Competência {competence}</p>
+          <section className="map-card-signal" aria-label="Sinais e motivo da triagem">
+            <span>SINAIS DE ATENÇÃO</span>
+            <strong data-testid="regional-map-signals">
+              {cardSignals
+                ? `${cardSignals.count} de ${cardSignals.total} sinais acesos`
+                : 'Sinais indisponíveis'}
+            </strong>
+            <p>
+              {!cardSignals
+                ? 'Não foi possível calcular os sinais desta região.'
+                : cardSignals.count > 0
+                  ? `${cardSignals.lit.map(signalLabel).join(', ')} no grupo de valores mais altos do recorte.`
+                  : 'Nenhum dos seis indicadores acendeu um sinal neste recorte.'}
             </p>
+            {cardIsSelection && (
+              <button type="button" onClick={() => onAskLocal('O que são os sinais?')}>
+                O que são os sinais?
+              </button>
+            )}
+          </section>
+
+          <div className="map-card-primary-metrics">
+            <section>
+              <span>IPH estimado</span>
+              <strong>{formatPercent(cardItem.iph_percent)}</strong>
+              <small>Estimativa mensal de pressão sobre a capacidade declarada.</small>
+              {cardIsSelection && (
+                <button type="button" onClick={() => onAskLocal('O que é IPH?')}>
+                  O que é IPH?
+                </button>
+              )}
+            </section>
+            <section>
+              <span>Internações novas</span>
+              <strong>{formatInteger(cardItem.new_admissions)}</strong>
+              <dl className="admissions-comparisons" data-testid="map-card-admissions-comparisons">
+                <div>
+                  <dt>Em relação a {comparisonPeriods.previous}</dt>
+                  <dd>{formatVariation(variations?.get(cardItem.region_code)?.mom ?? null)}</dd>
+                </div>
+                <div>
+                  <dt>Em relação a {comparisonPeriods.yearAgo}</dt>
+                  <dd>{formatVariation(variations?.get(cardItem.region_code)?.yoy ?? null)}</dd>
+                </div>
+              </dl>
+            </section>
+            <section>
+              <span>Permanência média</span>
+              <strong>
+                {cardItem.average_stay_days.toLocaleString('pt-BR', {
+                  minimumFractionDigits: 1,
+                  maximumFractionDigits: 1,
+                })}{' '}
+                dias
+              </strong>
+            </section>
+          </div>
+
+          {cardIsSelection && (
+            <>
+              <details className="map-card-other" data-testid="map-card-other-indicators">
+                <summary>Outros indicadores</summary>
+                <p>
+                  Os sinais indicam valores no grupo mais alto do recorte; são triagem
+                  comparativa, não nota de qualidade.
+                </p>
+                <dl>
+                  {SIGNALS.filter(
+                    (signal) => signal.id !== 'iph' && signal.id !== 'stay',
+                  ).map((signal) => (
+                    <div key={signal.id} data-signal={signal.id}>
+                      <dt>{signalLabel(signal.id)}</dt>
+                      <dd>
+                        {formatSignalValue(cardItem, signal.id)}
+                        {cardSignals?.lit.includes(signal.id) ? ' · sinal aceso' : ''}
+                      </dd>
+                    </div>
+                  ))}
+                  <div>
+                    <dt>Acima dos pares (IPE)</dt>
+                    <dd data-testid="map-card-ipe">
+                      {cardItem.ipe_eligible_pairs === 0
+                        ? 'sem comparação elegível'
+                        : `${formatInteger(cardItem.ipe_above_reference)} de ${formatInteger(cardItem.ipe_eligible_pairs)}`}
+                    </dd>
+                  </div>
+                </dl>
+              </details>
+              <button className="map-card-hospitals" type="button" onClick={onViewHospitals}>
+                Ver hospitais da região ↓
+              </button>
+            </>
           )}
         </div>
       ) : (

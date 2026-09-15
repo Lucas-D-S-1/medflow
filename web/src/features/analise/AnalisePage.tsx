@@ -2,9 +2,8 @@ import { useEffect } from 'react'
 import { useLocation } from 'react-router-dom'
 import HospitalView from '../hospital/HospitalView'
 import RegionalView from '../regional/RegionalView'
+import { ANCHOR_REQUEST_EVENT, requestAnalysisAnchor } from '../../shared/analysisNavigation'
 import './AnalisePage.css'
-
-export const ANCHOR_REQUEST_EVENT = 'medflow-anchor-request'
 
 function anchorIsReady(target: HTMLElement, id: string) {
   // The hospital section exists while its state panel is loading, but its
@@ -32,7 +31,12 @@ export default function AnalisePage() {
         return
       }
       pendingAnchor = null
-      target.scrollIntoView({ block: 'start' })
+      const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+      target.scrollIntoView({
+        block: 'start',
+        behavior: reduceMotion ? 'auto' : 'smooth',
+      })
+      target.focus({ preventScroll: true })
     }
     const onAnchorRequest = (event: Event) => {
       const id = (event as CustomEvent<string>).detail
@@ -59,7 +63,9 @@ export default function AnalisePage() {
 
   return (
     <main className="page-main analysis-page">
-      <RegionalView />
+      <RegionalView
+        onViewHospitals={() => requestAnalysisAnchor('hospital')}
+      />
       <HospitalView />
     </main>
   )

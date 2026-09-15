@@ -1,4 +1,4 @@
-.regional-workspace { margin-top: var(--space-7); }
+.regional-workspace { margin-top: 0; }
 .view-intro > div > p:last-child { margin: var(--space-2) 0 0; color: var(--color-text-muted); }
 .regional-source { color: var(--color-accent-strong); font-size: var(--font-size-sm); }
 
@@ -93,8 +93,8 @@
 .regional-map-shape.selected { fill: var(--color-map-selected-fill); stroke: var(--color-selected); stroke-width: 4.5; opacity: 1; }
 .map-hover-label { min-height: 1.5rem; margin: var(--space-2) 0; color: var(--color-text-muted); font-size: var(--font-size-sm); }
 
-/* O hover responde "o que está ruim aqui", então mostra os valores, não só o
-   nome da região. */
+/* O hover oferece uma prévia factual; as ações pertencem somente ao cartão da
+   seleção compartilhada. */
 .map-hover-card {
   margin: var(--space-2) 0;
   padding: var(--space-3);
@@ -105,6 +105,7 @@
 .map-hover-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-2) var(--space-3); }
 .map-hover-head strong { color: var(--color-heading); font: 700 var(--font-size-md) var(--font-heading); }
 .map-hover-head span { color: var(--color-text-muted); font-size: var(--font-size-xs); }
+.map-card-competence { margin: var(--space-1) 0 0; color: var(--color-text-muted); font-size: var(--font-size-xs); }
 /* Fixado no território escolhido: a borda azul o liga à região destacada no
    mapa, que é a única cor fria da rampa. */
 .map-hover-card.pinned { border-color: var(--color-map-selected-fill); }
@@ -114,31 +115,75 @@
   text-transform: uppercase;
   letter-spacing: .06em;
 }
-.map-hover-card dl {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
-  gap: var(--space-2) var(--space-4);
+.map-card-signal {
   margin: var(--space-3) 0 0;
-}
-.map-hover-card dt { color: var(--color-text-muted); font-size: var(--font-size-xs); }
-.map-hover-signals {
-  margin: var(--space-3) 0 0;
-  padding-top: var(--space-3);
-  border-top: var(--border-subtle);
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
   font-size: var(--font-size-xs);
 }
-.map-hover-signals strong { color: var(--color-heading); }
-.map-hover-signals span { color: var(--color-text-muted); }
+.map-card-signal > span,
+.map-card-primary-metrics section > span { color: var(--color-text-muted); font-size: var(--font-size-xs); font-weight: 700; }
+.map-card-signal > strong { color: var(--color-heading); font-size: var(--font-size-md); }
+.map-card-signal p { margin: 0; color: var(--color-text-muted); line-height: 1.45; }
 
-.map-hover-card dd {
-  margin: 0;
+.map-card-primary-metrics {
+  display: grid;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: var(--border-subtle);
+}
+.map-card-primary-metrics section { display: grid; gap: var(--space-1); }
+.map-card-primary-metrics section > strong {
   color: var(--color-heading);
-  font-weight: 700;
+  font: 700 var(--font-size-lg) var(--font-heading);
   font-variant-numeric: tabular-nums;
 }
+.map-card-primary-metrics small { color: var(--color-text-muted); line-height: 1.4; }
+.map-card-signal button,
+.map-card-primary-metrics button {
+  justify-self: start;
+  padding: 0;
+  border: 0;
+  color: var(--color-accent-strong);
+  background: transparent;
+  cursor: pointer;
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  text-decoration: underline;
+}
+
+.admissions-comparisons { margin: var(--space-1) 0 0; }
+.admissions-comparisons div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+.admissions-comparisons dt { color: var(--color-text-muted); font-size: var(--font-size-xs); }
+.admissions-comparisons dd { margin: 0; color: var(--color-heading); font-size: var(--font-size-xs); font-weight: 700; }
+
+.map-card-other { margin-top: var(--space-3); border-top: var(--border-subtle); }
+.map-card-other summary { padding: var(--space-3) 0; color: var(--color-heading); cursor: pointer; font-weight: 700; }
+.map-card-other > p { margin: 0 0 var(--space-2); color: var(--color-text-muted); font-size: var(--font-size-xs); }
+.map-card-other dl { display: grid; gap: var(--space-2); margin: 0; }
+.map-card-other dl div { padding-bottom: var(--space-2); border-bottom: var(--border-subtle); }
+.map-card-other dt { color: var(--color-text-muted); font-size: var(--font-size-xs); }
+.map-card-other dd { margin: var(--space-1) 0 0; color: var(--color-heading); font-size: var(--font-size-xs); font-weight: 700; }
+
+.map-card-hospitals {
+  width: 100%;
+  margin-top: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-accent-strong);
+  border-radius: var(--radius-pill);
+  color: var(--color-surface);
+  background: var(--color-accent-strong);
+  cursor: pointer;
+  font-weight: 700;
+}
+
 .regional-map-legend { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-4); color: var(--color-text-muted); font-size: var(--font-size-xs); }
 .regional-map-legend span { display: inline-flex; align-items: center; gap: var(--space-2); }
 .regional-map-legend small { flex-basis: 100%; }
@@ -153,6 +198,7 @@
   background: var(--color-surface);
 }
 .regional-series-panel .block-heading p:last-child { margin: var(--space-2) 0 0; color: var(--color-text-muted); }
+.regional-series-heading > small { color: var(--color-text-muted); text-align: right; }
 .series-indicator-selector { display: flex; flex-wrap: wrap; gap: var(--space-2); margin: var(--space-4) 0; }
 .series-indicator-selector button {
   padding: var(--space-2) var(--space-3);
@@ -164,18 +210,40 @@
   font-weight: 700;
 }
 .series-indicator-selector button[aria-checked="true"] { color: var(--color-surface); background: var(--color-accent-strong); }
-.series-current-value {
+.series-insights {
   display: grid;
-  grid-template-columns: minmax(11rem, .8fr) minmax(8rem, auto) minmax(16rem, 1.5fr);
-  gap: var(--space-3);
-  align-items: center;
-  padding: var(--space-3) var(--space-4);
-  border-radius: var(--radius-lg);
-  color: var(--color-text-muted);
-  background: var(--color-accent-soft);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  border-block: var(--border-subtle);
 }
-.series-current-value strong { color: var(--color-heading); font: 600 var(--font-size-lg) var(--font-heading); }
-.series-current-value small { text-align: right; }
+.series-insights article {
+  display: grid;
+  gap: var(--space-1);
+  min-width: 0;
+  padding: var(--space-3) var(--space-4);
+}
+.series-insights article + article { border-left: var(--border-subtle); }
+.series-insights span,
+.series-insights small { color: var(--color-text-muted); font-size: var(--font-size-xs); }
+.series-insights strong { color: var(--color-heading); font: 700 var(--font-size-lg) var(--font-heading); font-variant-numeric: tabular-nums; }
+.series-summary { margin: var(--space-3) 0 0; color: var(--color-text); font-size: var(--font-size-sm); }
+.series-window-control {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+}
+.series-window-control button {
+  padding: var(--space-1) var(--space-3);
+  border: var(--border-strong);
+  border-radius: var(--radius-pill);
+  color: var(--color-accent-strong);
+  background: var(--color-surface);
+  cursor: pointer;
+  font-weight: 700;
+}
 .series-chart { margin-top: var(--space-3); }
 /* O tooltip escapa a caixa do gráfico. Sem contexto de empilhamento próprio,
    a tabela logo abaixo — que vem depois no DOM e tem fundo — pintava por cima
@@ -186,6 +254,7 @@
 .series-values-details { position: relative; z-index: 1; }
 .series-chart-canvas svg { display: block; width: 100%; max-height: 18rem; overflow: visible; }
 .series-grid-line { stroke: var(--color-border-strong); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.series-baseline { stroke: var(--color-selected); stroke-width: 1.5; stroke-dasharray: 7 6; vector-effect: non-scaling-stroke; }
 .series-line { fill: none; stroke: var(--color-accent-strong); stroke-width: 3; stroke-linejoin: round; stroke-linecap: round; vector-effect: non-scaling-stroke; }
 .series-point { fill: var(--color-surface); stroke: var(--color-accent-strong); stroke-width: 2.5; vector-effect: non-scaling-stroke; }
 .series-point.selected { fill: var(--color-selected); stroke: var(--color-surface); stroke-width: 3; }
@@ -219,6 +288,8 @@
 .series-tooltip strong { color: var(--color-nav-text-active); font: 700 var(--font-size-lg) var(--font-heading); }
 .series-tooltip small { color: var(--color-nav-text); line-height: 1.35; }
 .series-chart > p, .series-no-values { margin: var(--space-2) 0 0; color: var(--color-text-muted); font-size: var(--font-size-sm); }
+.series-baseline-label { display: flex; align-items: center; gap: var(--space-2); }
+.series-baseline-label span { width: 1.8rem; border-top: 2px dashed var(--color-selected); }
 .series-values-details { margin-top: var(--space-3); border-top: var(--border-subtle); }
 .series-values-details summary { padding: var(--space-3) 0; color: var(--color-heading); cursor: pointer; font-weight: 700; }
 .series-table-scroll { max-height: 45vh; overflow: auto; }
@@ -261,7 +332,9 @@
   .block-heading > strong { display: block; max-width: none; margin-top: var(--space-2); text-align: left; }
   .regional-layout { display: block; }
   .ranking-list { grid-template-columns: 1fr; }
-  .series-current-value { grid-template-columns: 1fr; }
-  .series-current-value small { text-align: left; }
+  .regional-series-heading > small { display: block; margin-top: var(--space-2); text-align: left; }
+  .series-insights { grid-template-columns: 1fr; }
+  .series-insights article + article { border-top: var(--border-subtle); border-left: 0; }
+  .series-window-control { align-items: flex-start; flex-direction: column; }
   .series-table-scroll { overflow-x: auto; }
 }

@@ -1,4 +1,55 @@
-.hospital-page { display: grid; gap: var(--space-5); }
+.hospital-page {
+  --hospital-anchor-offset: 5.25rem;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-5);
+}
+.hospital-page #hospital-list,
+.hospital-page #hospital-detail {
+  scroll-margin-top: var(--hospital-anchor-offset);
+}
+.hospital-detail {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-4);
+  outline: none;
+}
+.hospital-page > *,
+.hospital-detail > * { min-width: 0; }
+
+@media (max-width: 760px) {
+  .hospital-page { --hospital-anchor-offset: 9.25rem; }
+}
+
+.hospital-history {
+  border: var(--border-subtle);
+  border-radius: var(--radius-xl);
+  background: var(--color-surface-translucent);
+  box-shadow: var(--shadow-panel);
+  overflow: clip;
+}
+.hospital-history > button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border: 0;
+  color: var(--color-heading);
+  text-align: left;
+  background: transparent;
+  cursor: pointer;
+}
+.hospital-history > button > span:first-child { display: grid; gap: var(--space-1); }
+.hospital-history > button small { color: var(--color-accent-strong); font-size: var(--font-size-xs); font-weight: 700; letter-spacing: .08em; }
+.hospital-history > button strong { font: 700 var(--font-size-md) var(--font-heading); }
+.hospital-history > button > span:last-child { font-size: var(--font-size-lg); }
+.diagnostics-period { color: var(--color-text-muted); font-size: var(--font-size-xs); font-weight: 400; }
+.hospital-history-content { padding: 0 var(--space-4) var(--space-4); }
+.hospital-history .hospital-panel { border: 0; border-top: var(--border-subtle); border-radius: 0; box-shadow: none; }
 
 .hospital-controls,
 .hospital-panel {
@@ -64,23 +115,11 @@
 
 .specialty-summary-heading h3 { margin: 0; }
 .specialty-summary-heading p:not(.section-kicker) { margin: var(--space-2) 0 0; }
-
-.specialty-summary-selector {
-  display: grid;
-  flex: 0 1 16rem;
-  gap: var(--space-1);
+.specialty-summary-heading > small {
   color: var(--color-text-muted);
   font-size: var(--font-size-xs);
   font-weight: 700;
-}
-
-.specialty-summary-selector select {
-  min-width: 12rem;
-  padding: .6rem .7rem;
-  color: var(--color-text);
-  border: var(--border-strong);
-  border-radius: var(--radius-sm);
-  background: var(--color-surface);
+  text-align: right;
 }
 
 .specialty-summary-grid {
@@ -211,7 +250,7 @@
   .hospital-panel .block-heading { display: block; }
   .hospital-panel .block-heading > strong { display: inline-block; margin-top: var(--space-3); }
   .specialty-summary-heading { display: block; }
-  .specialty-summary-selector { margin-top: var(--space-3); max-width: none; }
+  .specialty-summary-heading > small { display: block; margin-top: var(--space-2); text-align: left; }
   .specialty-summary-grid { grid-template-columns: 1fr; }
   .hospital-table-wrap { overflow-x: visible; }
   .hospital-table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
@@ -250,15 +289,42 @@
 .hospital-series-table td:nth-child(6) { width: 14%; }
 .hospital-series-table td:nth-child(7) { width: 14%; }
 
-/* Sete colunas desde que a participação na região entrou entre o volume e a
-   mortalidade: a leitura é volume → concentração → o resto. */
-.hospital-specialty-table td:nth-child(1) { width: 22%; }
-.hospital-specialty-table td:nth-child(2) { width: 15%; }
-.hospital-specialty-table td:nth-child(3) { width: 16%; }
-.hospital-specialty-table td:nth-child(4) { width: 12%; }
-.hospital-specialty-table td:nth-child(5) { width: 12%; }
-.hospital-specialty-table td:nth-child(6) { width: 12%; }
-.hospital-specialty-table td:nth-child(7) { width: 11%; }
+/* A tabela principal responde só às quatro perguntas da jornada; indicadores
+   técnicos continuam disponíveis no detalhe e na metodologia. */
+.hospital-specialty-table td:nth-child(1) { width: 28%; }
+.hospital-specialty-table td:nth-child(2) { width: 16%; }
+.hospital-specialty-table td:nth-child(3) { width: 24%; }
+.hospital-specialty-table td:nth-child(4) { width: 32%; }
+.hospital-specialty-table tr.specialty-selected { background: var(--color-accent-soft); }
+.hospital-specialty-table tbody tr { cursor: pointer; }
+.specialty-select {
+  display: grid;
+  gap: var(--space-1);
+  width: 100%;
+  padding: 0;
+  color: inherit;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.specialty-select small { font-weight: 400; }
+.specialty-share-track {
+  display: block;
+  width: min(10rem, 100%);
+  height: .4rem;
+  margin-top: var(--space-2);
+  overflow: hidden;
+  border-radius: var(--radius-pill);
+  background: var(--color-border);
+}
+.specialty-share-track > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--color-accent-strong);
+}
 
 .cid-reference {
   display: flex;
@@ -342,11 +408,26 @@
   justify-content: flex-end;
   gap: var(--space-2) var(--space-3);
 }
-.hospital-inline-search { display: inline-flex; align-items: center; gap: var(--space-2); }
-.hospital-inline-search span { color: var(--color-text-muted); font-size: var(--font-size-xs); }
-.hospital-inline-search input { min-width: 12rem; }
+.hospital-inline-search { display: grid; gap: var(--space-1); }
+.hospital-inline-search > label { color: var(--color-text-muted); font-size: var(--font-size-xs); font-weight: 700; }
+.hospital-inline-search > div { display: flex; align-items: center; gap: var(--space-2); }
+.hospital-inline-search input { min-width: 13rem; }
+.hospital-inline-search button {
+  padding: .4rem .65rem;
+  border: var(--border-strong);
+  border-radius: var(--radius-pill);
+  color: var(--color-accent-strong);
+  background: var(--color-surface);
+  cursor: pointer;
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+}
 
 @media (max-width: 60rem) {
-  .hospital-table-wrap { max-height: none; overflow: visible; }
+  .hospital-table-wrap { max-height: none; overflow-x: auto; overflow-y: visible; }
   .hospital-table thead th { position: static; }
+}
+
+@media (max-width: 680px) {
+  .hospital-table { min-width: 0; }
 }

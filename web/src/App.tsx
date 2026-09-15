@@ -1,6 +1,7 @@
 import { Link, Navigate, NavLink, Route, Routes, useLocation } from 'react-router-dom'
 import { SourceProvider } from './shared/SourceContext'
-import AnalisePage, { ANCHOR_REQUEST_EVENT } from './features/analise/AnalisePage'
+import AnalisePage from './features/analise/AnalisePage'
+import { requestAnalysisAnchor } from './shared/analysisNavigation'
 import AssistantWidget from './features/assistant/AssistantWidget'
 import MetodologiaView from './features/metodologia/MetodologiaView'
 import { useActiveSection } from './shared/useActiveSection'
@@ -83,9 +84,7 @@ function Shell() {
                 onClick={(event) => {
                   if (onAnalysis && location.hash === `#${section.id}`) {
                     event.preventDefault()
-                    window.dispatchEvent(
-                      new CustomEvent<string>(ANCHOR_REQUEST_EVENT, { detail: section.id }),
-                    )
+                    requestAnalysisAnchor(section.id)
                   }
                 }}
                 className={onAnalysis && activeSection === section.id ? 'active' : undefined}

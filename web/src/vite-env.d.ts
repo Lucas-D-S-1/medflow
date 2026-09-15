@@ -7,6 +7,8 @@ interface ImportMetaEnv {
    * Ver `src/lib/api/base.ts`.
    */
   readonly VITE_API_BASE?: string
+  /** Preview local reproduzível, explicitamente rotulado como snapshot. */
+  readonly VITE_SNAPSHOT_PREVIEW?: string
 }
 
 interface ImportMeta {

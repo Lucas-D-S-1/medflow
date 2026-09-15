@@ -13,13 +13,14 @@ import {
 } from './pares'
 import PositionBar from '../../shared/PositionBar'
 import StatePanel from '../../shared/StatePanel'
-import { formatCurrency, formatDecimal, formatInteger, formatPercent } from '../../shared/format'
+import { formatCurrency, formatDecimal, formatInteger, formatPercent, formatPeriod } from '../../shared/format'
 import './HospitalPeers.css'
 
 const LABELS: Record<MetricId, { label: string; format: (value: number) => string }> = {
   iph: { label: 'Pressão sobre leitos (IPH)', format: formatPercent },
-  tmh: { label: 'Mortalidade observada (TMH)', format: formatPercent },
   stay: { label: 'Permanência média', format: (value) => `${formatDecimal(value)} dias` },
+  admissions: { label: 'Internações novas', format: formatInteger },
+  tmh: { label: 'Mortalidade observada (TMH)', format: formatPercent },
   cmi: { label: 'Valor médio aprovado pelo SUS (CMI real)', format: formatCurrency },
   ipe: {
     label: 'Permanência ante os pares (IPE)',
@@ -27,12 +28,18 @@ const LABELS: Record<MetricId, { label: string; format: (value: number) => strin
   },
 }
 
+const PRIMARY_METRICS: MetricId[] = ['iph', 'stay', 'admissions']
+const SECONDARY_METRICS: MetricId[] = ['tmh', 'cmi', 'ipe']
+
 type HospitalPeersProps = {
   hospital: HospitalItem
+  competence: string
   regionName: string
   regionHospitals: HospitalItem[]
   statewide: PeerHospital[] | null
   statewideFailed: boolean
+  snapshotLimited: boolean
+  onChangeHospital: () => void
 }
 
 /**
@@ -44,10 +51,13 @@ type HospitalPeersProps = {
  */
 export default function HospitalPeers({
   hospital,
+  competence,
   regionName,
   regionHospitals,
   statewide,
   statewideFailed,
+  snapshotLimited,
+  onChangeHospital,
 }: HospitalPeersProps) {
   const [modoPedido, setModoPedido] = useState<PeerMode>('regiao-porte')
 
@@ -87,7 +97,47 @@ export default function HospitalPeers({
     internacoesDaRegiao > 0 ? (hospital.new_admissions / internacoesDaRegiao) * 100 : null
 
   const rotation = iphMeasuresRotation(hospital)
-  const waiting = !statewide && !statewideFailed
+  const waiting = !statewide && !statewideFailed && !snapshotLimited
+
+  function metricRow(metric: MetricId) {
+    const value = METRICS[metric](hospital)
+    const values = peers.map((item) => METRICS[metric](item as HospitalItem))
+    const distribution = distributionOf(values)
+    const percentile = value === null ? null : percentileOf(values, value)
+
+    return (
+      <article key={metric} className="peer-metric">
+        <div className="peer-metric-head">
+          <h4>{LABELS[metric].label}</h4>
+          <strong data-testid={`peer-value-${metric}`}>
+            {value === null ? 'não calculado' : LABELS[metric].format(value)}
+          </strong>
+        </div>
+        {value !== null && distribution && percentile !== null ? (
+          <div className="peer-metric-comparison">
+            <PositionBar
+              value={value}
+              distribution={distribution}
+              percentile={percentile}
+              format={LABELS[metric].format}
+              peerLabel={group.label}
+              testId={`peer-bar-${metric}`}
+              showLegend={false}
+            />
+            <span>
+              Mediana dos pares <strong>{LABELS[metric].format(distribution.median)}</strong>
+            </span>
+          </div>
+        ) : (
+          <p className="peer-insufficient" data-testid={`peer-insufficient-${metric}`}>
+            {value === null
+              ? 'Sem valor publicado para comparar.'
+              : `Menos de ${MIN_PEERS} pares com valor calculado em ${group.label}.`}
+          </p>
+        )}
+      </article>
+    )
+  }
 
   return (
     <section className="hospital-peers" aria-labelledby="hospital-peers-title">
@@ -97,7 +147,7 @@ export default function HospitalPeers({
           <h3 id="hospital-peers-title">{hospital.hospital_name}</h3>
           <p>
             {hospital.unit_type_name} · {formatInteger(hospital.sus_beds)} leitos SUS ·{' '}
-            {formatInteger(hospital.new_admissions)} internações
+            {formatInteger(hospital.new_admissions)} internações · {formatPeriod(competence)}
             {participacao !== null && (
               <>
                 {' · '}
@@ -108,34 +158,39 @@ export default function HospitalPeers({
             )}
           </p>
         </div>
-        <div className="peer-mode" role="radiogroup" aria-label="Alcance da comparação">
-          {(['regiao-porte', 'porte'] as PeerMode[]).map((candidate) => (
-            <button
-              key={candidate}
-              type="button"
-              role="radio"
-              aria-checked={modoPedido === candidate}
-              onClick={() => setModoPedido(candidate)}
-              data-testid={`peer-mode-${candidate}`}
-            >
-              {candidate === 'regiao-porte' ? 'Na região' : 'No estado'}
-            </button>
-          ))}
+        <div className="peer-actions">
+          <button type="button" className="peer-change" onClick={onChangeHospital}>
+            Trocar hospital
+          </button>
+          <div className="peer-mode" role="radiogroup" aria-label="Alcance da comparação">
+            {(['regiao-porte', 'porte'] as PeerMode[]).map((candidate) => (
+              <button
+                key={candidate}
+                type="button"
+                role="radio"
+                aria-checked={modoPedido === candidate}
+                disabled={snapshotLimited}
+                onClick={() => setModoPedido(candidate)}
+                data-testid={`peer-mode-${candidate}`}
+              >
+                {candidate === 'regiao-porte' ? 'Na região' : 'No estado'}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
       {/* O porte é a régua, e ela fica escrita: sem saber com quem o número
           está sendo comparado, a posição na faixa não quer dizer nada. */}
-      <p className="peer-criterio" data-testid="peer-criterio">
-        Comparando com <strong>{formatInteger(peers.length)}</strong>{' '}
-        {peers.length === 1 ? 'hospital' : 'hospitais'} na faixa de{' '}
-        <strong>{group.porte}</strong>
-        {mode === 'regiao-porte' ? `, em ${regionName}` : ', no estado'}. O porte entra
-        no critério porque é ele que torna os números comparáveis; o próprio
-        hospital fica de fora do grupo.
-      </p>
+      {!waiting && !statewideFailed && !snapshotLimited && (
+        <p className="peer-criterio" data-testid="peer-criterio">
+          <strong>{formatInteger(peers.length)}</strong>{' '}
+          {peers.length === 1 ? 'hospital' : 'hospitais'} de <strong>{group.porte}</strong>
+          {mode === 'regiao-porte' ? `, em ${regionName}` : ', no estado'}; unidade selecionada excluída.
+        </p>
+      )}
 
-      {rebaixado && (
+      {rebaixado && !snapshotLimited && (
         <p className="peer-caveat" data-testid="peer-rebaixado">
           Em {regionName} não há {MIN_PEERS} hospitais na faixa de {group.porte} para
           comparar, então a régua subiu para o estado, no mesmo porte.
@@ -147,8 +202,8 @@ export default function HospitalPeers({
           Este estabelecimento tem permanência média abaixo de um dia. O IPH divide
           pacientes-dia por leitos-dia declarados, e a reconstrução atribui ao menos um
           dia por internação — aqui ele mede <strong>giro sobre capacidade</strong>, não
-          ocupação. Comparar com unidades do mesmo tipo mantém a comparação justa; não
-          transforma o número em taxa de ocupação.
+          ocupação. O mesmo porte melhora a comparabilidade, mas não transforma o
+          número em taxa de ocupação.
         </p>
       )}
 
@@ -161,52 +216,38 @@ export default function HospitalPeers({
       {statewideFailed && (
         <StatePanel kind="error" title="Grupo de pares indisponível" testId="peer-error">
           Não foi possível carregar a lista de hospitais agora, então não há com quem
-          comparar. Os indicadores do hospital continuam nas seções acima.
+          comparar. Os indicadores do hospital continuam disponíveis.
         </StatePanel>
       )}
 
-      {!waiting && !statewideFailed && (
-        <div className="peer-metrics">
-          {(Object.keys(LABELS) as MetricId[]).map((metric) => {
-            const value = METRICS[metric](hospital)
-            // O próprio hospital sai do grupo: comparar alguém consigo mesmo
-            // puxa a mediana na direção dele. É a mesma regra que o IPR já
-            // aplica ao excluir o hospital do benchmark regional.
-            const values = peers.map((item) => METRICS[metric](item as HospitalItem))
-            const distribution = distributionOf(values)
-            const percentile = value === null ? null : percentileOf(values, value)
-
-            return (
-              <article key={metric} className="peer-metric">
-                <div className="peer-metric-head">
-                  <h4>{LABELS[metric].label}</h4>
-                  <strong data-testid={`peer-value-${metric}`}>
-                    {value === null ? 'não calculado' : LABELS[metric].format(value)}
-                  </strong>
-                </div>
-                {value !== null && distribution && percentile !== null ? (
-                  <PositionBar
-                    value={value}
-                    distribution={distribution}
-                    percentile={percentile}
-                    format={LABELS[metric].format}
-                    peerLabel={group.label}
-                    testId={`peer-bar-${metric}`}
-                  />
-                ) : (
-                  <p className="peer-insufficient" data-testid={`peer-insufficient-${metric}`}>
-                    {value === null
-                      ? 'Sem valor publicado para comparar.'
-                      : `Menos de ${MIN_PEERS} pares com valor calculado em ${group.label}.`}
-                  </p>
-                )}
-              </article>
-            )
-          })}
-        </div>
+      {snapshotLimited && (
+        <StatePanel kind="empty" title="Pares estaduais fora do snapshot" testId="peer-snapshot-limited">
+          A contingência contém os hospitais de Jundiaí, mas não a lista estadual
+          completa exigida por este grupo de porte. Por isso a comparação com pares
+          não é declarada neste preview.
+        </StatePanel>
       )}
 
-      {!waiting && !statewideFailed && peers.length > 0 && (
+      {!waiting && !statewideFailed && !snapshotLimited && (
+        <>
+          <p className="peer-legend">
+            <span><i className="peer-marker" aria-hidden="true" /> este hospital</span>
+            <span><i className="peer-range" aria-hidden="true" /> metade central dos pares (P25–P75)</span>
+            <span>traço: mediana · comparação descritiva, sem ajuste de risco</span>
+          </p>
+          <div className="peer-metrics">
+            {PRIMARY_METRICS.map(metricRow)}
+          </div>
+          <details className="peer-more" data-testid="peer-more">
+            <summary>Mais indicadores</summary>
+            <div className="peer-metrics secondary">
+              {SECONDARY_METRICS.map(metricRow)}
+            </div>
+          </details>
+        </>
+      )}
+
+      {!waiting && !statewideFailed && !snapshotLimited && peers.length > 0 && (
         <details className="peer-lista" data-testid="peer-lista">
           <summary>Quem são os {formatInteger(peers.length)} pares</summary>
           {/* Sem os nomes, a faixa é um número sobre um grupo invisível. Com

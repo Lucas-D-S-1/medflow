@@ -31,12 +31,13 @@ export type PeerMode = 'regiao-porte' | 'porte'
 /** O IPR já usa três como piso de comparação; a extensão herda o mesmo corte. */
 export const MIN_PEERS = 3
 
-export type MetricId = 'iph' | 'tmh' | 'stay' | 'cmi' | 'ipe'
+export type MetricId = 'iph' | 'stay' | 'admissions' | 'tmh' | 'cmi' | 'ipe'
 
 export const METRICS: Record<MetricId, (item: HospitalItem) => number | null> = {
   iph: (item) => item.iph_percent,
-  tmh: (item) => item.tmh_percent,
   stay: (item) => item.average_stay_days,
+  admissions: (item) => item.new_admissions,
+  tmh: (item) => item.tmh_percent,
   cmi: (item) => item.cmi_real,
   // O IPE já compara com pares por construção, mas contra os pares da região
   // na mesma especialidade. Aqui a faixa mostra outra coisa: como essa

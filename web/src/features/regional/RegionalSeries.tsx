@@ -4,14 +4,17 @@ import type {
   RegionalSeriesResponse,
 } from './regioesSerie'
 import {
-  formatCurrency,
-  formatDecimal,
+  regionalInsight,
+  regionalMetricValue,
+  regionalSeriesWindow,
+  type RegionalInsightMetric,
+} from './regionalInsights'
+import {
   formatInteger,
   formatPercent,
   formatPeriod,
+  formatPeriodLong,
 } from '../../shared/format'
-
-type IndicatorId = 'iph' | 'admissions' | 'tmh' | 'cmi' | 'ipe' | 'seasonality'
 
 type IndicatorConfig = {
   label: string
@@ -21,74 +24,31 @@ type IndicatorConfig = {
   note: string
 }
 
-const INDICATORS: Record<IndicatorId, IndicatorConfig> = {
+const INDICATORS: Record<RegionalInsightMetric, IndicatorConfig> = {
   iph: {
     label: 'IPH estimado',
-    value: (item) => item.iph_percent,
+    value: (item) => regionalMetricValue(item, 'iph'),
     format: formatPercent,
     detail: (item) =>
       `${formatInteger(item.estimated_patient_days)} pacientes-dia / ${formatInteger(item.declared_capacity_bed_days)} leitos-dia declarados`,
-    note: 'Pressão estimada sobre capacidade SUS declarada; não representa ocupação física real.',
+    note: 'Estimativa de pressão sobre a capacidade SUS declarada; não representa ocupação física real.',
   },
   admissions: {
     label: 'Internações novas',
-    value: (item) => item.new_admissions,
+    value: (item) => regionalMetricValue(item, 'admissions'),
     format: formatInteger,
     detail: (item) =>
       `${formatInteger(item.hospitals_with_admissions)} hospitais com produção`,
-    note: 'Amostra mensal de internações novas.',
-  },
-  tmh: {
-    label: 'TMH observado',
-    value: (item) => item.tmh_percent,
-    format: formatPercent,
-    detail: (item) =>
-      `${formatInteger(item.deaths)} óbitos · ${formatInteger(item.new_admissions)} internações`,
-    note: 'Mortalidade observada sem ajuste de risco; não mede causalmente qualidade.',
-  },
-  cmi: {
-    label: 'Valor médio aprovado pelo SUS (CMI nominal)',
-    value: (item) => item.cmi_nominal,
-    format: formatCurrency,
-    detail: (item) => `${formatInteger(item.new_admissions)} internações novas`,
-    note: 'Valor SIH aprovado médio nominal; não representa o gasto total do atendimento.',
-  },
-  ipe: {
-    label: 'Ante os pares (IPE)',
-    value: (item) => item.ipe_median,
-    format: formatDecimal,
-    detail: (item) =>
-      item.ipe_eligible_pairs === 0
-        ? 'Nenhuma comparação elegível nesta competência'
-        : `${formatInteger(item.ipe_above_reference)} de ${formatInteger(item.ipe_eligible_pairs)} comparações hospital-especialidade acima dos pares`,
-    note: 'Mediana da permanência ante os pares na mesma especialidade; não é nota de qualidade e não há ajuste de risco.',
-  },
-  seasonality: {
-    label: 'Índice sazonal',
-    value: (item) => item.seasonality_index,
-    format: formatDecimal,
-    // Quando não é calculado, o motivo importa: fora do período-alvo é regra
-    // do contrato, histórico insuficiente é falta de base. Dizer só "não
-    // calculado" trata os dois como a mesma coisa. A explicação vivia no
-    // quadro da região selecionada, que saiu por ser repetição; ela não podia
-    // sair junto.
-    detail: (item) =>
-      item.seasonality_status === 'calculado'
-        ? `${formatInteger(item.historical_years)} anos comparáveis · média histórica ${formatDecimal(item.historical_admissions_average)}`
-        : item.seasonality_status === 'fora_periodo_alvo'
-          ? 'Competência fora do período-alvo definido para sazonalidade'
-          : `Histórico insuficiente: ${formatInteger(item.historical_years)} ${item.historical_years === 1 ? 'ano comparável' : 'anos comparáveis'}`,
-    note: 'Comparação com a média do mesmo mês histórico; não é previsão definitiva.',
+    note: 'Volume mensal publicado; variações não indicam melhora ou piora por si sós.',
   },
 }
 
-const INDICATOR_IDS = Object.keys(INDICATORS) as IndicatorId[]
-const TABLE_PREVIEW_SIZE = 6
+const INDICATOR_IDS = Object.keys(INDICATORS) as RegionalInsightMetric[]
 const CHART_WIDTH = 760
 const CHART_HEIGHT = 250
 const CHART_LEFT = 58
 const CHART_RIGHT = 22
-const CHART_TOP = 22
+const CHART_TOP = 30
 const CHART_BOTTOM = 44
 
 function chartPath(values: Array<number | null>, minimum: number, maximum: number) {
@@ -107,6 +67,15 @@ function chartPath(values: Array<number | null>, minimum: number, maximum: numbe
     .join(' ')
 }
 
+function formatDifference(metric: RegionalInsightMetric, value: number) {
+  const formatted = Math.abs(value).toLocaleString('pt-BR', {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  })
+  const sign = Math.abs(value) < 0.05 ? '' : value > 0 ? '+' : '−'
+  return `${sign}${Math.abs(value) < 0.05 ? '0,0' : formatted}${metric === 'iph' ? ' p.p.' : '%'}`
+}
+
 export default function RegionalSeries({
   data,
   selectedCompetence,
@@ -114,52 +83,67 @@ export default function RegionalSeries({
   data: RegionalSeriesResponse
   selectedCompetence: string
 }) {
-  const [indicatorId, setIndicatorId] = useState<IndicatorId>('iph')
-  const [showAllRows, setShowAllRows] = useState(false)
+  const [indicatorId, setIndicatorId] = useState<RegionalInsightMetric>('iph')
+  const [showAllHistory, setShowAllHistory] = useState(false)
   const [tooltipCompetence, setTooltipCompetence] = useState<string | null>(null)
   const tooltipCloseTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const indicator = INDICATORS[indicatorId]
-  const chronologicalItems = useMemo(
-    () => [...data.items].sort((left, right) => left.competence.localeCompare(right.competence)),
-    [data.items],
+  const insight = useMemo(
+    () => regionalInsight(data.items, selectedCompetence, indicatorId),
+    [data.items, indicatorId, selectedCompetence],
   )
-  const selectedItem =
-    chronologicalItems.find((item) => item.competence === selectedCompetence) ??
-    chronologicalItems.at(-1) ??
-    null
-  const values = chronologicalItems.map(indicator.value)
-  const numericValues = values.filter((value): value is number => value !== null)
+  const slots = useMemo(
+    () => regionalSeriesWindow(data.items, selectedCompetence, showAllHistory),
+    [data.items, selectedCompetence, showAllHistory],
+  )
+  const values = slots.map(({ item }) => (item ? indicator.value(item) : null))
+  const baseline = insight.historicalComparison?.reference ?? null
+  const numericValues = [
+    ...values.filter((value): value is number => value !== null),
+    ...(baseline === null ? [] : [baseline]),
+  ]
   const minimum = numericValues.length ? Math.min(...numericValues) : 0
   const maximum = numericValues.length ? Math.max(...numericValues) : 0
+  const range = maximum - minimum || 1
   const path = chartPath(values, minimum, maximum)
-  const chartPoints = chronologicalItems
-    .map((item, index) => {
+  const chartPoints = slots
+    .map(({ competence, item }, index) => {
       const value = values[index]
-      if (value === null) return null
-      const range = maximum - minimum || 1
+      if (!item || value === null) return null
       const x = CHART_LEFT +
         (index / Math.max(values.length - 1, 1)) *
         (CHART_WIDTH - CHART_LEFT - CHART_RIGHT)
       const y = CHART_TOP +
         (1 - (value - minimum) / range) *
         (CHART_HEIGHT - CHART_TOP - CHART_BOTTOM)
-      return { item, value, x, y }
+      return { competence, item, value, x, y }
     })
     .filter((point): point is {
+      competence: string
       item: RegionalSeriesItem
       value: number
       x: number
       y: number
     } => point !== null)
+  const baselineY = baseline === null
+    ? null
+    : CHART_TOP +
+      (1 - (baseline - minimum) / range) *
+      (CHART_HEIGHT - CHART_TOP - CHART_BOTTOM)
   const tooltipPoint = chartPoints.find(
-    (point) => point.item.competence === tooltipCompetence,
+    (point) => point.competence === tooltipCompetence,
   )
-  const descendingItems = [...chronologicalItems].reverse()
-  const tableItems = showAllRows
-    ? descendingItems
-    : descendingItems.slice(0, TABLE_PREVIEW_SIZE)
-  const firstCompetence = chronologicalItems[0]?.competence
-  const lastCompetence = chronologicalItems.at(-1)?.competence
+  const firstCompetence = slots[0]?.competence
+  const lastCompetence = slots.at(-1)?.competence
+  const selectedMonth = formatPeriodLong(selectedCompetence).split('/')[0]
+  const historicalLabel = insight.historicalComparison
+    ? `Média de ${selectedMonth} nos ${insight.historicalComparison.years} anos anteriores`
+    : null
+
+  useEffect(() => {
+    setShowAllHistory(false)
+    setTooltipCompetence(null)
+  }, [data.region.region_code, selectedCompetence])
 
   useEffect(() => () => {
     if (tooltipCloseTimer.current !== null) clearTimeout(tooltipCloseTimer.current)
@@ -191,17 +175,20 @@ export default function RegionalSeries({
 
   return (
     <section className="regional-series-panel" aria-labelledby="regional-series-title">
-      <div className="block-heading">
+      <div className="block-heading regional-series-heading">
         <div>
-          <p className="section-kicker">EVOLUÇÃO MENSAL</p>
-          <h3 id="regional-series-title">Série de {data.region.region_name}</h3>
-          <p>
-            {formatInteger(data.pagination.count)} competências · ordem cronológica explícita na visualização
-          </p>
+          <p className="section-kicker">EVOLUÇÃO</p>
+          <h3 id="regional-series-title">Evolução regional</h3>
+          <p>{data.region.region_name} · {formatPeriod(selectedCompetence)}</p>
         </div>
+        <small>
+          {indicatorId === 'iph'
+            ? 'Estimativa mensal · histórico publicado'
+            : 'Produção mensal · histórico publicado'}
+        </small>
       </div>
 
-      <div className="series-indicator-selector" role="radiogroup" aria-label="Indicador da série">
+      <div className="series-indicator-selector" role="radiogroup" aria-label="Indicador da evolução regional">
         {INDICATOR_IDS.map((id) => (
           <button
             key={id}
@@ -215,19 +202,64 @@ export default function RegionalSeries({
         ))}
       </div>
 
-      {selectedItem && (
-        <div className="series-current-value" data-testid="regional-series-current">
-          <span>{formatPeriod(selectedItem.competence)} · {indicator.label}</span>
+      <div className="series-insights" aria-live="polite">
+        <article data-testid="regional-series-current">
+          <span>{indicator.label} atual</span>
           <strong>
-            {indicator.value(selectedItem) === null
-              ? 'não calculado'
-              : indicator.format(indicator.value(selectedItem)!)}
+            {insight.current === null ? 'indisponível' : indicator.format(insight.current)}
           </strong>
-          <small>{indicator.detail(selectedItem)}</small>
-        </div>
-      )}
+          <small>{formatPeriod(selectedCompetence)}</small>
+        </article>
+        <article data-testid="regional-series-previous">
+          <span>Mês anterior</span>
+          <strong>
+            {insight.previousComparison
+              ? formatDifference(indicatorId, insight.previousComparison.difference)
+              : 'indisponível'}
+          </strong>
+          <small>
+            {insight.previousComparison
+              ? `vs. ${formatPeriod(insight.previousComparison.referenceCompetence!)} · referência ${indicator.format(insight.previousComparison.reference)}`
+              : 'Mês-calendário sem base válida'}
+          </small>
+        </article>
+        <article data-testid="regional-series-historical">
+          <span>Mesmo mês em anos anteriores</span>
+          <strong>
+            {insight.historicalComparison
+              ? formatDifference(indicatorId, insight.historicalComparison.difference)
+              : 'indisponível'}
+          </strong>
+          <small>
+            {insight.historicalComparison
+              ? `${historicalLabel}: ${indicator.format(insight.historicalComparison.reference)}`
+              : insight.historicalReason === 'fora-periodo-alvo'
+                ? 'Fora do período-alvo da sazonalidade publicada'
+                : insight.historicalReason === 'referencia-zero'
+                  ? 'Referência publicada igual a zero; variação não calculada'
+                  : indicatorId === 'iph'
+                    ? 'São necessários ao menos 2 anos comparáveis para IPH'
+                    : 'Histórico publicado insuficiente'}
+          </small>
+        </article>
+      </div>
 
-      {numericValues.length > 0 ? (
+      <p className="series-summary" data-testid="regional-series-summary">
+        {insight.summary}
+      </p>
+
+      <div className="series-window-control">
+        <span>
+          {showAllHistory ? 'Todo o histórico até a competência' : 'Últimos 12 meses até a competência'}
+        </span>
+        {(showAllHistory || data.items.some((item) => item.competence < (slots[0]?.competence ?? selectedCompetence))) && (
+          <button type="button" onClick={() => setShowAllHistory((current) => !current)}>
+            {showAllHistory ? 'Ver 12 meses' : 'Todo o histórico'}
+          </button>
+        )}
+      </div>
+
+      {numericValues.length > 0 && firstCompetence && lastCompetence ? (
         <div className="series-chart" data-testid="regional-series-chart">
           <div className="series-chart-canvas">
             <svg
@@ -236,25 +268,35 @@ export default function RegionalSeries({
             >
               <title id="regional-series-chart-title">{indicator.label} ao longo do tempo</title>
               <desc id="regional-series-chart-description">
-                Série de {formatPeriod(firstCompetence!)} a {formatPeriod(lastCompetence!)}; mínimo {indicator.format(minimum)} e máximo {indicator.format(maximum)}. Passe o cursor ou use Tab nos pontos para consultar cada mês.
+                Série de {formatPeriod(firstCompetence)} a {formatPeriod(lastCompetence)}; meses não publicados aparecem como lacunas. Mínimo {indicator.format(minimum)} e máximo {indicator.format(maximum)}.
+                {historicalLabel && baseline !== null ? ` Linha pontilhada: ${historicalLabel}, ${indicator.format(baseline)}.` : ''}
               </desc>
               <line className="series-grid-line" x1={CHART_LEFT} x2={CHART_WIDTH - CHART_RIGHT} y1={CHART_TOP} y2={CHART_TOP} />
               <line className="series-grid-line" x1={CHART_LEFT} x2={CHART_WIDTH - CHART_RIGHT} y1={CHART_HEIGHT - CHART_BOTTOM} y2={CHART_HEIGHT - CHART_BOTTOM} />
+              {baselineY !== null && (
+                <line
+                  className="series-baseline"
+                  x1={CHART_LEFT}
+                  x2={CHART_WIDTH - CHART_RIGHT}
+                  y1={baselineY}
+                  y2={baselineY}
+                />
+              )}
               <text className="series-axis-label" x={CHART_LEFT - 8} y={CHART_TOP + 4} textAnchor="end">{indicator.format(maximum)}</text>
               <text className="series-axis-label" x={CHART_LEFT - 8} y={CHART_HEIGHT - CHART_BOTTOM + 4} textAnchor="end">{indicator.format(minimum)}</text>
               <path className="series-line" d={path} />
-              {chartPoints.map(({ item, value, x, y }) => (
+              {chartPoints.map(({ competence, item, value, x, y }) => (
                 <g
-                  key={item.competence}
+                  key={competence}
                   className="series-data-point"
-                  data-testid={`regional-series-point-${item.competence}`}
+                  data-testid={`regional-series-point-${competence}`}
                   role="img"
                   tabIndex={0}
-                  aria-label={`${formatPeriod(item.competence)} · ${indicator.label}: ${indicator.format(value)}. ${indicator.detail(item)}`}
-                  aria-describedby={tooltipCompetence === item.competence ? 'regional-series-tooltip' : undefined}
-                  onMouseEnter={() => showTooltip(item.competence)}
+                  aria-label={`${formatPeriod(competence)} · ${indicator.label}: ${indicator.format(value)}. ${indicator.detail(item)}`}
+                  aria-describedby={tooltipCompetence === competence ? 'regional-series-tooltip' : undefined}
+                  onMouseEnter={() => showTooltip(competence)}
                   onMouseLeave={scheduleTooltipClose}
-                  onFocus={() => showTooltip(item.competence)}
+                  onFocus={() => showTooltip(competence)}
                   onBlur={scheduleTooltipClose}
                   onKeyDown={(event) => {
                     if (event.key === 'Escape') hideTooltip()
@@ -262,15 +304,15 @@ export default function RegionalSeries({
                 >
                   <circle className="series-point-hit" cx={x} cy={y} r={13} />
                   <circle
-                    className={item.competence === selectedItem?.competence ? 'series-point selected' : 'series-point'}
+                    className={competence === selectedCompetence ? 'series-point selected' : 'series-point'}
                     cx={x}
                     cy={y}
-                    r={item.competence === selectedItem?.competence ? 6 : 3.5}
+                    r={competence === selectedCompetence ? 6 : 3.5}
                   />
                 </g>
               ))}
-              <text className="series-axis-label" x={CHART_LEFT} y={CHART_HEIGHT - 12}>{formatPeriod(firstCompetence!)}</text>
-              <text className="series-axis-label" x={CHART_WIDTH - CHART_RIGHT} y={CHART_HEIGHT - 12} textAnchor="end">{formatPeriod(lastCompetence!)}</text>
+              <text className="series-axis-label" x={CHART_LEFT} y={CHART_HEIGHT - 12}>{formatPeriod(firstCompetence)}</text>
+              <text className="series-axis-label" x={CHART_WIDTH - CHART_RIGHT} y={CHART_HEIGHT - 12} textAnchor="end">{formatPeriod(lastCompetence)}</text>
             </svg>
             {tooltipPoint && (
               <div
@@ -289,21 +331,26 @@ export default function RegionalSeries({
                 onMouseLeave={hideTooltip}
                 data-testid="regional-series-tooltip"
               >
-                <span>{formatPeriod(tooltipPoint.item.competence)} · {indicator.label}</span>
+                <span>{formatPeriod(tooltipPoint.competence)} · {indicator.label}</span>
                 <strong>{indicator.format(tooltipPoint.value)}</strong>
                 <small>{indicator.detail(tooltipPoint.item)}</small>
               </div>
             )}
           </div>
+          {historicalLabel && baseline !== null && (
+            <p className="series-baseline-label">
+              <span aria-hidden="true" /> {historicalLabel}: {indicator.format(baseline)}
+            </p>
+          )}
           <p>{indicator.note}</p>
         </div>
       ) : (
-        <p className="series-no-values">O indicador não foi calculado em nenhuma competência deste recorte.</p>
+        <p className="series-no-values">Não há valores publicados nesta janela.</p>
       )}
 
       <details className="series-values-details">
         <summary>
-          Valores, amostras e denominadores ({formatInteger(tableItems.length)} de {formatInteger(descendingItems.length)})
+          Valores, amostras e denominadores ({formatInteger(slots.length)} meses)
         </summary>
         <div className="series-table-scroll">
           <table>
@@ -311,24 +358,19 @@ export default function RegionalSeries({
               <tr><th>Competência</th><th>{indicator.label}</th><th>Amostra ou denominador</th></tr>
             </thead>
             <tbody>
-              {tableItems.map((item) => {
-                const value = indicator.value(item)
+              {[...slots].reverse().map(({ competence, item }) => {
+                const value = item ? indicator.value(item) : null
                 return (
-                  <tr key={item.competence} className={item.competence === selectedItem?.competence ? 'selected' : undefined}>
-                    <th scope="row">{formatPeriod(item.competence)}</th>
-                    <td>{value === null ? 'não calculado' : indicator.format(value)}</td>
-                    <td>{indicator.detail(item)}</td>
+                  <tr key={competence} className={competence === selectedCompetence ? 'selected' : undefined}>
+                    <th scope="row">{formatPeriod(competence)}</th>
+                    <td>{value === null ? 'não publicado' : indicator.format(value)}</td>
+                    <td>{item ? indicator.detail(item) : 'Competência ausente na série publicada'}</td>
                   </tr>
                 )
               })}
             </tbody>
           </table>
         </div>
-        {descendingItems.length > TABLE_PREVIEW_SIZE && (
-          <button type="button" onClick={() => setShowAllRows((current) => !current)}>
-            {showAllRows ? 'Mostrar as 6 competências mais recentes' : `Ver todas as ${descendingItems.length} competências`}
-          </button>
-        )}
       </details>
     </section>
   )

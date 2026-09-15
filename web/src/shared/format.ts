@@ -3,6 +3,10 @@ const periodFormatter = new Intl.DateTimeFormat('pt-BR', {
   year: 'numeric',
   timeZone: 'UTC',
 })
+const monthFormatter = new Intl.DateTimeFormat('pt-BR', {
+  month: 'long',
+  timeZone: 'UTC',
+})
 const integerFormatter = new Intl.NumberFormat('pt-BR')
 const decimalFormatter = new Intl.NumberFormat('pt-BR', {
   minimumFractionDigits: 1,
@@ -20,6 +24,12 @@ const currencyFormatter = new Intl.NumberFormat('pt-BR', {
 
 export function formatPeriod(period: string) {
   return periodFormatter.format(new Date(`${period}-01T00:00:00Z`))
+}
+
+export function formatPeriodLong(period: string) {
+  if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(period)) return 'período indisponível'
+  const date = new Date(`${period}-01T00:00:00Z`)
+  return `${monthFormatter.format(date)}/${date.getUTCFullYear()}`
 }
 
 export function formatDatabaseTime(value: string) {

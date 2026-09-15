@@ -13,7 +13,6 @@ import {
   competenciaVisivel,
   escolherCompetencia,
   mockLiveSource,
-  paginacao,
   pt,
   regiaoDestacada,
   regionalSeriesSnapshot,
@@ -25,6 +24,7 @@ import {
 } from './apoio'
 
 test('renderiza a competência e a versão do contrato recebidas do Oracle', async ({ page }) => {
+  await mockLiveSource(page)
   await page.route('**/api/dev/v1/status', async (route) => {
     await route.fulfill({
       contentType: 'application/json',
@@ -62,13 +62,13 @@ test('renderiza a competência e a versão do contrato recebidas do Oracle', asy
   await expect(page.getByTestId('source-badge')).toHaveCount(0)
   await expect(page.getByTestId('data-through')).toHaveCount(0)
   await expect(page.getByTestId('contract-version')).toHaveCount(0)
-  await expect(page.getByTestId('regional-context-note')).toContainText(snapshotCompetenciaBR)
-  await expect(page.getByTestId('regional-count')).toHaveText('62 de 62 regiões')
+  await expect(page.getByText('CONTEXTO DA ANÁLISE')).toHaveCount(0)
+  await expect(page.getByTestId('global-search')).toHaveCount(0)
   await expect.poll(() => competenciaVisivel(page)).toBe(snapshotCompetencia)
   await expect(page.getByTestId('regional-map-svg')).toHaveCount(1)
   await expect(page.locator('.regional-map-shape')).toHaveCount(62)
   await expect(page.getByTestId('regional-selected-name')).toHaveText('JUNDIAI')
-  await expect(page.getByLabel('Rede Regional de Atenção à Saúde')).toContainText(
+  await expect(page.getByLabel('Rede regional')).toContainText(
     'Rede regional 16 — Bragança e Jundiaí',
   )
   // Os números da região selecionada moram no cartão do mapa. Eles também
@@ -114,6 +114,7 @@ test('renderiza a competência e a versão do contrato recebidas do Oracle', asy
   )
 })
 test('filtra a competência sem abandonar o mapa espacial e o tamanho da amostra', async ({ page }) => {
+  await mockLiveSource(page)
   await page.route('**/api/dev/v1/status', async (route) => {
     await route.fulfill({
       contentType: 'application/json',
@@ -166,7 +167,7 @@ test('filtra a competência sem abandonar o mapa espacial e o tamanho da amostra
   await escolherCompetencia(page, '2025-05')
 
   await expect.poll(() => requestedCompetence).toBe('2025-05')
-  await expect(page.getByTestId('regional-context-note')).toContainText('05/2025')
+  await expect.poll(() => competenciaVisivel(page)).toBe('2025-05')
   await expect(page.locator('.regional-map-shape')).toHaveCount(62)
   // A amostra da região continua visível no cartão do mapa, que é onde os
   // números da região selecionada passaram a viver.
@@ -211,7 +212,6 @@ test('expõe o mapa com percentis, seleção textual e uma única parada de tabu
   await page.goto('/regional?macrorregiao=3529&regiao=35102')
   // Navegar recomeça no placar de sinais, que é o padrão do mapa.
   await page.getByTestId('map-metric-iph').click()
-  await expect(page.getByTestId('regional-count')).toHaveText('4 de 62 regiões')
   await expect(page.getByTestId('regional-map-svg').locator('[role="button"]')).toHaveCount(4)
   await expect(page.getByTestId('regional-map-legend')).toContainText(
     `mínimo real ${pt(Math.min(...iphDaMacro3529), 1)}%`,
@@ -235,58 +235,78 @@ test('renderiza a série regional persistida com competência, amostra e denomin
 
   await page.goto(`/regional?competencia=${snapshotCompetencia}&regiao=35073`)
 
-  await expect(page.getByRole('heading', { name: 'Série de JUNDIAI' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Evolução regional' })).toBeVisible()
+  await expect(page.locator('.regional-series-panel')).toContainText('JUNDIAI')
   await expect(page.getByTestId('regional-series-chart')).toBeVisible()
-  await expect(page.getByTestId('regional-series-current')).toContainText(`${snapshotCompetenciaBR} · IPH estimado`)
+  await expect(page.getByTestId('regional-series-current')).toContainText('IPH estimado atual')
+  await expect(page.getByTestId('regional-series-current')).toContainText(snapshotCompetenciaBR)
   await expect(page.getByTestId('regional-series-current')).toContainText(
     `${pt(serieRegionalAtual.iph_percent as number, 1)}%`,
   )
-  await expect(page.getByTestId('regional-series-current')).toContainText(
-    `${pt(serieRegionalAtual.estimated_patient_days as number)} pacientes-dia / ` +
-      `${pt(serieRegionalAtual.declared_capacity_bed_days as number)} leitos-dia declarados`,
-  )
+  await expect(page.getByRole('radiogroup', { name: 'Indicador da evolução regional' }).getByRole('radio')).toHaveCount(2)
+  await expect(page.getByRole('radio', { name: 'TMH observado' })).toHaveCount(0)
+  await expect(page.getByRole('radio', { name: 'Ante os pares (IPE)' })).toHaveCount(0)
 
-  await page.getByRole('radio', { name: 'TMH observado' }).click()
-  await expect(page.getByTestId('regional-series-current')).toContainText(
-    `${pt(serieRegionalAtual.tmh_percent as number, 1)}%`,
+  await page.getByRole('radio', { name: 'Internações novas' }).click()
+  await expect(page.locator('.regional-series-panel')).toContainText(
+    'Produção mensal · histórico publicado',
+  )
+  await expect(page.locator('.regional-series-panel')).not.toContainText(
+    'Estimativa mensal · histórico publicado',
   )
   await expect(page.getByTestId('regional-series-current')).toContainText(
-    `${pt(serieRegionalAtual.deaths as number)} óbitos · ` +
-      `${pt(serieRegionalAtual.new_admissions as number)} internações`,
+    pt(serieRegionalAtual.new_admissions as number),
   )
 
   const currentPoint = page.getByTestId(`regional-series-point-${snapshotCompetencia}`)
   await currentPoint.hover()
   const tooltip = page.getByRole('tooltip')
-  await expect(tooltip).toContainText(`${snapshotCompetenciaBR} · TMH observado`)
-  await expect(tooltip).toContainText(`${pt(serieRegionalAtual.tmh_percent as number, 1)}%`)
+  await expect(tooltip).toContainText(`${snapshotCompetenciaBR} · Internações novas`)
+  await expect(tooltip).toContainText(pt(serieRegionalAtual.new_admissions as number))
   await expect(tooltip).toContainText(
-    `${pt(serieRegionalAtual.deaths as number)} óbitos · ` +
-      `${pt(serieRegionalAtual.new_admissions as number)} internações`,
+    `${pt(serieRegionalAtual.hospitals_with_admissions as number)} hospitais com produção`,
   )
   await currentPoint.focus()
   await currentPoint.press('Escape')
   await expect(tooltip).not.toBeVisible()
 
-  // O IPE entrou no seletor da série: a evolução mensal é onde se vê se a
-  // permanência ante os pares vem piorando ou é do mês.
-  await page.getByRole('radio', { name: 'Ante os pares (IPE)' }).click()
-  await expect(page.locator('#regional-series-chart-title')).toContainText(
-    'Ante os pares (IPE)',
-  )
-
   const details = page.locator('.series-values-details')
-  await expect(details.locator('summary')).toContainText(
-    `6 de ${paginacao(regionalSeriesSnapshot).count}`,
-  )
+  await expect(details.locator('summary')).toContainText('12 meses')
   await details.locator('summary').click()
-  await expect(details.locator('tbody tr')).toHaveCount(6)
-  await details
-    .getByRole('button', {
-      name: `Ver todas as ${paginacao(regionalSeriesSnapshot).count} competências`,
+  await expect(details.locator('tbody tr')).toHaveCount(12)
+  await expect(details.locator('tbody tr').first()).toContainText(
+    `${pt(serieRegionalAtual.hospitals_with_admissions as number)} hospitais com produção`,
+  )
+  await page.getByRole('button', { name: 'Todo o histórico' }).click()
+  await expect(details.locator('tbody tr')).toHaveCount(
+    (regionalSeriesSnapshot.items as unknown[]).length,
+  )
+})
+
+test('o gráfico rejeita IPH com denominador publicado igual a zero', async ({ page }) => {
+  await mockLiveSource(page)
+  await page.route('**/api/dev/v1/regioes/*/serie**', async (route) => {
+    const items = (regionalSeriesSnapshot.items as Record<string, unknown>[]).map((item) =>
+      item.competence === snapshotCompetencia
+        ? { ...item, declared_capacity_bed_days: 0 }
+        : item,
+    )
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        ...regionalSeriesSnapshot,
+        source: 'oracle-live',
+        database_time: '2026-08-01T12:00:00-03:00',
+        items,
+      }),
     })
-    .click()
-  await expect(details.locator('tbody tr')).toHaveCount(paginacao(regionalSeriesSnapshot).count)
+  })
+
+  await page.goto(`/?competencia=${snapshotCompetencia}&regiao=35073`)
+  await expect(page.getByTestId('regional-series-current')).toContainText('indisponível')
+  await expect(page.getByTestId(`regional-series-point-${snapshotCompetencia}`)).toHaveCount(0)
+  await page.locator('.series-values-details summary').click()
+  await expect(page.locator('.series-values-details tbody tr').first()).toContainText('não publicado')
 })
 test('explica pelo contrato quando a sazonalidade não é calculada', async ({ page }) => {
   await mockLiveSource(page)
@@ -325,9 +345,9 @@ test('explica pelo contrato quando a sazonalidade não é calculada', async ({ p
   // A explicação mudou de lugar, não de exigência: ela vive na série mensal,
   // ao lado da curva que qualifica. Dizer só "não calculado" trataria fora do
   // período-alvo e histórico insuficiente como a mesma coisa.
-  await page.getByRole('radio', { name: 'Índice sazonal' }).click()
-  await expect(page.getByTestId('regional-series-current')).toContainText(
-    'Competência fora do período-alvo definido para sazonalidade',
+  await page.getByRole('radio', { name: 'Internações novas' }).click()
+  await expect(page.getByTestId('regional-series-historical')).toContainText(
+    'Fora do período-alvo da sazonalidade publicada',
   )
 })
 test('mantém a metodologia colapsável', async ({ page }) => {
@@ -394,7 +414,7 @@ test('o mapa pode colorir pelo placar que consome os seis indicadores', async ({
 
   // O padrão é o placar: ele é o que responde "onde olhar primeiro", enquanto
   // o IPH sozinho é um dos seis sinais que ele conta.
-  await expect(page.locator('#map-title')).toContainText('Sinais acesos')
+  await expect(page.locator('#map-title')).toContainText('Sinais por região')
   await expect(page.getByTestId('regional-map-legend')).toContainText('sinais')
   await expect(page.getByTestId('regional-map-legend')).toContainText(
     'não nota de qualidade',
@@ -405,7 +425,110 @@ test('o mapa pode colorir pelo placar que consome os seis indicadores', async ({
   await expect(page.getByTestId('regional-map-legend')).toContainText('mínimo real')
 
   await page.getByTestId('map-metric-sinais').click()
-  await expect(page.locator('#map-title')).toContainText('Sinais acesos')
+  await expect(page.locator('#map-title')).toContainText('Sinais por região')
+})
+
+test('hierarquiza a região selecionada, expõe os seis sinais e isola ações do hover', async ({ page }) => {
+  await mockLiveSource(page)
+  await page.goto(`/?competencia=${snapshotCompetencia}&regiao=35071`)
+
+  const cartao = page.getByTestId('regional-map-tooltip')
+  await expect(cartao).toContainText('SINAIS DE ATENÇÃO')
+  await expect(cartao).toContainText('Competência junho/2026')
+  await expect(cartao).toContainText('Estimativa mensal')
+  await expect(cartao).toContainText('Internações novas')
+  await expect(cartao).toContainText('Permanência média')
+  await expect(cartao.getByRole('button', { name: 'O que são os sinais?' })).toBeVisible()
+  await expect(cartao.getByRole('button', { name: 'O que é IPH?' })).toBeVisible()
+  await expect(cartao.getByRole('button', { name: 'Ver hospitais da região ↓' })).toBeVisible()
+
+  const comparacoes = page.getByTestId('map-card-admissions-comparisons')
+  await expect(comparacoes).toContainText('Em relação a maio/2026')
+  await expect(comparacoes).toContainText('Em relação a junho/2025')
+  await expect(comparacoes).not.toContainText('MoM')
+  await expect(comparacoes).not.toContainText('YoY')
+
+  const disclosure = page.getByTestId('map-card-other-indicators')
+  const summary = disclosure.locator('summary')
+  await summary.focus()
+  await summary.press('Enter')
+  await expect(disclosure).toHaveAttribute('open', '')
+  await expect(disclosure.locator('[data-signal]')).toHaveCount(4)
+  await expect(disclosure.locator('[data-signal="iph"]')).toHaveCount(0)
+  await expect(disclosure.locator('[data-signal="stay"]')).toHaveCount(0)
+  await expect(disclosure).not.toContainText('P80')
+  await expect(disclosure).not.toContainText('percentil 80')
+  await expect(disclosure).toContainText('Acima dos pares (IPE)')
+  await expect(disclosure.locator('[data-signal="tmh"]')).toContainText('sinal aceso')
+  for (const signal of ['cmi', 'evasion', 'icsap']) {
+    await expect(disclosure.locator(`[data-signal="${signal}"]`)).not.toContainText('sinal aceso')
+  }
+
+  // JUNDIAI é só a prévia sob o ponteiro. Nenhuma ação pode herdar BRAGANCA,
+  // a seleção que continua na URL e no filtro compartilhado.
+  await page.getByTestId('regional-map-35073').hover()
+  await expect(cartao).toContainText('JUNDIAI')
+  await expect(cartao.getByRole('button')).toHaveCount(0)
+  await expect(cartao.locator('details')).toHaveCount(0)
+  await expect(page.getByTestId('global-region')).toHaveValue('35071')
+
+  await page.mouse.move(2, 2)
+  await expect(cartao).toContainText('BRAGANCA')
+  await expect(cartao.getByRole('button', { name: 'Ver hospitais da região ↓' })).toBeVisible()
+})
+
+test('não transforma comparação ausente de internações novas em zero', async ({ page }) => {
+  await mockLiveSource(page)
+  await page.route('**/api/dev/v1/regioes/resumo**', async (route) => {
+    const url = new URL(route.request().url())
+    const year = Number(url.searchParams.get('ano'))
+    const month = Number(url.searchParams.get('mes'))
+    const competence = `${year}-${String(month).padStart(2, '0')}`
+    const isComparison = competence === '2026-05' || competence === '2025-06'
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        ...regionalSnapshot,
+        source: 'oracle-live',
+        database_time: '2026-08-01T12:00:00-03:00',
+        data_through: competence,
+        filters: { year, month, macroregion_code: null, region_code: null },
+        items: isComparison ? [] : regionalSnapshot.items,
+        pagination: isComparison
+          ? { ...(regionalSnapshot.pagination as Record<string, unknown>), count: 0 }
+          : regionalSnapshot.pagination,
+      }),
+    })
+  })
+
+  await page.goto(`/?competencia=${snapshotCompetencia}&regiao=35073`)
+  const comparacoes = page.getByTestId('map-card-admissions-comparisons')
+  await expect(comparacoes).toContainText('sem comparação disponível')
+  await expect(comparacoes).not.toContainText('0,0%')
+})
+
+test('explicações locais de sinais e IPH usam a FlowIA sem POST e preservam o robô', async ({ page }) => {
+  await mockLiveSource(page)
+  const posts: string[] = []
+  page.on('request', (request) => {
+    if (request.method() === 'POST') posts.push(request.url())
+  })
+  await page.goto(`/?competencia=${snapshotCompetencia}&regiao=35073`)
+
+  await expect(page.locator('.assistant-launcher .assistant-robot')).toHaveCount(1)
+  await page.getByRole('button', { name: 'O que são os sinais?' }).click()
+  await expect(page.locator('.assistant-header .assistant-robot.compact')).toHaveCount(1)
+  await expect(page.getByTestId('assistant-thread')).toContainText(
+    'triagem comparativa para investigar, não ranking ou nota de qualidade',
+  )
+  expect(posts).toEqual([])
+
+  await page.getByRole('button', { name: 'Fechar assistente' }).click()
+  await page.getByRole('button', { name: 'O que é IPH?' }).click()
+  await expect(page.getByTestId('assistant-thread')).toContainText(
+    'não uma taxa de ocupação real',
+  )
+  expect(posts).toEqual([])
 })
 
 test('a metodologia responde as duas metades do proprio titulo', async ({ page }) => {

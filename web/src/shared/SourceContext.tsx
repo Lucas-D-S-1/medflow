@@ -41,6 +41,9 @@ export type HospitalSpecialtySummary = {
   specialtyName: string
   competence: string
   newAdmissions: number
+  hospitalSharePercent: number | null
+  hospitalSpecialtyAdmissionsTotal: number
+  hospitalShareCoverage: 'complete' | 'available-specialties'
   benchmarkAdmissions: number
   regionalSharePercent: number | null
   averageStayDays: number | null
@@ -48,6 +51,11 @@ export type HospitalSpecialtySummary = {
   benchmarkHospitals: number
   sampleStatus: 'suficiente' | 'amostra_insuficiente'
   ipeSampleStatus: 'suficiente' | 'amostra_insuficiente' | 'benchmark_zero'
+}
+
+export type AssistantLocalRequest = {
+  question: string
+  specialtySummary?: HospitalSpecialtySummary
 }
 
 export type SourceState =
@@ -85,8 +93,11 @@ type SourceContextValue = {
   hospitalSummary: HospitalSpecialtySummary | null
   reportHospitalSummary: (summary: HospitalSpecialtySummary | null) => void
   /** Solicitação local dos botões do resumo, consumida pela FlowIA. */
-  pendingAssistantQuestion: string | null
-  requestAssistantQuestion: (question: string) => void
+  pendingAssistantQuestion: AssistantLocalRequest | null
+  requestAssistantQuestion: (
+    question: string,
+    specialtySummary?: HospitalSpecialtySummary,
+  ) => void
   clearAssistantQuestion: () => void
 }
 
@@ -137,7 +148,8 @@ export function SourceProvider({ children }: { children: ReactNode }) {
   const comparisonRequest = useRef<AbortController | null>(null)
   const [selectedHospitalName, setSelectedHospitalName] = useState<string | null>(null)
   const [hospitalSummary, setHospitalSummary] = useState<HospitalSpecialtySummary | null>(null)
-  const [pendingAssistantQuestion, setPendingAssistantQuestion] = useState<string | null>(null)
+  const [pendingAssistantQuestion, setPendingAssistantQuestion] =
+    useState<AssistantLocalRequest | null>(null)
   const reloadGeneration = useRef(0)
 
   const sourceData =
@@ -175,8 +187,11 @@ export function SourceProvider({ children }: { children: ReactNode }) {
     },
     [],
   )
-  const requestAssistantQuestion = useCallback((question: string) => {
-    setPendingAssistantQuestion(question)
+  const requestAssistantQuestion = useCallback((
+    question: string,
+    specialtySummary?: HospitalSpecialtySummary,
+  ) => {
+    setPendingAssistantQuestion({ question, specialtySummary })
   }, [])
   const clearAssistantQuestion = useCallback(() => {
     setPendingAssistantQuestion(null)
@@ -194,6 +209,46 @@ export function SourceProvider({ children }: { children: ReactNode }) {
     setRegionalLoadState('loading')
     setHospitalSummary(null)
     setPendingAssistantQuestion(null)
+
+    const activateSnapshot = (
+      reason: Extract<SourceState, { kind: 'fallback' }>['reason'],
+    ) => {
+      const status = getStatusSnapshot()
+      const methodology = getMethodologySnapshot()
+      const regions = getRegioesResumoSnapshot()
+      const fallbackRegion =
+        regions.items.find((item) => item.region_code === '35073')?.region_code ??
+        regions.items[0]?.region_code ??
+        ''
+      setSourceState({
+        kind: 'fallback',
+        data: { status, methodology, regions },
+        reason,
+      })
+      // Snapshot fixtures form one locked publication. Normalize the two
+      // shared parameters together so every route and the URL describe the
+      // same fallback context, while all local parameters survive.
+      setSearchParamsRef.current((current) => {
+        const next = new URLSearchParams(current)
+        next.set('competencia', regions.data_through)
+        if (fallbackRegion) next.set('regiao', fallbackRegion)
+        return next
+      }, { replace: true })
+      setRegionalLoadState(regions.items.length === 0 ? 'empty' : 'ready')
+    }
+
+    // O executor local pode abrir a jornada completa sem rede nem tentativa de
+    // Oracle. O estado continua sendo contingência e a própria interface o
+    // rotula; esta chave nunca é ativada no build publicado.
+    if (import.meta.env.VITE_SNAPSHOT_PREVIEW === '1') {
+      try {
+        activateSnapshot('oracle-unavailable')
+      } catch {
+        setSourceState({ kind: 'error' })
+        setRegionalLoadState('error')
+      }
+      return
+    }
 
     try {
       const requested = new URLSearchParams(window.location.search).get('competencia')
@@ -217,28 +272,7 @@ export function SourceProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       if (reloadGeneration.current !== generation) return
       try {
-        const status = getStatusSnapshot()
-        const methodology = getMethodologySnapshot()
-        const regions = getRegioesResumoSnapshot()
-        const fallbackRegion =
-          regions.items.find((item) => item.region_code === '35073')?.region_code ??
-          regions.items[0]?.region_code ??
-          ''
-        setSourceState({
-          kind: 'fallback',
-          data: { status, methodology, regions },
-          reason: isContractError(error) ? 'invalid-contract' : 'oracle-unavailable',
-        })
-        // Snapshot fixtures form one locked publication. Normalize the two
-        // shared parameters together so every route and the URL describe the
-        // same fallback context, while all local parameters survive.
-        setSearchParamsRef.current((current) => {
-          const next = new URLSearchParams(current)
-          next.set('competencia', regions.data_through)
-          if (fallbackRegion) next.set('regiao', fallbackRegion)
-          return next
-        }, { replace: true })
-        setRegionalLoadState(regions.items.length === 0 ? 'empty' : 'ready')
+        activateSnapshot(isContractError(error) ? 'invalid-contract' : 'oracle-unavailable')
       } catch {
         setSourceState({ kind: 'error' })
         setRegionalLoadState('error')
@@ -440,11 +474,12 @@ export function SourceProvider({ children }: { children: ReactNode }) {
     (regionCode: string) => {
       if (isFallback) return
       if (regionCode === '') {
-        // Voltar ao panorama larga o território e tudo que dependia dele.
+        // Voltar ao panorama larga somente a região escolhida. A rede
+        // regional continua sendo um recorte válido do mapa e pode ser limpa
+        // pelo próprio seletor, sem acoplar os dois controles.
         setSearchParams((current) => {
           const next = new URLSearchParams(current)
           next.delete('regiao')
-          next.delete('macrorregiao')
           next.delete('destino')
           next.delete('hospital')
           return next
