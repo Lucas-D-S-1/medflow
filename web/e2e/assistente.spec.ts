@@ -435,8 +435,13 @@ test('Q1 entrega a pergunta livre quando hospital, competência ou região expl�
   })
 
   await page.goto('/?competencia=2026-06&regiao=35073&hospital=2786435#hospital')
+  await expect(page.getByTestId('especialidade-count')).toHaveText('3 de 3 especialidades')
+  await expect(page.getByTestId('specialty-summary')).toContainText(/Clínica médica/i)
   await page.getByRole('link', { name: 'Hospital' }).click()
   await page.getByRole('button', { name: /Posso ajudar/ }).click()
+  await expect(page.locator('#medflow-assistant-panel')).toContainText(
+    'Contexto: visão hospitalar',
+  )
   const input = page.getByLabel('Faça outra pergunta')
   const questions = [
     'No Hospital Universitário (3012212), em junho/2026, mostre todas as especialidades por dias.',
@@ -489,8 +494,13 @@ test('Q2 não reutiliza o conjunto anterior diante de recorte explícito diverge
   })
 
   await page.goto('/?competencia=2026-06&regiao=35073&hospital=2786435#hospital')
+  await expect(page.getByTestId('especialidade-count')).toHaveText('3 de 3 especialidades')
+  await expect(page.getByTestId('specialty-summary')).toContainText(/Clínica médica/i)
   await page.getByRole('link', { name: 'Hospital' }).click()
   await page.getByRole('button', { name: /Posso ajudar/ }).click()
+  await expect(page.locator('#medflow-assistant-panel')).toContainText(
+    'Contexto: visão hospitalar',
+  )
   const input = page.getByLabel('Faça outra pergunta')
   await input.fill(Q1_SAO_VICENTE)
   await input.press('Enter')

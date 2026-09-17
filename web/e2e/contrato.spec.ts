@@ -117,7 +117,7 @@ test('não descreve contrato inválido como indisponibilidade do Oracle', async 
 
   await expect(page.getByTestId('source-badge')).toContainText('Contingência')
   await expect(page.getByTestId('fallback-note')).toContainText(
-    'O Oracle respondeu, mas o conteúdo não corresponde ao contrato da API',
+    'O Oracle respondeu, mas o conteúdo veio em um formato inesperado',
   )
   await expect(page.getByTestId('fallback-note')).not.toContainText(
     'Oracle não respondeu',
@@ -151,7 +151,7 @@ test('@live não mistura metodologia snapshot com status Oracle ao vivo', async 
     `Contingência — snapshot até ${snapshotCompetencia}`,
   )
   await expect(page.getByTestId('fallback-note')).toContainText(
-    'O Oracle respondeu, mas o conteúdo não corresponde ao contrato da API',
+    'O Oracle respondeu, mas o conteúdo veio em um formato inesperado',
   )
   await expect(page.getByTestId('coverage-regions')).toHaveText('62')
   await expect(page.getByTestId('coverage-admissions')).toHaveText(
@@ -187,7 +187,7 @@ test('rejeita snapshot, competência, versão e horário inválidos na resposta 
 
     await expect(page.getByTestId('source-badge')).toContainText('Contingência')
     await expect(page.getByTestId('fallback-note')).toContainText(
-      'O Oracle respondeu, mas o conteúdo não corresponde ao contrato da API',
+      'O Oracle respondeu, mas o conteúdo veio em um formato inesperado',
     )
     await expect(page.getByTestId('data-through')).toHaveText(snapshotCompetenciaBR)
   }

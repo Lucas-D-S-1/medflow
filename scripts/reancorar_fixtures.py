@@ -29,7 +29,15 @@ from pathlib import Path
 
 RAIZ = Path(__file__).resolve().parents[1]
 METADADOS_GOLD = RAIZ / "data" / "gold" / "qualidade" / "METADADOS.json"
+METADADOS_DIAGNOSTICO = (
+    RAIZ
+    / "data"
+    / "gold"
+    / "qualidade"
+    / "METADADOS_DIAGNOSTICO_ESPECIALIDADE_MENSAL.json"
+)
 DIR_FIXTURES = RAIZ / "web" / "src" / "mocks"
+PREFIXO_DIAGNOSTICO = "hospital-diagnosticos-especialidade-"
 
 # ISO-8601 com microssegundos e deslocamento, como o pipeline grava.
 CARIMBO = re.compile(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+\+00:00")
@@ -37,6 +45,10 @@ CARIMBO = re.compile(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+\+00:00")
 
 def carimbo_da_gold() -> str:
     return json.loads(METADADOS_GOLD.read_text(encoding="utf-8"))["gerado_em_utc"]
+
+
+def carimbo_do_diagnostico() -> str:
+    return json.loads(METADADOS_DIAGNOSTICO.read_text(encoding="utf-8"))["gerado_em_utc"]
 
 
 def main() -> int:
@@ -57,11 +69,13 @@ def main() -> int:
         return 0
 
     atual = carimbo_da_gold()
+    atual_diagnostico = carimbo_do_diagnostico()
     desatualizadas: list[str] = []
 
     for caminho in sorted(DIR_FIXTURES.glob("*.json")):
         texto = caminho.read_text(encoding="utf-8")
-        antigos = {c for c in CARIMBO.findall(texto) if c != atual}
+        esperado = atual_diagnostico if caminho.name.startswith(PREFIXO_DIAGNOSTICO) else atual
+        antigos = {c for c in CARIMBO.findall(texto) if c != esperado}
         if not antigos:
             continue
         desatualizadas.append(caminho.name)
@@ -69,7 +83,7 @@ def main() -> int:
             continue
         novo = texto
         for antigo in antigos:
-            novo = novo.replace(antigo, atual)
+            novo = novo.replace(antigo, esperado)
         caminho.write_text(novo, encoding="utf-8")
         print(f"  {caminho.name}: {len(antigos)} carimbo(s) reancorado(s)")
 
@@ -84,6 +98,7 @@ def main() -> int:
     if not desatualizadas:
         print("nada a fazer; as fixtures já batem com o carimbo da Gold")
     print("carimbo da Gold:", atual)
+    print("carimbo do diagnóstico mensal por especialidade:", atual_diagnostico)
     return 0
 
 
