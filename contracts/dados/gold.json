@@ -112,7 +112,7 @@
           "tipo": "int64",
           "aceita_nulo": false,
           "nulos": 0,
-          "descricao": "Soma dos dias de permanência das internações novas."
+          "descricao": "Soma de DIAS_PERM apenas das internações novas; permanência observada, não pacientes-dia reconstruídos para o IPH, ocupação ou calendário."
         },
         {
           "nome": "vl_aprovado_internacao_nova_soma",
@@ -399,7 +399,7 @@
           "tipo": "int32",
           "aceita_nulo": false,
           "nulos": 0,
-          "descricao": "Soma dos dias de permanência das internações novas."
+          "descricao": "Soma de DIAS_PERM apenas das internações novas; permanência observada, não pacientes-dia reconstruídos para o IPH, ocupação ou calendário."
         },
         {
           "nome": "vl_aprovado_internacao_nova_soma",
@@ -523,6 +523,196 @@
       ]
     },
     {
+      "nome": "mart_indicador_hospital_especialidade_cid_mensal",
+      "caminho": "data/gold/marts/mart_indicador_hospital_especialidade_cid_mensal.parquet",
+      "descricao": "Diagnósticos, permanência e benchmark por hospital, especialidade e competência.",
+      "grao": "uma linha por hospital, competência, especialidade e CID principal",
+      "chave_primaria_logica": [
+        "cd_cnes",
+        "cd_competencia",
+        "cd_especialidade_sih",
+        "cd_cid_principal"
+      ],
+      "linhas": 2495111,
+      "colunas": [
+        {
+          "nome": "cd_cnes",
+          "tipo": "string",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Código de sete dígitos do estabelecimento no CNES."
+        },
+        {
+          "nome": "cd_especialidade_sih",
+          "tipo": "string",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Código de especialidade da internação no SIH; `--` representa código não informado."
+        },
+        {
+          "nome": "nm_especialidade",
+          "tipo": "string",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Descrição da especialidade SIH; `Especialidade não informada` acompanha o código `--`."
+        },
+        {
+          "nome": "cd_regiao_saude",
+          "tipo": "string",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Código oficial de cinco dígitos da região de saúde."
+        },
+        {
+          "nome": "nm_regiao_saude",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Nome oficial da região de saúde."
+        },
+        {
+          "nome": "cd_macrorregiao_saude",
+          "tipo": "string",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Código oficial da macrorregião de saúde."
+        },
+        {
+          "nome": "nm_macrorregiao_saude",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Nome oficial da macrorregião de saúde."
+        },
+        {
+          "nome": "nr_ano_competencia",
+          "tipo": "int16",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Ano da competência de processamento."
+        },
+        {
+          "nome": "nr_mes_competencia",
+          "tipo": "int8",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Número do mês da competência de processamento."
+        },
+        {
+          "nome": "cd_competencia",
+          "tipo": "string",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Competência no formato AAAAMM."
+        },
+        {
+          "nome": "cd_cid_principal",
+          "tipo": "string",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Código CID-10 principal; `--` preserva internações sem CID principal informado."
+        },
+        {
+          "nome": "ds_cid",
+          "tipo": "string",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Descrição do diagnóstico; `Sem CID principal informado` acompanha o código `--`."
+        },
+        {
+          "nome": "cd_capitulo_cid",
+          "tipo": "string",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Código do capítulo CID-10; `--` representa capítulo não classificável ou não informado."
+        },
+        {
+          "nome": "ds_capitulo_cid",
+          "tipo": "string",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Descrição do capítulo CID-10; `Não classificado` acompanha o código `--`."
+        },
+        {
+          "nome": "qt_internacao_nova",
+          "tipo": "int64",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Quantidade de internações novas, identificadas por AIH normal."
+        },
+        {
+          "nome": "qt_dia_permanencia_soma",
+          "tipo": "int32",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Soma de DIAS_PERM apenas das internações novas; permanência observada, não pacientes-dia reconstruídos para o IPH, ocupação ou calendário."
+        },
+        {
+          "nome": "nr_permanencia_media_hospital",
+          "tipo": "float64",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Soma dos dias de permanência dividida pelas internações novas do hospital no grão."
+        },
+        {
+          "nome": "pc_internacao_especialidade",
+          "tipo": "float64",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Participação percentual do CID nas internações novas do hospital, na mesma especialidade e competência."
+        },
+        {
+          "nome": "pc_dia_permanencia_especialidade",
+          "tipo": "float64",
+          "aceita_nulo": true,
+          "nulos": 37770,
+          "descricao": "Participação percentual do CID nos dias de permanência do hospital, na mesma especialidade e competência; nula quando o total de dias é zero."
+        },
+        {
+          "nome": "qt_internacao_benchmark",
+          "tipo": "int64",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Quantidade de internações no benchmark regional, excluído o hospital avaliado."
+        },
+        {
+          "nome": "qt_dia_permanencia_benchmark",
+          "tipo": "int32",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Dias de permanência dos demais hospitais no benchmark regional do mesmo grão."
+        },
+        {
+          "nome": "qt_hospital_benchmark",
+          "tipo": "int64",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Quantidade de outros hospitais que compõem o benchmark."
+        },
+        {
+          "nome": "nr_permanencia_media_benchmark",
+          "tipo": "float64",
+          "aceita_nulo": true,
+          "nulos": 1179656,
+          "descricao": "Dias de permanência divididos pelas internações dos demais hospitais do benchmark."
+        },
+        {
+          "nome": "nr_ipr",
+          "tipo": "float64",
+          "aceita_nulo": true,
+          "nulos": 2480440,
+          "descricao": "Permanência média do hospital/CID dividida pelo benchmark regional que exclui o hospital."
+        },
+        {
+          "nome": "st_amostra",
+          "tipo": "object",
+          "aceita_nulo": false,
+          "nulos": 0,
+          "descricao": "Estado da amostra segundo os mínimos definidos no contrato do indicador."
+        }
+      ]
+    },
+    {
       "nome": "mart_indicador_hospital_cid_periodo",
       "caminho": "data/gold/marts/mart_indicador_hospital_cid_periodo.parquet",
       "descricao": "IPR por hospital e diagnóstico no período completo.",
@@ -608,7 +798,7 @@
           "tipo": "int32",
           "aceita_nulo": false,
           "nulos": 0,
-          "descricao": "Soma dos dias de permanência das internações novas."
+          "descricao": "Soma de DIAS_PERM apenas das internações novas; permanência observada, não pacientes-dia reconstruídos para o IPH, ocupação ou calendário."
         },
         {
           "nome": "qt_internacao_benchmark",
@@ -740,7 +930,7 @@
           "tipo": "int32",
           "aceita_nulo": false,
           "nulos": 0,
-          "descricao": "Soma dos dias de permanência das internações novas."
+          "descricao": "Soma de DIAS_PERM apenas das internações novas; permanência observada, não pacientes-dia reconstruídos para o IPH, ocupação ou calendário."
         },
         {
           "nome": "vl_aprovado_internacao_nova_soma",

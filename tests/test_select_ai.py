@@ -89,6 +89,105 @@ def test_sql_nulo_recusa_antes_de_gerar_narrativa():
     assert gate < narrate
 
 
+def test_narrativa_com_erro_oracle_ou_sql_cru_e_bloqueada():
+    pacote = (RAIZ / "db" / "apex" / "02_pacote_select_ai.sql").read_text(
+        encoding="utf-8"
+    )
+
+    assert "ORA-[0-9]{5}" in pacote
+    assert "Narrativa recusada: continha erro Oracle ou SQL cru." in pacote
+    assert "nenhum erro Oracle ou SQL bruto foi exibido como resultado" in pacote
+
+
+def test_ords_limita_contexto_em_bytes_e_preserva_especialidades_estruturadas():
+    modulo = (RAIZ / "db" / "ords" / "03_modulo_medflow_dev.sql").read_text(
+        encoding="utf-8"
+    )
+
+    especialidades = modulo.split("function especialidades return varchar2", 1)[1].split(
+        "function limitar_bytes", 1
+    )[0]
+    limitador = modulo.split("function limitar_bytes", 1)[1].split(
+        "function competencia_aaaamm", 1
+    )[0]
+
+    assert "least(l_itens.get_size, 5)" in especialidades
+    assert "l_texto varchar2(32767) := null" in especialidades
+    assert "varchar2(800)" not in especialidades
+    assert "l_texto varchar2(32767) := substr" in limitador
+    assert "lengthb(l_texto) > p_limite" in limitador
+    assert "l_context_text varchar2(32767)" in modulo
+    assert "l_texto  varchar2(12000)" in modulo
+    assert "l_context_text := limitar_bytes(l_context_text, 4000)" in modulo
+    assert modulo.index("; especialidades=") < modulo.index("; conversa_anterior=")
+
+
+def test_contexto_utf8_longo_preserva_identidade_e_duas_rodadas():
+    nomes = [
+        f"{codigo}=Especialidade clínica com ação e atenção {'á' * 36}"
+        for codigo in ("03", "01", "87", "07", "02")
+    ]
+    identidade = (
+        "tela=hospital; competencia=202606; hospital_cnes=2786435; "
+        "intencao=diagnosticos_especialidade; "
+        f"especialidades={','.join(nomes)}"
+    )
+    historico = "".join(
+        f" | P: rodada {i} {'ação ç ã ' * 35} R: resposta {i} {'atenção ü ' * 55}"
+        for i in (1, 2)
+    )
+    bruto = f"{identidade}; conversa_anterior={historico}"
+    codificado = bruto.encode("utf-8")
+    cortado = codificado[:4000]
+    while True:
+        try:
+            contexto = cortado.decode("utf-8")
+            break
+        except UnicodeDecodeError:
+            cortado = cortado[:-1]
+
+    assert len(contexto.encode("utf-8")) <= 4000
+    assert "hospital_cnes=2786435" in contexto
+    assert "competencia=202606" in contexto
+    assert all(nome in contexto for nome in nomes)
+    assert "rodada 1" in contexto and "rodada 2" in contexto
+
+
+def test_migracao_contexto_preserva_registros_e_auxiliares_usam_buffers_maiores():
+    pacote = (RAIZ / "db" / "apex" / "02_pacote_select_ai.sql").read_text(
+        encoding="utf-8"
+    )
+    migracao = (RAIZ / "db" / "schema" / "08_ampliar_contexto_select_ai.sql").read_text(
+        encoding="utf-8"
+    )
+
+    assert "contexto     varchar2(4000 byte)" in pacote
+    assert "l_contexto varchar2(32767)" in pacote
+    assert "l_contexto  varchar2(32767)" in pacote
+    assert "lengthb(l_contexto) > 4000" in pacote
+    assert "modify contexto varchar2(4000 byte)" in migracao
+    assert all(palavra not in migracao.lower() for palavra in ("drop table", "delete from", "truncate"))
+
+
+def test_profile_normal_e_sincronizacao_incluem_novo_mart():
+    for relativo in (
+        "db/select_ai/04_select_ai.sql",
+        "db/select_ai/05_sincronizar_profile_territorio.sql",
+    ):
+        roteiro = (RAIZ / relativo).read_text(encoding="utf-8")
+        assert "treze objetos analíticos" in roteiro
+        assert '"name": "mart_indicador_hospital_especialidade_cid_mensal"' in roteiro
+
+    pacote = (RAIZ / "db" / "apex" / "02_pacote_select_ai.sql").read_text(
+        encoding="utf-8"
+    )
+    assert "preserve exatamente esses filtros" in pacote
+    assert "um mesmo CID pode reaparecer em especialidades distintas" in pacote
+    assert "MART_INDICADOR_HOSPITAL_ESPECIALIDADE_CID_MENSAL" in pacote
+    assert "SUM(QT_DIA_PERMANENCIA_SOMA)" in pacote
+    assert "CD_CID_PRINCIPAL ja esta no mart" in pacote
+
+
 def test_comparacao_mensal_nao_faz_aritmetica_direta_em_aaaamm():
     pacote = (RAIZ / "db" / "apex" / "02_pacote_select_ai.sql").read_text(
         encoding="utf-8"

@@ -1,5 +1,5 @@
 /**
- * Regrava os dez snapshots de contingência a partir da API ao vivo.
+ * Regrava os snapshots de contingência a partir da API ao vivo.
  *
  * As fixtures existem para um caso só: quando o Oracle não responde, a tela
  * mostra dados versionados com selo explícito em vez de página vazia. Elas
@@ -62,6 +62,7 @@ const LIMITE_DO_CLIENTE: Record<string, string> = {
   'regioes/resumo': '62',
   serie: '100',
   padrao: '200',
+  diagnosticos: '2000',
 }
 
 function lerJson(caminho: string): Record<string, unknown> {
@@ -81,6 +82,19 @@ function competenciaCorrente(): { iso: string; ano: string; mes: string } {
 function carimboDaGold(): string {
   const metadados = lerJson(
     join(RAIZ, 'data', 'gold', 'qualidade', 'METADADOS.json'),
+  )
+  return metadados.gerado_em_utc as string
+}
+
+function carimboDoDiagnostico(): string {
+  const metadados = lerJson(
+    join(
+      RAIZ,
+      'data',
+      'gold',
+      'qualidade',
+      'METADADOS_DIAGNOSTICO_ESPECIALIDADE_MENSAL.json',
+    ),
   )
   return metadados.gerado_em_utc as string
 }
@@ -118,6 +132,16 @@ function planoDeFixtures(ano: string, mes: string): Fixture[] {
       arquivo: `hospital-especialidades-${HOSPITAL}.json`,
       caminho: `hospitais/${HOSPITAL}/especialidades`,
       parametros: { ...competencia, limit: LIMITE_DO_CLIENTE.padrao },
+    },
+    {
+      arquivo: `hospital-diagnosticos-especialidade-${HOSPITAL}-07.json`,
+      caminho: `hospitais/${HOSPITAL}/especialidades/07/diagnosticos`,
+      parametros: {
+        ...competencia,
+        ordenar: 'dias',
+        limit: LIMITE_DO_CLIENTE.diagnosticos,
+        offset: '0',
+      },
     },
     {
       arquivo: `hospital-cids-${HOSPITAL}.json`,
@@ -168,6 +192,7 @@ async function principal(): Promise<number> {
 
   const { iso, ano, mes } = competenciaCorrente()
   const carimbo = carimboDaGold()
+  const carimboDiagnostico = carimboDoDiagnostico()
   const plano = planoDeFixtures(ano, mes)
   mkdirSync(DIR_MOCKS, { recursive: true })
 
@@ -175,7 +200,15 @@ async function principal(): Promise<number> {
 
   const desatualizadas: string[] = []
   for (const fixture of plano) {
-    const corpo = paraSnapshot(await buscar(`${base}/${caminhoDaApi}`, fixture), carimbo)
+    const carimboFixture = fixture.arquivo.startsWith(
+      'hospital-diagnosticos-especialidade-',
+    )
+      ? carimboDiagnostico
+      : carimbo
+    const corpo = paraSnapshot(
+      await buscar(`${base}/${caminhoDaApi}`, fixture),
+      carimboFixture,
+    )
     const conteudo = serializar(corpo)
     const destino = join(DIR_MOCKS, fixture.arquivo)
 

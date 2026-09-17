@@ -23,7 +23,8 @@ DDL_GOLD = Path("db/schema/02_criar_tabelas_gold.sql")
 
 _HANDLER = re.compile(r"p_pattern\s*=>\s*'([^']+)'", re.IGNORECASE)
 _ORDEM = re.compile(
-    r"row_number\(\)\s*over\s*\(\s*order by (.*?)\)\s*as nr_linha", re.S | re.IGNORECASE
+    r"row_number\(\)\s*over\s*\(\s*order by\s+(.*?)\)\s*as nr_linha",
+    re.S | re.IGNORECASE,
 )
 _ITENS = re.compile(
     r"json_arrayagg\(\s*json_object\((.*?)null on null returning json", re.S | re.IGNORECASE
@@ -61,9 +62,22 @@ class ContratoDoHandler:
     """
 
 
-def _chave_de_ordem(fragmento: str) -> ChaveDeOrdem:
+def _chave_de_ordem(fragmento: str) -> ChaveDeOrdem | None:
     partes = fragmento.split()
-    coluna = partes[0].split(".")[-1]
+    # A lista de diagnósticos usa um CASE por opção, sem ELSE. A reconciliação
+    # chama o handler sem `ordenar`, portanto mantém somente o braço `dias` e
+    # os desempates comuns. Os demais braços são conferidos estaticamente.
+    if partes[0].lower() == "case":
+        coluna_case = re.search(
+            r"\bordenar\s*=\s*'([^']+)'\s+then\s+\w+\.(\w+)\s+end\b",
+            fragmento,
+            re.I,
+        )
+        if not coluna_case or coluna_case.group(1).lower() != "dias":
+            return None
+        coluna = coluna_case.group(2)
+    else:
+        coluna = partes[0].split(".")[-1]
     resto = " ".join(partes[1:]).lower()
     descendente = "desc" in resto
     if "nulls last" in resto:
@@ -93,7 +107,9 @@ def contratos_dos_handlers(base: Path) -> dict[str, ContratoDoHandler]:
             (nome, coluna) for nome, coluna in _CAMPO.findall(itens.group(1))
         )
         chaves = tuple(
-            _chave_de_ordem(fragmento) for fragmento in ordem.group(1).split(",")
+            chave
+            for fragmento in ordem.group(1).split(",")
+            if (chave := _chave_de_ordem(fragmento)) is not None
         )
         teto = _LIMITE_MAXIMO.search(bloco)
         contratos[padrao.group(1)] = ContratoDoHandler(

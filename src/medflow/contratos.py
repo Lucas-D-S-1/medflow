@@ -227,16 +227,28 @@ DESCRICOES_EXATAS = {
     "cd_competencia_preco_referencia": "Competência AAAAMM para a qual os valores reais foram corrigidos pelo IPCA.",
     "vl_aprovado_internacao_nova_real_soma": "Soma dos valores aprovados para internações novas corrigida pelo IPCA para o preço de referência.",
     "nr_permanencia_media": "Soma dos dias de permanência dividida pela quantidade de internações novas.",
+    "nr_permanencia_media_hospital": (
+        "Soma dos dias de permanência dividida pelas internações novas do hospital no grão."
+    ),
     "nr_ipr": "Permanência média do hospital/CID dividida pelo benchmark regional que exclui o hospital.",
     "nr_indice_sazonalidade": "Volume atual dividido pela média do mesmo mês em 2024 e 2025.",
     "pc_variacao_sazonal": "Variação percentual correspondente ao índice de sazonalidade.",
     "qt_internacao_nova": "Quantidade de internações novas, identificadas por AIH normal.",
     "qt_obito": "Quantidade de óbitos em internações novas.",
-    "qt_dia_permanencia_soma": "Soma dos dias de permanência das internações novas.",
+    "qt_dia_permanencia_soma": (
+        "Soma de DIAS_PERM apenas das internações novas; permanência observada, "
+        "não pacientes-dia reconstruídos para o IPH, ocupação ou calendário."
+    ),
     "vl_aprovado_internacao_nova_soma": "Soma nominal dos valores aprovados para internações novas.",
     "vl_aprovado_continuacao_soma": "Soma nominal dos valores aprovados para continuações de longa permanência.",
     "qt_internacao_benchmark": "Quantidade de internações no benchmark regional, excluído o hospital avaliado.",
+    "qt_dia_permanencia_benchmark": (
+        "Dias de permanência dos demais hospitais no benchmark regional do mesmo grão."
+    ),
     "qt_hospital_benchmark": "Quantidade de outros hospitais que compõem o benchmark.",
+    "nr_permanencia_media_benchmark": (
+        "Dias de permanência divididos pelas internações dos demais hospitais do benchmark."
+    ),
     "nr_ipe": (
         "Permanência média do hospital na especialidade dividida pela dos demais "
         "hospitais da mesma região, na mesma especialidade e competência."
@@ -253,6 +265,14 @@ DESCRICOES_EXATAS = {
     ),
     "nr_permanencia_media_benchmark_especialidade": (
         "Permanência média dos demais hospitais da região na mesma especialidade, em dias."
+    ),
+    "pc_internacao_especialidade": (
+        "Participação percentual do CID nas internações novas do hospital, "
+        "na mesma especialidade e competência."
+    ),
+    "pc_dia_permanencia_especialidade": (
+        "Participação percentual do CID nos dias de permanência do hospital, "
+        "na mesma especialidade e competência; nula quando o total de dias é zero."
     ),
     "qt_ano_historico": "Quantidade de anos históricos usados na referência sazonal.",
     "tx_internacao_residente_observada_por_100_mil": "Internações de residentes da região atendidos em SP por 100 mil habitantes; não observa atendimentos fora do estado.",
@@ -325,6 +345,16 @@ DESCRICOES_TABELAS = {
         "uma linha por hospital, especialidade e competência",
         ["cd_cnes", "cd_especialidade_sih", "cd_competencia"],
     ),
+    "mart_indicador_hospital_especialidade_cid_mensal": (
+        "Diagnósticos, permanência e benchmark por hospital, especialidade e competência.",
+        "uma linha por hospital, competência, especialidade e CID principal",
+        [
+            "cd_cnes",
+            "cd_competencia",
+            "cd_especialidade_sih",
+            "cd_cid_principal",
+        ],
+    ),
     "mart_indicador_hospital_cid_periodo": (
         "IPR por hospital e diagnóstico no período completo.",
         "uma linha por hospital e CID principal",
@@ -350,6 +380,33 @@ DESCRICOES_TABELAS = {
         "uma linha por região de saúde",
         ["cd_regiao_saude"],
     ),
+}
+
+DESCRICOES_COLUNAS_TABELAS = {
+    (
+        "mart_indicador_hospital_especialidade_cid_mensal",
+        "cd_especialidade_sih",
+    ): "Código de especialidade da internação no SIH; `--` representa código não informado.",
+    (
+        "mart_indicador_hospital_especialidade_cid_mensal",
+        "nm_especialidade",
+    ): "Descrição da especialidade SIH; `Especialidade não informada` acompanha o código `--`.",
+    (
+        "mart_indicador_hospital_especialidade_cid_mensal",
+        "cd_cid_principal",
+    ): "Código CID-10 principal; `--` preserva internações sem CID principal informado.",
+    (
+        "mart_indicador_hospital_especialidade_cid_mensal",
+        "ds_cid",
+    ): "Descrição do diagnóstico; `Sem CID principal informado` acompanha o código `--`.",
+    (
+        "mart_indicador_hospital_especialidade_cid_mensal",
+        "cd_capitulo_cid",
+    ): "Código do capítulo CID-10; `--` representa capítulo não classificável ou não informado.",
+    (
+        "mart_indicador_hospital_especialidade_cid_mensal",
+        "ds_capitulo_cid",
+    ): "Descrição do capítulo CID-10; `Não classificado` acompanha o código `--`.",
 }
 
 
@@ -444,7 +501,9 @@ def _contrato_tabela(nome: str, frame: pd.DataFrame, camada: str, caminho: str) 
                 "tipo": str(frame[coluna].dtype),
                 "aceita_nulo": bool(frame[coluna].isna().any()),
                 "nulos": int(frame[coluna].isna().sum()),
-                "descricao": descricao_coluna(coluna, camada),
+                "descricao": DESCRICOES_COLUNAS_TABELAS.get(
+                    (nome, coluna), descricao_coluna(coluna, camada)
+                ),
             }
             for coluna in frame.columns
         ],

@@ -1,5 +1,5 @@
 /**
- * De onde o navegador busca os dados — um lugar só, para os dez endpoints.
+ * De onde o navegador busca os dados — um lugar só, para os onze endpoints GET.
  *
  * Em desenvolvimento o valor é relativo (`/api/dev/v1`): o proxy do Vite
  * encaminha ao ORDS, o navegador nunca sai da própria origem e CORS não entra
@@ -8,8 +8,8 @@
  * do módulo público `api/v1`, e quem autoriza a chamada entre origens é o
  * `set_module_origins_allowed` do ORDS, não o front.
  *
- * Antes isto estava escrito à mão em dez arquivos. Trocar de ambiente virava
- * dez edições, e bastava esquecer uma para o site publicado servir metade dos
+ * Antes isto estava escrito à mão em vários arquivos. Trocar de ambiente virava
+ * várias edições, e bastava esquecer uma para o site publicado servir metade dos
  * painéis de um módulo e metade de outro — sem erro visível, só números de
  * procedências diferentes na mesma tela.
  */

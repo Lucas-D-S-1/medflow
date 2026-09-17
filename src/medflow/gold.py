@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from datetime import UTC, datetime
 from hashlib import sha256
 from pathlib import Path
@@ -46,6 +47,27 @@ COLUNAS_FATO = [
     "fl_obito_internacao_nova",
     "vl_aprovado_continuacao",
 ]
+
+COLUNAS_DIAGNOSTICO_ESPECIALIDADE = [
+    "cd_cnes",
+    "cd_regiao_saude",
+    "nm_regiao_saude",
+    "cd_macrorregiao_saude",
+    "nm_macrorregiao_saude",
+    "nr_ano_competencia",
+    "nr_mes_competencia",
+    "cd_competencia",
+    "cd_especialidade_sih",
+    "nm_especialidade",
+    "cd_cid_principal",
+    "ds_cid",
+    "cd_capitulo_cid",
+    "ds_capitulo_cid",
+    "qt_dia_permanencia",
+    "fl_internacao_nova",
+]
+
+CODIGO_DESCONHECIDO = "--"
 
 
 def _dividir(numerador: pd.Series, denominador: pd.Series) -> pd.Series:
@@ -235,6 +257,9 @@ def _benchmark_especialidade(
         mart.nr_permanencia_media,
         mart.nr_permanencia_media_benchmark_especialidade,
     )
+    # `--` preserva o volume observado, mas não identifica a mesma
+    # especialidade/diagnóstico entre hospitais. Mesmo que a agregação bruta
+    # alcance artificialmente 20/50/3, ela nunca sustenta comparação nem IPR.
     elegivel = (
         mart.qt_internacao_nova.ge(20)
         & mart.qt_internacao_benchmark_especialidade.ge(50)
@@ -260,6 +285,182 @@ def _benchmark_especialidade(
             "qt_hospital_regiao",
         ]
     )
+
+
+def _preencher_desconhecido(
+    frame: pd.DataFrame,
+    coluna: str,
+    valor: str,
+) -> pd.Series:
+    """Materializa categoria ausente sem perder linhas em chaves Oracle.
+
+    `groupby(dropna=False)` preserva nulos no pandas, mas uma chave primária
+    Oracle não aceita nulo. O código `--` já representa CID não classificável
+    no projeto; aqui ele também representa código não informado, sempre com
+    descrição explícita para não parecer uma categoria clínica real.
+    """
+    texto = frame[coluna].astype("string")
+    ausente = texto.isna() | texto.str.strip().eq("")
+    frame[coluna] = texto.mask(ausente, valor)
+    return ausente
+
+
+def _hospital_especialidade_cid_mensal(fato: pd.DataFrame) -> pd.DataFrame:
+    """Diagnósticos no grão hospital × competência × especialidade × CID.
+
+    A função parte do detalhe e aplica o filtro de internação nova por conta
+    própria. Isso impede que uma chamada futura passe a misturar AIH de
+    continuação, e evita a reconstrução incorreta a partir de dois marts com
+    grãos incompatíveis.
+    """
+    novas = fato.loc[fato.fl_internacao_nova.eq(1)].copy()
+    especialidade_ausente = _preencher_desconhecido(
+        novas, "cd_especialidade_sih", CODIGO_DESCONHECIDO
+    )
+    _preencher_desconhecido(
+        novas, "nm_especialidade", "Especialidade não informada"
+    )
+    novas.loc[especialidade_ausente, "nm_especialidade"] = (
+        "Especialidade não informada"
+    )
+    cid_ausente = _preencher_desconhecido(
+        novas, "cd_cid_principal", CODIGO_DESCONHECIDO
+    )
+    _preencher_desconhecido(novas, "ds_cid", "Sem CID principal informado")
+    _preencher_desconhecido(novas, "cd_capitulo_cid", CODIGO_DESCONHECIDO)
+    _preencher_desconhecido(novas, "ds_capitulo_cid", "Não classificado")
+    novas.loc[cid_ausente, "ds_cid"] = "Sem CID principal informado"
+    novas.loc[cid_ausente, "cd_capitulo_cid"] = CODIGO_DESCONHECIDO
+    novas.loc[cid_ausente, "ds_capitulo_cid"] = "Não classificado"
+
+    chaves = [
+        "cd_cnes",
+        "cd_especialidade_sih",
+        "cd_cid_principal",
+        "cd_competencia",
+    ]
+    mart = (
+        novas.groupby(chaves, as_index=False, dropna=False)
+        .agg(
+            nm_especialidade=("nm_especialidade", "first"),
+            cd_regiao_saude=("cd_regiao_saude", "first"),
+            nm_regiao_saude=("nm_regiao_saude", "first"),
+            cd_macrorregiao_saude=("cd_macrorregiao_saude", "first"),
+            nm_macrorregiao_saude=("nm_macrorregiao_saude", "first"),
+            nr_ano_competencia=("nr_ano_competencia", "first"),
+            nr_mes_competencia=("nr_mes_competencia", "first"),
+            ds_cid=("ds_cid", "first"),
+            cd_capitulo_cid=("cd_capitulo_cid", "first"),
+            ds_capitulo_cid=("ds_capitulo_cid", "first"),
+            qt_internacao_nova=("fl_internacao_nova", "sum"),
+            qt_dia_permanencia_soma=("qt_dia_permanencia", "sum"),
+        )
+    )
+
+    grupo_especialidade = ["cd_cnes", "cd_competencia", "cd_especialidade_sih"]
+    total_internacoes = mart.groupby(grupo_especialidade, dropna=False)[
+        "qt_internacao_nova"
+    ].transform("sum")
+    total_dias = mart.groupby(grupo_especialidade, dropna=False)[
+        "qt_dia_permanencia_soma"
+    ].transform("sum")
+    mart["nr_permanencia_media_hospital"] = _dividir(
+        mart.qt_dia_permanencia_soma,
+        mart.qt_internacao_nova,
+    )
+    mart["pc_internacao_especialidade"] = (
+        _dividir(mart.qt_internacao_nova, total_internacoes) * 100
+    )
+    mart["pc_dia_permanencia_especialidade"] = (
+        _dividir(mart.qt_dia_permanencia_soma, total_dias) * 100
+    )
+
+    chaves_benchmark = [
+        "cd_regiao_saude",
+        "cd_competencia",
+        "cd_especialidade_sih",
+        "cd_cid_principal",
+    ]
+    regiao = (
+        mart.groupby(chaves_benchmark, as_index=False, dropna=False)
+        .agg(
+            qt_internacao_regiao=("qt_internacao_nova", "sum"),
+            qt_dia_permanencia_regiao=("qt_dia_permanencia_soma", "sum"),
+            qt_hospital_regiao=("cd_cnes", "nunique"),
+        )
+    )
+    mart = mart.merge(regiao, on=chaves_benchmark, how="left", validate="many_to_one")
+    mart["qt_internacao_benchmark"] = (
+        mart.qt_internacao_regiao - mart.qt_internacao_nova
+    )
+    mart["qt_dia_permanencia_benchmark"] = (
+        mart.qt_dia_permanencia_regiao - mart.qt_dia_permanencia_soma
+    )
+    mart["qt_hospital_benchmark"] = mart.qt_hospital_regiao - 1
+    mart["nr_permanencia_media_benchmark"] = _dividir(
+        mart.qt_dia_permanencia_benchmark,
+        mart.qt_internacao_benchmark,
+    )
+    mart["nr_ipr"] = _dividir(
+        mart.nr_permanencia_media_hospital,
+        mart.nr_permanencia_media_benchmark,
+    )
+    elegivel = (
+        mart.qt_internacao_nova.ge(20)
+        & mart.qt_internacao_benchmark.ge(50)
+        & mart.qt_hospital_benchmark.ge(3)
+        & mart.nr_permanencia_media_benchmark.gt(0)
+        & mart.cd_especialidade_sih.ne(CODIGO_DESCONHECIDO)
+        & mart.cd_cid_principal.ne(CODIGO_DESCONHECIDO)
+    )
+    mart["st_amostra"] = np.select(
+        [elegivel, mart.nr_permanencia_media_benchmark.eq(0)],
+        ["suficiente", "benchmark_zero"],
+        default="amostra_insuficiente",
+    )
+    mart.loc[~elegivel, "nr_ipr"] = np.nan
+    mart = mart.drop(
+        columns=[
+            "qt_internacao_regiao",
+            "qt_dia_permanencia_regiao",
+            "qt_hospital_regiao",
+        ]
+    )
+
+    ordem = [
+        "cd_cnes",
+        "cd_especialidade_sih",
+        "nm_especialidade",
+        "cd_regiao_saude",
+        "nm_regiao_saude",
+        "cd_macrorregiao_saude",
+        "nm_macrorregiao_saude",
+        "nr_ano_competencia",
+        "nr_mes_competencia",
+        "cd_competencia",
+        "cd_cid_principal",
+        "ds_cid",
+        "cd_capitulo_cid",
+        "ds_capitulo_cid",
+        "qt_internacao_nova",
+        "qt_dia_permanencia_soma",
+        "nr_permanencia_media_hospital",
+        "pc_internacao_especialidade",
+        "pc_dia_permanencia_especialidade",
+        "qt_internacao_benchmark",
+        "qt_dia_permanencia_benchmark",
+        "qt_hospital_benchmark",
+        "nr_permanencia_media_benchmark",
+        "nr_ipr",
+        "st_amostra",
+    ]
+    mart = mart[ordem]
+    assert not mart.duplicated(chaves).any()
+    assert int(mart.qt_internacao_nova.sum()) == int(novas.fl_internacao_nova.sum())
+    assert int(mart.qt_dia_permanencia_soma.sum()) == int(
+        novas.qt_dia_permanencia.sum()
+    )
+    return mart
 
 
 def _resumo_ipe(especialidade: pd.DataFrame, chaves: list[str]) -> pd.DataFrame:
@@ -997,6 +1198,7 @@ def calcular_gold(*, base: Path, sobrescrever: bool = False) -> dict[str, pd.Dat
     atracao_mensal = _atracao_mensal(novas)
     fluxo_mensal = _fluxo_assistencial_mensal(novas, municipios)
     hospital_especialidade = _hospital_especialidade_mensal(fato, novas, ipca)
+    hospital_especialidade_cid = _hospital_especialidade_cid_mensal(fato)
     hospital_cid = _hospital_cid_periodo(novas)
     hospital_mensal = _hospital_mensal(
         novas, leitos, hospitais, hospital_especialidade, ipca
@@ -1015,6 +1217,7 @@ def calcular_gold(*, base: Path, sobrescrever: bool = False) -> dict[str, pd.Dat
     marts = {
         "mart_indicador_hospital_mensal": hospital_mensal,
         "mart_indicador_hospital_especialidade_mensal": hospital_especialidade,
+        "mart_indicador_hospital_especialidade_cid_mensal": hospital_especialidade_cid,
         "mart_indicador_hospital_cid_periodo": hospital_cid,
         "mart_indicador_regiao_mensal": regiao_mensal,
         "mart_indicador_regiao_periodo": regiao_periodo,
@@ -1024,6 +1227,7 @@ def calcular_gold(*, base: Path, sobrescrever: bool = False) -> dict[str, pd.Dat
     total_novas = int(novas.fl_internacao_nova.sum())
     assert int(hospital_mensal.qt_internacao_nova.sum()) == total_novas
     assert int(hospital_especialidade.qt_internacao_nova.sum()) == total_novas
+    assert int(hospital_especialidade_cid.qt_internacao_nova.sum()) == total_novas
     assert int(regiao_mensal.qt_internacao_nova.sum()) == total_novas
     assert int(fluxo_mensal.qt_internacao_nova.sum()) == total_novas
     total_residentes_sp = int(novas.cd_regiao_saude_residencia.notna().sum())
@@ -1115,6 +1319,12 @@ def calcular_gold(*, base: Path, sobrescrever: bool = False) -> dict[str, pd.Dat
         "combinacoes_ipr_elegiveis": int(
             hospital_cid.st_amostra.eq("suficiente").sum()
         ),
+        "combinacoes_diagnostico_especialidade_mensal": int(
+            len(hospital_especialidade_cid)
+        ),
+        "combinacoes_diagnostico_especialidade_comparaveis": int(
+            hospital_especialidade_cid.st_amostra.eq("suficiente").sum()
+        ),
         "cobertura_internacoes_ipr_pct": round(
             hospital_cid.loc[
                 hospital_cid.st_amostra.eq("suficiente"),
@@ -1176,3 +1386,114 @@ def calcular_gold(*, base: Path, sobrescrever: bool = False) -> dict[str, pd.Dat
         "\n".join(relatorio), encoding="utf-8"
     )
     return marts
+
+
+def materializar_diagnosticos_especialidade(
+    *,
+    base: Path,
+    sobrescrever: bool = False,
+) -> pd.DataFrame:
+    """Gera somente o novo mart a partir da Silver já materializada.
+
+    É o caminho de atualização local desta migração: não lê Bronze, não
+    reconstrói Silver e não toca nos sete marts já publicados.
+    """
+    origem = base / "data" / "silver" / "fatos" / "fato_internacao.parquet"
+    destino = (
+        base
+        / "data"
+        / "gold"
+        / "marts"
+        / "mart_indicador_hospital_especialidade_cid_mensal.parquet"
+    )
+    fato = pd.read_parquet(origem, columns=COLUNAS_DIAGNOSTICO_ESPECIALIDADE)
+    mart = _hospital_especialidade_cid_mensal(fato)
+    destino.parent.mkdir(parents=True, exist_ok=True)
+    parcial = destino.with_suffix(".parquet.parcial")
+    if destino.exists() and not sobrescrever:
+        existente = pd.read_parquet(destino)
+        if list(existente.columns) == list(mart.columns) and existente.equals(mart):
+            print(f"{destino.stem:<58} {len(mart):>10,} linhas (preservado)")
+        else:
+            if parcial.exists():
+                parcial.unlink()
+            mart.to_parquet(parcial, index=False)
+            parcial.replace(destino)
+            print(f"{destino.stem:<58} {len(mart):>10,} linhas")
+    else:
+        if parcial.exists():
+            parcial.unlink()
+        mart.to_parquet(parcial, index=False)
+        parcial.replace(destino)
+        print(f"{destino.stem:<58} {len(mart):>10,} linhas")
+
+    contrato_path = base / "contracts" / "dados" / "gold.json"
+    contrato = json.loads(contrato_path.read_text(encoding="utf-8"))
+    nome_mart = destino.stem
+    entrada = _contrato_tabela(
+        nome_mart,
+        mart,
+        "gold",
+        str(destino.relative_to(base)),
+    )
+    tabelas = list(contrato["tabelas"])
+    posicao = next(
+        (indice for indice, tabela in enumerate(tabelas) if tabela["nome"] == nome_mart),
+        len(tabelas),
+    )
+    if posicao < len(tabelas):
+        tabelas[posicao] = entrada
+    else:
+        anterior = next(
+            (
+                indice + 1
+                for indice, tabela in enumerate(tabelas)
+                if tabela["nome"] == "mart_indicador_hospital_especialidade_mensal"
+            ),
+            len(tabelas),
+        )
+        tabelas.insert(anterior, entrada)
+    contrato["tabelas"] = tabelas
+    # O carimbo acima descreve a publicação histórica da camada inteira. Este
+    # comando dirigido não o altera nem recarimba os outros marts.
+    _gravar_json(contrato_path, contrato)
+    (base / "data" / "gold" / "DICIONARIO.md").write_text(
+        _renderizar_dicionario(contrato), encoding="utf-8"
+    )
+
+    metadados_path = (
+        base
+        / "data"
+        / "gold"
+        / "qualidade"
+        / "METADADOS_DIAGNOSTICO_ESPECIALIDADE_MENSAL.json"
+    )
+    metadados_path.parent.mkdir(parents=True, exist_ok=True)
+    assinatura = {
+        "silver_sha256": _hash_arquivo(origem),
+        "mart_sha256": _hash_arquivo(destino),
+        "linhas": int(len(mart)),
+        "colunas": len(mart.columns),
+        "internacoes_novas": int(mart.qt_internacao_nova.sum()),
+        "dias_permanencia": int(mart.qt_dia_permanencia_soma.sum()),
+        "comparaveis": int(mart.st_amostra.eq("suficiente").sum()),
+    }
+    anteriores: dict[str, Any] = {}
+    if metadados_path.exists():
+        anteriores = json.loads(metadados_path.read_text(encoding="utf-8"))
+    gerado_em = (
+        anteriores.get("gerado_em_utc")
+        if anteriores.get("assinatura") == assinatura
+        else datetime.now(UTC).isoformat()
+    )
+    metadados = {
+        "camada": "gold",
+        "tabela": nome_mart,
+        "versao_contrato": contrato["versao_contrato"],
+        "gerado_em_utc": gerado_em,
+        "origem": str(origem.relative_to(base)),
+        "destino": str(destino.relative_to(base)),
+        "assinatura": assinatura,
+    }
+    _gravar_json(metadados_path, metadados)
+    return mart

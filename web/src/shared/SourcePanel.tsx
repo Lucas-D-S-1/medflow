@@ -11,7 +11,7 @@ export default function SourcePanel() {
     return (
       <section className="source-panel" aria-busy="true">
         <StatePanel kind="loading" title="Consultando a fonte" testId="loading-state">
-          Validando o contrato e a competência publicada.
+          Validando a fonte e a competência publicada.
         </StatePanel>
       </section>
     )
@@ -48,7 +48,7 @@ export default function SourcePanel() {
       <div className="panel-heading">
         <div>
           <p className="section-kicker">ESTADO DA FONTE</p>
-          <h2>Contrato operacional</h2>
+          <h2>Estado dos dados</h2>
         </div>
         <SourceBadge kind={sourceState.kind} dataThrough={status.data_through} />
       </div>
@@ -60,7 +60,7 @@ export default function SourcePanel() {
           testId="data-through"
         />
         <MetricCard
-          label="Contrato da API"
+          label="Versão dos dados"
           value={`v${status.contract_version}`}
           detail="caminho versionado /v1"
           testId="contract-version"
@@ -83,7 +83,7 @@ export default function SourcePanel() {
           <span aria-hidden="true">i</span>
           <p>
             {sourceState.reason === 'invalid-contract'
-              ? 'O Oracle respondeu, mas o conteúdo não corresponde ao contrato da API. '
+              ? 'O Oracle respondeu, mas o conteúdo veio em um formato inesperado. '
               : 'A consulta ao Oracle falhou ou excedeu o tempo limite. '}
             Esta sessão usa somente o snapshot local; nenhuma fonte foi misturada. Você pode{' '}
             <button type="button" onClick={() => void reload()}>tentar novamente</button>.

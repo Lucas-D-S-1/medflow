@@ -123,6 +123,38 @@ módulo público depois da ordem normal `03_modulo_medflow_dev.sql` seguida de
 `make ords-publicar`. O profile Select AI pode ser atualizado sem inferência
 com `make select-ai-sincronizar-territorio`.
 
+Para acrescentar o diagnóstico mensal por especialidade a uma instância já
+existente, não execute novamente o schema destrutivo `02`. Revise e execute,
+nesta ordem, a migração aditiva, a carga isolada, a view e os módulos:
+
+```bash
+.venv/bin/python src/medflow/oracle/executar_sql.py \
+  db/schema/07_adicionar_diagnostico_especialidade_mensal.sql
+safe-run .venv/bin/python src/medflow/oracle/carregar_gold.py \
+  --somente mart_indicador_hospital_especialidade_cid_mensal
+.venv/bin/python src/medflow/oracle/executar_sql.py \
+  db/schema/08_ampliar_contexto_select_ai.sql
+.venv/bin/python src/medflow/oracle/executar_sql.py \
+  db/views/10_vw_api_hospital_diagnosticos_especialidade.sql
+.venv/bin/python src/medflow/oracle/executar_sql.py \
+  db/apex/02_pacote_select_ai.sql
+.venv/bin/python src/medflow/oracle/executar_sql.py \
+  db/select_ai/05_sincronizar_profile_territorio.sql
+.venv/bin/python src/medflow/oracle/executar_sql.py \
+  db/ords/03_modulo_medflow_dev.sql
+.venv/bin/python src/medflow/oracle/executar_sql.py \
+  db/ords/04_modulo_medflow_prod.sql
+```
+
+O rollback operacional está em
+`db/schema/07_reverter_diagnostico_especialidade_mensal.sql`: primeiro restaure
+pacote, profile, ORDS e frontend anteriores; o mart e a view podem permanecer
+inativos, preservando a carga. Remoção física é uma etapa destrutiva separada,
+guardada por confirmação em
+`db/schema/07_remover_fisicamente_diagnostico_especialidade.sql`, e só vem
+depois da retirada de todas as dependências. Nenhum desses comandos foi
+executado nesta implementação local.
+
 ### Passos 8 e 9 — dois módulos, uma definição
 
 | Módulo | Caminho | Origem aceita no CORS | Para quê |

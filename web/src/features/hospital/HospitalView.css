@@ -194,6 +194,56 @@
 
 .specialty-summary-actions button:hover { background: var(--color-accent-soft); }
 
+.specialty-diagnoses {
+  padding-top: var(--space-4);
+  border-top: var(--border-subtle);
+}
+.specialty-diagnoses-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+.specialty-diagnoses-heading h3 { margin: 0; }
+.specialty-diagnoses-heading p:not(.section-kicker) { margin: var(--space-2) 0 0; }
+.specialty-diagnoses-heading label {
+  display: grid;
+  flex: 0 0 min(14rem, 36%);
+  gap: var(--space-2);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+}
+.specialty-diagnoses-heading select {
+  min-width: 0;
+  padding: .65rem .75rem;
+  color: var(--color-text);
+  border: var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+}
+.specialty-diagnoses-meta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-4);
+  margin-top: var(--space-3);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+}
+.diagnosis-state {
+  margin: var(--space-3) 0 0;
+  padding: var(--space-3);
+  border: var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-soft);
+}
+.specialty-diagnosis-table td:nth-child(1) { width: 30%; }
+.specialty-diagnosis-table td:nth-child(2) { width: 13%; }
+.specialty-diagnosis-table td:nth-child(3) { width: 13%; }
+.specialty-diagnosis-table td:nth-child(4) { width: 14%; }
+.specialty-diagnosis-table td:nth-child(5) { width: 30%; }
+
 .hospital-table-wrap { margin-top: var(--space-4); overflow-x: auto; }
 .hospital-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
 .hospital-table th,
@@ -252,6 +302,8 @@
   .specialty-summary-heading { display: block; }
   .specialty-summary-heading > small { display: block; margin-top: var(--space-2); text-align: left; }
   .specialty-summary-grid { grid-template-columns: 1fr; }
+  .specialty-diagnoses-heading { display: block; }
+  .specialty-diagnoses-heading label { margin-top: var(--space-3); }
   .hospital-table-wrap { overflow-x: visible; }
   .hospital-table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
   .hospital-table,

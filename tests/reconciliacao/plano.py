@@ -158,7 +158,7 @@ def _hospital_serie(mart: pd.DataFrame) -> Iterator[Recorte]:
 
 
 def _hospital_especialidades(mart: pd.DataFrame) -> Iterator[Recorte]:
-    # O mais caro dos oito: são milhares de combinações hospital-competência,
+    # Um dos recortes caros: são milhares de combinações hospital-competência,
     # uma chamada cada, porque o handler exige `ano` e `mes`.
     for ano, mes, cnes in _combinacoes(mart, "cd_cnes"):
         yield Recorte(
@@ -175,6 +175,29 @@ def _hospital_especialidades(mart: pd.DataFrame) -> Iterator[Recorte]:
 def _hospital_cids(mart: pd.DataFrame) -> Iterator[Recorte]:
     for cnes in sorted(mart.cd_cnes.unique()):
         yield Recorte(caminho=f"hospitais/{cnes}/cids", filtro={"cd_cnes": cnes})
+
+
+def _hospital_diagnosticos_especialidade(mart: pd.DataFrame) -> Iterator[Recorte]:
+    colunas = [
+        "nr_ano_competencia",
+        "nr_mes_competencia",
+        "cd_cnes",
+        "cd_especialidade_sih",
+    ]
+    presentes = mart[colunas].drop_duplicates()
+    for ano, mes, cnes, especialidade in presentes.sort_values(colunas).itertuples(
+        index=False
+    ):
+        yield Recorte(
+            caminho=f"hospitais/{cnes}/especialidades/{especialidade}/diagnosticos",
+            parametros={"ano": int(ano), "mes": int(mes)},
+            filtro={
+                "cd_cnes": cnes,
+                "cd_especialidade_sih": especialidade,
+                "nr_ano_competencia": int(ano),
+                "nr_mes_competencia": int(mes),
+            },
+        )
 
 
 ENDPOINTS: tuple[Endpoint, ...] = (
@@ -230,6 +253,12 @@ ENDPOINTS: tuple[Endpoint, ...] = (
         mart="mart_indicador_hospital_especialidade_mensal",
         enumerar=_hospital_especialidades,
         descricao="especialidades por hospital",
+    ),
+    Endpoint(
+        padrao="hospitais/:cnes/especialidades/:especialidade/diagnosticos",
+        mart="mart_indicador_hospital_especialidade_cid_mensal",
+        enumerar=_hospital_diagnosticos_especialidade,
+        descricao="diagnósticos por hospital, competência e especialidade",
     ),
     Endpoint(
         padrao="hospitais/:cnes/cids",

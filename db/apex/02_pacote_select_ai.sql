@@ -45,7 +45,7 @@ begin
         id           number generated always as identity primary key,
         momento      timestamp with local time zone default systimestamp not null,
         pergunta     varchar2(4000) not null,
-        contexto     varchar2(1000),
+        contexto     varchar2(4000 byte),
         sql_gerado   clob,
         narrativa    clob,
         aviso        varchar2(4000),
@@ -58,6 +58,7 @@ end;
 -- Migração idempotente para instalações anteriores ao assistente contextual.
 declare
   ja_existe number;
+  capacidade number;
 begin
   select count(*) into ja_existe
   from   user_tab_columns
@@ -65,7 +66,16 @@ begin
   and    column_name = 'CONTEXTO';
 
   if ja_existe = 0 then
-    execute immediate 'alter table select_ai_resposta add contexto varchar2(1000)';
+    execute immediate 'alter table select_ai_resposta add contexto varchar2(4000 byte)';
+  else
+    select data_length into capacidade
+      from user_tab_columns
+     where table_name = 'SELECT_AI_RESPOSTA'
+       and column_name = 'CONTEXTO';
+    if capacidade < 4000 then
+      execute immediate
+        'alter table select_ai_resposta modify contexto varchar2(4000 byte)';
+    end if;
   end if;
 end;
 /
@@ -463,7 +473,7 @@ create or replace package body medflow_select_ai as
     p_pergunta in varchar2,
     p_contexto in varchar2
   ) return boolean is
-    l_contexto varchar2(1000) := lower(nvl(p_contexto, ' '));
+    l_contexto varchar2(32767) := lower(nvl(p_contexto, ' '));
   begin
     return eh_comparacao_mensal(p_pergunta)
            and (
@@ -744,9 +754,9 @@ fetch first 5 rows only~';
     l_no_texto  varchar2(4000);
     l_no_sql    varchar2(4000);
     l_pergunta  varchar2(4000) := trim(p_pergunta);
-    l_contexto  varchar2(4000) := trim(p_contexto);
+    l_contexto  varchar2(32767) := trim(p_contexto);
     -- 32767 e nao 4000: o texto fixo das regras ja passa de 4 mil caracteres, e
-    -- somado ao contexto (ate 1000) e a pergunta (ate 300) estourava o buffer.
+    -- somado ao contexto (ate 4000 bytes) e a pergunta (ate 300) estourava o buffer.
     -- O limite antigo cabia por pouco desde antes das regras 11 e 12, e o
     -- estouro seria ORA-06502 no meio da resposta, nao um erro de contrato.
     l_prompt    varchar2(32767);
@@ -763,8 +773,8 @@ fetch first 5 rows only~';
       raise_application_error(-20004, 'A pergunta deve ter no máximo 300 caracteres.');
     end if;
 
-    if length(l_contexto) > 4000 then
-      raise_application_error(-20008, 'O contexto deve ter no máximo 4000 caracteres.');
+    if lengthb(l_contexto) > 4000 then
+      raise_application_error(-20008, 'O contexto deve ter no máximo 4000 bytes UTF-8.');
     end if;
 
     l_prompt := case
@@ -782,7 +792,11 @@ fetch first 5 rows only~';
            || 'mais, quais, o maior, o pior, os primeiros), NAO restrinja '
            || 'a regiao nem ao hospital do contexto: percorra todo o escopo '
            || 'disponivel e ordene. Nesse caso o contexto serve apenas para '
-           || 'citar onde o local atual aparece no resultado.' || chr(10)
+           || 'citar onde o local atual aparece no resultado. EXCECAO: se o '
+           || 'contexto trouxer hospital_cnes, competencia, intencao de '
+           || 'diagnosticos por especialidade e especialidades estruturadas, '
+           || 'preserve exatamente esses filtros; e um drilldown do conjunto, '
+           || 'nao um ranking global.' || chr(10)
            || '3. Perguntas como ate onde vao os dados, ate quando ha dados, '
            || 'qual o mes mais recente ou qual a ultima competencia pedem '
            || 'cobertura temporal: use MAX(CD_COMPETENCIA), que e AAAAMM, e '
@@ -933,7 +947,17 @@ fetch first 5 rows only~';
            || 'devolve a mesma unidade varias vezes, uma por mes, como se '
            || 'fossem hospitais diferentes. O mesmo hospital, regiao, '
            || 'especialidade ou diagnostico nunca pode aparecer duas vezes na '
-           || 'mesma lista.'
+           || 'mesma lista. EXCECAO: em ranking separado por especialidade, '
+           || 'um mesmo CID pode reaparecer em especialidades distintas; ele '
+           || 'nao pode duplicar dentro da mesma especialidade.' || chr(10)
+           || '23. Para pergunta livre que combine CID ou diagnostico com mes '
+           || 'e especialidade, use somente '
+           || 'MART_INDICADOR_HOSPITAL_ESPECIALIDADE_CID_MENSAL. Seu grao e '
+           || 'hospital, competencia, especialidade SIH e CID principal. '
+           || 'Some QT_INTERNACAO_NOVA e QT_DIA_PERMANENCIA_SOMA; permanencia '
+           || 'media e SUM(QT_DIA_PERMANENCIA_SOMA) / '
+           || 'SUM(QT_INTERNACAO_NOVA), nunca media de medias. Nao invente '
+           || 'CD_CID, joins ou colunas: CD_CID_PRINCIPAL ja esta no mart.'
     end;
 
     l_ranking := eh_ranking_analitico(l_pergunta);
@@ -1026,6 +1050,32 @@ fetch first 5 rows only~';
 
     if l_narrativa is null or dbms_lob.getlength(l_narrativa) = 0 then
       raise_application_error(-20005, 'O modelo nao devolveu narrativa.');
+    end if;
+
+    -- NARRATE é outra geração, não uma execução do SQL aprovado. Em 17/09 a
+    -- geração devolveu ORA-00904 dentro do próprio texto e a API o apresentou
+    -- como resposta concluída. Erro Oracle, SQL cru ou bloco SQL na narrativa
+    -- passam a ser falha auditada: o conteúdo bruto nunca chega ao usuário.
+    if regexp_like(dbms_lob.substr(l_narrativa, 32767, 1), 'ORA-[0-9]{5}', 'i')
+       or regexp_like(
+            dbms_lob.substr(l_narrativa, 32767, 1),
+            '^[[:space:]]*(SQL[[:space:]:>-]*)?(SELECT|WITH)([[:space:][:punct:]])',
+            'im')
+       or regexp_like(
+            dbms_lob.substr(l_narrativa, 32767, 1),
+            '```[[:space:]]*(sql)?[[:space:]]*(select|with)',
+            'i') then
+      l_recusa := substr(
+        case when l_recusa is null then '' else l_recusa || ' | ' end
+        || 'Narrativa recusada: continha erro Oracle ou SQL cru.',
+        1,
+        400);
+      l_sql := null;
+      l_aviso := 'A resposta gerada foi bloqueada porque continha erro Oracle '
+                 || 'ou SQL cru. Nenhum resultado conclusivo foi publicado.';
+      l_narrativa := to_clob(
+        'Nao foi possivel concluir esta resposta com seguranca. A geracao foi '
+        || 'bloqueada e nenhum erro Oracle ou SQL bruto foi exibido como resultado.');
     end if;
 
     l_no_texto := termos_afirmados(l_narrativa);

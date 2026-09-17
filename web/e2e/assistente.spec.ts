@@ -15,8 +15,107 @@ import {
   regiaoDestacada,
   snapshotCompetencia,
   snapshotCompetenciaBR,
+  specialtyDiagnosisSnapshot,
   specialtySnapshot,
 } from './apoio'
+
+const Q1_SAO_VICENTE = 'No São Vicente (2786435), em junho/2026, mostre todas as especialidades: internações, total de dias de permanência, permanência média e referência dos demais hospitais de Jundiaí. Ordene pelo total de dias de permanência; destaque diferenças com amostra suficiente.'
+const Q2_SAO_VICENTE = 'dentro dessas 3 especilidades, me mostre os principais diagnósticos? gere os números igual gerou anteriormente'
+
+const saoVicenteSpecialties = [
+  { code: '03', name: 'Clínica médica', admissions: 730, days: 5666, average: 7.761644, peerAdmissions: 776, peerDays: 2846, peerHospitals: 10, peerAverage: 3.667526, ipe: 2.116316, comparison: 'suficiente' },
+  { code: '01', name: 'Cirurgia', admissions: 592, days: 2939, average: 4.964527, peerAdmissions: 1272, peerDays: 2066, peerHospitals: 7, peerAverage: 1.624214, ipe: 3.056572, comparison: 'suficiente' },
+  { code: '87', name: 'Saúde mental - clínico', admissions: 50, days: 328, average: 6.56, peerAdmissions: 0, peerDays: 0, peerHospitals: 0, peerAverage: null, ipe: null, comparison: 'amostra_insuficiente' },
+] as const
+
+const saoVicenteTop = {
+  '03': [
+    ['J448', 'Outras formas especificadas de doença pulmonar obstrutiva crônica', 53, 1010, 19.056604, 7.260274, 17.825627, 0, 0, 0, null],
+    ['I64', 'Acidente vascular cerebral, não especificado como hemorrágico ou isquêmico', 49, 406, 8.285714, 6.712329, 7.165549, 22, 99, 5, 4.5],
+    ['A419', 'Septicemia não especificada', 29, 274, 9.448276, 3.972603, 4.835863, 23, 234, 5, 10.173913],
+    ['I500', 'Insuficiência cardíaca congestiva', 18, 220, 12.222222, 2.465753, 3.88281, 12, 71, 3, 5.916667],
+    ['J180', 'Broncopneumonia não especificada', 31, 190, 6.129032, 4.246575, 3.353336, 14, 81, 5, 5.785714],
+  ],
+  '01': [
+    ['I219', 'Infarto agudo do miocárdio não especificado', 58, 254, 4.37931, 9.797297, 8.642395, 0, 0, 0, null],
+    ['S065', 'Hemorragia subdural devida a traumatismo', 18, 164, 9.111111, 3.040541, 5.580129, 0, 0, 0, null],
+    ['K566', 'Outras formas de obstrução intestinal', 11, 106, 9.636364, 1.858108, 3.606669, 1, 8, 1, 8],
+    ['S721', 'Fratura pertrocantérica', 14, 93, 6.642857, 2.364865, 3.164342, 0, 0, 0, null],
+    ['J448', 'Outras formas especificadas de doença pulmonar obstrutiva crônica', 4, 85, 21.25, 0.675676, 2.89214, 0, 0, 0, null],
+  ],
+  '87': [
+    ['F609', 'Transtorno não especificado da personalidade', 7, 83, 11.857143, 14, 25.304878, 0, 0, 0, null],
+    ['F312', 'Transtorno afetivo bipolar', 3, 47, 15.666667, 6, 14.329268, 0, 0, 0, null],
+    ['F603', 'Transtorno de personalidade com instabilidade emocional', 6, 34, 5.666667, 12, 10.365854, 0, 0, 0, null],
+    ['F192', 'Transtornos pelo uso de múltiplas drogas', 2, 19, 9.5, 4, 5.792683, 0, 0, 0, null],
+    ['F239', 'Transtorno psicótico agudo e transitório', 1, 17, 17, 2, 5.182927, 0, 0, 0, null],
+  ],
+} as const
+
+async function mockSaoVicenteQ1Q2(page: import('@playwright/test').Page) {
+  await page.route('**/api/dev/v1/hospitais/2786435/especialidades**', async (route) => {
+    const url = new URL(route.request().url())
+    if (url.pathname.includes('/diagnosticos')) return route.fallback()
+    const baseItems = specialtySnapshot.items as Record<string, unknown>[]
+    const items = saoVicenteSpecialties.map((item, index) => ({
+      ...baseItems[index],
+      cnes: '2786435',
+      specialty_code: item.code,
+      specialty_name: item.name,
+      new_admissions: item.admissions,
+      stay_days_total: item.days,
+      average_stay_days: item.average,
+      benchmark_admissions: item.peerAdmissions,
+      benchmark_stay_days_total: item.peerDays,
+      benchmark_hospitals: item.peerHospitals,
+      average_stay_benchmark: item.peerAverage,
+      ipe: item.ipe,
+      ipe_sample_status: item.comparison,
+      sample_status: 'suficiente',
+    }))
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        ...specialtySnapshot,
+        source: 'oracle-live',
+        database_time: '2026-09-17T12:00:00-03:00',
+        filters: { cnes: '2786435', year: 2026, month: 6 },
+        hospital: { ...(specialtySnapshot.hospital as object), cnes: '2786435', new_admissions_total: 1372 },
+        pagination: { limit: 200, offset: 0, count: 3, has_more: false, order: 'new_admissions_desc' },
+        items,
+      }),
+    })
+  })
+  await page.route(
+    '**/api/dev/v1/hospitais/2786435/especialidades/*/diagnosticos**',
+    async (route) => {
+      const url = new URL(route.request().url())
+      const code = url.pathname.match(/especialidades\/(\d{2})\/diagnosticos$/)?.[1] as keyof typeof saoVicenteTop
+      const specialty = saoVicenteSpecialties.find((item) => item.code === code)!
+      const limit = Number(url.searchParams.get('limit'))
+      const rows = saoVicenteTop[code]
+      const items = rows.map((row) => ({
+        cnes: '2786435', specialty_code: code, specialty_name: specialty.name,
+        cid_code: row[0], cid_description: row[1], chapter_code: 'X', chapter_description: 'Capítulo CID-10',
+        new_admissions: row[2], stay_days_total: row[3], average_stay_days: row[4],
+        admission_share_percent: row[5], stay_day_share_percent: row[6],
+        benchmark_admissions: row[7], benchmark_stay_days_total: row[8], benchmark_hospitals: row[9],
+        average_stay_benchmark: row[10], ipr: null, sample_status: 'amostra_insuficiente',
+      }))
+      await route.fulfill({
+        contentType: 'application/json',
+        body: JSON.stringify({
+          ...specialtyDiagnosisSnapshot,
+          source: 'oracle-live', database_time: '2026-09-17T12:00:00-03:00', data_through: '2026-06',
+          filters: { cnes: '2786435', year: 2026, month: 6, specialty_code: code, order_by: 'dias' },
+          hospital: { ...(specialtyDiagnosisSnapshot.hospital as object), cnes: '2786435', specialty_code: code, specialty_name: specialty.name, specialty_new_admissions_total: specialty.admissions, specialty_stay_days_total: specialty.days },
+          pagination: { limit, offset: 0, count: 5, has_more: false, order: 'stay_days_desc' },
+          items,
+        }),
+      })
+    },
+  )
+}
 
 test.beforeEach(async ({ page }) => {
   await mockLiveSource(page)
@@ -127,6 +226,8 @@ test('envia somente pergunta livre ao Oracle Select AI e mostra SQL auditável',
         macroregion_label: 'Rede regional 16 — Bragança e Jundiaí',
         hospital_cnes: null,
         active_analysis: 'pressão hospitalar regional e tendência',
+        intent: 'pergunta_livre',
+        specialties: [],
         history: [],
       },
     })
@@ -157,6 +258,420 @@ test('envia somente pergunta livre ao Oracle Select AI e mostra SQL auditável',
   await panel.getByText('Ver SQL gerado e validado').click()
   await expect(panel.locator('pre')).toContainText('select nm_regiao_saude')
   await expect(panel).toContainText('assistente da análise')
+})
+
+test('bloqueia ORA devolvido dentro da narrativa em vez de mostrá-lo como sucesso', async ({
+  page,
+}) => {
+  await page.route('**/api/dev/v1/assistente/perguntar', async (route) => {
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        status: 'ok',
+        source: 'oracle-select-ai',
+        response_id: 502,
+        narrative: 'ORA-00904: c.CD_CID: invalid identifier',
+        sql: null,
+        warning: null,
+      }),
+    })
+  })
+
+  await page.goto('/regional?regiao=35073')
+  await page.getByRole('button', { name: /Posso ajudar/ }).click()
+  await page.getByLabel('Faça outra pergunta').fill('Pergunta livre de teste')
+  await page.getByRole('button', { name: 'Enviar pergunta' }).click()
+
+  const answer = page.locator('.assistant-answer').last()
+  await expect(answer).toContainText('resposta do assistente veio incompleta ou insegura')
+  await expect(answer).not.toContainText('ORA-00904')
+})
+
+test('executa Q1 e Q2 canônicos no São Vicente com conjunto estruturado e zero Select AI', async ({
+  page,
+}) => {
+  await mockSaoVicenteQ1Q2(page)
+  let selectAiCalls = 0
+  let diagnosticRankingCalls = 0
+  const diagnosticSpecialties: string[] = []
+  await page.route('**/api/dev/v1/assistente/perguntar', async (route) => {
+    selectAiCalls += 1
+    await route.abort()
+  })
+  await page.route(
+    '**/api/dev/v1/hospitais/*/especialidades/*/diagnosticos**',
+    async (route) => {
+      const url = new URL(route.request().url())
+      if (url.searchParams.get('limit') === '5') {
+        diagnosticRankingCalls += 1
+        diagnosticSpecialties.push(
+          url.pathname.match(/especialidades\/(\d{2}|--)\/diagnosticos$/)?.[1] ?? '',
+        )
+      }
+      await route.fallback()
+    },
+  )
+
+  await page.goto('/?competencia=2026-06&regiao=35073&hospital=2786435#hospital')
+  await expect(page.getByTestId('especialidade-count')).toHaveText('3 de 3 especialidades')
+  await expect(page.getByTestId('specialty-summary')).toContainText(/Clínica médica/i)
+  await page.getByRole('link', { name: 'Hospital' }).click()
+  await page.getByRole('button', { name: /Posso ajudar/ }).click()
+  await expect(page.locator('#medflow-assistant-panel')).toContainText(
+    'Contexto: visão hospitalar',
+  )
+  const input = page.getByLabel('Faça outra pergunta')
+
+  await input.fill(Q1_SAO_VICENTE)
+  await page.getByRole('button', { name: 'Enviar pergunta' }).click()
+  const first = page.locator('.assistant-answer').last()
+  await expect(first).toContainText('Clínica médica (03): 730 internações, 5.666 dias')
+  await expect(first).toContainText('Cirurgia (01): 592 internações, 2.939 dias')
+  await expect(first).toContainText('Saúde mental - clínico (87): 50 internações, 328 dias')
+  expect(await first.innerText()).toMatch(/Clínica médica[\s\S]*Cirurgia[\s\S]*Saúde mental/)
+  await expect(first).toContainText('Ordenação: total de dias de permanência')
+  await expect(first).toContainText('Fonte: dados do MedFlow consultados diretamente, junho/2026')
+
+  await input.fill(Q2_SAO_VICENTE)
+  await page.getByRole('button', { name: 'Enviar pergunta' }).click()
+  const followUp = page.locator('.assistant-answer').last()
+  await expect(followUp).toContainText('Clínica médica (03) — top 5 por total de dias')
+  await expect(followUp).toContainText('J448 — Outras formas especificadas de doença pulmonar obstrutiva crônica: 53 internações, 1.010 dias')
+  await expect(followUp).toContainText('I64 — Acidente vascular cerebral')
+  await expect(followUp).toContainText('Cirurgia (01)')
+  await expect(followUp).toContainText('I219 — Infarto agudo do miocárdio não especificado: 58 internações, 254 dias')
+  await expect(followUp).toContainText('J448 — Outras formas especificadas de doença pulmonar obstrutiva crônica: 4 internações, 85 dias')
+  await expect(followUp).toContainText('Saúde mental - clínico (87)')
+  await expect(followUp).toContainText('F609 — Transtorno não especificado da personalidade: 7 internações, 83 dias')
+  await expect(followUp).toContainText('Sem outros hospitais neste recorte')
+  await expect(followUp).toContainText(
+    'Fonte: dados do MedFlow consultados diretamente, junho/2026',
+  )
+  expect(await followUp.innerText()).toMatch(/Clínica médica[\s\S]*Cirurgia[\s\S]*Saúde mental/)
+  expect(diagnosticRankingCalls).toBe(3)
+  expect(diagnosticSpecialties).toEqual(['03', '01', '87'])
+  expect(selectAiCalls).toBe(0)
+})
+
+test('não responde top 5 de diagnósticos mais frequentes com ranking por dias', async ({
+  page,
+}) => {
+  await mockSaoVicenteQ1Q2(page)
+  const requests: { context: Record<string, unknown> }[] = []
+  let diagnosticRankingCalls = 0
+  await page.route(
+    '**/api/dev/v1/hospitais/*/especialidades/*/diagnosticos**',
+    async (route) => {
+      if (new URL(route.request().url()).searchParams.get('limit') === '5') {
+        diagnosticRankingCalls += 1
+      }
+      await route.fallback()
+    },
+  )
+  await page.route('**/api/dev/v1/assistente/perguntar', async (route) => {
+    requests.push(route.request().postDataJSON() as { context: Record<string, unknown> })
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        status: 'ok',
+        source: 'oracle-select-ai',
+        response_id: 950 + requests.length,
+        narrative: 'O critério explícito de frequência foi preservado.',
+        sql: null,
+        warning: null,
+      }),
+    })
+  })
+
+  await page.goto('/?competencia=2026-06&regiao=35073&hospital=2786435#hospital')
+  await expect(page.getByTestId('especialidade-count')).toHaveText('3 de 3 especialidades')
+  await expect(page.getByTestId('specialty-summary')).toContainText(/Clínica médica/i)
+  await page.getByRole('link', { name: 'Hospital' }).click()
+  await page.getByRole('button', { name: /Posso ajudar/ }).click()
+  await expect(page.locator('#medflow-assistant-panel')).toContainText(
+    'Contexto: visão hospitalar',
+  )
+  const input = page.getByLabel('Faça outra pergunta')
+
+  await input.fill(Q1_SAO_VICENTE)
+  await input.press('Enter')
+  await expect(page.locator('.assistant-answer').last()).toContainText('Clínica médica (03)')
+
+  await input.fill(
+    'dentro dessas 3 especialidades, mostre o top 5 de diagnósticos mais frequentes',
+  )
+  await input.press('Enter')
+  await expect(page.locator('.assistant-answer').last()).toContainText(
+    'O critério explícito de frequência foi preservado.',
+  )
+
+  expect(diagnosticRankingCalls).toBe(0)
+  expect(requests).toHaveLength(1)
+  for (const request of requests) {
+    expect(request.context.specialties).toEqual([
+      { code: '03', name: 'Clínica médica' },
+      { code: '01', name: 'Cirurgia' },
+      { code: '87', name: 'Saúde mental - clínico' },
+    ])
+  }
+})
+
+test('Q1 entrega a pergunta livre quando hospital, competência ou região explícitos divergem', async ({
+  page,
+}) => {
+  await mockSaoVicenteQ1Q2(page)
+  const contexts: Record<string, unknown>[] = []
+  await page.route('**/api/dev/v1/assistente/perguntar', async (route) => {
+    contexts.push(
+      (route.request().postDataJSON() as { context: Record<string, unknown> }).context,
+    )
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        status: 'ok', source: 'oracle-select-ai', response_id: 901 + contexts.length,
+        narrative: 'O recorte explícito foi preservado.', sql: null, warning: null,
+      }),
+    })
+  })
+
+  await page.goto('/?competencia=2026-06&regiao=35073&hospital=2786435#hospital')
+  await page.getByRole('link', { name: 'Hospital' }).click()
+  await page.getByRole('button', { name: /Posso ajudar/ }).click()
+  const input = page.getByLabel('Faça outra pergunta')
+  const questions = [
+    'No Hospital Universitário (3012212), em junho/2026, mostre todas as especialidades por dias.',
+    'No Hospital Universitário, em junho/2026, mostre todas as especialidades por dias.',
+    'No São Vicente (2786435), em maio/2026, mostre todas as especialidades por dias.',
+    'No São Vicente (2786435), em junho/2026, mostre todas as especialidades e compare com os hospitais de Campinas.',
+  ]
+  for (const question of questions) {
+    await input.fill(question)
+    await input.press('Enter')
+    await expect(page.locator('.assistant-answer').last()).toContainText(
+      'O recorte explícito foi preservado.',
+    )
+  }
+
+  expect(contexts).toHaveLength(4)
+  for (const context of contexts) {
+    expect(context.hospital_cnes).toBeNull()
+    expect(context.competence).toBeNull()
+    expect(context.region_code).toBeNull()
+    expect(context.specialties).toEqual([])
+  }
+})
+
+test('Q2 não reutiliza o conjunto anterior diante de recorte explícito divergente', async ({
+  page,
+}) => {
+  await mockSaoVicenteQ1Q2(page)
+  const requests: { question: string; context: Record<string, unknown> }[] = []
+  let diagnosisRankingCalls = 0
+  await page.route('**/api/dev/v1/hospitais/*/especialidades/*/diagnosticos**', async (route) => {
+    if (new URL(route.request().url()).searchParams.get('limit') === '5') {
+      diagnosisRankingCalls += 1
+    }
+    await route.fallback()
+  })
+  await page.route('**/api/dev/v1/assistente/perguntar', async (route) => {
+    const body = route.request().postDataJSON() as {
+      question: string
+      context: Record<string, unknown>
+    }
+    requests.push(body)
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        status: 'ok', source: 'oracle-select-ai', response_id: 920 + requests.length,
+        narrative: 'A pergunta explícita teve precedência.', sql: null, warning: null,
+      }),
+    })
+  })
+
+  await page.goto('/?competencia=2026-06&regiao=35073&hospital=2786435#hospital')
+  await page.getByRole('link', { name: 'Hospital' }).click()
+  await page.getByRole('button', { name: /Posso ajudar/ }).click()
+  const input = page.getByLabel('Faça outra pergunta')
+  await input.fill(Q1_SAO_VICENTE)
+  await input.press('Enter')
+  await expect(page.locator('.assistant-answer').last()).toContainText('Clínica médica (03)')
+
+  const questions = [
+    `${Q2_SAO_VICENTE} no Hospital Universitário (3012212)`,
+    `${Q2_SAO_VICENTE} em maio/2026`,
+    `${Q2_SAO_VICENTE} para os hospitais de Campinas`,
+    `${Q2_SAO_VICENTE} na especialidade Cirurgia`,
+  ]
+  for (const question of questions) {
+    await input.fill(question)
+    await input.press('Enter')
+    await expect(page.locator('.assistant-answer').last()).toContainText(
+      'A pergunta explícita teve precedência.',
+    )
+  }
+
+  expect(diagnosisRankingCalls).toBe(0)
+  expect(requests).toHaveLength(4)
+  for (const request of requests) expect(request.context.specialties).toEqual([])
+  for (const request of requests.slice(0, 3)) {
+    expect(request.context.hospital_cnes).toBeNull()
+    expect(request.context.competence).toBeNull()
+    expect(request.context.region_code).toBeNull()
+  }
+  expect(requests[3].context.hospital_cnes).toBe('2786435')
+  expect(requests[3].context.competence).toBe('2026-06')
+})
+
+test('não absorve mortalidade, todos os diagnósticos nem outro mês no top 5 anafórico', async ({
+  page,
+}) => {
+  await mockSaoVicenteQ1Q2(page)
+  let selectAiCalls = 0
+  await page.route('**/api/dev/v1/assistente/perguntar', async (route) => {
+    selectAiCalls += 1
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({ status: 'ok', source: 'oracle-select-ai', response_id: 700 + selectAiCalls, narrative: 'Pergunta explícita preservada.', sql: null, warning: null }),
+    })
+  })
+  await page.goto('/?competencia=2026-06&regiao=35073&hospital=2786435#hospital')
+  await page.getByRole('link', { name: 'Hospital' }).click()
+  await page.getByRole('button', { name: /Posso ajudar/ }).click()
+  await expect(page.locator('#medflow-assistant-panel')).toContainText(
+    'Contexto: visão hospitalar',
+  )
+  const input = page.getByLabel('Faça outra pergunta')
+  await input.fill(Q1_SAO_VICENTE)
+  await input.press('Enter')
+  await expect(page.locator('.assistant-answer').last()).toContainText('Clínica médica (03)')
+
+  for (const pergunta of [
+    'dentro dessas 3 especialidades, qual a mortalidade por CID?',
+    'dentro dessas 3 especialidades, mostre todos os diagnósticos',
+    'dentro dessas 3 especialidades, mostre os principais diagnósticos em maio de 2026',
+    'dentro dessas 3 especialidades, principais diagnósticos da especialidade cirurgia',
+  ]) {
+    await input.fill(pergunta)
+    await input.press('Enter')
+    await expect(page.locator('.assistant-answer').last()).toContainText('Pergunta explícita preservada.')
+  }
+  expect(selectAiCalls).toBe(4)
+})
+
+test('envia ao backend no máximo cinco especialidades estruturadas do conjunto anterior', async ({
+  page,
+}) => {
+  let sentContext: Record<string, unknown> | null = null
+  await page.route('**/api/dev/v1/assistente/perguntar', async (route) => {
+    sentContext = (route.request().postDataJSON() as { context: Record<string, unknown> }).context
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        status: 'ok',
+        source: 'oracle-select-ai',
+        response_id: 503,
+        narrative: 'Resposta livre auditada.',
+        sql: null,
+        warning: null,
+      }),
+    })
+  })
+
+  await page.goto(`/?competencia=${snapshotCompetencia}&regiao=35073&hospital=3012212#hospital`)
+  await expect(page.getByTestId('especialidade-count')).toHaveText('4 de 4 especialidades')
+  await page.getByRole('link', { name: 'Hospital' }).click()
+  await page.getByRole('button', { name: /Posso ajudar/ }).click()
+  await expect(page.locator('#medflow-assistant-panel')).toContainText(
+    'Contexto: visão hospitalar',
+  )
+  const input = page.getByLabel('Faça outra pergunta')
+  await input.fill('Quais as 3 especialidades com mais internações?')
+  await page.getByRole('button', { name: 'Enviar pergunta' }).click()
+  await expect(page.locator('.assistant-answer').last()).toContainText('Cirurgia (01)')
+
+  await input.fill('Cruze esse conjunto com outra dimensão disponível.')
+  await page.getByRole('button', { name: 'Enviar pergunta' }).click()
+  await expect(page.locator('.assistant-answer').last()).toContainText('Resposta livre auditada')
+
+  expect(sentContext).not.toBeNull()
+  expect(sentContext!.hospital_cnes).toBe('3012212')
+  expect(sentContext!.competence).toBe(snapshotCompetencia)
+  expect(sentContext!.intent).toBe('pergunta_livre')
+  expect(sentContext!.specialties).toEqual([
+    { code: '07', name: 'Pediatria' },
+    { code: '02', name: 'Obstetrícia' },
+    { code: '01', name: 'Cirurgia' },
+  ])
+})
+
+test('todas as especialidades mantém mais de cinco no conjunto local e não ressuscita conjunto antigo', async ({
+  page,
+}) => {
+  await page.route('**/api/dev/v1/hospitais/3012212/especialidades**', async (route) => {
+    const url = new URL(route.request().url())
+    if (url.pathname.includes('/diagnosticos')) return route.fallback()
+    const atuais = specialtySnapshot.items as Record<string, unknown>[]
+    const extras = ['08', '09'].map((code, index) => ({
+      ...atuais[3],
+      specialty_code: code,
+      specialty_name: `Especialidade extra ${index + 1}`,
+      new_admissions: 10 - index,
+      stay_days_total: 20 - index,
+      benchmark_admissions: 0,
+      benchmark_stay_days_total: 0,
+      benchmark_hospitals: 0,
+      average_stay_benchmark: null,
+      ipe: null,
+      ipe_sample_status: 'amostra_insuficiente',
+    }))
+    const items = [...atuais, ...extras].sort(
+      (left, right) => Number(right.new_admissions) - Number(left.new_admissions),
+    )
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        ...specialtySnapshot,
+        source: 'oracle-live',
+        filters: { cnes: '3012212', year: 2026, month: 6 },
+        pagination: { limit: 200, offset: 0, count: 6, has_more: false, order: 'new_admissions_desc' },
+        items,
+      }),
+    })
+  })
+  let selectAiCalls = 0
+  let sentSpecialties: unknown[] = []
+  await page.route('**/api/dev/v1/assistente/perguntar', async (route) => {
+    selectAiCalls += 1
+    sentSpecialties = (route.request().postDataJSON() as { context: { specialties: unknown[] } }).context.specialties
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({ status: 'ok', source: 'oracle-select-ai', response_id: 810, narrative: 'Novo assunto respondido.', sql: null, warning: null }),
+    })
+  })
+
+  await page.goto(`/?competencia=${snapshotCompetencia}&regiao=35073&hospital=3012212#hospital`)
+  await expect(page.getByTestId('especialidade-count')).toHaveText('6 de 6 especialidades')
+  await page.getByRole('link', { name: 'Hospital' }).click()
+  await page.getByRole('button', { name: /Posso ajudar/ }).click()
+  await expect(page.locator('#medflow-assistant-panel')).toContainText(
+    'Contexto: visão hospitalar',
+  )
+  const input = page.getByLabel('Faça outra pergunta')
+  await input.fill('Mostre todas as especialidades ordenadas pelo total de dias')
+  await input.press('Enter')
+  const resposta = page.locator('.assistant-answer').last()
+  await expect(resposta).toContainText('Especialidade extra 2 (09)')
+
+  await input.fill('Cruze com uma dimensão nova')
+  await input.press('Enter')
+  await expect(page.locator('.assistant-answer').last()).toContainText('Novo assunto respondido.')
+  await input.fill(Q2_SAO_VICENTE)
+  await input.press('Enter')
+  await expect(page.locator('.assistant-answer').last()).toContainText(
+    'Peça primeiro o ranking de especialidades',
+  )
+  expect(selectAiCalls).toBe(1)
+  expect(sentSpecialties).toHaveLength(5)
 })
 
 test('envia a competência compartilhada, não data_through do status, ao Select AI', async ({ page }) => {

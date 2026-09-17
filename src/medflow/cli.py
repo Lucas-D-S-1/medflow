@@ -85,6 +85,11 @@ def main(argv: list[str] | None = None) -> int:
     p_silver = sub.add_parser("silver", help="dimensões, fatos e de/paras")
     p_silver.add_argument("--sobrescrever", action="store_true")
     sub.add_parser("gold", help="marts e indicadores")
+    p_gold_diagnosticos = sub.add_parser(
+        "gold-diagnosticos",
+        help="gera só o mart mensal de diagnóstico por especialidade",
+    )
+    p_gold_diagnosticos.add_argument("--sobrescrever", action="store_true")
     sub.add_parser("geografia", help="regiões, população e malhas")
     sub.add_parser("validar", help="validação integrada das três camadas")
 
@@ -134,6 +139,23 @@ def main(argv: list[str] | None = None) -> int:
             {
                 "marts": {nome: len(frame) for nome, frame in marts.items()},
                 "geografia": geografia,
+            }
+        )
+        return 0
+
+    if args.comando == "gold-diagnosticos":
+        from medflow.gold import materializar_diagnosticos_especialidade
+
+        mart = materializar_diagnosticos_especialidade(
+            base=base,
+            sobrescrever=_sobrescrever(args),
+        )
+        _imprimir(
+            {
+                "mart": "mart_indicador_hospital_especialidade_cid_mensal",
+                "linhas": len(mart),
+                "internacoes_novas": int(mart.qt_internacao_nova.sum()),
+                "comparaveis": int(mart.st_amostra.eq("suficiente").sum()),
             }
         )
         return 0

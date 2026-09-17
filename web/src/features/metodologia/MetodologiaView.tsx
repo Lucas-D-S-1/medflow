@@ -68,7 +68,7 @@ export default function MetodologiaView() {
               <p className="section-kicker">RESUMO PUBLICADO</p>
               <h2 id="methodology-title">Cobertura antes do detalhe</h2>
               <p data-testid="methodology-data-through">
-                Gold publicada até {formatPeriod(data.data_through)} · contrato v{data.contract_version}
+                Gold publicada até {formatPeriod(data.data_through)} · versão {data.contract_version}
               </p>
             </div>
           </div>
@@ -156,7 +156,7 @@ export default function MetodologiaView() {
               </article>
               <article>
                 <strong>Governança próxima ao dado</strong>
-                <span>Views, SQL somente leitura, auditoria e limites no banco.</span>
+                <span>Views, SQL somente leitura, rastreabilidade e limites no banco.</span>
               </article>
               <article>
                 <strong>Custo compatível</strong>

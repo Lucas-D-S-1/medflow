@@ -32,6 +32,7 @@ export type SpecialtyItem = {
   price_reference_competence: string
   sample_status: SampleStatus
   benchmark_admissions: number
+  benchmark_stay_days_total: number
   benchmark_hospitals: number
   /** Nula exatamente quando não há hospital par na região e especialidade. */
   average_stay_benchmark: number | null
@@ -137,6 +138,7 @@ function isValidItem(value: unknown): value is SpecialtyItem {
     PRICE_COMPETENCE_PATTERN.test(value.price_reference_competence) &&
     isSampleStatus(value.sample_status) &&
     isNonNegativeInteger(value.benchmark_admissions) &&
+    isNonNegativeInteger(value.benchmark_stay_days_total) &&
     isNonNegativeInteger(value.benchmark_hospitals) &&
     isNullableNumber(value.average_stay_benchmark) &&
     isNullableNumber(value.ipe) &&

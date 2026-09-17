@@ -410,7 +410,7 @@ export default function HospitalView() {
           )}
           {listState.kind === 'error' && (
             <StatePanel kind="error" title="Hospitais indisponíveis" testId="hospital-list-error">
-              O endpoint não respondeu ou devolveu conteúdo fora do contrato. A fonte
+              A consulta não respondeu ou devolveu conteúdo inesperado. A fonte
               regional continua identificada acima.
             </StatePanel>
           )}
@@ -505,8 +505,8 @@ export default function HospitalView() {
               title="Especialidades indisponíveis"
               testId="especialidade-error"
             >
-              O endpoint de especialidades não respondeu ou devolveu conteúdo fora do
-              contrato. A série e a lista acima não foram afetadas.
+              A consulta de especialidades não respondeu ou devolveu conteúdo inesperado.
+              A série e a lista acima não foram afetadas.
             </StatePanel>
           )}
           {specialtyData && selectedHospital && (
@@ -552,8 +552,8 @@ export default function HospitalView() {
                   )}
                   {cidState.kind === 'error' && (
                     <StatePanel kind="error" title="Diagnósticos indisponíveis" testId="cid-error">
-                      O endpoint de diagnósticos não respondeu ou devolveu conteúdo fora do
-                      contrato. Os blocos acima não foram afetados.
+                      A consulta de diagnósticos não respondeu ou devolveu conteúdo inesperado.
+                      Os blocos acima não foram afetados.
                     </StatePanel>
                   )}
                   {cidState.kind === 'ready' &&

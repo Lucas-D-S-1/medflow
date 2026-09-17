@@ -77,12 +77,22 @@ class TestExtracaoDoSQL:
         assert contratos["regioes/:id/serie"].limite_maximo == 120
         assert contratos["regioes/resumo"].limite_maximo == 200
         assert contratos["hospitais/:cnes/cids"].limite_maximo == 2000
+        diagnosticos = contratos[
+            "hospitais/:cnes/especialidades/:especialidade/diagnosticos"
+        ]
+        assert diagnosticos.limite_maximo == 2000
+        assert diagnosticos.ordem[0].coluna == "qt_dia_permanencia_soma"
 
     def test_as_escalas_saem_da_ddl(self):
         escalas = escalas_da_gold(BASE)
         cids = escalas["mart_indicador_hospital_cid_periodo"]
         assert cids["nr_ipr"] == 6
         assert cids["qt_internacao_nova"] == 0
+        diagnosticos = escalas[
+            "mart_indicador_hospital_especialidade_cid_mensal"
+        ]
+        assert diagnosticos["pc_internacao_especialidade"] == 6
+        assert diagnosticos["nr_permanencia_media_hospital"] == 6
 
     @pytest.mark.parametrize(
         ("valor", "casas", "esperado"),

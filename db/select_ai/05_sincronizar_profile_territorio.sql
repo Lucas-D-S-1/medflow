@@ -22,7 +22,7 @@ begin
 
   dbms_cloud_ai.create_profile(
       profile_name => 'MEDFLOW_GENAI',
-      description  => 'Select AI sobre os doze objetos analíticos do MedFlow',
+      description  => 'Select AI sobre os treze objetos analíticos do MedFlow',
       attributes   => '{"provider": "oci",
                         "credential_name": "OCI$RESOURCE_PRINCIPAL",
                         "region": "sa-saopaulo-1",
@@ -32,6 +32,7 @@ begin
                         "object_list": [
                           {"owner": "MEDFLOW", "name": "mart_indicador_hospital_mensal"},
                           {"owner": "MEDFLOW", "name": "mart_indicador_hospital_especialidade_mensal"},
+                          {"owner": "MEDFLOW", "name": "mart_indicador_hospital_especialidade_cid_mensal"},
                           {"owner": "MEDFLOW", "name": "mart_indicador_hospital_cid_periodo"},
                           {"owner": "MEDFLOW", "name": "mart_indicador_regiao_mensal"},
                           {"owner": "MEDFLOW", "name": "mart_indicador_regiao_periodo"},

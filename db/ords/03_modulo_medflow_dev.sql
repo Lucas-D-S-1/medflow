@@ -1737,6 +1737,7 @@ begin
                             'price_reference_competence' value x.cd_competencia_preco_referencia,
                             'sample_status' value x.st_amostra,
                             'benchmark_admissions' value x.qt_internacao_benchmark_especialidade,
+                            'benchmark_stay_days_total' value x.qt_dia_permanencia_benchmark_especialidade,
                             'benchmark_hospitals' value x.qt_hospital_benchmark_especialidade,
                             'average_stay_benchmark' value x.nr_permanencia_media_benchmark_especialidade,
                             'ipe' value x.nr_ipe,
@@ -1941,7 +1942,213 @@ begin
     ~'
   );
 
-  -- O decimo primeiro handler nao publica uma tabela: ele e a fronteira
+  ords.define_template(
+    p_module_name => 'medflow_dev',
+    p_pattern     => 'hospitais/:cnes/especialidades/:especialidade/diagnosticos',
+    p_etag_type   => 'HASH',
+    p_comments    => 'Diagnosticos no recorte hospital, competencia de processamento e especialidade SIH, com benchmark regional no mesmo grao.'
+  );
+
+  ords.define_handler(
+    p_module_name => 'medflow_dev',
+    p_pattern     => 'hospitais/:cnes/especialidades/:especialidade/diagnosticos',
+    p_method      => 'GET',
+    p_source_type => ords.source_type_collection_item,
+    p_mimes_allowed => 'application/json',
+    p_comments    => 'Ordena o conjunto inteiro antes da paginacao. ordenar=dias (padrao), internacoes ou media; sem filtro global de elegibilidade. Limite padrao 100 e maximo 2000.',
+    p_source      => q'~
+      with parametros_brutos as (
+        select :cnes as cnes_bruto,
+               :especialidade as especialidade_bruta,
+               :ano as ano_bruto,
+               :mes as mes_bruto,
+               :ordenar as ordenar_bruto,
+               :limit as limite_bruto,
+               :offset as deslocamento_bruto
+          from dual
+      ),
+      parametros_formatados as (
+        select p.*,
+               case
+                 when regexp_like(p.cnes_bruto, '^[0-9]{7}$') then p.cnes_bruto
+               end as cnes_solicitado,
+               case
+                 when regexp_like(p.especialidade_bruta, '^([0-9]{2}|--)$')
+                 then p.especialidade_bruta
+               end as especialidade_solicitada,
+               case
+                 when regexp_like(p.ano_bruto, '^[0-9]{4}$') then to_number(p.ano_bruto)
+               end as ano_solicitado,
+               case
+                 when regexp_like(p.mes_bruto, '^(0?[1-9]|1[0-2])$') then to_number(p.mes_bruto)
+               end as mes_solicitado,
+               case
+                 when p.ordenar_bruto in ('dias', 'internacoes', 'media')
+                 then p.ordenar_bruto
+               end as ordenar_solicitado,
+               case
+                 when regexp_like(p.limite_bruto, '^[0-9]+$') then to_number(p.limite_bruto)
+               end as limite_solicitado,
+               case
+                 when regexp_like(p.deslocamento_bruto, '^[0-9]+$') then to_number(p.deslocamento_bruto)
+               end as deslocamento_solicitado
+          from parametros_brutos p
+      ),
+      parametros as (
+        select p.cnes_solicitado as cnes,
+               p.especialidade_solicitada as especialidade,
+               p.ano_solicitado as ano,
+               p.mes_solicitado as mes,
+               to_char(p.ano_solicitado, 'FM0000')
+                 || to_char(p.mes_solicitado, 'FM00') as competencia,
+               coalesce(p.ordenar_solicitado, 'dias') as ordenar,
+               coalesce(p.limite_solicitado, 100) as limite,
+               coalesce(p.deslocamento_solicitado, 0) as deslocamento,
+               case
+                 when p.cnes_solicitado is not null
+                  and p.especialidade_solicitada is not null
+                  and p.ano_solicitado is not null
+                  and p.mes_solicitado is not null
+                  and (p.ordenar_bruto is null or p.ordenar_solicitado is not null)
+                  and (p.limite_bruto is null or p.limite_solicitado between 1 and 2000)
+                  and (p.deslocamento_bruto is null or p.deslocamento_solicitado >= 0)
+                 then 1
+                 else 0
+               end as parametros_validos
+          from parametros_formatados p
+      ),
+      ordenado as (
+        select v.*,
+               row_number() over (
+                 order by
+                   case when p.ordenar = 'dias'
+                     then v.qt_dia_permanencia_soma end desc nulls last,
+                   case when p.ordenar = 'internacoes'
+                     then v.qt_internacao_nova end desc nulls last,
+                   case when p.ordenar = 'media'
+                     then v.nr_permanencia_media_hospital end desc nulls last,
+                   v.qt_dia_permanencia_soma desc,
+                   v.cd_cid_principal
+               ) as nr_linha,
+               count(*) over () as qt_total
+          from vw_api_hosp_diag_esp_mensal v
+          cross join parametros p
+         where v.cd_cnes = p.cnes
+           and v.cd_especialidade_sih = p.especialidade
+           and v.cd_competencia = p.competencia
+      ),
+      pagina as (
+        select o.*
+          from ordenado o
+          cross join parametros p
+         where o.nr_linha > p.deslocamento
+           and o.nr_linha <= p.deslocamento + p.limite
+      )
+      select 'ok' as "status",
+             'oracle-live' as "source",
+             to_char(
+               systimestamp,
+               'YYYY-MM-DD"T"HH24:MI:SS.FF3TZH:TZM'
+             ) as "database_time",
+             '0.5.0' as "contract_version",
+             to_char(p.ano, 'FM0000') || '-' || to_char(p.mes, 'FM00')
+               as "data_through",
+             json_object(
+               'cnes' value p.cnes,
+               'year' value p.ano,
+               'month' value p.mes,
+               'specialty_code' value p.especialidade,
+               'order_by' value p.ordenar
+               null on null returning json
+             ) as "filters",
+             json_object(
+               'cnes' value p.cnes,
+               'region_code' value meta.cd_regiao_saude,
+               'region_name' value meta.nm_regiao_saude,
+               'macroregion_code' value meta.cd_macrorregiao_saude,
+               'macroregion_name' value meta.nm_macrorregiao_saude,
+               'specialty_code' value p.especialidade,
+               'specialty_name' value meta.nm_especialidade,
+               'specialty_new_admissions_total' value meta.qt_internacao_total,
+               'specialty_stay_days_total' value meta.qt_dia_total
+               null on null returning json
+             ) as "hospital",
+             json_object(
+               'limit' value p.limite,
+               'offset' value p.deslocamento,
+               'count' value coalesce(total.qt_total, 0),
+               'has_more' value case
+                 when coalesce(total.qt_total, 0) > p.deslocamento + p.limite
+                 then 'true'
+                 else 'false'
+               end format json,
+               'order' value case p.ordenar
+                 when 'internacoes' then 'new_admissions_desc'
+                 when 'media' then 'average_stay_desc'
+                 else 'stay_days_desc'
+               end
+               returning json
+             ) as "pagination",
+             coalesce(
+               (
+                 select json_arrayagg(
+                          json_object(
+                            'cnes' value x.cd_cnes,
+                            'specialty_code' value x.cd_especialidade_sih,
+                            'specialty_name' value x.nm_especialidade,
+                            'cid_code' value x.cd_cid_principal,
+                            'cid_description' value x.ds_cid,
+                            'chapter_code' value x.cd_capitulo_cid,
+                            'chapter_description' value x.ds_capitulo_cid,
+                            'new_admissions' value x.qt_internacao_nova,
+                            'stay_days_total' value x.qt_dia_permanencia_soma,
+                            'average_stay_days' value x.nr_permanencia_media_hospital,
+                            'admission_share_percent' value x.pc_internacao_especialidade,
+                            'stay_day_share_percent' value x.pc_dia_permanencia_especialidade,
+                            'benchmark_admissions' value x.qt_internacao_benchmark,
+                            'benchmark_stay_days_total' value x.qt_dia_permanencia_benchmark,
+                            'benchmark_hospitals' value x.qt_hospital_benchmark,
+                            'average_stay_benchmark' value x.nr_permanencia_media_benchmark,
+                            'ipr' value x.nr_ipr,
+                            'sample_status' value x.st_amostra
+                            null on null returning json
+                          )
+                          order by x.nr_linha
+                          returning json
+                        )
+                   from pagina x
+               ),
+               json_array(returning json)
+             ) as "items"
+        from parametros p
+        outer apply (
+          select v.cd_regiao_saude,
+                 v.nm_regiao_saude,
+                 v.cd_macrorregiao_saude,
+                 v.nm_macrorregiao_saude,
+                 v.nm_especialidade,
+                 sum(v.qt_internacao_nova) as qt_internacao_total,
+                 sum(v.qt_dia_permanencia_soma) as qt_dia_total
+            from vw_api_hosp_diag_esp_mensal v
+           where v.cd_cnes = p.cnes
+             and v.cd_especialidade_sih = p.especialidade
+             and v.cd_competencia = p.competencia
+           group by v.cd_regiao_saude,
+                    v.nm_regiao_saude,
+                    v.cd_macrorregiao_saude,
+                    v.nm_macrorregiao_saude,
+                    v.nm_especialidade
+        ) meta
+        outer apply (
+          select max(o.qt_total) as qt_total
+            from ordenado o
+        ) total
+       where p.parametros_validos = 1
+       fetch first 1 row only
+    ~'
+  );
+
+  -- O decimo segundo handler nao publica uma tabela: ele e a fronteira
   -- controlada do assistente. O pacote limita tamanho e volume, gera SQL,
   -- recusa qualquer comando que nao seja leitura e guarda a rodada inteira.
   ords.define_template(
@@ -1963,7 +2170,7 @@ begin
         l_body     json_object_t;
         l_context  json_object_t;
         l_question varchar2(4000);
-        l_context_text varchar2(4000);
+        l_context_text varchar2(32767);
         l_id       number;
         l_json     clob;
         l_status   pls_integer := 200;
@@ -1998,7 +2205,7 @@ begin
         function historico return varchar2 is
           l_turnos json_array_t;
           l_turno  json_object_t;
-          l_texto  varchar2(2000) := null;
+          l_texto  varchar2(12000) := null;
         begin
           if l_context is null or not l_context.has('history') then
             return null;
@@ -2011,12 +2218,58 @@ begin
                 || ' | P: ' || substr(l_turno.get_string('question'), 1, 200)
                 || ' R: ' || substr(l_turno.get_string('answer'), 1, 300),
                 1,
-                2000);
+                12000);
           end loop;
           return l_texto;
         exception
           when others then
             return null;
+        end;
+
+        -- Contexto clínico estruturado, limitado a cinco especialidades. Os
+        -- códigos resolvem "dessas três" sem depender de nomes truncados no
+        -- histórico nem da especialidade que esteja selecionada agora.
+        function especialidades return varchar2 is
+          l_itens json_array_t;
+          l_item  json_object_t;
+          l_texto varchar2(32767) := null;
+          l_limite pls_integer;
+        begin
+          if l_context is null or not l_context.has('specialties') then
+            return null;
+          end if;
+          l_itens := l_context.get_array('specialties');
+          l_limite := least(l_itens.get_size, 5);
+          if l_limite > 0 then
+            for i in 0 .. l_limite - 1 loop
+              l_item := treat(l_itens.get(i) as json_object_t);
+              l_texto :=
+                case when l_texto is null then '' else l_texto || ',' end
+                || substr(l_item.get_string('code'), 1, 2)
+                || '=' || replace(substr(l_item.get_string('name'), 1, 80), ';', ' ');
+            end loop;
+          end if;
+          return l_texto;
+        exception
+          when others then
+            return null;
+        end;
+
+        function limitar_bytes(
+          p_texto in varchar2,
+          p_limite in pls_integer
+        ) return varchar2 is
+          -- Continua no buffer PL/SQL amplo durante o corte: 4000 caracteres
+          -- acentuados podem ultrapassar 4000 bytes antes mesmo do loop.
+          l_texto varchar2(32767) := substr(
+              p_texto,
+              1,
+              least(length(p_texto), p_limite));
+        begin
+          while lengthb(l_texto) > p_limite loop
+            l_texto := substr(l_texto, 1, length(l_texto) - 1);
+          end loop;
+          return l_texto;
         end;
 
         -- CD_COMPETENCIA e AAAAMM na Gold. O site exibe 2026-06, e o modelo
@@ -2061,21 +2314,29 @@ begin
           l_question := l_body.get_string('question');
           if l_body.has('context') then
             l_context := l_body.get_object('context');
-            l_context_text := 'tela=' || nvl(contexto('route'), 'nao informada')
+            l_context_text := 'hospital_cnes=' || nvl(contexto('hospital_cnes'), 'nao informado')
               || '; competencia=' || nvl(competencia_aaaamm, 'nao informada')
               || ' (formato AAAAMM, igual ao da coluna CD_COMPETENCIA'
               || nvl2(competencia_extenso,
                       '; por extenso: ' || competencia_extenso
                       || '. Use este mes e este ano ao escrever a resposta', '')
               || ')'
+              || '; intencao=' || nvl(contexto('intent'), 'nao informada')
+              || nvl2(especialidades, '; especialidades=' || especialidades, '')
+              || '; tela=' || nvl(contexto('route'), 'nao informada')
               || '; regiao=' || nvl(contexto('region_name'), 'nao informada')
               || '; codigo_regiao=' || nvl(contexto('region_code'), 'nao informado')
               || '; rede_regional=' || nvl(contexto('macroregion_label'), 'nao informada')
               || '; rras=' || nvl(contexto('macroregion_name'), 'nao informada')
               || '; codigo_rede=' || nvl(contexto('macroregion_code'), 'nao informado')
-              || '; hospital_cnes=' || nvl(contexto('hospital_cnes'), 'nao informado')
               || '; analise_ativa=' || nvl(contexto('active_analysis'), 'nao informada')
               || nvl2(historico, '; conversa_anterior=' || historico, '');
+            -- SELECT_AI_RESPOSTA.CONTEXTO é VARCHAR2(4000 BYTE). A montagem
+            -- ocorre no buffer de 32767 e só então é limitada por bytes UTF-8,
+            -- antes de entrar no parâmetro/coluna de 4000 bytes.
+            -- Identidade e especialidades ficam antes do histórico, portanto
+            -- sobrevivem quando a cauda precisa ser removida.
+            l_context_text := limitar_bytes(l_context_text, 4000);
           end if;
         exception
           when others then

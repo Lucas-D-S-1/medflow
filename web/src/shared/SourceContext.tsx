@@ -53,6 +53,27 @@ export type HospitalSpecialtySummary = {
   ipeSampleStatus: 'suficiente' | 'amostra_insuficiente' | 'benchmark_zero'
 }
 
+export type HospitalSpecialtyOption = {
+  code: string
+  name: string
+  newAdmissions: number
+  stayDaysTotal: number
+  averageStayDays: number | null
+  benchmarkAdmissions: number
+  benchmarkStayDaysTotal: number
+  benchmarkHospitals: number
+  averageStayBenchmark: number | null
+  sampleStatus: 'suficiente' | 'amostra_insuficiente'
+  comparisonStatus: 'suficiente' | 'amostra_insuficiente' | 'benchmark_zero'
+  ipe: number | null
+}
+
+export type HospitalSpecialtyContext = {
+  cnes: string
+  competence: string
+  items: HospitalSpecialtyOption[]
+}
+
 export type AssistantLocalRequest = {
   question: string
   specialtySummary?: HospitalSpecialtySummary
@@ -92,6 +113,9 @@ type SourceContextValue = {
   /** Resumo da especialidade aberta; nulo durante qualquer transição. */
   hospitalSummary: HospitalSpecialtySummary | null
   reportHospitalSummary: (summary: HospitalSpecialtySummary | null) => void
+  /** Conjunto estruturado das especialidades publicadas no recorte hospitalar. */
+  hospitalSpecialties: HospitalSpecialtyContext | null
+  reportHospitalSpecialties: (context: HospitalSpecialtyContext | null) => void
   /** Solicitação local dos botões do resumo, consumida pela FlowIA. */
   pendingAssistantQuestion: AssistantLocalRequest | null
   requestAssistantQuestion: (
@@ -148,6 +172,8 @@ export function SourceProvider({ children }: { children: ReactNode }) {
   const comparisonRequest = useRef<AbortController | null>(null)
   const [selectedHospitalName, setSelectedHospitalName] = useState<string | null>(null)
   const [hospitalSummary, setHospitalSummary] = useState<HospitalSpecialtySummary | null>(null)
+  const [hospitalSpecialties, setHospitalSpecialties] =
+    useState<HospitalSpecialtyContext | null>(null)
   const [pendingAssistantQuestion, setPendingAssistantQuestion] =
     useState<AssistantLocalRequest | null>(null)
   const reloadGeneration = useRef(0)
@@ -208,6 +234,7 @@ export function SourceProvider({ children }: { children: ReactNode }) {
     setSourceState({ kind: 'loading' })
     setRegionalLoadState('loading')
     setHospitalSummary(null)
+    setHospitalSpecialties(null)
     setPendingAssistantQuestion(null)
 
     const activateSnapshot = (
@@ -464,6 +491,7 @@ export function SourceProvider({ children }: { children: ReactNode }) {
       })
       if (competenceChanged) {
         setHospitalSummary(null)
+        setHospitalSpecialties(null)
         setPendingAssistantQuestion(null)
       }
     },
@@ -485,6 +513,7 @@ export function SourceProvider({ children }: { children: ReactNode }) {
           return next
         })
         setHospitalSummary(null)
+        setHospitalSpecialties(null)
         setPendingAssistantQuestion(null)
         return
       }
@@ -503,6 +532,7 @@ export function SourceProvider({ children }: { children: ReactNode }) {
         return next
       })
       setHospitalSummary(null)
+      setHospitalSpecialties(null)
       setPendingAssistantQuestion(null)
     },
     [isFallback, setSearchParams, sourceData],
@@ -557,6 +587,7 @@ export function SourceProvider({ children }: { children: ReactNode }) {
       })
       if (changesSummaryIdentity) {
         setHospitalSummary(null)
+        setHospitalSpecialties(null)
         setPendingAssistantQuestion(null)
       }
     },
@@ -590,6 +621,8 @@ export function SourceProvider({ children }: { children: ReactNode }) {
         reportHospitalName: setSelectedHospitalName,
         hospitalSummary,
         reportHospitalSummary,
+        hospitalSpecialties,
+        reportHospitalSpecialties: setHospitalSpecialties,
         pendingAssistantQuestion,
         requestAssistantQuestion,
         clearAssistantQuestion,

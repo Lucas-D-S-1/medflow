@@ -2,8 +2,9 @@
 -- MedFlow — reconciliação da Gold carregada no Autonomous AI Lakehouse
 -- Conecte como MEDFLOW, depois de rodar carregar_gold.py.
 --
--- Os valores esperados vêm de dados/gold/qualidade/METADADOS.json, contrato
--- 0.3.0, gerado em 01/08/2026. Toda linha deve sair como "ok". Qualquer
+-- Os valores esperados vêm dos contratos versionados em contracts/dados e do
+-- metadado seletivo do mart aditivo da migração 07. Toda linha deve sair
+-- como "ok". Qualquer
 -- DIVERGENTE significa que a carga não reproduz o gate técnico aprovado e o
 -- dashboard não deve ser construído sobre essa base.
 -- =====================================================================
@@ -191,6 +192,32 @@ with conferencia (ordem, metrica, esperado, obtido) as (
   select 47, 'IPE acima de 1 somado no mart de regioes', 13688,
          (select sum(qt_hospital_especialidade_ipe_acima_referencia)
           from mart_indicador_regiao_mensal) from dual
+
+  -- Diagnosticos por especialidade e competencia, migracao aditiva 07.
+  -- Os tres estados fecham a cardinalidade e IPR so existe no estado suficiente.
+  union all
+  select 48, 'linhas mart diagnostico por especialidade', 2495111,
+         (select count(*)
+          from mart_indicador_hospital_especialidade_cid_mensal) from dual
+  union all
+  select 49, 'internacoes novas no diagnostico por especialidade', 7150693,
+         (select sum(qt_internacao_nova)
+          from mart_indicador_hospital_especialidade_cid_mensal) from dual
+  union all
+  select 50, 'diagnosticos por especialidade comparaveis', 14671,
+         (select count(*)
+          from mart_indicador_hospital_especialidade_cid_mensal
+          where st_amostra = 'suficiente' and nr_ipr is not null) from dual
+  union all
+  select 51, 'diagnosticos por especialidade benchmark zero', 53769,
+         (select count(*)
+          from mart_indicador_hospital_especialidade_cid_mensal
+          where st_amostra = 'benchmark_zero' and nr_ipr is null) from dual
+  union all
+  select 52, 'diagnosticos por especialidade amostra insuficiente', 2426671,
+         (select count(*)
+          from mart_indicador_hospital_especialidade_cid_mensal
+          where st_amostra = 'amostra_insuficiente' and nr_ipr is null) from dual
 )
 select metrica,
        esperado,
@@ -212,6 +239,12 @@ having count(*) > 0
 union all
 select 'hospital_cid_periodo sem regiao', count(*)
 from   mart_indicador_hospital_cid_periodo m
+where  not exists (select 1 from dim_geografia_regiao d
+                   where d.cd_regiao_saude = m.cd_regiao_saude)
+having count(*) > 0
+union all
+select 'hospital_especialidade_cid_mensal sem regiao', count(*)
+from   mart_indicador_hospital_especialidade_cid_mensal m
 where  not exists (select 1 from dim_geografia_regiao d
                    where d.cd_regiao_saude = m.cd_regiao_saude)
 having count(*) > 0;

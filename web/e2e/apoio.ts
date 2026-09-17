@@ -1,7 +1,7 @@
 /**
  * Apoio compartilhado das suítes por visão.
  *
- * Aqui moram os dez snapshots, os valores derivados deles e o `mockLiveSource`
+ * Aqui moram os snapshots, os valores derivados deles e o `mockLiveSource`
  * que faz a página acreditar que o Oracle respondeu. Nada disto é específico
  * de uma visão, e duplicá-lo em quatro arquivos garantiria que um deles
  * envelhecesse sozinho.
@@ -48,6 +48,15 @@ export const hospitalSeriesSnapshot = JSON.parse(
 export const specialtySnapshot = JSON.parse(
   readFileSync(
     new URL('../src/mocks/hospital-especialidades-3012212.json', import.meta.url),
+    'utf8',
+  ),
+) as Record<string, unknown>
+export const specialtyDiagnosisSnapshot = JSON.parse(
+  readFileSync(
+    new URL(
+      '../src/mocks/hospital-diagnosticos-especialidade-3012212-07.json',
+      import.meta.url,
+    ),
     'utf8',
   ),
 ) as Record<string, unknown>
@@ -308,6 +317,88 @@ export async function mockLiveSource(page: Page) {
       }),
     })
   })
+  // Mais específica e registrada depois para vencer a rota da lista de
+  // especialidades. Simula ordenação global e paginação, não uma ordenação da
+  // página já cortada.
+  await page.route(
+    '**/api/dev/v1/hospitais/*/especialidades/*/diagnosticos**',
+    async (route) => {
+      const url = new URL(route.request().url())
+      const match = url.pathname.match(
+        /hospitais\/(\d{7})\/especialidades\/(\d{2}|--)\/diagnosticos$/,
+      )
+      const cnes = match?.[1] ?? ''
+      const specialtyCode = match?.[2] ?? ''
+      const year = Number(url.searchParams.get('ano'))
+      const month = Number(url.searchParams.get('mes'))
+      const orderBy = url.searchParams.get('ordenar') ?? 'dias'
+      const limit = Number(url.searchParams.get('limit') ?? 100)
+      const offset = Number(url.searchParams.get('offset') ?? 0)
+      const specialty = (specialtySnapshot.items as Record<string, unknown>[]).find(
+        (item) => item.specialty_code === specialtyCode,
+      )
+      const specialtyName = String(specialty?.specialty_name ?? 'Especialidade não informada')
+      const metric = (item: Record<string, unknown>) =>
+        orderBy === 'internacoes'
+          ? Number(item.new_admissions)
+          : orderBy === 'media'
+            ? Number(item.average_stay_days)
+            : Number(item.stay_days_total)
+      const allItems: Record<string, unknown>[] = (
+        specialtyDiagnosisSnapshot.items as Record<string, unknown>[]
+      )
+        .map((item) => ({
+          ...item,
+          cnes,
+          specialty_code: specialtyCode,
+          specialty_name: specialtyName,
+        }))
+        .sort((left: Record<string, unknown>, right: Record<string, unknown>) =>
+          metric(right) - metric(left) ||
+          Number(right.stay_days_total) - Number(left.stay_days_total) ||
+          String(left.cid_code).localeCompare(String(right.cid_code)),
+        )
+      const items = allItems.slice(offset, offset + limit)
+      const publishedOrder =
+        orderBy === 'internacoes'
+          ? 'new_admissions_desc'
+          : orderBy === 'media'
+            ? 'average_stay_desc'
+            : 'stay_days_desc'
+      await route.fulfill({
+        contentType: 'application/json',
+        body: JSON.stringify({
+          ...specialtyDiagnosisSnapshot,
+          source: 'oracle-live',
+          database_time: '2026-09-17T12:00:00-03:00',
+          data_through: `${year}-${String(month).padStart(2, '0')}`,
+          filters: {
+            cnes,
+            year,
+            month,
+            specialty_code: specialtyCode,
+            order_by: orderBy,
+          },
+          hospital: {
+            ...(specialtyDiagnosisSnapshot.hospital as object),
+            cnes,
+            specialty_code: specialtyCode,
+            specialty_name: specialtyName,
+            specialty_new_admissions_total: Number(specialty?.new_admissions ?? 0),
+            specialty_stay_days_total: Number(specialty?.stay_days_total ?? 0),
+          },
+          pagination: {
+            limit,
+            offset,
+            count: allItems.length,
+            has_more: offset + items.length < allItems.length,
+            order: publishedOrder,
+          },
+          items,
+        }),
+      })
+    },
+  )
   await page.route('**/api/dev/v1/hospitais/*/cids**', async (route) => {
     const url = new URL(route.request().url())
     const cnes = url.pathname.match(/hospitais\/(\d{7})\/cids$/)?.[1] ?? ''

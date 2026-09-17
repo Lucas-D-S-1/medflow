@@ -49,6 +49,7 @@ TABELAS: tuple[tuple[str, Path], ...] = (
     ("dim_hospital_alias", SILVER / "dimensoes" / "dim_hospital_alias.parquet"),
     ("mart_indicador_hospital_mensal", GOLD / "marts" / "mart_indicador_hospital_mensal.parquet"),
     ("mart_indicador_hospital_especialidade_mensal", GOLD / "marts" / "mart_indicador_hospital_especialidade_mensal.parquet"),
+    ("mart_indicador_hospital_especialidade_cid_mensal", GOLD / "marts" / "mart_indicador_hospital_especialidade_cid_mensal.parquet"),
     ("mart_indicador_hospital_cid_periodo", GOLD / "marts" / "mart_indicador_hospital_cid_periodo.parquet"),
     ("mart_indicador_regiao_mensal", GOLD / "marts" / "mart_indicador_regiao_mensal.parquet"),
     ("mart_indicador_regiao_periodo", GOLD / "marts" / "mart_indicador_regiao_periodo.parquet"),

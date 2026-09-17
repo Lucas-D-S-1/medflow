@@ -156,10 +156,10 @@ begin
     join user_ords_modules m on m.id = tpl.module_id
    where m.name = c_prod;
 
-  if v_handlers != 11 then
+  if v_handlers != 12 then
     raise_application_error(
       -20002,
-      'Esperados 11 handlers em producao, encontrados ' || v_handlers || '.'
+      'Esperados 12 handlers em producao, encontrados ' || v_handlers || '.'
     );
   end if;
 end;

@@ -177,7 +177,9 @@ Lakehouse, região São Paulo:
 - 5 dimensões, 7 marts, 225 colunas comentadas e 10 índices secundários;
 - 597.930 linhas carregadas e conferidas após a migração territorial;
 - 39/39 métricas Oracle com estado `ok`, incluindo as dimensões territoriais;
-- profile `MEDFLOW_GENAI` usando OCI Generative AI por Resource Principal, sincronizado com os doze objetos analíticos;
+- profile `MEDFLOW_GENAI` publicado com doze objetos analíticos; os roteiros
+  locais desta migração preparam a sincronização aditiva do décimo terceiro
+  objeto, sem afirmar que ela já foi executada no Oracle;
 - suíte de 13 perguntas em cinco blocos, oito com SQL de referência conferido
   por execução. Na rodada de 23/08/2026, seis das oito coincidiram exatamente;
   as divergências e as limitações de narrativa/conversação estão registradas,
@@ -192,8 +194,8 @@ a base versionada da demonstração APEX, em [`db/apex/`](db/apex/README.md).
 
 ### Webapp — concluído e revisado em 26/08/2026
 
-O produto é uma aplicação React + Vite em `web/`, servida por onze endpoints
-ORDS: dez analíticos somente leitura (`GET`) sobre views de projeção pura, e um
+O produto é uma aplicação React + Vite em `web/`, servida por doze endpoints
+ORDS: onze analíticos somente leitura (`GET`) sobre views de projeção pura, e um
 `POST` governado para perguntas livres do assistente. Nenhum objeto da Gold é
 publicado por AutoREST.
 
@@ -202,7 +204,7 @@ Os endpoints existem em dois módulos: `api/dev/v1`, que aceita só `localhost` 
 quem serve o link da entrega. O segundo é clone do primeiro, gerado dos
 metadados do ORDS e recusado se divergir. Ver [`db/README.md`](db/README.md).
 
-O contrato das onze operações está em
+O contrato das doze operações está em
 [`contracts/openapi.yaml`](contracts/openapi.yaml), conferido por teste contra
 o SQL dos handlers e contra a API viva. Um contrato que ninguém confere vira
 só uma terceira versão da verdade.
@@ -215,7 +217,7 @@ investigação inteira, e a URL preserva o recorte para abrir e compartilhar.
 | Endereço | O que entrega | Endpoints |
 |---|---|---|
 | `/#regional` | panorama das 62 regiões no mapa, totais do recorte, MoM, YoY, placar de sinais e série mensal | `regioes/resumo`, `regioes/{id}/serie` |
-| `/#hospital` | hospitais da região, comparação com pares, série, especialidades e diagnósticos | `hospitais`, `.../serie`, `.../especialidades`, `.../cids` |
+| `/#hospital` | hospitais da região, comparação com pares, série, diagnósticos por especialidade/competência e perfil CID histórico recolhido | `hospitais`, `.../serie`, `.../especialidades`, `.../especialidades/{especialidade}/diagnosticos`, `.../cids` |
 | `/metodologia` | Posso confiar no número e quais são seus limites? | `status`, `metodologia` |
 | assistente flutuante | acompanha a etapa visível e o recorte ativo | respostas locais; fallback `POST assistente/perguntar` |
 
@@ -417,7 +419,7 @@ cd web && npm run dev
 
 Em `db/views/` há uma view por fatia. Em `db/ords/`, cada
 arquivo numerado é uma **redefinição cumulativa do módulo inteiro**: o `03`
-define os dez handlers e é o único que precisa ser reaplicado ao mudar
+define onze handlers `GET` e o `POST` da FlowIA, e é o único que precisa ser reaplicado ao mudar
 qualquer endpoint.
 
 ## Fontes

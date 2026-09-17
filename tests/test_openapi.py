@@ -231,6 +231,10 @@ class TestContraAAPIViva:
             "hospitais/3012212/especialidades",
             {"limit": 1},
         ),
+        "/hospitais/{cnes}/especialidades/{especialidade}/diagnosticos": (
+            "hospitais/3012212/especialidades/07/diagnosticos",
+            {"ano": 2026, "mes": 6, "limit": 1},
+        ),
         "/hospitais/{cnes}/cids": ("hospitais/3012212/cids", {"limit": 1}),
     }
 

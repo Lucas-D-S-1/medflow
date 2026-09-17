@@ -7,6 +7,7 @@ import {
   type SortableColumn,
 } from '../../shared/useSortableRows'
 import type { SpecialtyItem, SpecialtyResponse } from './hospitalEspecialidades'
+import SpecialtyDiagnoses from './SpecialtyDiagnoses'
 import {
   SUMMARY_QUESTIONS,
   comparisonAbsence,
@@ -75,6 +76,7 @@ export default function SpecialtyTable({
 }) {
   const {
     reportHospitalSummary,
+    reportHospitalSpecialties,
     requestAssistantQuestion,
     clearAssistantQuestion,
   } = useSource()
@@ -129,6 +131,28 @@ export default function SpecialtyTable({
     reportHospitalSummary,
     selected,
   ])
+
+  useEffect(() => {
+    reportHospitalSpecialties({
+      cnes: data.filters.cnes,
+      competence: data.data_through,
+      items: data.items.map((item) => ({
+        code: item.specialty_code,
+        name: item.specialty_name,
+        newAdmissions: item.new_admissions,
+        stayDaysTotal: item.stay_days_total,
+        averageStayDays: item.average_stay_days,
+        benchmarkAdmissions: item.benchmark_admissions,
+        benchmarkStayDaysTotal: item.benchmark_stay_days_total,
+        benchmarkHospitals: item.benchmark_hospitals,
+        averageStayBenchmark: item.average_stay_benchmark,
+        sampleStatus: item.sample_status,
+        comparisonStatus: item.ipe_sample_status,
+        ipe: item.ipe,
+      })),
+    })
+    return () => reportHospitalSpecialties(null)
+  }, [data.data_through, data.filters.cnes, data.items, reportHospitalSpecialties])
 
   if (!selected) return null
 
@@ -305,6 +329,13 @@ export default function SpecialtyTable({
           ))}
         </div>
       </article>
+
+      <SpecialtyDiagnoses
+        cnes={data.filters.cnes}
+        competence={data.data_through}
+        specialtyCode={selected.specialty_code}
+        specialtyName={selected.specialty_name}
+      />
     </section>
   )
 }

@@ -1,6 +1,6 @@
 # `web/` — o produto
 
-**O quê.** A aplicação React + Vite do MedFlow, servida por dez endpoints
+**O quê.** A aplicação React + Vite do MedFlow, servida por onze endpoints
 analíticos `GET` e pelo `POST` governado do assistente.
 
 São **duas páginas**. A análise é uma investigação contínua, com duas etapas

@@ -9,10 +9,24 @@ import {
 } from '../../lib/api/assistente'
 import { useSource } from '../../shared/SourceContext'
 import { formatRegionalNetwork } from '../../shared/territory'
-import { formatDecimal, formatInteger, formatPercent, formatPeriod } from '../../shared/format'
+import {
+  formatDecimal,
+  formatInteger,
+  formatPercent,
+  formatPeriod,
+  formatPeriodLong,
+} from '../../shared/format'
 import { SUMMARY_QUESTIONS } from '../hospital/specialtySummary'
 import { isComparableStay } from '../hospital/specialtyMetrics'
-import type { HospitalSpecialtySummary } from '../../shared/SourceContext'
+import type {
+  HospitalSpecialtyContext,
+  HospitalSpecialtyOption,
+  HospitalSpecialtySummary,
+} from '../../shared/SourceContext'
+import {
+  fetchSpecialtyDiagnoses,
+  type SpecialtyDiagnosisResponse,
+} from '../hospital/hospitalDiagnosticosEspecialidade'
 import {
   assistantContextKey,
   isCurrentSpecialtySummary,
@@ -25,6 +39,11 @@ type Answer = {
   contextLabel?: string
   sql?: string | null
   warning?: string | null
+  specialtySet?: {
+    cnes: string
+    competence: string
+    items: HospitalSpecialtyOption[]
+  }
 }
 
 /** Uma rodada completa da conversa, já respondida. */
@@ -87,6 +106,111 @@ function normalize(value: string) {
     .trim()
 }
 
+const MONTH_NAMES = [
+  'janeiro',
+  'fevereiro',
+  'marco',
+  'abril',
+  'maio',
+  'junho',
+  'julho',
+  'agosto',
+  'setembro',
+  'outubro',
+  'novembro',
+  'dezembro',
+]
+
+function mentionsExplicitSpecialty(normalized: string) {
+  return /\bespecialidade\s+(?!(?:atual|selecionada|sih|e\b|ou\b|do\b|da\b|no\b|na\b|com\b|por\b))(?:codigo\s+)?(?:\d{2}|--|[a-z])/.test(
+    normalized,
+  )
+}
+
+function matchesHospitalName(question: string, hospitalName: string | null) {
+  if (!hospitalName) return false
+  const ignored = new Set(['hospital', 'hosp', 'hu', 'de', 'da', 'do', 'das', 'dos', 'e'])
+  const tokens = normalize(hospitalName)
+    .split(' ')
+    .filter((token) => token.length > 1 && !ignored.has(token))
+  if (tokens.length === 0) return false
+  const matches = tokens.filter((token) => new RegExp(`\\b${token}\\b`).test(question)).length
+  return matches >= Math.min(2, tokens.length)
+}
+
+function hasDivergentExplicitScope(
+  normalized: string,
+  current: {
+    cnes: string | null
+    competence: string
+    hospitalName: string | null
+    regionCode: string | null
+    regionName: string | null
+  },
+) {
+  const cnesCodes: string[] = normalized.match(/\b\d{7}\b/g) ?? []
+  if (cnesCodes.some((code) => code !== current.cnes)) return true
+
+  const competence = /^(\d{4})-(0[1-9]|1[0-2])$/.exec(current.competence)
+  if (competence) {
+    const currentYear = Number(competence[1])
+    const currentMonth = Number(competence[2])
+    const numericCompetences = [
+      ...normalized.matchAll(/\b(20\d{2})\s*(0[1-9]|1[0-2])\b/g),
+    ]
+    if (
+      numericCompetences.some(
+        (match) => Number(match[1]) !== currentYear || Number(match[2]) !== currentMonth,
+      )
+    ) {
+      return true
+    }
+    const monthFirst = [...normalized.matchAll(/\b(0?[1-9]|1[0-2])\s+(20\d{2})\b/g)]
+    if (
+      monthFirst.some(
+        (match) => Number(match[2]) !== currentYear || Number(match[1]) !== currentMonth,
+      )
+    ) {
+      return true
+    }
+    const years = normalized.match(/\b20\d{2}\b/g) ?? []
+    if (years.some((year) => Number(year) !== currentYear)) return true
+    if (
+      MONTH_NAMES.some(
+        (month, index) =>
+          new RegExp(`\\b${month}\\b`).test(normalized) && index + 1 !== currentMonth,
+      )
+    ) {
+      return true
+    }
+  }
+
+  const regionCodes = [
+    ...normalized.matchAll(/\bregiao(?:\s+de|\s+da)?\s+(\d{5})\b/g),
+  ].map((match) => match[1])
+  if (regionCodes.some((code) => code !== current.regionCode)) return true
+  const explicitRegion = /\b(?:regiao(?:\s+de|\s+da)?|hospitais\s+de)\s+(?!(?:saude|mesma|esta|essa|nesta|nessa|desta|dessa|atual)\b)[a-z]/.test(
+    normalized,
+  )
+  if (
+    explicitRegion &&
+    (!current.regionName || !normalized.includes(normalize(current.regionName)))
+  ) {
+    return true
+  }
+
+  const explicitHospital =
+    /\b(?:outro|outra)\s+hospital\b/.test(normalized) ||
+    /\bhospital\s+(?!(?:selecionado|atual|aberto|deste|desse|neste|nesse)\b)[a-z0-9]/.test(
+      normalized,
+    )
+  return (
+    explicitHospital &&
+    !cnesCodes.includes(current.cnes ?? '') &&
+    !matchesHospitalName(normalized, current.hospitalName)
+  )
+}
+
 function AssistantRobot({ compact = false }: { compact?: boolean }) {
   return (
     <span className={`assistant-robot${compact ? ' compact' : ''}`} aria-hidden="true">
@@ -106,6 +230,7 @@ export default function AssistantWidget() {
     sourceState,
     sharedCompetence,
     hospitalSummary,
+    hospitalSpecialties,
     selectedHospitalName,
     pendingAssistantQuestion,
     clearAssistantQuestion,
@@ -184,6 +309,18 @@ export default function AssistantWidget() {
   currentContextKeyRef.current = currentContextKey
 
   const suggestedQuestions = quickQuestions[currentRoute]
+
+  const activeHospitalSpecialties = useMemo<HospitalSpecialtyContext | null>(() => {
+    const params = new URLSearchParams(location.search)
+    if (
+      !hospitalSpecialties ||
+      hospitalSpecialties.cnes !== params.get('hospital') ||
+      hospitalSpecialties.competence !== sharedCompetence
+    ) {
+      return null
+    }
+    return hospitalSpecialties
+  }, [hospitalSpecialties, location.search, sharedCompetence])
 
   useEffect(() => {
     if (isOpen) window.setTimeout(() => inputRef.current?.focus(), 80)
@@ -278,6 +415,126 @@ export default function AssistantWidget() {
     return `${routeNames[currentRoute]} · ${period}`
   }
 
+  function latestSpecialtySet() {
+    const params = new URLSearchParams(location.search)
+    const cnes = params.get('hospital')
+    const set = thread.at(-1)?.answer.specialtySet
+    return set?.cnes === cnes && set.competence === sharedCompetence ? set : null
+  }
+
+  function explicitScopeDiverges(normalized: string) {
+    const params = new URLSearchParams(location.search)
+    return hasDivergentExplicitScope(normalized, {
+      cnes: params.get('hospital'),
+      competence: sharedCompetence,
+      hospitalName: selectedHospitalName,
+      regionCode: selectedRegion?.region_code ?? params.get('regiao'),
+      regionName: selectedRegion?.region_name ?? null,
+    })
+  }
+
+  function requestedSpecialtyCount(normalized: string) {
+    const digit = /\b([1-5])\b/.exec(normalized)
+    if (digit) return Number(digit[1])
+    const words: [RegExp, number][] = [
+      [/\bcinco\b/, 5],
+      [/\bquatro\b/, 4],
+      [/\btres\b/, 3],
+      [/\bduas?\b/, 2],
+      [/\buma?\b/, 1],
+    ]
+    return words.find(([pattern]) => pattern.test(normalized))?.[1] ?? 3
+  }
+
+  function isDiagnosisFollowUp(normalized: string) {
+    const anaforico = /(dessas?|nessas?|dentro dessas?|dentro das).{0,30}(?:especialidad|especilidad)/.test(
+      normalized,
+    )
+    const ranking = /(principais|top\s*\d*|ranking)/.test(normalized)
+    const diagnostico = /(diagnostic|\bcid\b|doenc)/.test(normalized)
+    const quantidadeExplicita = /(?:dessas?|nessas?)\s+(\d+)\s+(?:especialidad|especilidad)/.exec(
+      normalized,
+    )
+    const conjuntoAtual = latestSpecialtySet()
+    const outroRecorte =
+      explicitScopeDiverges(normalized) ||
+      mentionsExplicitSpecialty(normalized) ||
+      /(mais frequentes|mais comuns)/.test(normalized) ||
+      /\b(?:todos|todas)\s+(?:os\s+)?diagnosticos\b/.test(normalized) ||
+      /(mortalidade|obito|letalidade|custo|valor|intervalo|serie|evolucao)/.test(normalized) ||
+      (quantidadeExplicita !== null &&
+        conjuntoAtual !== null &&
+        Number(quantidadeExplicita[1]) !== conjuntoAtual.items.length)
+    return anaforico && ranking && diagnostico && !outroRecorte
+  }
+
+  function comparisonReason(
+    specialtyCode: string,
+    cidCode: string,
+    benchmarkAdmissions: number,
+    benchmarkStayDays: number,
+    benchmarkHospitals: number,
+    status: 'suficiente' | 'amostra_insuficiente' | 'benchmark_zero',
+  ) {
+    if (specialtyCode === '--' || cidCode === '--') return 'Identificador desconhecido; não comparável'
+    if (benchmarkHospitals === 0 || benchmarkAdmissions === 0) {
+      return 'Sem outros hospitais neste recorte'
+    }
+    if (status === 'benchmark_zero' || benchmarkStayDays === 0) {
+      return 'Pares sem dias de permanência registrados'
+    }
+    return 'Amostra insuficiente para comparar'
+  }
+
+  function specialtyReference(item: HospitalSpecialtyOption) {
+    const raw = `${formatInteger(item.benchmarkAdmissions)} internações, ${formatInteger(item.benchmarkStayDaysTotal)} dias e ${formatInteger(item.benchmarkHospitals)} hospitais pares`
+    if (
+      item.comparisonStatus === 'suficiente' &&
+      item.ipe !== null &&
+      item.averageStayBenchmark !== null
+    ) {
+      return `referência ${formatDecimal(item.averageStayBenchmark)} dias (${raw}); IPE ${formatDecimal(item.ipe)}`
+    }
+    const reason = comparisonReason(
+      item.code,
+      'categoria',
+      item.benchmarkAdmissions,
+      item.benchmarkStayDaysTotal,
+      item.benchmarkHospitals,
+      item.comparisonStatus,
+    )
+    const peerMean = item.averageStayBenchmark === null
+      ? ''
+      : `, média dos pares ${formatDecimal(item.averageStayBenchmark)} dias`
+    return `${reason} (${raw}${peerMean}); não comparável`
+  }
+
+  function diagnosisRankingText(
+    specialties: HospitalSpecialtyOption[],
+    responses: SpecialtyDiagnosisResponse[],
+  ) {
+    return specialties
+      .map((specialty, index) => {
+        const diagnoses = responses[index].items
+        if (diagnoses.length === 0) {
+          return `${specialty.name} (${specialty.code}): sem diagnóstico publicado nesta competência.`
+        }
+        const ranking = diagnoses
+          .map(
+            (item, position) => {
+              const raw = `${formatInteger(item.benchmark_admissions)} internações, ${formatInteger(item.benchmark_stay_days_total)} dias e ${formatInteger(item.benchmark_hospitals)} hospitais pares`
+              const reference = item.sample_status === 'suficiente'
+                ? `referência ${formatDecimal(item.average_stay_benchmark!)} dias (${raw}); IPR ${formatDecimal(item.ipr!)}`
+                : `${comparisonReason(specialty.code, item.cid_code, item.benchmark_admissions, item.benchmark_stay_days_total, item.benchmark_hospitals, item.sample_status)} (${raw}${item.average_stay_benchmark === null ? '' : `, média dos pares ${formatDecimal(item.average_stay_benchmark)} dias`}); não comparável`
+              return `${position + 1}. ${item.cid_code} — ${item.cid_description}: ${formatInteger(item.new_admissions)} internações, ${formatInteger(item.stay_days_total)} dias, média ${formatDecimal(item.average_stay_days)} dias (${formatPercent(item.admission_share_percent)} do volume; ${item.stay_day_share_percent === null ? 'Sem dias registrados para calcular participação' : `${formatPercent(item.stay_day_share_percent)} dos dias`}); ${reference}.`
+            },
+          )
+          .join(' ')
+        return `${specialty.name} (${specialty.code}) — top 5 por total de dias: ${ranking}`
+      })
+      .join('\n')
+  }
+
   function localAnswer(
     rawQuestion: string,
     requestedSummary?: HospitalSpecialtySummary,
@@ -333,6 +590,48 @@ export default function AssistantWidget() {
       /(quais|que|quantos)\b[a-z0-9 ]{0,24}\bhospitais\b/.test(normalized) ||
       /\bonde\b[a-z0-9 ]{0,30}\b(concentra|interna)/.test(normalized) ||
       /\branking\b[a-z0-9 ]{0,20}\bhospita/.test(normalized)
+
+    if (
+      currentRoute === 'hospital' &&
+      activeHospitalSpecialties &&
+      !explicitScopeDiverges(normalized) &&
+      !mentionsExplicitSpecialty(normalized) &&
+      !/(diagnostic|\bcid\b|doenc)/.test(normalized) &&
+      /(especialidad).*(principais|mais|maior|ranking)|(?:principais|quais|ranking|mais).*(especialidad)|(?:mostre|liste).*(?:todas as )?especialidad/.test(
+        normalized,
+      )
+    ) {
+      const todas = /todas as especialidad|todas especialidad/.test(normalized)
+      const count = todas
+        ? activeHospitalSpecialties.items.length
+        : requestedSpecialtyCount(normalized)
+      const ordenarPorDias = /(dias|permanencia)/.test(normalized)
+      const leaders = activeHospitalSpecialties.items
+        .slice()
+        .sort(
+          (left, right) =>
+            (ordenarPorDias
+              ? right.stayDaysTotal - left.stayDaysTotal
+              : right.newAdmissions - left.newAdmissions) ||
+            left.code.localeCompare(right.code),
+        )
+        .slice(0, count)
+      if (leaders.length > 0) {
+        return {
+          text: `${leaders
+            .map(
+              (item, index) =>
+                `${index + 1}. ${item.name} (${item.code}): ${formatInteger(item.newAdmissions)} internações, ${formatInteger(item.stayDaysTotal)} dias, média ${item.averageStayDays === null ? 'não calculada' : `${formatDecimal(item.averageStayDays)} dias`}; ${specialtyReference(item)}.`,
+            )
+            .join('\n')}\nOrdenação: ${ordenarPorDias ? 'total de dias de permanência' : 'volume de internações'}. Referência regional: mesmo mês e especialidade; hospital excluído; comparação sem ajuste de risco. Diferenças são descritivas e não demonstram causa ou qualidade.\nFonte: dados do MedFlow consultados diretamente, ${formatPeriodLong(activeHospitalSpecialties.competence)}.`,
+          specialtySet: {
+            cnes: activeHospitalSpecialties.cnes,
+            competence: activeHospitalSpecialties.competence,
+            items: leaders,
+          },
+        }
+      }
+    }
 
     const perguntaResumo = SUMMARY_QUESTIONS.find(
       (question) => normalized === normalize(question),
@@ -591,7 +890,7 @@ export default function AssistantWidget() {
 
     if (/oracle|autonomous|banco|arquitetura/.test(normalized)) {
       return {
-        text: 'O Oracle Autonomous Database concentra a Gold, as views de contrato, a API ORDS e o Select AI. Na matriz de decisão deste MVP, ele evita uma API própria, mantém auditoria perto dos dados e acomoda o volume atual no ambiente Always Free já provisionado.',
+        text: 'O Oracle Autonomous Database concentra a Gold, as views de leitura, a API ORDS e o Select AI. Na matriz de decisão deste MVP, ele evita uma API própria, mantém a rastreabilidade perto dos dados e acomoda o volume atual no ambiente Always Free já provisionado.',
       }
     }
 
@@ -630,6 +929,85 @@ export default function AssistantWidget() {
     setPendingQuestion(cleanQuestion)
     setQuestion('')
 
+    const normalizedQuestion = normalize(cleanQuestion)
+    if (currentRoute === 'hospital' && isDiagnosisFollowUp(normalizedQuestion)) {
+      const specialtySet = latestSpecialtySet()
+      if (!specialtySet) {
+        registrar(cleanQuestion, {
+          text: 'Peça primeiro o ranking de especialidades do hospital. Assim eu preservo os códigos exatos do conjunto antes de detalhar os diagnósticos.',
+          contextLabel: usedContextLabel,
+        })
+        return
+      }
+      if (sourceState.kind !== 'live') {
+        registrar(cleanQuestion, {
+          text: `O ranking por diagnóstico exige o recorte completo da Gold. No snapshot de contingência eu preservei as ${formatInteger(specialtySet.items.length)} especialidades anteriores, mas não vou completar as demais com dados parciais nem chamar o Select AI.`,
+          contextLabel: usedContextLabel,
+          specialtySet,
+        })
+        return
+      }
+
+      const generation = requestGeneration.current + 1
+      requestGeneration.current = generation
+      const controller = new AbortController()
+      const diagnosisRequest: ActiveRemoteRequest = {
+        generation,
+        contextKey: currentContextKey,
+        controller,
+      }
+      activeRemoteRequest.current?.controller.abort()
+      activeRemoteRequest.current = diagnosisRequest
+      setIsLoading(true)
+      try {
+        const year = Number(specialtySet.competence.slice(0, 4))
+        const month = Number(specialtySet.competence.slice(5, 7))
+        const responses = await Promise.all(
+          specialtySet.items.map((specialty) =>
+            fetchSpecialtyDiagnoses(
+              {
+                cnes: specialtySet.cnes,
+                year,
+                month,
+                specialtyCode: specialty.code,
+                orderBy: 'dias',
+              },
+              { limit: 5, signal: controller.signal },
+            ),
+          ),
+        )
+        if (
+          activeRemoteRequest.current !== diagnosisRequest ||
+          currentContextKeyRef.current !== diagnosisRequest.contextKey
+        ) {
+          return
+        }
+        registrar(cleanQuestion, {
+          text: `${diagnosisRankingText(specialtySet.items, responses)}\nReferência regional: mesmo mês, especialidade e CID; hospital excluído; comparação sem ajuste de risco. Os estados não comparáveis não sustentam causalidade.\nFonte: dados do MedFlow consultados diretamente, ${formatPeriodLong(specialtySet.competence)}.`,
+          contextLabel: `${selectedHospitalName ?? specialtySet.cnes} · ${formatInteger(specialtySet.items.length)} especialidades · ${formatPeriod(specialtySet.competence)}`,
+          specialtySet,
+        })
+      } catch {
+        if (
+          activeRemoteRequest.current !== diagnosisRequest ||
+          currentContextKeyRef.current !== diagnosisRequest.contextKey
+        ) {
+          return
+        }
+        registrar(cleanQuestion, {
+          text: 'Não consegui carregar os diagnósticos desse conjunto agora. Nenhuma chamada ao Select AI foi feita e nenhum resultado parcial foi apresentado.',
+          contextLabel: usedContextLabel,
+          specialtySet,
+        })
+      } finally {
+        if (activeRemoteRequest.current === diagnosisRequest) {
+          activeRemoteRequest.current = null
+          setIsLoading(false)
+        }
+      }
+      return
+    }
+
     const deterministic = localAnswer(cleanQuestion, requestedSummary)
     if (deterministic) {
       registrar(cleanQuestion, deterministic)
@@ -660,18 +1038,31 @@ export default function AssistantWidget() {
     setIsLoading(true)
     try {
       const params = new URLSearchParams(location.search)
+      const divergentScope = explicitScopeDiverges(normalizedQuestion)
+      const explicitSpecialty = mentionsExplicitSpecialty(normalizedQuestion)
+      const structuredSet = divergentScope || explicitSpecialty ? null : latestSpecialtySet()
       const context: AssistantContext = {
         route: currentRoute,
-        competence: sharedCompetence || null,
-        region_code: selectedRegion?.region_code ?? params.get('regiao'),
-        region_name: selectedRegion?.region_name ?? null,
-        macroregion_code: selectedRegion?.macroregion_code ?? null,
-        macroregion_name: selectedRegion?.macroregion_name ?? null,
-        macroregion_label: selectedRegion
+        competence: divergentScope ? null : sharedCompetence || null,
+        region_code: divergentScope ? null : selectedRegion?.region_code ?? params.get('regiao'),
+        region_name: divergentScope ? null : selectedRegion?.region_name ?? null,
+        macroregion_code: divergentScope ? null : selectedRegion?.macroregion_code ?? null,
+        macroregion_name: divergentScope ? null : selectedRegion?.macroregion_name ?? null,
+        macroregion_label: !divergentScope && selectedRegion
           ? formatRegionalNetwork(selectedRegion.macroregion_name)
           : null,
-        hospital_cnes: params.get('hospital'),
+        hospital_cnes: divergentScope ? null : params.get('hospital'),
         active_analysis: routeAnalysis[currentRoute],
+        intent:
+          structuredSet && /(diagnostic|\bcid\b|doenc)/.test(normalizedQuestion)
+            ? 'diagnosticos_por_especialidade'
+            : 'pergunta_livre',
+        specialties: (
+          structuredSet?.items ??
+          (!explicitSpecialty && !divergentScope && activeHospitalSummary
+            ? [{ code: activeHospitalSummary.specialtyCode, name: activeHospitalSummary.specialtyName }]
+            : [])
+        ).slice(0, 5).map(({ code, name }) => ({ code, name })),
         history: historyForRequest(),
       }
       const response = await askOracleSelectAi(

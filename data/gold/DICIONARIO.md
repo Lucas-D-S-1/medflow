@@ -35,7 +35,7 @@ Pressão estimada, capacidade e volume mensal por hospital.
 | `qt_paciente_dia_estimado` | `int64` | 0 | Pacientes-dia reconstruídos pelas datas de entrada e saída. |
 | `qt_internacao_nova` | `int64` | 0 | Quantidade de internações novas, identificadas por AIH normal. |
 | `qt_obito` | `int64` | 0 | Quantidade de óbitos em internações novas. |
-| `qt_dia_permanencia_soma` | `int64` | 0 | Soma dos dias de permanência das internações novas. |
+| `qt_dia_permanencia_soma` | `int64` | 0 | Soma de DIAS_PERM apenas das internações novas; permanência observada, não pacientes-dia reconstruídos para o IPH, ocupação ou calendário. |
 | `vl_aprovado_internacao_nova_soma` | `float64` | 0 | Soma nominal dos valores aprovados para internações novas. |
 | `nm_hospital_atual` | `object` | 0 | Nome fantasia atual do estabelecimento; não representa histórico mensal. |
 | `cd_municipio_ibge_6` | `string` | 0 | Código municipal de seis dígitos usado nas bases do DATASUS. |
@@ -86,7 +86,7 @@ TMH e CMI por hospital, especialidade e competência.
 | `cd_competencia` | `string` | 0 | Competência no formato AAAAMM. |
 | `qt_internacao_nova` | `int64` | 0 | Quantidade de internações novas, identificadas por AIH normal. |
 | `qt_obito` | `int64` | 0 | Quantidade de óbitos em internações novas. |
-| `qt_dia_permanencia_soma` | `int32` | 0 | Soma dos dias de permanência das internações novas. |
+| `qt_dia_permanencia_soma` | `int32` | 0 | Soma de DIAS_PERM apenas das internações novas; permanência observada, não pacientes-dia reconstruídos para o IPH, ocupação ou calendário. |
 | `vl_aprovado_internacao_nova_soma` | `float64` | 0 | Soma nominal dos valores aprovados para internações novas. |
 | `vl_aprovado_continuacao_soma` | `float64` | 0 | Soma nominal dos valores aprovados para continuações de longa permanência. |
 | `pc_tmh` | `float64` | 0 | Óbitos em internações novas divididos pelas internações novas, em percentual. |
@@ -104,6 +104,43 @@ TMH e CMI por hospital, especialidade e competência.
 | `cd_competencia_preco_referencia` | `object` | 0 | Competência AAAAMM para a qual os valores reais foram corrigidos pelo IPCA. |
 | `vl_aprovado_internacao_nova_real_soma` | `Float64` | 0 | Soma dos valores aprovados para internações novas corrigida pelo IPCA para o preço de referência. |
 | `vl_cmi_real` | `float64` | 0 | Valor aprovado médio corrigido pelo IPCA para a competência indicada em cd_competencia_preco_referencia. |
+
+## `mart_indicador_hospital_especialidade_cid_mensal`
+
+Diagnósticos, permanência e benchmark por hospital, especialidade e competência.
+
+- Caminho: `data/gold/marts/mart_indicador_hospital_especialidade_cid_mensal.parquet`
+- Grão: uma linha por hospital, competência, especialidade e CID principal
+- Linhas: 2,495,111
+- Chave lógica: `cd_cnes`, `cd_competencia`, `cd_especialidade_sih`, `cd_cid_principal`
+
+| coluna | tipo | nulos | significado |
+|---|---|---:|---|
+| `cd_cnes` | `string` | 0 | Código de sete dígitos do estabelecimento no CNES. |
+| `cd_especialidade_sih` | `string` | 0 | Código de especialidade da internação no SIH; `--` representa código não informado. |
+| `nm_especialidade` | `string` | 0 | Descrição da especialidade SIH; `Especialidade não informada` acompanha o código `--`. |
+| `cd_regiao_saude` | `string` | 0 | Código oficial de cinco dígitos da região de saúde. |
+| `nm_regiao_saude` | `object` | 0 | Nome oficial da região de saúde. |
+| `cd_macrorregiao_saude` | `string` | 0 | Código oficial da macrorregião de saúde. |
+| `nm_macrorregiao_saude` | `object` | 0 | Nome oficial da macrorregião de saúde. |
+| `nr_ano_competencia` | `int16` | 0 | Ano da competência de processamento. |
+| `nr_mes_competencia` | `int8` | 0 | Número do mês da competência de processamento. |
+| `cd_competencia` | `string` | 0 | Competência no formato AAAAMM. |
+| `cd_cid_principal` | `string` | 0 | Código CID-10 principal; `--` preserva internações sem CID principal informado. |
+| `ds_cid` | `string` | 0 | Descrição do diagnóstico; `Sem CID principal informado` acompanha o código `--`. |
+| `cd_capitulo_cid` | `string` | 0 | Código do capítulo CID-10; `--` representa capítulo não classificável ou não informado. |
+| `ds_capitulo_cid` | `string` | 0 | Descrição do capítulo CID-10; `Não classificado` acompanha o código `--`. |
+| `qt_internacao_nova` | `int64` | 0 | Quantidade de internações novas, identificadas por AIH normal. |
+| `qt_dia_permanencia_soma` | `int32` | 0 | Soma de DIAS_PERM apenas das internações novas; permanência observada, não pacientes-dia reconstruídos para o IPH, ocupação ou calendário. |
+| `nr_permanencia_media_hospital` | `float64` | 0 | Soma dos dias de permanência dividida pelas internações novas do hospital no grão. |
+| `pc_internacao_especialidade` | `float64` | 0 | Participação percentual do CID nas internações novas do hospital, na mesma especialidade e competência. |
+| `pc_dia_permanencia_especialidade` | `float64` | 37,770 | Participação percentual do CID nos dias de permanência do hospital, na mesma especialidade e competência; nula quando o total de dias é zero. |
+| `qt_internacao_benchmark` | `int64` | 0 | Quantidade de internações no benchmark regional, excluído o hospital avaliado. |
+| `qt_dia_permanencia_benchmark` | `int32` | 0 | Dias de permanência dos demais hospitais no benchmark regional do mesmo grão. |
+| `qt_hospital_benchmark` | `int64` | 0 | Quantidade de outros hospitais que compõem o benchmark. |
+| `nr_permanencia_media_benchmark` | `float64` | 1,179,656 | Dias de permanência divididos pelas internações dos demais hospitais do benchmark. |
+| `nr_ipr` | `float64` | 2,480,440 | Permanência média do hospital/CID dividida pelo benchmark regional que exclui o hospital. |
+| `st_amostra` | `object` | 0 | Estado da amostra segundo os mínimos definidos no contrato do indicador. |
 
 ## `mart_indicador_hospital_cid_periodo`
 
@@ -126,7 +163,7 @@ IPR por hospital e diagnóstico no período completo.
 | `cd_capitulo_cid` | `object` | 0 | Código do capítulo da CID-10. |
 | `ds_capitulo_cid` | `object` | 0 | Descrição do capítulo da CID-10. |
 | `qt_internacao_nova` | `int64` | 0 | Quantidade de internações novas, identificadas por AIH normal. |
-| `qt_dia_permanencia_soma` | `int32` | 0 | Soma dos dias de permanência das internações novas. |
+| `qt_dia_permanencia_soma` | `int32` | 0 | Soma de DIAS_PERM apenas das internações novas; permanência observada, não pacientes-dia reconstruídos para o IPH, ocupação ou calendário. |
 | `qt_internacao_benchmark` | `int64` | 0 | Quantidade de internações no benchmark regional, excluído o hospital avaliado. |
 | `qt_dia_permanencia_benchmark` | `int32` | 0 | Quantidade referente a dia permanencia benchmark. |
 | `qt_hospital_benchmark` | `int64` | 0 | Quantidade de outros hospitais que compõem o benchmark. |
@@ -155,7 +192,7 @@ Indicadores consolidados para mapa e visão executiva regional.
 | `cd_competencia` | `string` | 0 | Competência no formato AAAAMM. |
 | `qt_internacao_nova` | `int64` | 0 | Quantidade de internações novas, identificadas por AIH normal. |
 | `qt_obito` | `int64` | 0 | Quantidade de óbitos em internações novas. |
-| `qt_dia_permanencia_soma` | `int32` | 0 | Soma dos dias de permanência das internações novas. |
+| `qt_dia_permanencia_soma` | `int32` | 0 | Soma de DIAS_PERM apenas das internações novas; permanência observada, não pacientes-dia reconstruídos para o IPH, ocupação ou calendário. |
 | `vl_aprovado_internacao_nova_soma` | `float64` | 0 | Soma nominal dos valores aprovados para internações novas. |
 | `qt_hospital_com_internacao` | `int64` | 0 | Quantidade referente a hospital com internacao. |
 | `qt_paciente_dia_estimado` | `int64` | 0 | Pacientes-dia reconstruídos pelas datas de entrada e saída. |

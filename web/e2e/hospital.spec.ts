@@ -27,12 +27,292 @@ import {
   regionalSnapshot,
   snapshotCompetencia,
   snapshotCompetenciaBR,
+  specialtyDiagnosisSnapshot,
   specialtySnapshot,
   totalInternacoesDoHospital,
 } from './apoio'
 
 /** O mesmo recorte que `HospitalSeries` mostra antes de expandir. */
 const PREVIEW_SERIE = 6
+
+test('abre diagnósticos na especialidade, reordena o conjunto e permite expandir', async ({
+  page,
+}) => {
+  await mockLiveSource(page)
+  await page.goto(`/?competencia=${snapshotCompetencia}&regiao=35073&hospital=3012212#hospital`)
+
+  await expect(page.getByTestId('specialty-diagnosis-meta')).toContainText(
+    'ordenados por total de dias',
+  )
+  await expect(page.locator('[data-testid^="specialty-diagnosis-row-"]')).toHaveCount(10)
+  await expect(page.getByTestId('specialty-diagnosis-row-J219')).toContainText(
+    'Bronquite aguda não especificada',
+  )
+  await expect(page.getByTestId('specialty-diagnosis-row-J219')).toContainText(
+    'Amostra insuficiente para comparar',
+  )
+  await expect(page.getByTestId('specialty-diagnosis-row-J219')).toContainText(
+    '11 internações, 43 dias e 4 outros hospitais',
+  )
+  await expect(page.getByTestId('specialty-diagnosis-row-P228')).toContainText(
+    'Sem outros hospitais neste recorte',
+  )
+
+  for (let pageNumber = 0; pageNumber < 8; pageNumber += 1) {
+    await page.getByTestId('specialty-diagnosis-more').click()
+  }
+  await expect(page.locator('[data-testid^="specialty-diagnosis-row-"]')).toHaveCount(
+    (specialtyDiagnosisSnapshot.items as unknown[]).length,
+  )
+  await expect(page.getByTestId('specialty-diagnosis-row-K219')).toBeVisible()
+
+  await page.getByTestId('specialty-diagnosis-order').selectOption('media')
+  await expect(page.getByTestId('specialty-diagnosis-meta')).toContainText(
+    'ordenados por média de permanência',
+  )
+  await expect(page.locator('.specialty-diagnosis-table tbody tr').first()).toHaveAttribute(
+    'data-testid',
+    'specialty-diagnosis-row-D649',
+  )
+  await page.getByTestId('specialty-diagnosis-order').selectOption('internacoes')
+  await expect(page.getByTestId('specialty-diagnosis-meta')).toContainText(
+    'ordenados por volume de internações',
+  )
+  await expect(page.locator('.specialty-diagnosis-table tbody tr').first()).toHaveAttribute(
+    'data-testid',
+    'specialty-diagnosis-row-J219',
+  )
+})
+
+test('explica benchmark zero, identificador desconhecido e participação sem dias', async ({
+  page,
+}) => {
+  await mockLiveSource(page)
+  await page.route(
+    '**/api/dev/v1/hospitais/*/especialidades/*/diagnosticos**',
+    async (route) => {
+      const original = (specialtyDiagnosisSnapshot.items as Record<string, unknown>[])[0]
+      const items = [
+        {
+          ...original,
+          cid_code: '--',
+          cid_description: 'Sem CID principal informado',
+          stay_days_total: 2,
+          benchmark_admissions: 60,
+          benchmark_stay_days_total: 120,
+          benchmark_hospitals: 3,
+          average_stay_benchmark: 2,
+          sample_status: 'amostra_insuficiente',
+        },
+        {
+          ...original,
+          cid_code: 'Z999',
+          cid_description: 'Diagnóstico sem dias nos pares',
+          stay_days_total: 0,
+          stay_day_share_percent: null,
+          benchmark_admissions: 60,
+          benchmark_stay_days_total: 0,
+          benchmark_hospitals: 3,
+          average_stay_benchmark: 0,
+          sample_status: 'benchmark_zero',
+        },
+      ]
+      await route.fulfill({
+        contentType: 'application/json',
+        body: JSON.stringify({
+          ...specialtyDiagnosisSnapshot,
+          source: 'oracle-live',
+          pagination: { limit: 2000, offset: 0, count: 2, has_more: false, order: 'stay_days_desc' },
+          items,
+        }),
+      })
+    },
+  )
+  await page.goto(`/?competencia=${snapshotCompetencia}&regiao=35073&hospital=3012212#hospital`)
+  await expect(page.getByTestId('specialty-diagnosis-row---')).toContainText(
+    'Identificador desconhecido; não comparável',
+  )
+  await expect(page.getByTestId('specialty-diagnosis-row-Z999')).toContainText(
+    'Pares sem dias de permanência registrados',
+  )
+  await expect(page.getByTestId('specialty-diagnosis-row-Z999')).toContainText(
+    'Sem dias registrados para calcular participação',
+  )
+})
+
+test('snapshot de contingência cobre os 85 CIDs e distingue recorte não coberto', async ({
+  page,
+}) => {
+  await page.route('**/api/dev/v1/status', async (route) => {
+    await route.abort('connectionfailed')
+  })
+  await page.goto(`/?competencia=${snapshotCompetencia}&regiao=35073&hospital=3012212#hospital`)
+  await expect(page.getByTestId('specialty-diagnosis-meta')).toContainText('85 diagnósticos')
+  await expect(page.locator('[data-testid^="specialty-diagnosis-row-"]')).toHaveCount(10)
+  await page.getByTestId('especialidade-row-02').click()
+  await expect(page.getByTestId('specialty-diagnosis-snapshot-unavailable')).toHaveText(
+    'Este recorte não está disponível no snapshot de contingência.',
+  )
+  await expect(page.getByTestId('specialty-diagnosis-absent')).toHaveCount(0)
+})
+
+test('paginação além do fim mantém count global e has_more falso', async ({ page }) => {
+  await mockLiveSource(page)
+  await page.goto('/')
+  const envelope = await page.evaluate(async () => {
+    const response = await fetch(
+      '/api/dev/v1/hospitais/3012212/especialidades/07/diagnosticos?ano=2026&mes=6&ordenar=dias&limit=10&offset=999',
+    )
+    return response.json()
+  }) as { items: unknown[]; pagination: { count: number; has_more: boolean } }
+
+  expect(envelope.items).toEqual([])
+  expect(envelope.pagination.count).toBe(85)
+  expect(envelope.pagination.has_more).toBe(false)
+})
+
+test('resposta vazia de outro recorte é inválida, não ausência real', async ({ page }) => {
+  await mockLiveSource(page)
+  await page.route(
+    '**/api/dev/v1/hospitais/*/especialidades/*/diagnosticos**',
+    async (route) => {
+      const url = new URL(route.request().url())
+      const limit = Number(url.searchParams.get('limit'))
+      await route.fulfill({
+        contentType: 'application/json',
+        body: JSON.stringify({
+          ...specialtyDiagnosisSnapshot,
+          source: 'oracle-live',
+          filters: { cnes: '9999999', year: 2026, month: 6, specialty_code: '07', order_by: 'dias' },
+          hospital: {
+            cnes: '9999999', region_code: null, region_name: null,
+            macroregion_code: null, macroregion_name: null,
+            specialty_code: '07', specialty_name: null,
+            specialty_new_admissions_total: null, specialty_stay_days_total: null,
+          },
+          pagination: { limit, offset: 0, count: 0, has_more: false, order: 'stay_days_desc' },
+          items: [],
+        }),
+      })
+    },
+  )
+  await page.goto(`/?competencia=${snapshotCompetencia}&regiao=35073&hospital=3012212#hospital`)
+  await expect(page.getByTestId('specialty-diagnosis-error')).toBeVisible()
+  await expect(page.getByTestId('specialty-diagnosis-absent')).toHaveCount(0)
+})
+
+test('ignora diagnóstico atrasado depois da troca de especialidade', async ({ page }) => {
+  await mockLiveSource(page)
+  await page.route(
+    '**/api/dev/v1/hospitais/*/especialidades/*/diagnosticos**',
+    async (route) => {
+      const url = new URL(route.request().url())
+      const specialtyCode =
+        url.pathname.match(/especialidades\/(\d{2}|--)\/diagnosticos$/)?.[1] ?? ''
+      const specialtyName = specialtyCode === '02' ? 'Obstetrícia' : 'Pediatria'
+      const original = (specialtyDiagnosisSnapshot.items as Record<string, unknown>[])[0]
+      const item = {
+        ...original,
+        specialty_code: specialtyCode,
+        specialty_name: specialtyName,
+        cid_code: specialtyCode === '02' ? 'O820' : 'J219',
+        cid_description:
+          specialtyCode === '02' ? 'Parto por cesariana eletiva' : 'Bronquite atrasada',
+      }
+      if (specialtyCode === '07') {
+        await new Promise((resolve) => setTimeout(resolve, 300))
+      }
+      try {
+        await route.fulfill({
+          contentType: 'application/json',
+          body: JSON.stringify({
+            ...specialtyDiagnosisSnapshot,
+            source: 'oracle-live',
+            data_through: snapshotCompetencia,
+            filters: {
+              cnes: '3012212',
+              year: Number(snapshotCompetencia.slice(0, 4)),
+              month: Number(snapshotCompetencia.slice(5, 7)),
+              specialty_code: specialtyCode,
+              order_by: 'dias',
+            },
+            hospital: {
+              ...(specialtyDiagnosisSnapshot.hospital as object),
+              specialty_code: specialtyCode,
+              specialty_name: specialtyName,
+            },
+            pagination: {
+              limit: 2000,
+              offset: 0,
+              count: 1,
+              has_more: false,
+              order: 'stay_days_desc',
+            },
+            items: [item],
+          }),
+        })
+      } catch {
+        // A resposta de Pediatria é cancelada quando Obstetrícia vira o recorte.
+      }
+    },
+  )
+
+  await page.goto(`/?competencia=${snapshotCompetencia}&regiao=35073&hospital=3012212#hospital`)
+  await expect(page.getByTestId('especialidade-count')).toHaveText('4 de 4 especialidades')
+  await page.getByTestId('especialidade-row-02').click()
+
+  await expect(page.getByTestId('specialty-diagnosis-row-O820')).toContainText(
+    'Parto por cesariana eletiva',
+  )
+  await page.waitForTimeout(350)
+  await expect(page.getByTestId('specialty-diagnosis-row-O820')).toBeVisible()
+  await expect(page.getByTestId('specialty-diagnosis-row-J219')).toHaveCount(0)
+  await expect(page.getByRole('heading', { name: /Principais diagnósticos · Obstetrícia/ })).toBeVisible()
+})
+
+test('ignora diagnóstico atrasado depois da troca de competência', async ({ page }) => {
+  await mockLiveSource(page)
+  await page.route(
+    '**/api/dev/v1/hospitais/*/especialidades/*/diagnosticos**',
+    async (route) => {
+      const url = new URL(route.request().url())
+      const year = Number(url.searchParams.get('ano'))
+      const month = Number(url.searchParams.get('mes'))
+      const competence = `${year}-${String(month).padStart(2, '0')}`
+      const antigo = competence === snapshotCompetencia
+      const original = (specialtyDiagnosisSnapshot.items as Record<string, unknown>[])[0]
+      if (antigo) await new Promise((resolve) => setTimeout(resolve, 300))
+      try {
+        await route.fulfill({
+          contentType: 'application/json',
+          body: JSON.stringify({
+            ...specialtyDiagnosisSnapshot,
+            source: 'oracle-live',
+            data_through: competence,
+            filters: { cnes: '3012212', year, month, specialty_code: '07', order_by: 'dias' },
+            pagination: { limit: 2000, offset: 0, count: 1, has_more: false, order: 'stay_days_desc' },
+            items: [{
+              ...original,
+              cid_code: antigo ? 'J219' : 'A090',
+              cid_description: antigo ? 'Resposta atrasada da competência antiga' : 'Resposta da nova competência',
+            }],
+          }),
+        })
+      } catch {
+        // A requisição antiga é abortada assim que a competência muda.
+      }
+    },
+  )
+
+  await page.goto(`/?competencia=${snapshotCompetencia}&regiao=35073&hospital=3012212#hospital`)
+  await escolherCompetencia(page, '2025-05')
+  await expect(page.getByTestId('specialty-diagnosis-row-A090')).toContainText(
+    'Resposta da nova competência',
+  )
+  await page.waitForTimeout(350)
+  await expect(page.getByTestId('specialty-diagnosis-row-A090')).toBeVisible()
+  await expect(page.getByText('Resposta atrasada da competência antiga')).toHaveCount(0)
+})
 
 async function expectAnchorBelowHeader(page: Page, selector: '#hospital-detail' | '#hospital-list') {
   const viewport = page.viewportSize()

@@ -33,6 +33,8 @@ export type AssistantContext = {
   macroregion_label: string | null
   hospital_cnes: string | null
   active_analysis: string
+  intent: string | null
+  specialties: { code: string; name: string }[]
   history: AssistantTurn[]
 }
 
@@ -40,6 +42,15 @@ const ASSISTANT_PATH = apiUrl('/assistente/perguntar')
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === 'object' && !Array.isArray(value)
+}
+
+export function containsOracleOrRawSql(value: string): boolean {
+  const normalized = value.trim()
+  return (
+    /\bORA-\d{5}\b/i.test(normalized) ||
+    /```\s*(?:sql)?[\s\S]*\b(?:select|with)\b/i.test(normalized) ||
+    /(?:^|\n)\s*(?:SQL\s*[:>-]?\s*)?(?:select|with)\b/i.test(normalized)
+  )
 }
 
 function isAssistantResponse(value: unknown): value is AssistantResponse {
@@ -53,6 +64,7 @@ function isAssistantResponse(value: unknown): value is AssistantResponse {
     value.response_id > 0 &&
     typeof value.narrative === 'string' &&
     value.narrative.trim().length > 0 &&
+    !containsOracleOrRawSql(value.narrative) &&
     (value.sql === null || typeof value.sql === 'string') &&
     (value.warning === null || typeof value.warning === 'string')
   )
@@ -137,7 +149,9 @@ export async function askOracleSelectAi(
     }
 
     if (!isAssistantResponse(payload)) {
-      throw new AssistantRequestError('O contrato do assistente veio diferente do esperado.')
+      throw new AssistantRequestError(
+        'A resposta do assistente veio incompleta ou insegura e não foi exibida.',
+      )
     }
     return payload
   } catch (error) {

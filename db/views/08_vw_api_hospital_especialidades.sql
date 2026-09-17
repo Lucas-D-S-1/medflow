@@ -20,6 +20,7 @@ select e.cd_cnes,
        e.st_amostra,
        e.nr_permanencia_media_benchmark_especialidade,
        e.qt_internacao_benchmark_especialidade,
+       e.qt_dia_permanencia_benchmark_especialidade,
        e.qt_hospital_benchmark_especialidade,
        e.nr_ipe,
        e.st_amostra_ipe
