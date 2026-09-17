@@ -530,7 +530,7 @@ export default function AssistantWidget() {
             },
           )
           .join(' ')
-        return `${specialty.name} (${specialty.code}) — top 5 por total de dias: ${ranking}`
+        return `${specialty.name} (${specialty.code}) — top 3 por total de dias: ${ranking}`
       })
       .join('\n')
   }
@@ -972,7 +972,7 @@ export default function AssistantWidget() {
                 specialtyCode: specialty.code,
                 orderBy: 'dias',
               },
-              { limit: 5, signal: controller.signal },
+              { limit: 3, signal: controller.signal },
             ),
           ),
         )
