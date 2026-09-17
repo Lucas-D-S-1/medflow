@@ -1,5 +1,7 @@
 import { expect, test } from '@playwright/test'
+import { readFileSync } from 'node:fs'
 import {
+  regionalIphCumulativeAverages,
   regionalInsight,
   regionalMetricValue,
   regionalSeriesWindow,
@@ -23,28 +25,110 @@ function point(
   }
 }
 
-test('calcula IPH em pontos percentuais e usa somente o mesmo mês de anos anteriores', () => {
+test('calcula IPH contra a média acumulada inclusiva em ordem cronológica', () => {
   const insight = regionalInsight([
-    point('2024-06', { iph_percent: 68 }),
-    point('2025-06', { iph_percent: 72 }),
-    point('2026-05', { iph_percent: 78 }),
-    point('2026-06', { iph_percent: 72 }),
+    point('2026-06', { iph_percent: 70 }),
+    point('2025-12', { iph_percent: 30 }),
+    point('2026-05', { iph_percent: 50 }),
     point('2026-07', { iph_percent: 99 }),
-    point('2027-06', { iph_percent: 100 }),
   ], '2026-06', 'iph')
 
   expect(insight.status).toBe('ready')
-  expect(insight.current).toBe(72)
+  expect(insight.current).toBe(70)
   expect(insight.previousComparison).toMatchObject({
-    reference: 78,
-    difference: -6,
+    reference: 50,
+    difference: 20,
     referenceCompetence: '2026-05',
   })
   expect(insight.historicalComparison).toMatchObject({
-    reference: 70,
-    difference: 2,
-    years: 2,
+    reference: 50,
+    difference: 20,
+    competences: 3,
+    startCompetence: '2025-12',
   })
+  expect(insight.summary).toContain('ante a média acumulada até o mês')
+})
+
+test('ordena entrada decrescente, exclui futuro e usa meses diferentes', () => {
+  const cumulative = regionalIphCumulativeAverages([
+    point('2027-01', { iph_percent: 500 }),
+    point('2026-03', { iph_percent: 90 }),
+    point('2026-02', { iph_percent: 60 }),
+    point('2026-01', { iph_percent: 30 }),
+  ], '2026-03')
+
+  expect(cumulative.map(({ competence, average, competences }) => ({
+    competence,
+    average,
+    competences,
+  }))).toEqual([
+    { competence: '2026-01', average: 30, competences: 1 },
+    { competence: '2026-02', average: 45, competences: 2 },
+    { competence: '2026-03', average: 60, competences: 3 },
+  ])
+})
+
+test('inclui zero válido uma vez e ignora valores ou denominadores inválidos', () => {
+  const cumulative = regionalIphCumulativeAverages([
+    point('2026-01', { iph_percent: 0 }),
+    point('2026-01', { iph_percent: 0 }),
+    point('2026-02', { iph_percent: 100, declared_capacity_bed_days: 0 }),
+    point('2026-03', { iph_percent: Number.NaN }),
+    point('2026-04', { iph_percent: 80 }),
+  ], '2026-04')
+
+  expect(cumulative).toEqual([
+    {
+      competence: '2026-01',
+      average: 0,
+      competences: 1,
+      startCompetence: '2026-01',
+    },
+    {
+      competence: '2026-04',
+      average: 40,
+      competences: 2,
+      startCompetence: '2026-01',
+    },
+  ])
+})
+
+test('o primeiro mês válido usa o próprio IPH como média acumulada', () => {
+  const insight = regionalInsight([
+    point('2026-06', { iph_percent: 67.5 }),
+  ], '2026-06', 'iph')
+
+  expect(insight.status).toBe('ready')
+  expect(insight.historicalComparison).toMatchObject({
+    reference: 67.5,
+    difference: 0,
+    competences: 1,
+    startCompetence: '2026-06',
+  })
+})
+
+test('reproduz a média real de Jundiaí a partir da fixture pública preservada', () => {
+  const fixture = JSON.parse(
+    readFileSync(
+      new URL('../src/mocks/regiao-serie-35073.json', import.meta.url),
+      'utf8',
+    ),
+  ) as { items: RegionalInsightPoint[] }
+  const cumulative = regionalIphCumulativeAverages(fixture.items, '2026-06')
+  const current = cumulative.at(-1)
+
+  expect(current?.competence).toBe('2026-06')
+  expect(current?.competences).toBe(30)
+  expect(current?.startCompetence).toBe('2024-01')
+  expect(current?.average).toBeCloseTo(81.37068, 5)
+  const comparison = regionalInsight(fixture.items, '2026-06', 'iph')
+    .historicalComparison
+  expect(comparison).toMatchObject({
+    competences: 30,
+    startCompetence: '2024-01',
+  })
+  expect(comparison?.reference).toBeCloseTo(81.37068, 5)
+  expect(comparison?.difference).toBeCloseTo(-14.20448, 5)
 })
 
 test('calcula internações em percentual apenas com referências positivas', () => {
@@ -99,17 +183,10 @@ test('não substitui competência ou mês anterior ausentes pelo último ponto',
     point('2026-06', { iph_percent: 70 }),
   ], '2026-06', 'iph')
   expect(missingPrevious.previousComparison).toBeNull()
-  expect(missingPrevious.historicalComparison?.reference).toBe(55)
+  expect(missingPrevious.historicalComparison?.reference).toBe(61.25)
 })
 
-test('IPH exige dois anos distintos e rejeita denominador ou valor explicitamente inválidos', () => {
-  const insufficient = regionalInsight([
-    point('2025-06', { iph_percent: 60 }),
-    point('2026-06', { iph_percent: 70 }),
-  ], '2026-06', 'iph')
-  expect(insufficient.status).toBe('insufficient-history')
-  expect(insufficient.historicalComparison).toBeNull()
-
+test('IPH rejeita denominador ou valor explicitamente inválidos', () => {
   for (const invalid of [
     point('2026-06', { iph_percent: 70, declared_capacity_bed_days: 0 }),
     point('2026-06', { iph_percent: 70, declared_capacity_bed_days: -1 }),
@@ -159,13 +236,24 @@ test('a janela explicita meses ausentes e nunca inclui competências futuras', (
   expect(window.some((slot) => slot.competence === '2026-07')).toBe(false)
 })
 
-test('o baseline considera todo o histórico mesmo quando a janela visual é compacta', () => {
+test('a média acumulada preserva lacunas e usa histórico anterior à janela visual', () => {
   const items = [
-    point('2024-06', { iph_percent: 60 }),
-    point('2025-06', { iph_percent: 80 }),
-    point('2026-06', { iph_percent: 75 }),
+    point('2024-01', { iph_percent: 20 }),
+    point('2026-04', { iph_percent: 40 }),
+    point('2026-06', { iph_percent: 60 }),
   ]
-  const compact = regionalSeriesWindow(items, '2026-06', false, 12)
-  expect(compact.some((slot) => slot.competence === '2024-06')).toBe(false)
-  expect(regionalInsight(items, '2026-06', 'iph').historicalComparison?.reference).toBe(70)
+  const compact = regionalSeriesWindow(items, '2026-06', false, 3)
+  expect(compact.map((slot) => slot.competence)).toEqual([
+    '2026-04',
+    '2026-05',
+    '2026-06',
+  ])
+  expect(compact[1].item).toBeNull()
+  expect(compact.some((slot) => slot.competence === '2024-01')).toBe(false)
+  expect(regionalIphCumulativeAverages(items, '2026-06')).toEqual([
+    { competence: '2024-01', average: 20, competences: 1, startCompetence: '2024-01' },
+    { competence: '2026-04', average: 30, competences: 2, startCompetence: '2024-01' },
+    { competence: '2026-06', average: 40, competences: 3, startCompetence: '2024-01' },
+  ])
+  expect(regionalInsight(items, '2026-06', 'iph').historicalComparison?.reference).toBe(40)
 })

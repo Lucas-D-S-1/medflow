@@ -19,6 +19,15 @@ export type RegionalComparison = {
   difference: number
   referenceCompetence?: string
   years?: number
+  competences?: number
+  startCompetence?: string
+}
+
+export type RegionalIphCumulativePoint = {
+  competence: string
+  average: number
+  competences: number
+  startCompetence: string
 }
 
 export type RegionalInsight = {
@@ -113,7 +122,7 @@ function buildSummary(
   if (historical) {
     parts.push(
       metric === 'iph'
-        ? `${signed(historical.difference, 'p.p.')} ante a referência histórica disponível`
+        ? `${signed(historical.difference, 'p.p.')} ante a média acumulada até o mês`
         : `${signed(historical.difference, '%')} ante a referência histórica disponível`,
     )
   } else {
@@ -123,9 +132,55 @@ function buildSummary(
 }
 
 /**
+ * Calcula a média aritmética acumulada do IPH por competência, em ordem
+ * cronológica. Cada mês válido contribui uma única vez; meses ausentes ou
+ * inválidos não viram zero e competências futuras nunca entram no cálculo.
+ */
+export function regionalIphCumulativeAverages(
+  items: RegionalInsightPoint[],
+  throughCompetence: string,
+): RegionalIphCumulativePoint[] {
+  if (!COMPETENCE_PATTERN.test(throughCompetence)) return []
+
+  const valuesByCompetence = new Map<string, number | null>()
+  for (const item of items) {
+    if (
+      !COMPETENCE_PATTERN.test(item.competence) ||
+      item.competence > throughCompetence
+    ) {
+      continue
+    }
+    const value = regionalMetricValue(item, 'iph')
+    const existing = valuesByCompetence.get(item.competence)
+    if (!valuesByCompetence.has(item.competence) || (existing === null && value !== null)) {
+      valuesByCompetence.set(item.competence, value)
+    }
+  }
+
+  let sum = 0
+  let competences = 0
+  let startCompetence = ''
+  const result: RegionalIphCumulativePoint[] = []
+  for (const competence of [...valuesByCompetence.keys()].sort()) {
+    const value = valuesByCompetence.get(competence)
+    if (value === null || value === undefined) continue
+    sum += value
+    competences += 1
+    if (!startCompetence) startCompetence = competence
+    result.push({
+      competence,
+      average: sum / competences,
+      competences,
+      startCompetence,
+    })
+  }
+  return result
+}
+
+/**
  * Seleciona as três leituras da evolução sem substituir meses ausentes nem
  * transformar ausência em zero. A regra sazonal de internações vem do
- * contrato; a de IPH usa somente o mesmo mês em anos anteriores.
+ * contrato; o IPH usa a média mensal acumulada da própria região.
  */
 export function regionalInsight(
   items: RegionalInsightPoint[],
@@ -166,30 +221,14 @@ export function regionalInsight(
   let historicalReason: RegionalInsight['historicalReason'] = null
 
   if (metric === 'iph') {
-    const selectedYear = Number(selectedCompetence.slice(0, 4))
-    const selectedMonth = selectedCompetence.slice(5, 7)
-    const valuesByYear = new Map<number, number>()
-    for (const item of items) {
-      if (
-        !COMPETENCE_PATTERN.test(item.competence) ||
-        item.competence >= selectedCompetence ||
-        item.competence.slice(5, 7) !== selectedMonth
-      ) {
-        continue
-      }
-      const year = Number(item.competence.slice(0, 4))
-      const value = regionalMetricValue(item, 'iph')
-      if (year < selectedYear && value !== null && !valuesByYear.has(year)) {
-        valuesByYear.set(year, value)
-      }
-    }
-    if (valuesByYear.size >= 2) {
-      const reference = [...valuesByYear.values()].reduce((sum, value) => sum + value, 0) /
-        valuesByYear.size
+    const cumulative = regionalIphCumulativeAverages(items, selectedCompetence)
+      .find((point) => point.competence === selectedCompetence)
+    if (cumulative) {
       historicalComparison = {
-        reference,
-        difference: current - reference,
-        years: valuesByYear.size,
+        reference: cumulative.average,
+        difference: current - cumulative.average,
+        competences: cumulative.competences,
+        startCompetence: cumulative.startCompetence,
       }
     } else {
       historicalReason = 'historico-insuficiente'

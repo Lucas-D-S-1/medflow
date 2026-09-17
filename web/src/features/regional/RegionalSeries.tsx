@@ -4,9 +4,11 @@ import type {
   RegionalSeriesResponse,
 } from './regioesSerie'
 import {
+  regionalIphCumulativeAverages,
   regionalInsight,
   regionalMetricValue,
   regionalSeriesWindow,
+  type RegionalIphCumulativePoint,
   type RegionalInsightMetric,
 } from './regionalInsights'
 import {
@@ -97,15 +99,27 @@ export default function RegionalSeries({
     [data.items, selectedCompetence, showAllHistory],
   )
   const values = slots.map(({ item }) => (item ? indicator.value(item) : null))
+  const cumulativeIphByCompetence = useMemo(
+    () => new Map(
+      regionalIphCumulativeAverages(data.items, selectedCompetence)
+        .map((point) => [point.competence, point]),
+    ),
+    [data.items, selectedCompetence],
+  )
   const baseline = insight.historicalComparison?.reference ?? null
+  const cumulativeValues = indicatorId === 'iph'
+    ? slots.map(({ competence }) => cumulativeIphByCompetence.get(competence)?.average ?? null)
+    : []
   const numericValues = [
     ...values.filter((value): value is number => value !== null),
-    ...(baseline === null ? [] : [baseline]),
+    ...cumulativeValues.filter((value): value is number => value !== null),
+    ...(indicatorId === 'admissions' && baseline !== null ? [baseline] : []),
   ]
   const minimum = numericValues.length ? Math.min(...numericValues) : 0
   const maximum = numericValues.length ? Math.max(...numericValues) : 0
   const range = maximum - minimum || 1
   const path = chartPath(values, minimum, maximum)
+  const cumulativePath = chartPath(cumulativeValues, minimum, maximum)
   const chartPoints = slots
     .map(({ competence, item }, index) => {
       const value = values[index]
@@ -116,16 +130,24 @@ export default function RegionalSeries({
       const y = CHART_TOP +
         (1 - (value - minimum) / range) *
         (CHART_HEIGHT - CHART_TOP - CHART_BOTTOM)
-      return { competence, item, value, x, y }
+      return {
+        competence,
+        item,
+        value,
+        cumulativeIph: cumulativeIphByCompetence.get(competence) ?? null,
+        x,
+        y,
+      }
     })
     .filter((point): point is {
       competence: string
       item: RegionalSeriesItem
       value: number
+      cumulativeIph: RegionalIphCumulativePoint | null
       x: number
       y: number
     } => point !== null)
-  const baselineY = baseline === null
+  const baselineY = indicatorId === 'iph' || baseline === null
     ? null
     : CHART_TOP +
       (1 - (baseline - minimum) / range) *
@@ -137,7 +159,12 @@ export default function RegionalSeries({
   const lastCompetence = slots.at(-1)?.competence
   const selectedMonth = formatPeriodLong(selectedCompetence).split('/')[0]
   const historicalLabel = insight.historicalComparison
-    ? `Média de ${selectedMonth} nos ${insight.historicalComparison.years} anos anteriores`
+    ? indicatorId === 'iph'
+      ? `Média acumulada até ${formatPeriodLong(selectedCompetence)}`
+      : `Média de ${selectedMonth} nos ${insight.historicalComparison.years} anos anteriores`
+    : null
+  const cumulativeContext = indicatorId === 'iph' && insight.historicalComparison
+    ? `${formatInteger(insight.historicalComparison.competences ?? 0)} competências desde ${formatPeriodLong(insight.historicalComparison.startCompetence ?? '')}`
     : null
 
   useEffect(() => {
@@ -224,7 +251,7 @@ export default function RegionalSeries({
           </small>
         </article>
         <article data-testid="regional-series-historical">
-          <span>Mesmo mês em anos anteriores</span>
+          <span>{indicatorId === 'iph' ? 'Média acumulada' : 'Mesmo mês em anos anteriores'}</span>
           <strong>
             {insight.historicalComparison
               ? formatDifference(indicatorId, insight.historicalComparison.difference)
@@ -232,14 +259,12 @@ export default function RegionalSeries({
           </strong>
           <small>
             {insight.historicalComparison
-              ? `${historicalLabel}: ${indicator.format(insight.historicalComparison.reference)}`
+              ? `${historicalLabel}: ${indicator.format(insight.historicalComparison.reference)}${cumulativeContext ? ` · ${cumulativeContext}` : ''}`
               : insight.historicalReason === 'fora-periodo-alvo'
                 ? 'Fora do período-alvo da sazonalidade publicada'
                 : insight.historicalReason === 'referencia-zero'
                   ? 'Referência publicada igual a zero; variação não calculada'
-                  : indicatorId === 'iph'
-                    ? 'São necessários ao menos 2 anos comparáveis para IPH'
-                    : 'Histórico publicado insuficiente'}
+                  : 'Histórico publicado insuficiente'}
           </small>
         </article>
       </div>
@@ -269,7 +294,7 @@ export default function RegionalSeries({
               <title id="regional-series-chart-title">{indicator.label} ao longo do tempo</title>
               <desc id="regional-series-chart-description">
                 Série de {formatPeriod(firstCompetence)} a {formatPeriod(lastCompetence)}; meses não publicados aparecem como lacunas. Mínimo {indicator.format(minimum)} e máximo {indicator.format(maximum)}.
-                {historicalLabel && baseline !== null ? ` Linha pontilhada: ${historicalLabel}, ${indicator.format(baseline)}.` : ''}
+                {historicalLabel && baseline !== null ? ` Linha pontilhada: ${historicalLabel}, ${indicator.format(baseline)}${cumulativeContext ? `, calculada com ${cumulativeContext}` : ''}.` : ''}
               </desc>
               <line className="series-grid-line" x1={CHART_LEFT} x2={CHART_WIDTH - CHART_RIGHT} y1={CHART_TOP} y2={CHART_TOP} />
               <line className="series-grid-line" x1={CHART_LEFT} x2={CHART_WIDTH - CHART_RIGHT} y1={CHART_HEIGHT - CHART_BOTTOM} y2={CHART_HEIGHT - CHART_BOTTOM} />
@@ -282,17 +307,20 @@ export default function RegionalSeries({
                   y2={baselineY}
                 />
               )}
+              {indicatorId === 'iph' && cumulativePath && (
+                <path className="series-baseline" d={cumulativePath} />
+              )}
               <text className="series-axis-label" x={CHART_LEFT - 8} y={CHART_TOP + 4} textAnchor="end">{indicator.format(maximum)}</text>
               <text className="series-axis-label" x={CHART_LEFT - 8} y={CHART_HEIGHT - CHART_BOTTOM + 4} textAnchor="end">{indicator.format(minimum)}</text>
               <path className="series-line" d={path} />
-              {chartPoints.map(({ competence, item, value, x, y }) => (
+              {chartPoints.map(({ competence, item, value, cumulativeIph, x, y }) => (
                 <g
                   key={competence}
                   className="series-data-point"
                   data-testid={`regional-series-point-${competence}`}
                   role="img"
                   tabIndex={0}
-                  aria-label={`${formatPeriod(competence)} · ${indicator.label}: ${indicator.format(value)}. ${indicator.detail(item)}`}
+                  aria-label={`${formatPeriod(competence)} · ${indicator.label}: ${indicator.format(value)}. ${indicator.detail(item)}${indicatorId === 'iph' && cumulativeIph ? `. Média acumulada até ${formatPeriodLong(competence)}: ${indicator.format(cumulativeIph.average)}; ${formatInteger(cumulativeIph.competences)} competências desde ${formatPeriodLong(cumulativeIph.startCompetence)}` : ''}`}
                   aria-describedby={tooltipCompetence === competence ? 'regional-series-tooltip' : undefined}
                   onMouseEnter={() => showTooltip(competence)}
                   onMouseLeave={scheduleTooltipClose}
@@ -334,12 +362,17 @@ export default function RegionalSeries({
                 <span>{formatPeriod(tooltipPoint.competence)} · {indicator.label}</span>
                 <strong>{indicator.format(tooltipPoint.value)}</strong>
                 <small>{indicator.detail(tooltipPoint.item)}</small>
+                {indicatorId === 'iph' && tooltipPoint.cumulativeIph && (
+                  <small>
+                    Média acumulada até {formatPeriodLong(tooltipPoint.competence)}: {indicator.format(tooltipPoint.cumulativeIph.average)} · {formatInteger(tooltipPoint.cumulativeIph.competences)} competências
+                  </small>
+                )}
               </div>
             )}
           </div>
           {historicalLabel && baseline !== null && (
             <p className="series-baseline-label">
-              <span aria-hidden="true" /> {historicalLabel}: {indicator.format(baseline)}
+              <span aria-hidden="true" /> {historicalLabel}: {indicator.format(baseline)}{cumulativeContext ? ` · ${cumulativeContext}` : ''}
             </p>
           )}
           <p>{indicator.note}</p>
@@ -355,7 +388,12 @@ export default function RegionalSeries({
         <div className="series-table-scroll">
           <table>
             <thead>
-              <tr><th>Competência</th><th>{indicator.label}</th><th>Amostra ou denominador</th></tr>
+              <tr>
+                <th>Competência</th>
+                <th>{indicator.label}</th>
+                {indicatorId === 'iph' && <th>Média acumulada</th>}
+                <th>Amostra ou denominador</th>
+              </tr>
             </thead>
             <tbody>
               {[...slots].reverse().map(({ competence, item }) => {
@@ -364,6 +402,13 @@ export default function RegionalSeries({
                   <tr key={competence} className={competence === selectedCompetence ? 'selected' : undefined}>
                     <th scope="row">{formatPeriod(competence)}</th>
                     <td>{value === null ? 'não publicado' : indicator.format(value)}</td>
+                    {indicatorId === 'iph' && (
+                      <td>
+                        {cumulativeIphByCompetence.has(competence)
+                          ? `${indicator.format(cumulativeIphByCompetence.get(competence)!.average)} (${formatInteger(cumulativeIphByCompetence.get(competence)!.competences)} competências)`
+                          : 'não calculada'}
+                      </td>
+                    )}
                     <td>{item ? indicator.detail(item) : 'Competência ausente na série publicada'}</td>
                   </tr>
                 )

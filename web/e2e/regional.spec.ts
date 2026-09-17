@@ -243,6 +243,62 @@ test('renderiza a série regional persistida com competência, amostra e denomin
   await expect(page.getByTestId('regional-series-current')).toContainText(
     `${pt(serieRegionalAtual.iph_percent as number, 1)}%`,
   )
+  const iphItems = (regionalSeriesSnapshot.items as Array<Record<string, number | string>>)
+    .filter((item) => String(item.competence) <= snapshotCompetencia)
+  const iphAverage = iphItems.reduce(
+    (sum, item) => sum + (item.iph_percent as number),
+    0,
+  ) / iphItems.length
+  let iphSum = 0
+  const iphCumulative = [...iphItems]
+    .sort((left, right) => String(left.competence).localeCompare(String(right.competence)))
+    .map((item, index) => {
+      iphSum += item.iph_percent as number
+      return { competence: item.competence as string, average: iphSum / (index + 1) }
+    })
+  const compactStart = [...iphItems]
+    .map((item) => String(item.competence))
+    .sort()
+    .slice(-12)[0]
+  const chartMaximum = Math.max(
+    ...iphItems
+      .filter((item) => String(item.competence) >= compactStart)
+      .map((item) => item.iph_percent as number),
+    ...iphCumulative
+      .filter((item) => item.competence >= compactStart)
+      .map((item) => item.average),
+  )
+  const iphHistorical = page.getByTestId('regional-series-historical')
+  await expect(iphHistorical).toContainText('Média acumulada')
+  await expect(iphHistorical).toContainText(
+    `−${pt(Math.abs((serieRegionalAtual.iph_percent as number) - iphAverage), 1)} p.p.`,
+  )
+  await expect(iphHistorical).toContainText(`Média acumulada até junho/2026: ${pt(iphAverage, 1)}%`)
+  await expect(iphHistorical).toContainText(
+    `${pt(iphItems.length)} competências desde janeiro/2024`,
+  )
+  await expect(page.locator('.regional-series-panel')).not.toContainText('média sazonal')
+  const iphChart = page.getByTestId('regional-series-chart')
+  await expect(iphChart.locator('path.series-baseline')).toHaveCount(1)
+  await expect(iphChart.locator('desc')).toContainText(`máximo ${pt(chartMaximum, 1)}%`)
+
+  const iphCurrentPoint = page.getByTestId(`regional-series-point-${snapshotCompetencia}`)
+  await expect(iphCurrentPoint).toHaveAttribute(
+    'aria-label',
+    new RegExp(`Média acumulada até junho/2026: ${pt(iphAverage, 1)}%; ${iphItems.length} competências desde janeiro/2024`),
+  )
+  await iphCurrentPoint.hover()
+  const iphTooltip = page.getByRole('tooltip')
+  await expect(iphTooltip).toContainText(`${snapshotCompetenciaBR} · IPH estimado`)
+  await expect(iphTooltip).toContainText(
+    `${pt(serieRegionalAtual.estimated_patient_days as number)} pacientes-dia / ${pt(serieRegionalAtual.declared_capacity_bed_days as number)} leitos-dia declarados`,
+  )
+  await expect(iphTooltip).toContainText(
+    `Média acumulada até junho/2026: ${pt(iphAverage, 1)}% · ${pt(iphItems.length)} competências`,
+  )
+  await iphCurrentPoint.focus()
+  await iphCurrentPoint.press('Escape')
+  await expect(iphTooltip).not.toBeVisible()
   await expect(page.getByRole('radiogroup', { name: 'Indicador da evolução regional' }).getByRole('radio')).toHaveCount(2)
   await expect(page.getByRole('radio', { name: 'TMH observado' })).toHaveCount(0)
   await expect(page.getByRole('radio', { name: 'Ante os pares (IPE)' })).toHaveCount(0)
