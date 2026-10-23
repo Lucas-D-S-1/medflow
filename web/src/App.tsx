@@ -1,34 +1,16 @@
-import { Link, Navigate, NavLink, Route, Routes, useLocation } from 'react-router-dom'
+import { Link, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { SourceProvider } from './shared/SourceContext'
+import InicioView from './features/inicio/InicioView'
+import TechnicalView from './features/metodologia/TechnicalView'
+import { isEntryLocation, withEntryIntent } from './shared/entryNavigation'
 import AnalisePage from './features/analise/AnalisePage'
-import { requestAnalysisAnchor } from './shared/analysisNavigation'
 import AssistantWidget from './features/assistant/AssistantWidget'
 import MetodologiaView from './features/metodologia/MetodologiaView'
-import { useActiveSection } from './shared/useActiveSection'
-import { useSource } from './shared/SourceContext'
-
-const SECTIONS = [
-  { id: 'regional', label: 'Regional' },
-  { id: 'hospital', label: 'Hospital' },
-]
-const SECTION_IDS = SECTIONS.map((section) => section.id)
 
 function Shell() {
   const location = useLocation()
-  const onAnalysis = location.pathname === '/'
-  const activeSection = useActiveSection(SECTION_IDS, onAnalysis)
-  const { selectedHospitalName, sourceState, sharedRegionCode } = useSource()
-  const selectedRegionName =
-    sourceState.kind === 'live' || sourceState.kind === 'fallback'
-      ? sourceState.data.regions.items.find((item) => item.region_code === sharedRegionCode)
-          ?.region_name ?? null
-      : null
-  // O direcionador acompanha o recorte: dizer só "Hospital" quando há um
-  // estabelecimento aberto esconde onde a leitura está.
-  const sectionSuffix: Record<string, string | null> = {
-    regional: selectedRegionName,
-    hospital: selectedHospitalName ?? selectedRegionName,
-  }
+  const onEntry = isEntryLocation(location)
+  const onAnalysis = location.pathname === '/' && !onEntry
   const routeWithContext = (pathname: string) => ({
     pathname,
     search: location.search,
@@ -40,8 +22,8 @@ function Shell() {
         <header className="topbar">
           <Link
             className="brand"
-            to={{ pathname: '/', search: location.search }}
-            aria-label="MedFlow, início da análise"
+            to={{ pathname: '/', search: withEntryIntent(location.search, true) }}
+            aria-label="MedFlow, início"
           >
             <svg className="brand-symbol" viewBox="0 0 48 48" aria-hidden="true">
               <defs>
@@ -72,42 +54,17 @@ function Shell() {
             </svg>
             <span>MedFlow</span>
           </Link>
-          {/*
-            O direcionador não troca de tela: ele diz onde você está na mesma
-            investigação e rola até a etapa escolhida.
-          */}
-          <nav aria-label="Etapas da análise">
-            {SECTIONS.map((section) => (
-              <Link
-                key={section.id}
-                to={{ pathname: '/', search: location.search, hash: `#${section.id}` }}
-                onClick={(event) => {
-                  if (onAnalysis && location.hash === `#${section.id}`) {
-                    event.preventDefault()
-                    requestAnalysisAnchor(section.id)
-                  }
-                }}
-                className={onAnalysis && activeSection === section.id ? 'active' : undefined}
-                aria-current={
-                  onAnalysis && activeSection === section.id ? 'true' : undefined
-                }
-                data-testid={`anchor-${section.id}`}
-              >
-                {section.label}
-                {sectionSuffix[section.id] && (
-                  <small data-testid={`anchor-context-${section.id}`}>
-                    {sectionSuffix[section.id]}
-                  </small>
-                )}
-              </Link>
-            ))}
-            <NavLink to={routeWithContext('/metodologia')}>Metodologia</NavLink>
+          <nav aria-label="Principal">
+            <Link to={{ pathname: '/', search: withEntryIntent(location.search, true) }} className={onEntry ? 'active' : undefined} aria-current={onEntry ? 'page' : undefined}>Início</Link>
+            <Link to={{ pathname: '/', search: withEntryIntent(location.search, false) }} className={onAnalysis ? 'active' : undefined} aria-current={onAnalysis ? 'page' : undefined}>Dados</Link>
+            <Link to={routeWithContext('/metodologia')} className={location.pathname.startsWith('/metodologia') ? 'active' : undefined} aria-current={location.pathname.startsWith('/metodologia') ? 'page' : undefined}>Fontes e indicadores</Link>
           </nav>
         </header>
       </div>
 
       <Routes>
-        <Route path="/" element={<AnalisePage />} />
+        <Route path="/" element={onEntry ? <InicioView /> : <AnalisePage />} />
+        <Route path="/metodologia/tecnico" element={<TechnicalView />} />
         <Route path="/metodologia" element={<MetodologiaView />} />
         {/*
           Os caminhos antigos (/regional, /fluxos, /hospital) são reescritos

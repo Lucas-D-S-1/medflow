@@ -36,7 +36,9 @@ export function useActiveSection(ids: string[], enabled: boolean) {
         .at(-1)
       const atDocumentEnd =
         window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 1
-      const current = atDocumentEnd && window.scrollY > 0 ? visible.at(-1) : passed ?? visible.at(-1)
+      // Antes da primeira seção cruzar a linha de leitura, ela continua
+      // sendo a etapa inicial; uma seção curta abaixo não deve tomar seu lugar.
+      const current = atDocumentEnd && window.scrollY > 0 ? visible.at(-1) : passed ?? visible[0]
       if (current) setActive(current.id)
     }
     const scheduleViewportSync = () => {

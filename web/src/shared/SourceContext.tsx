@@ -7,7 +7,7 @@ import {
   useState,
   type ReactNode,
 } from 'react'
-import { useLocation, useSearchParams } from 'react-router-dom'
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import {
   fetchMethodology,
   getMethodologySnapshot,
@@ -86,6 +86,7 @@ export type SourceState =
       kind: 'fallback'
       data: SourceData
       reason: 'oracle-unavailable' | 'invalid-contract'
+      requested: { competence: string; regionCode: string; macroregionCode: string }
     }
   | { kind: 'empty' }
   | { kind: 'error' }
@@ -160,9 +161,10 @@ export function SourceProvider({ children }: { children: ReactNode }) {
   // Endereços fora das duas páginas reais são transitórios: a rede de
   // segurança do roteador ainda vai reescrevê-los. Normalizar a URL nesse
   // intervalo faz a escrita ser desfeita pelo redirecionamento seguinte.
-  const onCanonicalRoute = pathname === '/' || pathname === '/metodologia'
-  const setSearchParamsRef = useRef(setSearchParams)
-  setSearchParamsRef.current = setSearchParams
+  const onCanonicalRoute = pathname === '/' || pathname === '/metodologia' || pathname === '/metodologia/tecnico'
+  const navigate = useNavigate()
+  const snapshotNavigationRef = useRef(navigate)
+  snapshotNavigationRef.current = navigate
   const [sourceState, setSourceState] = useState<SourceState>({ kind: 'loading' })
   const [regionalLoadState, setRegionalLoadState] =
     useState<RegionalLoadState>('idle')
@@ -177,6 +179,7 @@ export function SourceProvider({ children }: { children: ReactNode }) {
   const [pendingAssistantQuestion, setPendingAssistantQuestion] =
     useState<AssistantLocalRequest | null>(null)
   const reloadGeneration = useRef(0)
+  const fallbackRequest = useRef<{ search: string; hash: string } | null>(null)
 
   const sourceData =
     sourceState.kind === 'live' || sourceState.kind === 'fallback'
@@ -224,6 +227,9 @@ export function SourceProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const reload = useCallback(async () => {
+    const request = fallbackRequest.current ?? { search: window.location.search, hash: window.location.hash }
+    const requestedParams = new URLSearchParams(request.search)
+    if (fallbackRequest.current) snapshotNavigationRef.current(request, { replace: true })
     const generation = reloadGeneration.current + 1
     reloadGeneration.current = generation
     regionalRequest.current?.controller.abort()
@@ -251,16 +257,25 @@ export function SourceProvider({ children }: { children: ReactNode }) {
         kind: 'fallback',
         data: { status, methodology, regions },
         reason,
+        requested: {
+          competence: requestedParams.get('competencia') ?? '',
+          regionCode: requestedParams.get('regiao') ?? '',
+          macroregionCode: requestedParams.get('macrorregiao') ?? '',
+        },
       })
+      fallbackRequest.current = request
       // Snapshot fixtures form one locked publication. Normalize the two
       // shared parameters together so every route and the URL describe the
       // same fallback context, while all local parameters survive.
-      setSearchParamsRef.current((current) => {
-        const next = new URLSearchParams(current)
-        next.set('competencia', regions.data_through)
-        if (fallbackRegion) next.set('regiao', fallbackRegion)
-        return next
-      }, { replace: true })
+      const next = new URLSearchParams(request.search)
+      next.set('competencia', regions.data_through)
+      if (fallbackRegion) next.set('regiao', fallbackRegion)
+      next.delete('macrorregiao')
+      // Normalizar o snapshot não pode apagar o destino de um link ou F5.
+      snapshotNavigationRef.current(
+        { search: `?${next}`, hash: window.location.hash },
+        { replace: true },
+      )
       setRegionalLoadState(regions.items.length === 0 ? 'empty' : 'ready')
     }
 
@@ -278,7 +293,7 @@ export function SourceProvider({ children }: { children: ReactNode }) {
     }
 
     try {
-      const requested = new URLSearchParams(window.location.search).get('competencia')
+      const requested = requestedParams.get('competencia')
       const status = await fetchStatus()
       if (reloadGeneration.current !== generation) return
       if (!status) {
@@ -294,6 +309,7 @@ export function SourceProvider({ children }: { children: ReactNode }) {
         fetchRegioesResumo(Number(competence.slice(0, 4)), Number(competence.slice(5, 7))),
       ])
       if (reloadGeneration.current !== generation) return
+      fallbackRequest.current = null
       setSourceState({ kind: 'live', data: { status, methodology, regions } })
       setRegionalLoadState(regions.items.length === 0 ? 'empty' : 'ready')
     } catch (error) {
@@ -426,6 +442,7 @@ export function SourceProvider({ children }: { children: ReactNode }) {
         next.set('regiao', nextRegion.region_code)
         next.delete('destino')
         next.delete('hospital')
+        next.delete('especialidade')
         return next
       },
       { replace: true },
@@ -502,14 +519,14 @@ export function SourceProvider({ children }: { children: ReactNode }) {
     (regionCode: string) => {
       if (isFallback) return
       if (regionCode === '') {
-        // Voltar ao panorama larga somente a região escolhida. A rede
-        // regional continua sendo um recorte válido do mapa e pode ser limpa
-        // pelo próprio seletor, sem acoplar os dois controles.
+        // Limpar a seleção devolve o panorama estadual, inclusive após links com rede.
         setSearchParams((current) => {
           const next = new URLSearchParams(current)
           next.delete('regiao')
+          next.delete('macrorregiao')
           next.delete('destino')
           next.delete('hospital')
+          next.delete('especialidade')
           return next
         })
         setHospitalSummary(null)
@@ -521,21 +538,20 @@ export function SourceProvider({ children }: { children: ReactNode }) {
       setSearchParams((current) => {
         const next = new URLSearchParams(current)
         next.set('regiao', regionCode)
-        const selected = sourceData?.regions.items.find(
-          (item) => item.region_code === regionCode,
-        )
-        if (selected) next.set('macrorregiao', selected.macroregion_code)
+        // Escolher região não impõe uma rede oculta nem bloqueia outros territórios.
+        next.delete('macrorregiao')
         // These local selections depend on the shared region. Competence and
         // unrelated URL parameters remain intact.
         next.delete('destino')
         next.delete('hospital')
+        next.delete('especialidade')
         return next
       })
       setHospitalSummary(null)
       setHospitalSpecialties(null)
       setPendingAssistantQuestion(null)
     },
-    [isFallback, setSearchParams, sourceData],
+    [isFallback, setSearchParams],
   )
 
   const setSharedMacroregion = useCallback(
@@ -582,6 +598,7 @@ export function SourceProvider({ children }: { children: ReactNode }) {
           // incoerente na URL e nas requisições seguintes.
           next.delete('destino')
           next.delete('hospital')
+          next.delete('especialidade')
         }
         return next
       })

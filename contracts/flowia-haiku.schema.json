@@ -1,0 +1,21 @@
+{
+  "type": "object",
+  "properties": {
+    "status": {
+      "type": "string",
+      "enum": [
+        "ready",
+        "clarify",
+        "refused"
+      ]
+    },
+    "rewritten_question": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "status",
+    "rewritten_question"
+  ],
+  "additionalProperties": false
+}

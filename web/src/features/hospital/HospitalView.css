@@ -305,7 +305,7 @@
   .specialty-diagnoses-heading { display: block; }
   .specialty-diagnoses-heading label { margin-top: var(--space-3); }
   .hospital-table-wrap { overflow-x: visible; }
-  .hospital-table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  .hospital-table thead { display: none; }
   .hospital-table,
   .hospital-table tbody,
   .hospital-table tr,

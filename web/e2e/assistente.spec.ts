@@ -94,7 +94,7 @@ async function mockSaoVicenteQ1Q2(page: import('@playwright/test').Page) {
       const specialty = saoVicenteSpecialties.find((item) => item.code === code)!
       const limit = Number(url.searchParams.get('limit'))
       const rows = saoVicenteTop[code]
-      const items = rows.map((row) => ({
+      const items = rows.slice(0, limit).map((row) => ({
         cnes: '2786435', specialty_code: code, specialty_name: specialty.name,
         cid_code: row[0], cid_description: row[1], chapter_code: 'X', chapter_description: 'Capítulo CID-10',
         new_admissions: row[2], stay_days_total: row[3], average_stay_days: row[4],
@@ -109,7 +109,7 @@ async function mockSaoVicenteQ1Q2(page: import('@playwright/test').Page) {
           source: 'oracle-live', database_time: '2026-09-17T12:00:00-03:00', data_through: '2026-06',
           filters: { cnes: '2786435', year: 2026, month: 6, specialty_code: code, order_by: 'dias' },
           hospital: { ...(specialtyDiagnosisSnapshot.hospital as object), cnes: '2786435', specialty_code: code, specialty_name: specialty.name, specialty_new_admissions_total: specialty.admissions, specialty_stay_days_total: specialty.days },
-          pagination: { limit, offset: 0, count: 5, has_more: false, order: 'stay_days_desc' },
+          pagination: { limit, offset: 0, count: rows.length, has_more: rows.length > limit, order: 'stay_days_desc' },
           items,
         }),
       })
@@ -302,7 +302,7 @@ test('executa Q1 e Q2 canônicos no São Vicente com conjunto estruturado e zero
     '**/api/dev/v1/hospitais/*/especialidades/*/diagnosticos**',
     async (route) => {
       const url = new URL(route.request().url())
-      if (url.searchParams.get('limit') === '5') {
+      if (url.searchParams.get('limit') === '3') {
         diagnosticRankingCalls += 1
         diagnosticSpecialties.push(
           url.pathname.match(/especialidades\/(\d{2}|--)\/diagnosticos$/)?.[1] ?? '',

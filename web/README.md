@@ -3,21 +3,28 @@
 **O quê.** A aplicação React + Vite do MedFlow, servida por onze endpoints
 analíticos `GET` e pelo `POST` governado do assistente.
 
-São **duas páginas**. A análise é uma investigação contínua, com duas etapas
-ancoradas no mesmo endereço; descer a página é estreitar o recorte. Metodologia
-é separada porque responde a outra pergunta, feita em outro momento.
+A raiz abre a **entrada**. O menu comum oferece **Dados** e **Fontes e indicadores**.
+A análise continua em uma página, com as etapas Regional e Hospital.
 
 | Endereço | O que entrega |
 |---|---|
-| `/#regional` | panorama no mapa, totais do recorte, MoM, YoY, sinais e série mensal |
-| `/#hospital` | hospitais da região, comparação com pares, série, especialidades e diagnósticos |
-| `/metodologia` | Posso confiar no número e quais são seus limites? |
+| `/` ou `/?inicio=1` | entrada, percurso e perguntas frequentes |
+| `/?inicio=0` | panorama da análise sem escolher território |
+| `/#regional` | mapa, totais do recorte, sinais e série mensal |
+| `/#hospital` | hospitais, pares, especialidades e diagnósticos |
+| `/metodologia` | fontes, atualização, leitura e IPH |
+| `/metodologia/tecnico` | contratos, reconciliações e critérios completos |
 
-Competência e território ficam numa barra de contexto que acompanha a
-investigação inteira; os filtros locais permanecem locais. Tudo na URL, para
-abrir e compartilhar o recorte. Os caminhos antigos são reescritos para as âncoras
-equivalentes, com o recorte intacto, antes do app montar. Há um só escritor da
-URL, para não competir com a normalização do contexto.
+URLs antigas com `competencia`, `regiao`, `macrorregiao`, `hospital`, `busca`,
+`elegiveis` ou `destino` abrem a análise diretamente, mesmo com só um parâmetro.
+A intenção explícita `inicio=1` ou `inicio=0` prevalece sobre esses filtros e
+sobre âncoras. Ela é registrada antes da normalização do contexto, para que F5
+e Voltar/Avançar preservem a tela. Entrar nos dados conserva os filtros.
+Os caminhos `/regional`, `/hospital` e `/fluxos` continuam válidos.
+
+As perguntas da entrada abrem o `AssistantWidget` real com o campo preenchido.
+O envio depende de uma ação explícita e mantém as guardas existentes.
+As âncoras de fontes são `#fontes`, `#atualizacao`, `#leitura` e `#iph`.
 
 **Como preparar**, a partir da raiz do repositório:
 
@@ -92,13 +99,14 @@ motivo, em vez de exibir zero ou uma tela de erro.
 
 ```bash
 npm run build                 # tsc + vite build
-npx playwright test           # 36 testes
+npx playwright test --grep-invert @live  # suíte hermética
+npx playwright test --grep @live         # exige Oracle acessível
 ```
 
 Um spec por visão, mais `contrato.spec.ts` para o que é transversal: origem do
-dado, contingência, recusa de resposta fora do contrato e layout. Os dois
-testes marcados `@live` falam com o Oracle de verdade; os outros 34 interceptam
-as rotas e não dependem de rede.
+dado, contingência, recusa de resposta fora do contrato e layout. Os testes marcados `@live` dependem de acesso ao Oracle; os demais interceptam
+as rotas e não dependem de rede. `entrada-fontes.spec.ts` cobre as três larguras,
+links antigos, histórico, F5, âncoras e preenchimento sem POST.
 
 **Os valores esperados saem dos snapshots**, nunca digitados. Regerar os
 snapshots é `make fixtures`, na raiz (ver `scripts/gerar-mocks.ts`).

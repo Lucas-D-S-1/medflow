@@ -18,6 +18,7 @@ type MapFeature = {
 type MapFeatureCollection = { type: 'FeatureCollection'; features: MapFeature[] }
 
 type RegionalMapProps = {
+  compact?: boolean
   items: RegionalSummaryItem[]
   selectedRegionCode: string
   selectedMacroregionCode: string
@@ -120,6 +121,7 @@ export default function RegionalMap({
   onAskLocal,
   onViewHospitals,
   colorBy = 'iph',
+  compact = false,
 }: RegionalMapProps) {
   const [ownHoveredCode, setOwnHoveredCode] = useState('')
   const hoveredCode = controlledHoveredCode ?? ownHoveredCode
@@ -144,7 +146,7 @@ export default function RegionalMap({
     .map((feature) => feature.properties.cd_regiao_saude)
     .filter((code) => {
       const item = itemsByRegion.get(code)
-      return Boolean(item && (!selectedMacroregionCode || item.macroregion_code === selectedMacroregionCode))
+      return Boolean(item)
     })
   const rovingCode = interactiveCodes.includes(selectedRegionCode)
     ? selectedRegionCode
@@ -238,6 +240,7 @@ export default function RegionalMap({
           const isVisible = Boolean(
             item && (!selectedMacroregionCode || item.macroregion_code === selectedMacroregionCode),
           )
+          const isInteractive = Boolean(item)
           const isSelected = regionCode === selectedRegionCode
           const label = item
             ? `${feature.properties.nm_regiao_saude}, ${
@@ -259,21 +262,21 @@ export default function RegionalMap({
               d={geometryPath(feature.geometry)}
               className={`regional-map-shape ${toneFor(item)}${isSelected ? ' selected' : ''}${isVisible ? '' : ' filtered-out'}`}
               data-testid={`regional-map-${regionCode}`}
-              role={isVisible ? 'button' : undefined}
-              tabIndex={isVisible && regionCode === rovingCode ? 0 : -1}
-              aria-label={isVisible ? label : undefined}
-              aria-pressed={isVisible ? isSelected : undefined}
-              onMouseEnter={() => isVisible && setHoveredCode(regionCode)}
+              role={isInteractive ? 'button' : undefined}
+              tabIndex={isInteractive && regionCode === rovingCode ? 0 : -1}
+              aria-label={isInteractive ? label : undefined}
+              aria-pressed={isInteractive ? isSelected : undefined}
+              onMouseEnter={() => isInteractive && setHoveredCode(regionCode)}
               onMouseLeave={() => setHoveredCode('')}
-              onFocus={() => isVisible && setHoveredCode(regionCode)}
+              onFocus={() => isInteractive && setHoveredCode(regionCode)}
               onBlur={() => setHoveredCode('')}
               // Clicar de novo na região já escolhida devolve ao panorama: é o
               // gesto que o usuário tenta primeiro para desfazer a seleção.
               onClick={() =>
-                isVisible && onSelect(regionCode === selectedRegionCode ? '' : regionCode)
+                isInteractive && onSelect(regionCode === selectedRegionCode ? '' : regionCode)
               }
               onKeyDown={(event) => {
-                if (!isVisible) return
+                if (!isInteractive) return
                 if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
                   event.preventDefault()
                   moveFocus(regionCode, 1)
@@ -294,7 +297,11 @@ export default function RegionalMap({
           )
         })}
       </svg>
-      {cardItem ? (
+      {compact ? (
+        <p className="map-compact-label" data-testid="regional-map-tooltip" aria-live="polite">
+          {cardItem ? <><strong>{cardItem.region_name}</strong>{cardIsSelection ? ' · selecionada' : ''} · IPH estimado {formatPercent(cardItem.iph_percent)} · Internações novas {formatInteger(cardItem.new_admissions)}</> : 'Passe o ponteiro ou use as setas para identificar uma região.'}
+        </p>
+      ) : cardItem ? (
         <div
           className={`map-hover-card${cardIsSelection ? ' pinned' : ''}`}
           data-testid="regional-map-tooltip"
@@ -320,8 +327,8 @@ export default function RegionalMap({
               {!cardSignals
                 ? 'Não foi possível calcular os sinais desta região.'
                 : cardSignals.count > 0
-                  ? `${cardSignals.lit.map(signalLabel).join(', ')} no grupo de valores mais altos do recorte.`
-                  : 'Nenhum dos seis indicadores acendeu um sinal neste recorte.'}
+                  ? `${cardSignals.lit.map(signalLabel).join(', ')} no grupo de valores mais altos da referência estadual.`
+                  : 'Nenhum dos seis indicadores acendeu um sinal na referência estadual.'}
             </p>
             {cardIsSelection && (
               <button type="button" onClick={() => onAskLocal('O que são os sinais?')}>
@@ -372,7 +379,7 @@ export default function RegionalMap({
               <details className="map-card-other" data-testid="map-card-other-indicators">
                 <summary>Outros indicadores</summary>
                 <p>
-                  Os sinais indicam valores no grupo mais alto do recorte; são triagem
+                  Os sinais indicam valores no grupo mais alto da referência estadual; são triagem
                   comparativa, não nota de qualidade.
                 </p>
                 <dl>

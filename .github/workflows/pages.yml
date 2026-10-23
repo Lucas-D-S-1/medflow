@@ -65,6 +65,8 @@ jobs:
           # Em produção não existe o proxy do Vite: a URL do módulo público
           # entra absoluta no bundle.
           VITE_API_BASE: ${{ vars.ORDS_BASE_URL }}/api/v1
+          # Versão da feira: rota isolada, chave mantida somente no ADB.
+          VITE_FLOWIA_HAIKU: "1"
           # Mantém o guard do vite.config válido; o build não fala com o ORDS.
           ORDS_BASE_URL: ${{ vars.ORDS_BASE_URL }}
         run: npm run build

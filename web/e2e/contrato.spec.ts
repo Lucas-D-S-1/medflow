@@ -35,7 +35,8 @@ test('@live renderiza os números reais do Oracle pelo proxy relativo', async ({
   await expect(page.getByTestId('regional-selected-name')).toHaveText('JUNDIAI')
   // A origem do dado saiu da área analítica: só a Metodologia presta contas.
   await expect(page.getByTestId('source-badge')).toHaveCount(0)
-  await page.getByRole('link', { name: 'Metodologia' }).click()
+  await page.getByRole('link', { name: 'Fontes e indicadores', exact: true }).click()
+  await page.getByRole('link', { name: 'Detalhes técnicos ›' }).click()
   await expect(page.getByTestId('source-badge')).toHaveText('Oracle ao vivo')
   // Derivado do manifesto da Bronze, não memorizado: quando o DATASUS publica
   // uma competência nova e o pipeline avança, este teste tem de acompanhar a
@@ -54,7 +55,7 @@ test('usa somente o snapshot quando o Oracle falha', async ({ page }) => {
     await route.abort('connectionfailed')
   })
 
-  await page.goto('/')
+  await page.goto('/?inicio=0')
 
   // A visão analítica não anuncia a origem; o contexto trava no recorte servido.
   await expect(page.getByTestId('source-badge')).toHaveCount(0)
@@ -64,7 +65,8 @@ test('usa somente o snapshot quando o Oracle falha', async ({ page }) => {
   await expect(page.getByTestId('regional-series-current')).toContainText(
     `${pt(serieRegionalAtual.iph_percent as number, 1)}%`,
   )
-  await page.getByRole('link', { name: 'Metodologia' }).click()
+  await page.getByRole('link', { name: 'Fontes e indicadores', exact: true }).click()
+  await page.getByRole('link', { name: 'Detalhes técnicos ›' }).click()
   await expect(page.getByTestId('source-badge')).toContainText(
     `Contingência — snapshot até ${snapshotCompetencia}`,
   )
@@ -90,7 +92,7 @@ test('distingue ausência legítima de indisponibilidade do Oracle', async ({ pa
     })
   })
 
-  await page.goto('/metodologia')
+  await page.goto('/metodologia/tecnico')
 
   await expect(page.getByTestId('empty-state')).toContainText(
     'Nenhuma competência publicada',
@@ -113,7 +115,7 @@ test('não descreve contrato inválido como indisponibilidade do Oracle', async 
     })
   })
 
-  await page.goto('/metodologia')
+  await page.goto('/metodologia/tecnico')
 
   await expect(page.getByTestId('source-badge')).toContainText('Contingência')
   await expect(page.getByTestId('fallback-note')).toContainText(
@@ -145,7 +147,7 @@ test('@live não mistura metodologia snapshot com status Oracle ao vivo', async 
     })
   })
 
-  await page.goto('/metodologia')
+  await page.goto('/metodologia/tecnico')
 
   await expect(page.getByTestId('source-badge')).toContainText(
     `Contingência — snapshot até ${snapshotCompetencia}`,
@@ -183,7 +185,7 @@ test('rejeita snapshot, competência, versão e horário inválidos na resposta 
       ...invalidField,
     }
 
-    await page.goto('/metodologia')
+    await page.goto('/metodologia/tecnico')
 
     await expect(page.getByTestId('source-badge')).toContainText('Contingência')
     await expect(page.getByTestId('fallback-note')).toContainText(
@@ -199,7 +201,7 @@ test('mantém a geração do snapshot verificável na metadata da Gold', async (
 
   expect(statusSnapshot.database_time).toBe(goldMetadata.gerado_em_utc)
 
-  await page.goto('/metodologia')
+  await page.goto('/metodologia/tecnico')
 
   await expect(page.getByTestId('data-through')).toHaveText(snapshotCompetenciaBR)
   await expect(page.getByTestId('contract-version')).toHaveText('v0.5.0')

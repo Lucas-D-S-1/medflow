@@ -1,3 +1,5 @@
+import { entryQuestions } from '../../shared/publicNavigation'
+import { isEntryLocation } from '../../shared/entryNavigation'
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import { useLocation } from 'react-router-dom'
 import { useActiveSection } from '../../shared/useActiveSection'
@@ -31,6 +33,7 @@ import {
   assistantContextKey,
   isCurrentSpecialtySummary,
 } from './assistantContext'
+import { askFlowiaHaiku, HAIKU_PILOT } from '../../lib/api/haiku'
 import './AssistantWidget.css'
 
 type RouteKey = 'regional' | 'hospital' | 'metodologia'
@@ -226,6 +229,9 @@ function AssistantRobot({ compact = false }: { compact?: boolean }) {
 
 export default function AssistantWidget() {
   const location = useLocation()
+  const onEntry = isEntryLocation(location)
+  const [bubbleOpen, setBubbleOpen] = useState(true)
+  const [suggestionIndex, setSuggestionIndex] = useState(0)
   const {
     sourceState,
     sharedCompetence,
@@ -242,6 +248,7 @@ export default function AssistantWidget() {
   const [thread, setThread] = useState<Exchange[]>([])
   const [pendingQuestion, setPendingQuestion] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [queryProgress, setQueryProgress] = useState('Entendendo a pergunta…')
   const inputRef = useRef<HTMLInputElement>(null)
   const bodyRef = useRef<HTMLDivElement>(null)
   const launcherRef = useRef<HTMLButtonElement>(null)
@@ -251,11 +258,11 @@ export default function AssistantWidget() {
   // três seções dividem o mesmo endereço.
   const activeSection = useActiveSection(
     ANALYSIS_SECTIONS,
-    location.pathname === '/',
+    location.pathname === '/' && !onEntry,
   )
   const currentRoute: RouteKey = location.pathname.startsWith('/metodologia')
     ? 'metodologia'
-    : isRouteKey(activeSection)
+    : !onEntry && isRouteKey(activeSection)
       ? activeSection
       : 'regional'
   const sourceData =
@@ -545,11 +552,34 @@ export default function AssistantWidget() {
       ...answer,
       contextLabel: answer.contextLabel ?? contextLabel(requestedSummary),
     }
-    if (sourceState.kind !== 'fallback') return contextualAnswer
+    if (sourceState.kind !== 'fallback') return HAIKU_PILOT ? {
+      ...contextualAnswer,
+      text: `${contextualAnswer.text}\nFonte: metodologia e indicadores do MedFlow (SIH/SUS, CNES e IBGE). Competência: ${sharedCompetence || 'ainda não carregada'}. Limite: dados mensais, sem disponibilidade operacional de leitos.`,
+    } : contextualAnswer
     const competence = sharedCompetence && formatPeriod(sharedCompetence)
     return {
       ...contextualAnswer,
       text: `${contextualAnswer.text} Fonte: snapshot de contingência${competence ? ` até ${competence}` : ''}; esta resposta local não consultou o Oracle.`,
+    }
+  }
+
+  function deterministicFallback(rawQuestion: string): Answer | null {
+    const local = localAnswer(rawQuestion)
+    if (local) return local
+    const normalized = normalize(rawQuestion)
+    const regions = sourceData?.regions
+    if (!regions || regions.pagination.has_more || regions.filters.region_code ||
+        regions.filters.macroregion_code || explicitScopeDiverges(normalized) ||
+        `${regions.filters.year}-${String(regions.filters.month).padStart(2, '0')}` !== sharedCompetence ||
+        !/(quais.*regio|top.*iph|onde.*pressao.*maior)/.test(normalized) ||
+        /hospita/.test(normalized)) return null
+    const top = regions.items.slice().sort((a, b) =>
+      b.iph_percent - a.iph_percent || a.region_code.localeCompare(b.region_code)).slice(0, 5)
+    if (!top.length) return null
+    return {
+      text: `Regiões com maior IPH estimado nos dados carregados:\n${top.map(item =>
+        `${item.region_name}: ${formatDecimal(item.iph_percent)}%`).join('\n')}\nFonte: SIH/SUS e CNES; Gold MedFlow, ${regions.source === 'snapshot' ? 'snapshot de contingência' : 'consulta Oracle já carregada'}. Competência: ${sharedCompetence}. Limite: até 5 regiões. Base mensal; não informa leitos livres nem ocupação real.`,
+      contextLabel: `São Paulo · ${formatPeriod(sharedCompetence)}`,
     }
   }
 
@@ -559,6 +589,10 @@ export default function AssistantWidget() {
   ): Answer | null {
     const normalized = normalize(rawQuestion)
     const methodology = sourceData?.methodology
+    if (/(leito|vaga).*(livre|disponiv|agora|hoje)|receber.*(ja|agora|hoje)|ocupacao.*(real|agora)/.test(normalized)) {
+      return { text: 'Não tenho disponibilidade de leitos em tempo real. A base é mensal por competência; o IPH estima pressão sobre capacidade SUS declarada. Posso mostrar a última competência disponível e seus limites.' }
+    }
+
     // "o que há no índice sazonal?" não casava com nada e ia parar no modelo,
     // que devolvia a definição seguida de um ranking que ninguém pediu — o
     // modo narrate do Select AI sempre consulta.
@@ -748,7 +782,7 @@ export default function AssistantWidget() {
       )
     ) {
       return {
-        text: 'O mapa tem dois modos. No placar de sinais, que é o padrão, cada região acende um sinal quando fica no quintil mais alto do recorte visível: pressão sobre leitos (IPH estimado), mortalidade observada (TMH), permanência média, valor médio aprovado pelo SUS (CMI), atendidos fora da região e ICSAP. Tons mais escuros nesse modo significam mais sinais acesos, não IPH por si só. No modo IPH estimado, a cor mostra a escala relativa por percentis do IPH. Nenhum modo é nota de qualidade ou ocupação real; selecione a região para ver os valores e limites.',
+        text: 'O mapa tem dois modos. No placar de sinais, que é o padrão, cada região acende um sinal quando fica no quintil mais alto da referência estadual na competência: pressão sobre leitos (IPH estimado), mortalidade observada (TMH), permanência média, valor médio aprovado pelo SUS (CMI), atendidos fora da região e ICSAP. Tons mais escuros nesse modo significam mais sinais acesos, não IPH por si só. No modo IPH estimado, a cor mostra a escala relativa por percentis do IPH. Nenhum modo é nota de qualidade ou ocupação real; selecione a região para ver os valores e limites.',
       }
     }
 
@@ -858,7 +892,7 @@ export default function AssistantWidget() {
 
     if (/o que sao os sinais|sinais? acesos|quintil|placar|quantos sinais|indice de priorizacao/.test(normalized)) {
       return {
-        text: 'Os sinais indicam quais dos seis indicadores estão no grupo de valores mais altos do recorte visível, a partir do percentil 80: pressão sobre leitos (IPH estimado), mortalidade observada (TMH), permanência média, valor médio aprovado pelo SUS (CMI), atendidos fora da região e ICSAP. São uma triagem comparativa para investigar, não ranking ou nota de qualidade. Filtrar uma rede regional muda os limiares.',
+        text: 'Os sinais indicam quais dos seis indicadores estão no grupo de valores mais altos da referência estadual na competência, a partir do percentil 80: pressão sobre leitos (IPH estimado), mortalidade observada (TMH), permanência média, valor médio aprovado pelo SUS (CMI), atendidos fora da região e ICSAP. São uma triagem comparativa para investigar, não ranking ou nota de qualidade. Filtrar uma rede regional não altera os limiares da referência estadual.',
       }
     }
 
@@ -1009,7 +1043,8 @@ export default function AssistantWidget() {
     }
 
     const deterministic = localAnswer(cleanQuestion, requestedSummary)
-    if (deterministic) {
+    const localExplanation = /o que (e|ha|tem|quer dizer)|que significa|explique|explica|defina|como (interpretar|funciona|ler)|leito.*(livre|disponiv|agora|hoje)/.test(normalizedQuestion)
+    if (deterministic && (!HAIKU_PILOT || localExplanation)) {
       registrar(cleanQuestion, deterministic)
       return
     }
@@ -1065,12 +1100,10 @@ export default function AssistantWidget() {
         ).slice(0, 5).map(({ code, name }) => ({ code, name })),
         history: historyForRequest(),
       }
-      const response = await askOracleSelectAi(
-        cleanQuestion,
-        context,
-        undefined,
-        controller.signal,
-      )
+      const response = HAIKU_PILOT
+        ? await askFlowiaHaiku(cleanQuestion, context, controller.signal, setQueryProgress)
+        : await askOracleSelectAi(cleanQuestion, context, undefined, controller.signal)
+      const provenance = 'provenance' in response ? response.provenance : undefined
       if (
         activeRemoteRequest.current !== remoteRequest ||
         currentContextKeyRef.current !== remoteRequest.contextKey
@@ -1078,7 +1111,9 @@ export default function AssistantWidget() {
         return
       }
       registrar(cleanQuestion, {
-        text: response.narrative,
+        text: response.narrative + ('origin' in response ? `\nOrigem: ${response.origin === 'haiku' ? 'Haiku → Oracle' : 'reserva Oracle'}.` : '') + (provenance
+          ? `\nFonte: ${provenance.dataset}. Competência: ${provenance.competence ?? 'não se aplica'}. Limite: até ${provenance.limit} resultados. ${provenance.limitations}`
+          : ''),
         contextLabel: usedContextLabel,
         sql: response.sql,
         warning: response.warning,
@@ -1093,7 +1128,8 @@ export default function AssistantWidget() {
       // O cliente já distingue cota estourada, contrato inválido e tempo
       // esgotado. Trocar tudo por uma frase única fazia o produto parecer
       // incapaz quando o problema era outro, e apagava a pista do diagnóstico.
-      registrar(cleanQuestion, {
+      const fallback = HAIKU_PILOT ? deterministicFallback(cleanQuestion) : null
+      registrar(cleanQuestion, fallback ?? {
         text:
           error instanceof AssistantRequestError
             ? `${error.message} Tente uma das sugestões abaixo.`
@@ -1119,15 +1155,23 @@ export default function AssistantWidget() {
   }
 
   return (
-    <aside className="assistant-widget" aria-label="FlowIA, assistente do MedFlow">
+    <aside className={`assistant-widget${onEntry ? ' entry-assistant' : location.pathname === '/metodologia' ? ' sources-assistant' : ''}`} aria-label="FlowIA, assistente do MedFlow">
+      {onEntry && !isOpen && bubbleOpen && <section className="assistant-entry-bubble" aria-label="Sugestão do FlowIA">
+        <div><strong>FlowIA</strong><button type="button" aria-label="Fechar sugestão" onClick={() => setBubbleOpen(false)}>×</button></div>
+        <p>{entryQuestions[suggestionIndex]}</p>
+        <div className="assistant-entry-actions">
+          <button type="button" onClick={() => { setQuestion(entryQuestions[suggestionIndex]); setIsOpen(true) }}>Perguntar</button>
+          <button type="button" onClick={() => setSuggestionIndex((index) => (index + 1) % entryQuestions.length)}>Outra pergunta</button>
+        </div>
+      </section>}
       {isOpen ? (
         <section className="assistant-panel" id="medflow-assistant-panel" aria-live="polite">
           <header className="assistant-header">
             <AssistantRobot compact />
             <div>
-              <span className="assistant-eyebrow">FLOWIA · ORACLE SELECT AI</span>
+              <span className="assistant-eyebrow">FLOWIA · ASSISTENTE MEDFLOW</span>
               <h2>Posso ajudar?</h2>
-              <p>Contexto: {routeNames[currentRoute]}</p>
+              <p>Contexto: {onEntry ? 'entrada' : routeNames[currentRoute]}</p>
             </div>
             <button
               className="assistant-close"
@@ -1153,7 +1197,7 @@ export default function AssistantWidget() {
                   type="button"
                   key={suggestion}
                   disabled={!sourceData || isLoading}
-                  onClick={() => void ask(suggestion)}
+                  onClick={() => { if (onEntry) setQuestion(suggestion); else void ask(suggestion) }}
                 >
                   {suggestion}
                 </button>
@@ -1188,7 +1232,7 @@ export default function AssistantWidget() {
                     <p className="assistant-question">{pendingQuestion}</p>
                     {isLoading && (
                       <div className="assistant-thinking" role="status">
-                        <span /> Consultando os dados…
+                        <span /> {HAIKU_PILOT ? queryProgress : 'Consultando os dados…'}
                       </div>
                     )}
                   </div>
@@ -1223,7 +1267,7 @@ export default function AssistantWidget() {
           ref={launcherRef}
           className="assistant-launcher"
           type="button"
-          onClick={() => setIsOpen(true)}
+          onClick={() => { if (onEntry && !bubbleOpen) setBubbleOpen(true); else setIsOpen(true) }}
           aria-expanded="false"
           aria-controls="medflow-assistant-panel"
           aria-label="Abrir FlowIA — Posso ajudar?"

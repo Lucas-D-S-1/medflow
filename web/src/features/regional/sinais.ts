@@ -53,8 +53,8 @@ export type RegionSignals = {
 
 /**
  * Calcula, para cada região do recorte, quais sinais estão no quintil mais
- * alto. Os cortes saem do próprio recorte visível: comparar uma rede regional
- * com os limiares do estado inteiro mudaria o significado do índice.
+ * alto. O chamador fornece todas as regiões publicadas do estado no mês;
+ * filtros de exibição não mudam o universo de referência.
  */
 export function computeSignals(items: RegionalSummaryItem[]): Map<string, RegionSignals> {
   const thresholds = new Map<SignalId, number>(

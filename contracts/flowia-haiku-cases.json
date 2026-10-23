@@ -1,0 +1,52 @@
+{
+  "regioes_iph": [
+    "Quais regiões têm maior IPH nesta competência?",
+    "Onde a pressão estimada é maior?",
+    "Top 5 de IPH no mês"
+  ],
+  "tendencia_regional": [
+    "A pressão está subindo ou é sazonal?",
+    "Piorou em três meses?",
+    "Isso se repete nesta época?"
+  ],
+  "hospitais_pressao": [
+    "Quais hospitais concentram a pressão?",
+    "Maior IPH nesta região",
+    "Quais hospitais merecem investigação?"
+  ],
+  "hospital_pares": [
+    "Como o hospital se compara aos pares?",
+    "Está acima da mediana?",
+    "E os hospitais do mesmo porte?"
+  ],
+  "especialidades": [
+    "Quais especialidades puxam volume ou permanência?",
+    "Especialidades com maior volume no hospital",
+    "Quais especialidades somam mais dias?"
+  ],
+  "diagnosticos_dias": [
+    "Quais diagnósticos somam mais dias na especialidade?",
+    "CIDs com mais dias",
+    "Quais doenças concentram dias nesta especialidade?"
+  ],
+  "mortalidade_valor": [
+    "Como variam mortalidade observada e valor aprovado?",
+    "Evolução do TMH e CMI",
+    "Quanto foi aprovado no mês?"
+  ],
+  "fluxos_saida": [
+    "Quanto atendimento sai da região e para onde vai?",
+    "Evasão para quais regiões?",
+    "Quem recebe os residentes daqui?"
+  ],
+  "conceito_fonte": [
+    "O que significa IPH/IPE e qual a fonte/competência?",
+    "Como interpretar IPH e IPE?",
+    "De onde vêm os números?"
+  ],
+  "recusar_tempo_real": [
+    "Quantos leitos estão disponíveis agora?",
+    "Tem vaga hoje?",
+    "Qual hospital pode receber já?"
+  ]
+}

@@ -7,7 +7,10 @@ import {
 import RegionalMap from './RegionalMap'
 import RegionalSeries from './RegionalSeries'
 import GlobalContextBar from '../../shared/GlobalContextBar'
-import StateTotals from './StateTotals'
+import { MoreRegionalIndicators, RegionalLimitNote, RegionalOverview } from './RegionalOverview'
+import { Link, useLocation } from 'react-router-dom'
+import { requestAnalysisAnchor } from '../../shared/analysisNavigation'
+import { useActiveSection } from '../../shared/useActiveSection'
 import { aggregateRegions } from './agregado'
 import { aggregateVariation, computeSignals, variation } from './sinais'
 import StatePanel from '../../shared/StatePanel'
@@ -27,6 +30,7 @@ type SeriesState =
 type RegionalViewProps = {
   onViewHospitals: () => void
 }
+const SECTION_IDS = ['regional', 'hospital']
 
 export default function RegionalView({ onViewHospitals }: RegionalViewProps) {
   const {
@@ -39,7 +43,11 @@ export default function RegionalView({ onViewHospitals }: RegionalViewProps) {
     setSharedRegion,
     regionalComparison,
     requestAssistantQuestion,
+    selectedHospitalName,
+    hospitalSummary,
   } = useSource()
+  const location = useLocation()
+  const activeSection = useActiveSection(SECTION_IDS, true)
   const [seriesState, setSeriesState] = useState<SeriesState>({ kind: 'idle' })
   // O mapa pode colorir por um indicador isolado ou pelo placar que consome os
   // seis. O padrão é o placar: ele é o que responde "onde olhar primeiro".
@@ -81,7 +89,10 @@ export default function RegionalView({ onViewHospitals }: RegionalViewProps) {
     ? rankedItems.find((item) => item.region_code === sharedRegionCode) ?? null
     : null
   const aggregate = useMemo(() => aggregateRegions(visibleItems), [visibleItems])
-  const signals = useMemo(() => computeSignals(visibleItems), [visibleItems])
+  const signals = useMemo(
+    () => computeSignals(regionalData?.items ?? []),
+    [regionalData],
+  )
   const variations = useMemo(
     () =>
       new Map(
@@ -151,14 +162,25 @@ export default function RegionalView({ onViewHospitals }: RegionalViewProps) {
       aria-labelledby="regional-title"
     >
       <div className="regional-workspace">
-        <div className="view-intro">
-          <div>
-            <p className="section-kicker">TERRITÓRIO</p>
+        <header className="regional-topline">
+          <div className="regional-title-group">
             <h1 id="regional-title">Sinais regionais</h1>
+            <nav className="regional-levels" aria-label="Etapas da análise">
+              <button type="button" onClick={() => setSharedRegion('')} aria-current={!selectedItem ? 'step' : undefined}>São Paulo</button>
+              <span aria-hidden="true">›</span>
+              <Link to={{ search: location.search, hash: '#regional' }} data-testid="anchor-regional" aria-current={activeSection === 'regional' ? 'true' : undefined} onClick={() => requestAnalysisAnchor('regional')}>
+                {selectedItem ? <span data-testid="anchor-context-regional">{selectedItem.region_name}</span> : 'Região'}
+              </Link>
+              <span aria-hidden="true">›</span>
+              <Link to={{ search: location.search, hash: '#hospital' }} data-testid="anchor-hospital" aria-current={activeSection === 'hospital' ? 'true' : undefined} onClick={() => requestAnalysisAnchor('hospital')}>
+                {selectedHospitalName ? <span data-testid="anchor-context-hospital">{selectedHospitalName}</span> : 'Hospital'}
+              </Link>
+              <span aria-hidden="true">›</span>
+              <span className={hospitalSummary ? 'level-selected' : 'level-pending'}>{hospitalSummary?.specialtyName ?? 'Especialidade'}</span>
+            </nav>
           </div>
-        </div>
-
-        <GlobalContextBar />
+          <GlobalContextBar />
+        </header>
 
         {sourceState.kind === 'loading' && (
           <StatePanel kind="loading" title="Carregando visão regional" testId="regional-loading">
@@ -196,76 +218,54 @@ export default function RegionalView({ onViewHospitals }: RegionalViewProps) {
 
             {visibleItems.length > 0 && (
               <>
-                {/*
-                  O mapa vem primeiro e ocupa a largura: é dele que sai a
-                  escolha do território. Os controles vêm logo abaixo, para
-                  quem prefere escolher pelo nome depois de ver o panorama, e
-                  só então os números do recorte.
-                */}
-                <section className="map-panel wide" aria-labelledby="map-title">
-                  <div className="block-heading">
-                    <div>
-                      <p className="section-kicker">MAPA DE SINAIS</p>
-                      <h3 id="map-title">
-                        {mapMetric === 'sinais'
-                          ? 'Sinais por região'
-                          : 'IPH estimado por percentis'}
-                      </h3>
+                <div className="regional-dashboard">
+                  <section className="map-panel overview-map" aria-labelledby="map-title">
+                    <h3 id="map-title" className="visually-hidden">{mapMetric === 'sinais' ? 'Sinais por região' : 'IPH estimado por percentis'}</h3>
+                    <div className="overview-map-toolbar">
                       <div className="map-metric" role="radiogroup" aria-label="O que a cor mostra">
                         {(['sinais', 'iph'] as const).map((candidate) => (
-                          <button
-                            key={candidate}
-                            type="button"
-                            role="radio"
-                            aria-checked={mapMetric === candidate}
-                            onClick={() => setMapMetric(candidate)}
-                            data-testid={`map-metric-${candidate}`}
-                          >
+                          <button key={candidate} type="button" role="radio" aria-checked={mapMetric === candidate} onClick={() => setMapMetric(candidate)} data-testid={`map-metric-${candidate}`}>
                             {candidate === 'sinais' ? 'Sinais' : 'IPH'}
                           </button>
                         ))}
                       </div>
+                      <p>Clique numa região para abrir os detalhes</p>
                     </div>
-                    <strong data-testid="regional-map-selection">
-                      {selectedItem ? (
-                        <>
-                          Selecionada:{' '}
-                          <span data-testid="regional-selected-name">
-                            {selectedItem.region_name}
-                          </span>
-                        </>
-                      ) : (
-                        'Nenhuma região selecionada'
-                      )}
-                    </strong>
-                  </div>
-                  <RegionalMap
-                    items={regionalData.items}
-                    selectedRegionCode={selectedItem?.region_code ?? ''}
-                    selectedMacroregionCode={selectedMacroregion}
-                    onSelect={setSharedRegion}
-                    formatInteger={formatInteger}
-                    formatPercent={formatPercent}
-                    signals={signals}
-                    variations={variations}
-                    competence={formatPeriodLong(selectedCompetence)}
-                    comparisonPeriods={comparisonPeriods}
-                    onAskLocal={requestAssistantQuestion}
-                    onViewHospitals={onViewHospitals}
-                    colorBy={mapMetric}
+                    <p className="visually-hidden" data-testid="regional-map-selection">{selectedItem ? `Selecionada: ${selectedItem.region_name}` : 'Nenhuma região selecionada'}</p>
+                    <RegionalMap
+                      compact
+                      items={regionalData.items}
+                      selectedRegionCode={selectedItem?.region_code ?? ''}
+                      selectedMacroregionCode={selectedMacroregion}
+                      onSelect={setSharedRegion}
+                      formatInteger={formatInteger}
+                      formatPercent={formatPercent}
+                      signals={signals}
+                      variations={variations}
+                      competence={formatPeriodLong(selectedCompetence)}
+                      comparisonPeriods={comparisonPeriods}
+                      onAskLocal={requestAssistantQuestion}
+                      onViewHospitals={onViewHospitals}
+                      colorBy={mapMetric}
+                    />
+                    <details className="map-reference"><summary>Como ler o mapa</summary>
+                      <p data-testid="signals-reference">Referência dos sinais: {regionalData.items.length} regiões de São Paulo na competência selecionada. O filtro de rede não altera os limiares.</p>
+                    </details>
+                  </section>
+                  <RegionalOverview
+                    items={rankedItems} stateItems={regionalData.items} selected={selectedItem}
+                    aggregate={aggregate} competence={selectedCompetence} scopeLabel={scopeLabel}
+                    mom={aggregateMom} yoy={aggregateYoy} signals={signals} onViewHospitals={onViewHospitals}
                   />
-                </section>
-
-                {!selectedItem && (
-                  <StateTotals
-                    aggregate={aggregate}
-                    competence={selectedCompetence}
-                    scopeLabel={scopeLabel}
-                    mom={aggregateMom}
-                    yoy={aggregateYoy}
-                    signals={signals}
-                  />
-                )}
+                </div>
+                <MoreRegionalIndicators
+                  items={rankedItems} stateItems={regionalData.items} selected={selectedItem}
+                  aggregate={aggregate} competence={selectedCompetence} scopeLabel={scopeLabel}
+                  mom={selectedItem ? variations.get(selectedItem.region_code)?.mom ?? null : aggregateMom}
+                  yoy={selectedItem ? variations.get(selectedItem.region_code)?.yoy ?? null : aggregateYoy}
+                  signals={signals} onViewHospitals={onViewHospitals}
+                />
+                <RegionalLimitNote />
 
                 {selectedRegionFromUrl && selectedItem && selectedRegionFromUrl !== selectedItem.region_code && (
                   <p className="selection-warning" role="status">
@@ -277,19 +277,6 @@ export default function RegionalView({ onViewHospitals }: RegionalViewProps) {
 
             {selectedItem && visibleItems.length > 0 && (
               <>
-                {/*
-                  Saíram daqui dois blocos, por serem repetição.
-
-                  O comportamento sazonal: o índice sazonal já vive na série
-                  mensal, ao lado da curva que ele qualifica, e é lá que ele
-                  responde a pergunta que interessa — se o mês está pior ou se
-                  sempre foi assim neste mês.
-
-                  E o quadro da região selecionada: os mesmos seis números já
-                  aparecem no cartão do mapa quando a região é escolhida, e o
-                  nome dela no cabeçalho do mapa. Repetir logo abaixo empurrava
-                  a série para fora da tela sem acrescentar nada.
-                */}
                 {seriesState.kind === 'loading' && (
                   <StatePanel kind="loading" title="Carregando série regional" testId="regional-series-loading">
                     Buscando as competências da região selecionada.

@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo } from 'react'
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { useSource } from '../../shared/SourceContext'
 import { formatDecimal, formatInteger, formatPercent, formatPeriod } from '../../shared/format'
 import {
@@ -85,9 +86,13 @@ export default function SpecialtyTable({
     [data.items],
   )
   const initial = useMemo(() => selectInitialSpecialty(data.items), [data.items])
-  const [selectedCode, setSelectedCode] = useState(initial?.specialty_code ?? '')
-  const selected =
-    data.items.find((item) => item.specialty_code === selectedCode) ?? initial
+  const [searchParams] = useSearchParams()
+  const navigate = useNavigate()
+  const { hash } = useLocation()
+  const selected = data.items.find(
+    (item) => item.specialty_code === searchParams.get('especialidade'),
+  ) ?? initial
+  const selectedCode = selected?.specialty_code ?? ''
   const completeCoverage = publishedSpecialtyAdmissions === data.hospital.new_admissions_total
   const participationLabel = completeCoverage
     ? 'Participação no hospital'
@@ -104,9 +109,8 @@ export default function SpecialtyTable({
   )
 
   useEffect(() => {
-    setSelectedCode(initial?.specialty_code ?? '')
     clearAssistantQuestion()
-  }, [clearAssistantQuestion, data.data_through, data.filters.cnes, initial])
+  }, [clearAssistantQuestion, data.data_through, data.filters.cnes, selectedCode])
 
   useEffect(() => {
     if (!selected) {
@@ -168,10 +172,14 @@ export default function SpecialtyTable({
   const absence = comparisonAbsence(selected)
 
   function chooseSpecialty(code: string) {
-    if (code === selectedCode) return
-    clearAssistantQuestion()
-    reportHospitalSummary(null)
-    setSelectedCode(code)
+    if (code === selectedCode && searchParams.get('especialidade') === code) return
+    if (code !== selectedCode) {
+      clearAssistantQuestion()
+      reportHospitalSummary(null)
+    }
+    const next = new URLSearchParams(searchParams)
+    next.set('especialidade', code)
+    navigate({ search: `?${next}`, hash })
   }
 
   return (
@@ -220,7 +228,10 @@ export default function SpecialtyTable({
                       type="button"
                       className="specialty-select"
                       aria-pressed={isSelected}
-                      onClick={() => chooseSpecialty(item.specialty_code)}
+                      onClick={(event) => {
+                        event.stopPropagation()
+                        chooseSpecialty(item.specialty_code)
+                      }}
                     >
                       <strong>{item.specialty_name}</strong>
                       <small>Código {item.specialty_code}</small>

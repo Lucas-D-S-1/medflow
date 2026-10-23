@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { useSource } from './SourceContext'
+import { COMPETENCE_PATTERN, useSource } from './SourceContext'
 import CompetencePicker from './CompetencePicker'
 import { shiftCompetence } from './SourceContext'
 import { formatPeriod } from './format'
@@ -9,6 +9,7 @@ import './GlobalContextBar.css'
 export default function GlobalContextBar() {
   const {
     sourceState,
+    reload,
     regionalLoadState,
     sharedCompetence,
     sharedRegionCode,
@@ -62,9 +63,7 @@ export default function GlobalContextBar() {
   )
     ? sharedMacroregionCode
     : ''
-  const selectableRegions = selectedMacroregionCode
-    ? regions.filter((item) => item.macroregion_code === selectedMacroregionCode)
-    : regions
+  const selectableRegions = regions
 
   return (
     <section className="global-context-bar" aria-label="Filtros regionais">
@@ -114,11 +113,34 @@ export default function GlobalContextBar() {
             </select>
           </label>
         </div>
-        {(isFallback || regionalLoadState === 'loading') && (
+        {!isFallback && (sharedRegionCode || sharedMacroregionCode) && (
+          <button className="global-context-clear" type="button" onClick={() => setSharedRegion('')}>
+            Limpar seleção
+          </button>
+        )}
+        {sourceState.kind === 'fallback' && (
+          <aside className="global-context-fallback" role="alert">
+            <strong>Contingência local · {regions.find((item) => item.region_code === sharedRegionCode)?.region_name} · {formatPeriod(sharedCompetence)}</strong>
+            <p>
+              {sourceState.reason === 'invalid-contract'
+                ? 'O Oracle respondeu em formato inesperado. '
+                : 'A consulta ao Oracle falhou ou excedeu o tempo limite. '}
+              Exibimos somente a cópia local de Jundiaí em {formatPeriod(sharedCompetence)}; nenhuma fonte foi misturada.
+            </p>
+            <p>
+              Pedido original: {sourceState.requested.regionCode
+                ? `${regions.find((item) => item.region_code === sourceState.requested.regionCode)?.region_name ?? 'região'} (${sourceState.requested.regionCode})`
+                : 'panorama regional'}
+              {sourceState.requested.macroregionCode && ` · rede ${sourceState.requested.macroregionCode}`}
+              {sourceState.requested.competence && ` · ${COMPETENCE_PATTERN.test(sourceState.requested.competence) ? formatPeriod(sourceState.requested.competence) : 'competência inválida'}`}.
+              {' '}O recorte pedido foi substituído pelo recorte disponível na contingência. Os filtros ficam travados até a reconexão.
+            </p>
+            <button type="button" onClick={() => void reload()}>Tentar novamente</button>
+          </aside>
+        )}
+        {!isFallback && regionalLoadState === 'loading' && (
           <small id="global-context-help" className="global-context-help" role="status">
-            {isFallback
-              ? `Recorte local fixo em ${formatPeriod(sharedCompetence)}.`
-              : 'Carregando a competência selecionada.'}
+            Carregando a competência selecionada.
           </small>
         )}
       </div>
