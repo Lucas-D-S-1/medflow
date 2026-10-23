@@ -58,7 +58,7 @@ export default function HospitalView() {
   const { sourceState, sharedCompetence, sharedRegionCode, reportHospitalName } = useSource()
   const [searchParams, setSearchParams] = useSearchParams()
   const [listState, setListState] = useState<ListState>({ kind: 'idle' })
-  const [statewide, setStatewide] = useState<PeerHospital[] | null>(null)
+  const [statewide, setStatewide] = useState<{ competence: string; items: PeerHospital[] } | null>(null)
   const [statewideFailed, setStatewideFailed] = useState(false)
   const statewideRequest = useRef<AbortController | null>(null)
   const [seriesState, setSeriesState] = useState<SeriesState>({ kind: 'idle' })
@@ -124,6 +124,8 @@ export default function HospitalView() {
   // enquanto está apenas olhando a região.
   useEffect(() => {
     statewideRequest.current?.abort()
+    setStatewide(null)
+    setStatewideFailed(false)
     if (!selectedCnes || sourceState.kind !== 'live' || !COMPETENCE_PATTERN.test(selectedCompetence)) {
       return
     }
@@ -134,7 +136,7 @@ export default function HospitalView() {
     const [year, month] = selectedCompetence.split('-')
     void fetchStatewideHospitals(Number(year), Number(month), { signal: controller.signal })
       .then((items) => {
-        if (!controller.signal.aborted) setStatewide(items)
+        if (!controller.signal.aborted) setStatewide({ competence: selectedCompetence, items })
       })
       .catch(() => {
         if (!controller.signal.aborted) {
@@ -440,7 +442,7 @@ export default function HospitalView() {
                 competence={selectedCompetence}
                 regionName={list.region.region_name ?? 'esta região'}
                 regionHospitals={list.items}
-                statewide={statewide}
+                statewide={statewide?.competence === selectedCompetence ? statewide.items : null}
                 statewideFailed={statewideFailed}
                 snapshotLimited={sourceState.kind === 'fallback'}
                 onChangeHospital={clearHospital}
