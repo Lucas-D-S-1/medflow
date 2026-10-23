@@ -45,7 +45,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--env-file", type=Path, required=True)
     parser.add_argument(
-        "action", choices=["inspect", "probe", "credential", "apply", "rollback", "classify", "ask"]
+        "action", choices=["inspect", "probe", "credential", "apply", "rollback", "classify", "ask", "rewrite-candidate", "rollback-rewrite"]
     )
     parser.add_argument("--question", default="Quais regiões têm maior IPH nesta competência?")
     args = parser.parse_args()
@@ -96,6 +96,20 @@ def main():
                     )
                     cursor.execute(sql, api_key=key)
                     print('{"credential_created":true}')
+                elif args.action == "rewrite-candidate":
+                    # Novo pacote isolado; nao atualizar a API/rota instalada.
+                    sys.path.insert(0, str(ROOT / "src/medflow/oracle"))
+                    from executar_sql import instrucoes
+
+                    blocks = [s for s in instrucoes(ROOT / "db/flowia_haiku/001_create.sql")
+                              if s.lower().startswith("create package")]
+                    if len(blocks) != 2:
+                        raise ValueError("Fonte do candidato invalida")
+                    for sql in blocks:
+                        cursor.execute(sql.replace("FLOWIA_HAIKU_API", "FLOWIA_HAIKU_REWRITE_API"))
+                    print('{"candidate_created":true}')
+                elif args.action == "rollback-rewrite":
+                    run_sql(connection, ROOT / "db/flowia_haiku/098_rollback_rewrite.sql")
                 elif args.action in ("apply", "rollback"):
                     run_sql(
                         connection,
@@ -113,7 +127,7 @@ def main():
                             "specialty_code": "07",
                         }
                     )
-                    call = "classify" if args.action == "classify" else "ask"
+                    call = "rewrite" if args.action == "classify" else "ask"
                     cursor.execute(
                         f"begin :result := flowia_haiku_api.{call}(:question, :context); end;",
                         result=out,

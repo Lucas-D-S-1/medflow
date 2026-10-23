@@ -1,81 +1,21 @@
 {
   "type": "object",
   "properties": {
-    "intent": {
+    "status": {
       "type": "string",
       "enum": [
-        "regioes_iph",
-        "tendencia_regional",
-        "hospitais_pressao",
-        "hospital_pares",
-        "especialidades",
-        "diagnosticos_dias",
-        "mortalidade_valor",
-        "fluxos_saida",
-        "conceito_fonte",
-        "recusar_tempo_real",
-        "esclarecer",
-        "explorar"
-      ]
-    },
-    "competence": {
-      "type": [
-        "string",
-        "null"
-      ]
-    },
-    "region_code": {
-      "type": [
-        "string",
-        "null"
-      ]
-    },
-    "hospital_cnes": {
-      "type": [
-        "string",
-        "null"
-      ]
-    },
-    "specialty_code": {
-      "type": [
-        "string",
-        "null"
+        "ready",
+        "clarify",
+        "refused"
       ]
     },
     "rewritten_question": {
-      "type": [
-        "string",
-        "null"
-      ]
-    },
-    "metric": {
-      "anyOf": [
-        {
-          "type": "string",
-          "enum": [
-            "iph",
-            "volume",
-            "dias",
-            "media",
-            "tmh",
-            "cmi",
-            "ambos"
-          ]
-        },
-        {
-          "type": "null"
-        }
-      ]
+      "type": "string"
     }
   },
   "required": [
-    "intent",
-    "competence",
-    "region_code",
-    "hospital_cnes",
-    "specialty_code",
-    "rewritten_question",
-    "metric"
+    "status",
+    "rewritten_question"
   ],
   "additionalProperties": false
 }

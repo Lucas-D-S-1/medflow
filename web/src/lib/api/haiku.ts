@@ -35,27 +35,29 @@ export async function askFlowiaHaiku(question: string, context: AssistantContext
   const abort = () => controller.abort()
   if (callerSignal?.aborted) abort()
   callerSignal?.addEventListener('abort', abort, { once: true })
-  const timer = window.setTimeout(abort, 5_500)
+  const timer = window.setTimeout(abort, 60_000)
   try {
     const response = await fetch(PATH, {
       method: 'POST', headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
       signal: controller.signal,
       body: JSON.stringify({ question, context: {
-        competence: context.competence, region_code: context.region_code, hospital_cnes: context.hospital_cnes,
+        competence: context.competence, region_code: context.region_code, region_name: context.region_name, hospital_cnes: context.hospital_cnes,
         specialty_code: context.specialties.length === 1 ? context.specialties[0].code : null,
+        specialty_name: context.specialties.length === 1 ? context.specialties[0].name : null,
+        history: context.history.slice(-3).map(turn => ({ question: turn.question.slice(0, 300), answer: turn.answer.slice(0, 1800) })),
       } }),
     })
     if (!response.ok) throw new Error('http')
     const value: unknown = await response.json()
     if (record(value) && value.status === 'unavailable') throw new Error('unavailable')
-    // Exploracao continua no fluxo OCI existente, acionado explicitamente no servidor.
+    // Toda pergunta reescrita segue para o Select AI; reservas continuam disponiveis.
     if (record(value) && value.source === 'oracle-select-ai' && value.status === 'ok' &&
         typeof value.narrative === 'string' && !containsOracleOrRawSql(value.narrative)) {
-      return { narrative: value.narrative, sql: null, warning: 'Análise exploratória. Confira competência, fonte e limites nos painéis.' }
+      return { narrative: value.narrative, sql: null, warning: 'Confira competência, fonte e limites nos painéis.' }
     }
     return validateHaikuAnswer(value)
   } catch {
-    throw new AssistantRequestError('A classificação não respondeu a tempo ou está indisponível. As explicações e os painéis continuam disponíveis.')
+    throw new AssistantRequestError('A consulta não respondeu a tempo ou está indisponível. As explicações e os painéis continuam disponíveis.')
   } finally {
     window.clearTimeout(timer)
     callerSignal?.removeEventListener('abort', abort)

@@ -44,9 +44,9 @@ for (const width of [1440, 390]) {
       await expect(panel).toContainText('Competência: 2026-06')
       await expect(panel).toContainText('Limite: até 5 resultados')
       expect(received).toBeTruthy()
-      expect(Object.keys(received!.context as object).sort()).toEqual(['competence', 'hospital_cnes', 'region_code', 'specialty_code'])
+      expect(Object.keys(received!.context as object).sort()).toEqual(['competence', 'history', 'hospital_cnes', 'region_code', 'region_name', 'specialty_code', 'specialty_name'])
       await expect(page.locator('html')).toHaveJSProperty('scrollWidth', width)
-      await page.screenshot({ path: `/home/lucas/orquestracao/20261023/medflow-haiku/qa-${width}.png`, fullPage: true })
+      await page.screenshot({ path: `/home/lucas/orquestracao/20261023/haiku-conversa/qa-${width}.png`, fullPage: true })
     })
 
     test('recusa leitos agora sem qualquer chamada paga', async ({ page }) => {
@@ -79,7 +79,7 @@ for (const width of [1440, 390]) {
       await page.getByRole('button', { name: /Posso ajudar/ }).click()
       await page.getByLabel('Faça outra pergunta').fill('Quais hospitais concentram a pressão?')
       await page.getByRole('button', { name: 'Enviar pergunta' }).click()
-      await expect(page.locator('#medflow-assistant-panel')).toContainText('classificação não respondeu')
+      await expect(page.locator('#medflow-assistant-panel')).toContainText('consulta não respondeu')
       await page.getByLabel('Perguntas sugeridas').getByRole('button', { name: 'O que é IPH?' }).click()
       await expect(page.locator('#medflow-assistant-panel')).toContainText('Índice de Pressão Hospitalar')
       expect(legacyCalls).toBe(0)
@@ -95,19 +95,45 @@ for (const width of [1440, 390]) {
       await expect(page.locator('#medflow-assistant-panel')).toContainText('Limite: até 5 regiões')
     })
 
-    test('prazo de 5,5s e resposta insegura nao mostram SQL', async ({ page }) => {
+    test('prazo completo do Select AI termina em 60s e preserva reserva', async ({ page }) => {
+      await page.route('**/api/flowia-haiku/v1/perguntar', async () => {})
+      await page.goto('/regional')
+      await page.getByRole('button', { name: /Posso ajudar/ }).click()
+      await page.clock.install()
+      await page.getByLabel('Faça outra pergunta').fill('Quais hospitais concentram a pressão?')
+      await page.getByRole('button', { name: 'Enviar pergunta' }).click()
+      await page.clock.fastForward(60_001)
+      await expect(page.locator('#medflow-assistant-panel')).toContainText('consulta não respondeu')
+    })
+
+    test('resposta insegura nao mostra SQL', async ({ page }) => {
       await page.route('**/api/flowia-haiku/v1/perguntar', async route => {
-        await new Promise(resolve => setTimeout(resolve, 6500))
-        await route.fulfill({ json: response('ok', 'SELECT * FROM user_credentials') }).catch(() => {})
+        await route.fulfill({ json: response('ok', 'SELECT * FROM user_credentials') })
       })
       await page.goto('/regional')
       await page.getByRole('button', { name: /Posso ajudar/ }).click()
       await page.getByLabel('Faça outra pergunta').fill('Quais hospitais concentram a pressão?')
-      const start = Date.now()
       await page.getByRole('button', { name: 'Enviar pergunta' }).click()
-      await expect(page.locator('#medflow-assistant-panel')).toContainText('classificação não respondeu', { timeout: 6200 })
-      expect(Date.now() - start).toBeLessThan(6100)
+      await expect(page.locator('#medflow-assistant-panel')).toContainText('consulta não respondeu')
       await expect(page.locator('#medflow-assistant-panel')).not.toContainText('user_credentials')
+    })
+
+    test('seguimento curto envia pergunta e resposta anteriores como dados', async ({ page }) => {
+      const requests: Array<{context: {history: Array<{question: string; answer: string}>}}> = []
+      await page.route('**/api/flowia-haiku/v1/perguntar', async route => {
+        requests.push(route.request().postDataJSON())
+        await route.fulfill({ json: response('ok', 'JUNDIAI: IPH 67,1662% na competência 06/2026.') })
+      })
+      await page.goto('/regional')
+      await page.getByRole('button', { name: /Posso ajudar/ }).click()
+      await page.getByLabel('Faça outra pergunta').fill('Quais regiões têm maior IPH nesta competência?')
+      await page.getByRole('button', { name: 'Enviar pergunta' }).click()
+      await expect(page.locator('#medflow-assistant-panel')).toContainText('JUNDIAI: IPH')
+      await page.getByLabel('Faça outra pergunta').fill('E quanto foi no trimestre?')
+      await page.getByRole('button', { name: 'Enviar pergunta' }).click()
+      await expect.poll(() => requests.length).toBe(2)
+      expect(requests[1].context.history.at(-1)?.question).toContain('Quais regiões')
+      expect(requests[1].context.history.at(-1)?.answer).toContain('JUNDIAI')
     })
   })
 }

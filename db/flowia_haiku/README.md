@@ -1,49 +1,51 @@
-# Piloto FlowIA Haiku
+# FlowIA: Haiku reescreve; Select AI gera SQL
 
-Este diretório mantém exclusivamente objetos `FLOWIA_HAIKU_*` e o módulo ORDS
-`flowia_haiku`, em `/api/flowia-haiku/v1/perguntar`. Não reaplicar os módulos antigos.
-O provisionamento começa **desabilitado** (`FLOWIA_HAIKU_BUDGET.enabled=0`).
+O Haiku recebe pergunta e até três rodadas da conversa como dados. Retorna
+somente `status` (`ready`, `clarify`, `refused`) e `rewritten_question`.
+O prompt curto está em `src/medflow/select_ai/reescrever.py` e no pacote SQL.
+Nomes e códigos são resolvidos pelo catálogo mensal aprovado, incluindo nomes
+retomados do histórico. Não se fornecem respostas de referência ao modelo.
+Não há lista fechada de perguntas no prompt. `contracts/flowia-haiku-cases.json`
+e `route_known`/`validate_result` conservam o contrato legado das reservas.
 
-`000_credential.sql` recebe `:api_key` por bind. O provisionador
-`scripts/flowia_haiku_db.py credential` lê somente `ANTHROPIC_API_KEY` do ambiente
-do processo. Não passar o valor por argumento, literal SQL, arquivo ou `VITE_*`.
-`001_create.sql` cria as tabelas, pacote e módulo. `099_rollback.sql` remove
-somente esses recursos, incluindo a credencial e os índices das tabelas.
-Os scripts de criação e remoção devem existir antes do provisionamento.
+A função `ask` recusa leitos atuais antes da API. Perguntas prontas seguem
+para `medflow_select_ai.responder`, que conserva perfil OCI, cotas e auditoria.
+A pergunta completa vai no contexto (até 3900 bytes); o pacote existente limita
+a pergunta a 300 caracteres. Falhas voltam às reservas da interface.
+O cliente envia o histórico e espera até 60 segundos pelo fluxo completo.
 
-O transporte candidato usa `bearer://` com a credencial. Sua ativação depende de
-aprovação da alternativa ao cabeçalho `x-api-key` e de ACL funcional no ADB.
-Não basta alterar `enabled`: a instalação atual devolveu ORA-24247 para Bearer.
-HTTPS com `x-api-key` em bind transitório foi validado pelo avaliador privado;
-isso não configura uma solução de armazenamento/extração da chave no ORDS.
-O relatório da execução e os resultados ficam fora do repositório, na pasta
-do executor. Cloudflare Worker é uma alternativa proposta, sem implementação.
+## Instalação isolada e rollback
 
-A função `ask` aplica recusas e validação antes de classificar. A saída do
-modelo passa por JSON Schema, enum fechado e validação de slots contra Gold.
-O único bloco PL/SQL dinâmico do transporte é constante e recebe binds.
-O pacote usa invoker rights para os privilégios DBMS_CLOUD via DWROLE, sem
-grant adicional. `route_known` e `validate_result` são pontos de teste internos;
-o ORDS expõe somente `ask`. SQL do modelo não entra nas consultas conhecidas.
-Exploração explícita chama o pacote Select AI existente, com suas próprias
-cotas e limitações. O perfil OCI não é alterado.
+`001_create.sql` é instalação NOVA, não migração do piloto já instalado.
+`scripts/flowia_haiku_db.py --env-file CAMINHO rewrite-candidate` extrai dessa
+fonte apenas spec/body e cria `FLOWIA_HAIKU_REWRITE_API`, sem trocar API/ORDS.
+`rollback-rewrite` executa `098_rollback_rewrite.sql` e remove só esse candidato.
+O rollback foi exercitado no ADB. Perfil, tabelas e API anteriores não mudam.
+`099_rollback.sql` continua sendo o rollback completo do piloto anterior.
 
-A cota padrão é 100 chamadas/dia e US$0,50 para o piloto. Uma atualização
-atômica reserva US$0,005 antes de chamar a API. `usage` reconcilia a reserva
-com o custo medido a US$0,10/MTok de entrada e US$0,50/MTok de saída, sem cache.
-Falhas sem `usage` mantêm a reserva. O avaliador privado usa a mesma cota,
-mesmo com a rota desligada; ele não deve ser disponibilizado no navegador.
-O prompt, contexto restrito e saída de 512 tokens ficam abaixo de 100 mil tokens.
+A rota paga continua desligada (`FLOWIA_HAIKU_BUDGET.enabled=0`). Bearer/ACL
+não está resolvido. Não habilitar como parte deste experimento. O teste real
+usou HTTPS com `x-api-key` por bind transitório; chave lida somente em memória.
+Não foi implementado armazenamento permanente nem infraestrutura intermediária.
 
-O servidor descarta classificações após 5 s; isso não cancela o HTTP já iniciado.
-O cliente encerra a espera em 5,5 s, preservando explicações locais e ranking
-regional dos dados já carregados quando o universo está completo e atual.
-Não há retentativa paga nem Select AI automático em falhas. Exploração OCI
-pode exceder esse prazo; não foi validada de ponta a ponta neste piloto.
+## Verificação
 
-Validação sem API paga: `tests/test_flowia_haiku_db.py` injeta classificações
-no roteador real. Ativar com `FLOWIA_HAIKU_TEST_ENV` apontando ao `.env` do ADB.
-Testes da interface: `FLOWIA_HAIKU_E2E=1 VITE_FLOWIA_HAIKU=1` e o arquivo
-`web/e2e/flowia-haiku.spec.ts`; `FLOWIA_E2E_PORT` isola a porta do servidor.
-`VITE_FLOWIA_HAIKU=0` preserva o caminho publicado. `ORDS_BASE_URL` é necessário
-no processo Vite. O preview usa `VITE_BASE=/medflow/` e bind `127.0.0.1:4184`.
+`tests/test_flowia_reescrever.py` testa histórico, resolução de entidades,
+contrato, encaminhamento ao Select AI, recusa e reserva, sem chamar APIs.
+`web/e2e/flowia-haiku.spec.ts` usa transporte simulado, duas larguras e relógio
+virtual. Ative `FLOWIA_HAIKU_E2E=1 VITE_FLOWIA_HAIKU=1`; escolha porta isolada
+com `FLOWIA_E2E_PORT`. Vite exige `ORDS_BASE_URL`, mesmo com rede simulada.
+
+`scripts/avaliar_flowia_haiku.py` recebe `--env-file`, `--key-env`, `--cases`
+e `--output`. Casos JSON têm `question`, `context` e `sql_reference` opcional.
+O avaliador chama `GENERATE(..., showsql)` no perfil atual e executa somente
+SQL aprovado pelo guarda em transação de leitura. A resposta usa essas mesmas
+linhas; não faz uma segunda geração de narrativa. Isso difere do pacote
+`medflow_select_ai.responder`, cujo fluxo HTTP completo ainda não foi testado.
+
+O avaliador reserva conservadoramente US$0,018 por rodada, máximo US$0,30.
+`usage` mede Anthropic a US$0,10/MTok entrada e US$0,50/MTok saída, sem cache.
+OCI não devolve usage via GENERATE: a reserva usa a estimativa histórica do app,
+não uma confirmação de fatura. As cotas antigas do piloto não foram ampliadas.
+`VITE_FLOWIA_HAIKU=0` preserva o caminho publicado. Preview: build com
+`VITE_FLOWIA_HAIKU=1 VITE_BASE=/medflow/`; não reiniciar o processo 4184.
