@@ -73,7 +73,8 @@ test('renderiza a competência e a versão do contrato recebidas do Oracle', asy
   )
   // Os números da região selecionada moram no cartão do mapa. Eles também
   // apareciam num quadro logo abaixo, repetidos, que saiu por isso.
-  const cartao = page.getByTestId('regional-map-tooltip')
+  await page.getByTestId('more-indicators').locator('summary').click()
+  const cartao = page.getByTestId('more-indicators')
   await expect(cartao).toContainText(pt(regiaoDestacada.new_admissions as number))
   await expect(cartao).toContainText(`${pt(regiaoDestacada.iph_percent as number, 1)}%`)
   await expect(cartao).toContainText(`${pt(regiaoDestacada.tmh_percent as number, 1)}%`)
@@ -486,56 +487,32 @@ test('o mapa pode colorir pelo placar que consome os seis indicadores', async ({
   await expect(page.locator('#map-title')).toContainText('Sinais por região')
 })
 
-test('hierarquiza a região selecionada, expõe os seis sinais e isola ações do hover', async ({ page }) => {
+test('hierarquiza a região no painel e preserva os seis sinais recolhidos', async ({ page }) => {
   await mockLiveSource(page)
   await page.goto(`/?competencia=${snapshotCompetencia}&regiao=35071`)
-
-  const cartao = page.getByTestId('regional-map-tooltip')
-  await expect(cartao).toContainText('SINAIS DE ATENÇÃO')
-  await expect(cartao).toContainText('Competência junho/2026')
-  await expect(cartao).toContainText('Estimativa mensal')
-  await expect(cartao).toContainText('Internações novas')
-  await expect(cartao).toContainText('Permanência média')
-  await expect(cartao.getByRole('button', { name: 'O que são os sinais?' })).toBeVisible()
-  await expect(cartao.getByRole('button', { name: 'O que é IPH?' })).toBeVisible()
-  await expect(cartao.getByRole('button', { name: 'Ver hospitais da região ↓' })).toBeVisible()
-
-  const comparacoes = page.getByTestId('map-card-admissions-comparisons')
-  await expect(comparacoes).toContainText('Em relação a maio/2026')
-  await expect(comparacoes).toContainText('Em relação a junho/2025')
-  await expect(comparacoes).not.toContainText('MoM')
-  await expect(comparacoes).not.toContainText('YoY')
-
-  const disclosure = page.getByTestId('map-card-other-indicators')
-  const summary = disclosure.locator('summary')
-  await summary.focus()
-  await summary.press('Enter')
+  const panel = page.getByTestId('regional-overview')
+  await expect(panel).toContainText('BRAGANCA')
+  await expect(panel.locator('.metric-card')).toHaveCount(4)
+  await expect(panel).toContainText('estado:')
+  await expect(panel.getByRole('button', { name: /Ver os .* hospitais da região/ })).toBeVisible()
+  const disclosure = page.getByTestId('more-indicators')
+  await expect(disclosure).not.toHaveAttribute('open', '')
+  await disclosure.locator('summary').focus()
+  await disclosure.locator('summary').press('Enter')
   await expect(disclosure).toHaveAttribute('open', '')
-  await expect(disclosure.locator('[data-signal]')).toHaveCount(4)
-  await expect(disclosure.locator('[data-signal="iph"]')).toHaveCount(0)
-  await expect(disclosure.locator('[data-signal="stay"]')).toHaveCount(0)
-  await expect(disclosure).not.toContainText('P80')
-  await expect(disclosure).not.toContainText('percentil 80')
-  await expect(disclosure).toContainText('Acima dos pares (IPE)')
+  await expect(disclosure.locator('[data-signal]')).toHaveCount(6)
   await expect(disclosure.locator('[data-signal="tmh"]')).toContainText('sinal aceso')
-  for (const signal of ['cmi', 'evasion', 'icsap']) {
-    await expect(disclosure.locator(`[data-signal="${signal}"]`)).not.toContainText('sinal aceso')
-  }
-
-  // JUNDIAI é só a prévia sob o ponteiro. Nenhuma ação pode herdar BRAGANCA,
-  // a seleção que continua na URL e no filtro compartilhado.
-  // O disclosure focado fica abaixo do mapa. Reposicioná-lo antes do hover
-  // evita que a rolagem automática mova o polígono sob o ponteiro.
-  await page.getByTestId('regional-map-svg').scrollIntoViewIfNeeded()
+  await expect(disclosure).toContainText('Permanência acima dos pares (IPE)')
+  await expect(page.getByTestId('state-total-mom').locator('..')).toContainText('maio/2026')
+  await expect(page.getByTestId('state-total-yoy').locator('..')).toContainText('junho/2025')
   await page.getByTestId('regional-map-35073').hover()
-  await expect(cartao).toContainText('JUNDIAI')
-  await expect(cartao.getByRole('button')).toHaveCount(0)
-  await expect(cartao.locator('details')).toHaveCount(0)
+  const preview = page.getByTestId('regional-map-tooltip')
+  await expect(preview).toContainText('JUNDIAI')
+  await expect(preview.getByRole('button')).toHaveCount(0)
+  await expect(panel).toContainText('BRAGANCA')
   await expect(page.getByTestId('global-region')).toHaveValue('35071')
-
   await page.mouse.move(2, 2)
-  await expect(cartao).toContainText('BRAGANCA')
-  await expect(cartao.getByRole('button', { name: 'Ver hospitais da região ↓' })).toBeVisible()
+  await expect(preview).toContainText('BRAGANCA')
 })
 
 test('não transforma comparação ausente de internações novas em zero', async ({ page }) => {
@@ -563,7 +540,8 @@ test('não transforma comparação ausente de internações novas em zero', asyn
   })
 
   await page.goto(`/?competencia=${snapshotCompetencia}&regiao=35073`)
-  const comparacoes = page.getByTestId('map-card-admissions-comparisons')
+  await page.getByTestId('more-indicators').locator('summary').click()
+  const comparacoes = page.locator('.state-admissions-card dl')
   await expect(comparacoes).toContainText('sem comparação disponível')
   await expect(comparacoes).not.toContainText('0,0%')
 })

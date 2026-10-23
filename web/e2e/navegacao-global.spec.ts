@@ -43,7 +43,7 @@ for (const width of [1440, 390]) {
           expect(item.x + item.width).toBeLessThanOrEqual(width)
         }
         await expect(header.locator('.analysis-nav, .global-context-bar, .position-bar')).toHaveCount(0)
-        await expect(page.locator('.analysis-nav')).toHaveCount(route.analysis ? 1 : 0)
+        await expect(page.locator('.regional-levels')).toHaveCount(route.analysis ? 1 : 0)
         await expect(page.locator('.global-context-bar')).toHaveCount(route.analysis ? 1 : 0)
         if (route.analysis) {
           const filters = await page.locator('.global-context-bar').boundingBox()
@@ -90,7 +90,7 @@ for (const width of [1440, 390]) {
       await expect(page.getByTestId('global-competence')).toHaveAttribute('data-value', '2026-06')
       await expect(page.getByTestId('regional-filter-loading')).toHaveCount(0)
       await page.getByTestId('global-region').selectOption('35073')
-      await page.getByRole('button', { name: 'Ver hospitais da região ↓' }).click()
+      await page.getByRole('button', { name: /Ver os .* hospitais da região ↓/ }).click()
       await page.getByTestId('hospital-select-3012212').click()
       await page.getByTestId('especialidade-row-07').click()
       await expect(page.getByTestId('specialty-summary')).toContainText(/Pediatria/i)

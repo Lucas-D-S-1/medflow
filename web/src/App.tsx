@@ -4,35 +4,13 @@ import InicioView from './features/inicio/InicioView'
 import TechnicalView from './features/metodologia/TechnicalView'
 import { isEntryLocation, withEntryIntent } from './shared/entryNavigation'
 import AnalisePage from './features/analise/AnalisePage'
-import { requestAnalysisAnchor } from './shared/analysisNavigation'
 import AssistantWidget from './features/assistant/AssistantWidget'
 import MetodologiaView from './features/metodologia/MetodologiaView'
-import { useActiveSection } from './shared/useActiveSection'
-import { useSource } from './shared/SourceContext'
-
-const SECTIONS = [
-  { id: 'regional', label: 'Regional' },
-  { id: 'hospital', label: 'Hospital' },
-]
-const SECTION_IDS = SECTIONS.map((section) => section.id)
 
 function Shell() {
   const location = useLocation()
   const onEntry = isEntryLocation(location)
   const onAnalysis = location.pathname === '/' && !onEntry
-  const activeSection = useActiveSection(SECTION_IDS, onAnalysis)
-  const { selectedHospitalName, sourceState, sharedRegionCode } = useSource()
-  const selectedRegionName =
-    sourceState.kind === 'live' || sourceState.kind === 'fallback'
-      ? sourceState.data.regions.items.find((item) => item.region_code === sharedRegionCode)
-          ?.region_name ?? null
-      : null
-  // O direcionador acompanha o recorte: dizer só "Hospital" quando há um
-  // estabelecimento aberto esconde onde a leitura está.
-  const sectionSuffix: Record<string, string | null> = {
-    regional: selectedRegionName,
-    hospital: selectedHospitalName ?? selectedRegionName,
-  }
   const routeWithContext = (pathname: string) => ({
     pathname,
     search: location.search,
@@ -83,34 +61,6 @@ function Shell() {
           </nav>
         </header>
       </div>
-
-      {/* Os atalhos e o recorte pertencem à análise, fora do cabeçalho comum. */}
-      {onAnalysis && <nav className="analysis-nav" aria-label="Etapas da análise">
-        {SECTIONS.map((section) => (
-          <Link
-            key={section.id}
-            to={{ pathname: '/', search: withEntryIntent(location.search, false), hash: `#${section.id}` }}
-            onClick={(event) => {
-              if (onAnalysis && location.hash === `#${section.id}`) {
-                event.preventDefault()
-                requestAnalysisAnchor(section.id)
-              }
-            }}
-            className={onAnalysis && activeSection === section.id ? 'active' : undefined}
-            aria-current={
-              onAnalysis && activeSection === section.id ? 'true' : undefined
-            }
-            data-testid={`anchor-${section.id}`}
-          >
-            {section.label}
-            {sectionSuffix[section.id] && (
-              <small data-testid={`anchor-context-${section.id}`}>
-                {sectionSuffix[section.id]}
-              </small>
-            )}
-          </Link>
-        ))}
-      </nav>}
 
       <Routes>
         <Route path="/" element={onEntry ? <InicioView /> : <AnalisePage />} />

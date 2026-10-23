@@ -35,7 +35,7 @@ for (const viewport of [{ width: 1440, height: 900 }, { width: 820, height: 1180
     await expect(page.getByTestId('global-region')).toBeEnabled()
     await page.getByTestId('global-region').selectOption('35073')
     await expect(page.getByTestId('regional-selected-name')).toHaveText('JUNDIAI')
-    await page.getByRole('button', { name: 'Ver hospitais da região ↓' }).click()
+    await page.getByRole('button', { name: /Ver os .* hospitais da região ↓/ }).click()
     await page.getByTestId('hospital-select-3012212').click()
     await page.getByTestId('especialidade-row-07').click()
     await expect(page.getByTestId('specialty-summary')).toContainText(/Pediatria/i)

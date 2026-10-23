@@ -133,7 +133,7 @@ test('CTA regional preserva o recorte, espera o hospital e rola de novo', async 
 
   await page.goto(`/?competencia=${snapshotCompetencia}&regiao=35073`)
   await expect(page.getByTestId('hospital-list-loading')).toBeVisible()
-  const cta = page.getByRole('button', { name: 'Ver hospitais da região ↓' })
+  const cta = page.getByRole('button', { name: /Ver os .* hospitais da região ↓/ })
   await cta.click()
 
   await expect(page.locator('#hospital')).toHaveAttribute('data-anchor-ready', 'true')
@@ -223,7 +223,7 @@ test('o hover no mapa mostra os valores da região, e o clique propaga', async (
   await expect(cartao).toContainText('JUNDIAI')
   await expect(cartao).toContainText('IPH estimado')
   await expect(cartao).toContainText('Internações novas')
-  await expect(cartao).toContainText('Em relação a')
+  await expect(cartao.getByRole('button')).toHaveCount(0)
 
   await alvo.click()
   await expect(page).toHaveURL(/regiao=35073/)
@@ -247,6 +247,8 @@ test('escolher pelo seletor abaixo do mapa vale o mesmo que clicar nele', async 
 test('o panorama mostra os totais do recorte, somados e não promediados', async ({ page }) => {
   await mockLiveSource(page)
   await page.goto(`/?competencia=${snapshotCompetencia}`)
+
+  await page.getByTestId('more-indicators').locator('summary').click()
 
   const regioes = itens(regionalSnapshot) as unknown as Record<string, number>[]
   const soma = (campo: string) => regioes.reduce((total, item) => total + item[campo], 0)
@@ -299,13 +301,13 @@ test('clicar de novo na região selecionada volta ao panorama', async ({ page })
   const jundiai = page.getByTestId('regional-map-35073')
   await jundiai.click()
   await expect(page.getByTestId('regional-selected-name')).toHaveText('JUNDIAI')
-  await expect(page.getByTestId('state-totals-scope')).toHaveCount(0)
+  await expect(page.getByTestId('regional-overview-scope')).toContainText('municípios')
 
   // O gesto que se tenta primeiro para desfazer é clicar de novo no mesmo
   // lugar, e não caçar o seletor abaixo do mapa.
   await jundiai.click()
   await expect(page.getByTestId('regional-selected-name')).toHaveCount(0)
-  await expect(page.getByTestId('state-totals-scope')).toBeVisible()
+  await expect(page.getByTestId('regional-overview-scope')).toContainText('62 regiões')
   expect(new URL(page.url()).searchParams.get('regiao')).toBeNull()
 })
 

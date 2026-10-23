@@ -18,6 +18,7 @@ type MapFeature = {
 type MapFeatureCollection = { type: 'FeatureCollection'; features: MapFeature[] }
 
 type RegionalMapProps = {
+  compact?: boolean
   items: RegionalSummaryItem[]
   selectedRegionCode: string
   selectedMacroregionCode: string
@@ -120,6 +121,7 @@ export default function RegionalMap({
   onAskLocal,
   onViewHospitals,
   colorBy = 'iph',
+  compact = false,
 }: RegionalMapProps) {
   const [ownHoveredCode, setOwnHoveredCode] = useState('')
   const hoveredCode = controlledHoveredCode ?? ownHoveredCode
@@ -295,7 +297,11 @@ export default function RegionalMap({
           )
         })}
       </svg>
-      {cardItem ? (
+      {compact ? (
+        <p className="map-compact-label" data-testid="regional-map-tooltip" aria-live="polite">
+          {cardItem ? <><strong>{cardItem.region_name}</strong>{cardIsSelection ? ' · selecionada' : ''} · IPH estimado {formatPercent(cardItem.iph_percent)} · Internações novas {formatInteger(cardItem.new_admissions)}</> : 'Passe o ponteiro ou use as setas para identificar uma região.'}
+        </p>
+      ) : cardItem ? (
         <div
           className={`map-hover-card${cardIsSelection ? ' pinned' : ''}`}
           data-testid="regional-map-tooltip"
