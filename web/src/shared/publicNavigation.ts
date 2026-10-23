@@ -11,4 +11,3 @@ export const sourceSections = [
   { id: 'leitura', question: 'Como ler os indicadores?', action: 'Ver como ler' },
   { id: 'iph', question: 'O que é a pressão estimada (IPH)?', action: 'Ver metodologia' },
 ]
-

@@ -82,7 +82,8 @@ test('renderiza a competência e a versão do contrato recebidas do Oracle', asy
   )
 
 
-  await page.getByRole('link', { name: 'Metodologia' }).click()
+  await page.getByRole('link', { name: 'Fontes e indicadores', exact: true }).click()
+  await page.getByRole('link', { name: 'Detalhes técnicos ›' }).click()
   await expect(page.getByTestId('methodology-data-through')).toContainText(`Gold publicada até ${snapshotCompetenciaBR}`)
   await expect(page.getByTestId('coverage-regions')).toHaveText('62')
   await expect(page.getByTestId('coverage-competencies')).toHaveText(
@@ -421,8 +422,9 @@ test('mantém a metodologia colapsável', async ({ page }) => {
 
   await page.goto('/regional?regiao=35073')
 
-  await page.getByRole('link', { name: 'Metodologia' }).click()
-  await expect(page).toHaveURL(/\/metodologia(\?|$)/)
+  await page.getByRole('link', { name: 'Fontes e indicadores', exact: true }).click()
+  await page.getByRole('link', { name: 'Detalhes técnicos ›' }).click()
+  await expect(page).toHaveURL(/\/metodologia\/tecnico(\?|$)/)
 
   // O IPE presta contas da própria cobertura no mesmo lugar que os demais: os
   // elegíveis sobre o total de linhas hospital/especialidade, e a fórmula e o
@@ -589,7 +591,7 @@ test('explicações locais de sinais e IPH usam a FlowIA sem POST e preservam o 
 
 test('a metodologia responde as duas metades do proprio titulo', async ({ page }) => {
   await mockLiveSource(page)
-  await page.goto('/metodologia')
+  await page.goto('/metodologia/tecnico')
 
   // "Posso confiar no número e quais são seus limites?" — a reconciliação e as
   // limitações respondem uma metade cada, e estavam as duas colapsadas, uma

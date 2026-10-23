@@ -158,7 +158,7 @@ test('snapshot de contingência cobre os 85 CIDs e distingue recorte não cobert
 
 test('paginação além do fim mantém count global e has_more falso', async ({ page }) => {
   await mockLiveSource(page)
-  await page.goto('/')
+  await page.goto('/?inicio=0')
   const envelope = await page.evaluate(async () => {
     const response = await fetch(
       '/api/dev/v1/hospitais/3012212/especialidades/07/diagnosticos?ano=2026&mes=6&ordenar=dias&limit=10&offset=999',

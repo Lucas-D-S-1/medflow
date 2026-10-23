@@ -16,7 +16,7 @@ test('reúne território e hospital em uma página só', async ({ page }) => {
   })
   page.on('pageerror', (error) => pageErrors.push(error.message))
   await mockLiveSource(page)
-  await page.goto('/')
+  await page.goto('/?inicio=0')
 
   await expect(page.locator('#regional')).toBeVisible()
   await expect(page.locator('#hospital')).toHaveCount(1)
@@ -45,7 +45,7 @@ test('mantém válidos os caminhos antigos, com o recorte intacto', async ({ pag
 
 test('o direcionador marca a etapa escolhida sem trocar de tela', async ({ page }) => {
   await mockLiveSource(page)
-  await page.goto('/')
+  await page.goto('/?inicio=0')
 
   await expect(page.getByTestId('anchor-regional')).toHaveAttribute('aria-current', 'true')
 
@@ -201,7 +201,7 @@ test('o filtro rola junto com a página; só o direcionador fica fixo', async ({
 
 test('abre em panorama, sem território eleito por padrão', async ({ page }) => {
   await mockLiveSource(page)
-  await page.goto('/')
+  await page.goto('/?inicio=0')
 
   // O mapa compara as 62 regiões antes de qualquer filtro: escolher um
   // território é um ato do usuário, não um padrão herdado.
@@ -214,7 +214,7 @@ test('abre em panorama, sem território eleito por padrão', async ({ page }) =>
 
 test('o hover no mapa mostra os valores da região, e o clique propaga', async ({ page }) => {
   await mockLiveSource(page)
-  await page.goto('/')
+  await page.goto('/?inicio=0')
   await expect(page.locator('.regional-map-shape')).toHaveCount(62)
 
   const alvo = page.getByTestId('regional-map-35073')
@@ -233,7 +233,7 @@ test('o hover no mapa mostra os valores da região, e o clique propaga', async (
 
 test('escolher pelo seletor abaixo do mapa vale o mesmo que clicar nele', async ({ page }) => {
   await mockLiveSource(page)
-  await page.goto('/')
+  await page.goto('/?inicio=0')
 
   await page.getByTestId('global-region').selectOption('35073')
   await expect(page.getByTestId('regional-selected-name')).toHaveText('JUNDIAI')
