@@ -45,16 +45,18 @@ alternativa; planejar cofre externo e rotação depois da feira.
 ## Prazo e contingência
 
 A interface inicia a consulta paga e uma reserva determinística em paralelo.
-A reserva tem prazo de 4,8 s. Se o caminho pago falhar ou passar de 5,2 s, usa a
+A reserva tem prazo de 4,8 s. Se o caminho pago falhar ou passar de 15 s, usa a
 reserva já preparada. Respostas tardias não substituem o histórico exibido.
-O HTTP Anthropic mantém prazo de transferência de 5 s e `max_tokens=700`;
+O HTTP Anthropic mantém prazo de transferência de 7 s e `max_tokens=1000`;
 a configuração anterior de timeout da sessão Oracle é restaurada.
 Cancelar o fetch não garante cancelar a execução no ADB nem a cobrança.
 O Select AI pode terminar depois; os testes HTTP completos medem esse tempo.
 
 Leitos livres agora são recusados antes da API. Definições continuam locais.
 Se também o ORDS falhar, a interface mantém as reservas locais e os painéis.
-O prazo de seis segundos é meta de interface, não garantia do processamento OCI.
+O balão mostra progresso aos 2,5 s; não recebe telemetria de fase do ADB.
+As respostas identificam Haiku → Oracle ou reserva Oracle nesta prévia.
+Os 15 s são prazo de interface; OCI pode continuar após o abort.
 A conversa de feira foi validada em 06/2026, Jundiaí, sem alterar o perfil.
 Outros recortes e perguntas livres continuam sujeitos aos erros do Select AI.
 
@@ -81,3 +83,11 @@ Os relatórios externos desta ativação guardam HTTP real, navegador e rollback
 `FLOWIA_HAIKU_REWRITE_API` conserva o candidato da avaliação conversacional.
 `098_rollback_rewrite.sql` e `099_rollback.sql` pertencem a esses experimentos.
 **Para reverter esta ativação use somente `012_live_rollback.sql`.**
+
+## Reverter o ajuste de 23/10
+
+`013_rollback_ajuste.sql` restaura somente o pacote da ativação anterior,
+conservando a chave, o usage e as rotas. Para desligar toda a ativação,
+`012_live_rollback.sql` continua removendo seus objetos e a rota nova.
+O rollback do frontend é o revert do commit de ajuste, seguido do build.
+O merge do cabeçalho pode ser conservado. Não alterar a prévia 4183.

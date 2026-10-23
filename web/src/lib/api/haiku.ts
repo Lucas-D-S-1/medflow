@@ -8,7 +8,7 @@ const INTENTS = new Set(['regioes_iph', 'tendencia_regional', 'hospitais_pressao
   'recusar_tempo_real', 'esclarecer', 'explorar', 'reescrita', 'reserva'])
 
 type Provenance = { dataset: string; competence: string | null; limit: number; limitations: string }
-export type HaikuAnswer = { narrative: string; sql: string | null; warning: string | null; provenance?: Provenance }
+export type HaikuAnswer = { narrative: string; sql: string | null; warning: string | null; origin: 'haiku' | 'reserva'; provenance?: Provenance }
 
 function record(value: unknown): value is Record<string, unknown> {
   return !!value && typeof value === 'object' && !Array.isArray(value)
@@ -27,15 +27,17 @@ export function validateHaikuAnswer(value: unknown): HaikuAnswer {
       p.limit !== 5 || typeof p.limitations !== 'string' || !p.limitations.trim()) {
     throw new AssistantRequestError('A resposta não trouxe fonte e limites completos.')
   }
-  return { narrative: value.narrative, sql: null, warning: null, provenance: p as Provenance }
+  return { narrative: value.narrative, sql: null, warning: null, origin: value.intent === 'reserva' ? 'reserva' : 'haiku', provenance: p as Provenance }
 }
 
-export async function askFlowiaHaiku(question: string, context: AssistantContext, callerSignal?: AbortSignal): Promise<HaikuAnswer> {
+export async function askFlowiaHaiku(question: string, context: AssistantContext, callerSignal?: AbortSignal, onProgress?: (text: string) => void): Promise<HaikuAnswer> {
   const controller = new AbortController()
   const abort = () => controller.abort()
   if (callerSignal?.aborted) abort()
   callerSignal?.addEventListener('abort', abort, { once: true })
-  const timer = window.setTimeout(abort, 5_200)
+  onProgress?.('Entendendo a pergunta…')
+  const progressTimer = window.setTimeout(() => onProgress?.('Consultando o Oracle…'), 2_500)
+  const timer = window.setTimeout(abort, 15_000)
   try {
     const payload = JSON.stringify({ question, context: {
         competence: context.competence, region_code: context.region_code, region_name: context.region_name, hospital_cnes: context.hospital_cnes,
@@ -78,6 +80,7 @@ export async function askFlowiaHaiku(question: string, context: AssistantContext
     throw new AssistantRequestError('A consulta não respondeu a tempo ou está indisponível. As explicações e os painéis continuam disponíveis.')
   } finally {
     window.clearTimeout(timer)
+    window.clearTimeout(progressTimer)
     callerSignal?.removeEventListener('abort', abort)
   }
 }

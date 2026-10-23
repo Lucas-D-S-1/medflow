@@ -248,6 +248,7 @@ export default function AssistantWidget() {
   const [thread, setThread] = useState<Exchange[]>([])
   const [pendingQuestion, setPendingQuestion] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [queryProgress, setQueryProgress] = useState('Entendendo a pergunta…')
   const inputRef = useRef<HTMLInputElement>(null)
   const bodyRef = useRef<HTMLDivElement>(null)
   const launcherRef = useRef<HTMLButtonElement>(null)
@@ -1100,7 +1101,7 @@ export default function AssistantWidget() {
         history: historyForRequest(),
       }
       const response = HAIKU_PILOT
-        ? await askFlowiaHaiku(cleanQuestion, context, controller.signal)
+        ? await askFlowiaHaiku(cleanQuestion, context, controller.signal, setQueryProgress)
         : await askOracleSelectAi(cleanQuestion, context, undefined, controller.signal)
       const provenance = 'provenance' in response ? response.provenance : undefined
       if (
@@ -1110,7 +1111,7 @@ export default function AssistantWidget() {
         return
       }
       registrar(cleanQuestion, {
-        text: response.narrative + (provenance
+        text: response.narrative + ('origin' in response ? `\nOrigem: ${response.origin === 'haiku' ? 'Haiku → Oracle' : 'reserva Oracle'}.` : '') + (provenance
           ? `\nFonte: ${provenance.dataset}. Competência: ${provenance.competence ?? 'não se aplica'}. Limite: até ${provenance.limit} resultados. ${provenance.limitations}`
           : ''),
         contextLabel: usedContextLabel,
@@ -1231,7 +1232,7 @@ export default function AssistantWidget() {
                     <p className="assistant-question">{pendingQuestion}</p>
                     {isLoading && (
                       <div className="assistant-thinking" role="status">
-                        <span /> Consultando os dados…
+                        <span /> {HAIKU_PILOT ? queryProgress : 'Consultando os dados…'}
                       </div>
                     )}
                   </div>

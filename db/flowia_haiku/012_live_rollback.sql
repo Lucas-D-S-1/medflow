@@ -1,3 +1,4 @@
+-- Para reverter somente o ajuste de prazo/prompt, use 013_rollback_ajuste.sql.
 -- Only this activation; previous pilots and all legacy resources remain intact.
 begin
   ords.delete_module(p_module_name=>'flowia_haiku_live'); commit;

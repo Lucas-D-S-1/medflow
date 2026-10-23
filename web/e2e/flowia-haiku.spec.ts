@@ -49,7 +49,26 @@ for (const width of [1440, 390]) {
       expect(received).toBeTruthy()
       expect(Object.keys(received!.context as object).sort()).toEqual(['competence', 'history', 'hospital_cnes', 'region_code', 'region_name', 'specialty_code', 'specialty_name'])
       await expect(page.locator('html')).toHaveJSProperty('scrollWidth', width)
-      await page.screenshot({ path: `/home/lucas/orquestracao/20261023/haiku-ligar/qa-mock-${width}.png`, fullPage: true })
+      await page.screenshot({ path: `/home/lucas/orquestracao/20261023/haiku-ajuste/qa-mock-${width}.png`, fullPage: true })
+    })
+
+    test('mostra progresso e espera resposta Haiku além de 5,2s', async ({ page }) => {
+      await page.route('**/api/flowia-haiku-live/v1/perguntar', async route => {
+        await new Promise(resolve => setTimeout(resolve, 6_000))
+        await route.fulfill({ json: response('ok', 'IPH da região: 67,2%.') })
+      })
+      await page.route('**/api/flowia-haiku-live/v1/reserva', route => route.fulfill({ json: {
+        ...response('ok', 'Resposta de reserva'), intent: 'reserva',
+      } }))
+      await page.goto('/regional')
+      await page.getByRole('button', { name: /Posso ajudar/ }).click()
+      await page.getByLabel('Faça outra pergunta').fill('Qual o IPH da região de Jundiaí?')
+      await page.getByRole('button', { name: 'Enviar pergunta' }).click()
+      const panel = page.locator('#medflow-assistant-panel')
+      await expect(panel.getByRole('status')).toContainText('Entendendo a pergunta…')
+      await expect(panel.getByRole('status')).toContainText('Consultando o Oracle…', { timeout: 4_000 })
+      await expect(panel).toContainText('Origem: Haiku → Oracle', { timeout: 8_000 })
+      await expect(panel).not.toContainText('Resposta de reserva')
     })
 
     test('recusa leitos agora sem qualquer chamada paga', async ({ page }) => {
@@ -98,14 +117,14 @@ for (const width of [1440, 390]) {
       await expect(page.locator('#medflow-assistant-panel')).toContainText('Limite: até 5 regiões')
     })
 
-    test('prazo de 5,2s preserva reserva', async ({ page }) => {
+    test('prazo de 15s preserva reserva', async ({ page }) => {
       await page.route('**/api/flowia-haiku-live/v1/perguntar', async () => {})
       await page.goto('/regional')
       await page.getByRole('button', { name: /Posso ajudar/ }).click()
       await page.clock.install()
       await page.getByLabel('Faça outra pergunta').fill('Quais hospitais concentram a pressão?')
       await page.getByRole('button', { name: 'Enviar pergunta' }).click()
-      await page.clock.fastForward(5_201)
+      await page.clock.fastForward(15_001)
       await expect(page.locator('#medflow-assistant-panel')).toContainText('consulta não respondeu')
     })
 
@@ -121,7 +140,7 @@ for (const width of [1440, 390]) {
       const reserveReady = page.waitForResponse('**/api/flowia-haiku-live/v1/reserva')
       await page.getByRole('button', { name: 'Enviar pergunta' }).click()
       await (await reserveReady).finished()
-      await page.clock.fastForward(5_201)
+      await page.clock.fastForward(15_001)
       await expect(page.locator('#medflow-assistant-panel')).toContainText('CNES 6992560')
       await expect(page.getByLabel('Faça outra pergunta')).toBeEnabled()
     })
