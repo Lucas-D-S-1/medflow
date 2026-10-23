@@ -330,6 +330,7 @@ export default function HospitalView() {
   function updateParam(name: string, value: string) {
     setSearchParams((current) => {
       const next = new URLSearchParams(current)
+      if (name === 'hospital') next.delete('especialidade')
       if (value) next.set(name, value)
       else next.delete(name)
       return next

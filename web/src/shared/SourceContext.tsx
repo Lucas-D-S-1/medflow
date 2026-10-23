@@ -442,6 +442,7 @@ export function SourceProvider({ children }: { children: ReactNode }) {
         next.set('regiao', nextRegion.region_code)
         next.delete('destino')
         next.delete('hospital')
+        next.delete('especialidade')
         return next
       },
       { replace: true },
@@ -525,6 +526,7 @@ export function SourceProvider({ children }: { children: ReactNode }) {
           next.delete('macrorregiao')
           next.delete('destino')
           next.delete('hospital')
+          next.delete('especialidade')
           return next
         })
         setHospitalSummary(null)
@@ -542,6 +544,7 @@ export function SourceProvider({ children }: { children: ReactNode }) {
         // unrelated URL parameters remain intact.
         next.delete('destino')
         next.delete('hospital')
+        next.delete('especialidade')
         return next
       })
       setHospitalSummary(null)
@@ -595,6 +598,7 @@ export function SourceProvider({ children }: { children: ReactNode }) {
           // incoerente na URL e nas requisições seguintes.
           next.delete('destino')
           next.delete('hospital')
+          next.delete('especialidade')
         }
         return next
       })
