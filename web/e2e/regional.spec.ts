@@ -524,6 +524,9 @@ test('hierarquiza a região selecionada, expõe os seis sinais e isola ações d
 
   // JUNDIAI é só a prévia sob o ponteiro. Nenhuma ação pode herdar BRAGANCA,
   // a seleção que continua na URL e no filtro compartilhado.
+  // O disclosure focado fica abaixo do mapa. Reposicioná-lo antes do hover
+  // evita que a rolagem automática mova o polígono sob o ponteiro.
+  await page.getByTestId('regional-map-svg').scrollIntoViewIfNeeded()
   await page.getByTestId('regional-map-35073').hover()
   await expect(cartao).toContainText('JUNDIAI')
   await expect(cartao.getByRole('button')).toHaveCount(0)
