@@ -12,10 +12,12 @@
 }
 
 .analysis-section {
-  /* A âncora para abaixo do direcionador, o único elemento que continua
-     fixo. Dimensionar isto para o chrome inteiro deixava um vão enorme acima
-     do título ao chegar por link. */
+  /* Reserva o cabeçalho global fixo ao chegar por link. */
   scroll-margin-top: clamp(5.5rem, 8vw, 6.5rem);
+}
+
+@media (max-width: 760px) {
+  .analysis-section { scroll-margin-top: 8rem; }
 }
 
 .analysis-section + .analysis-section {
