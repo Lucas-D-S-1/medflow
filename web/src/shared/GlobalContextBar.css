@@ -45,3 +45,13 @@
   .global-context-inner { width: 100%; }
   .global-context-fields { grid-template-columns: 1fr; }
 }
+
+.global-context-fallback {
+  margin-top: var(--space-3);
+  padding: var(--space-4);
+  border: var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  line-height: 1.5;
+}
+.global-context-fallback p { margin: var(--space-2) 0; }

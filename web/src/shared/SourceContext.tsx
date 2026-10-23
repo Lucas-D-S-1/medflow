@@ -86,6 +86,7 @@ export type SourceState =
       kind: 'fallback'
       data: SourceData
       reason: 'oracle-unavailable' | 'invalid-contract'
+      requested: { competence: string; regionCode: string; macroregionCode: string }
     }
   | { kind: 'empty' }
   | { kind: 'error' }
@@ -178,6 +179,7 @@ export function SourceProvider({ children }: { children: ReactNode }) {
   const [pendingAssistantQuestion, setPendingAssistantQuestion] =
     useState<AssistantLocalRequest | null>(null)
   const reloadGeneration = useRef(0)
+  const fallbackRequest = useRef<{ search: string; hash: string } | null>(null)
 
   const sourceData =
     sourceState.kind === 'live' || sourceState.kind === 'fallback'
@@ -225,6 +227,9 @@ export function SourceProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const reload = useCallback(async () => {
+    const request = fallbackRequest.current ?? { search: window.location.search, hash: window.location.hash }
+    const requestedParams = new URLSearchParams(request.search)
+    if (fallbackRequest.current) snapshotNavigationRef.current(request, { replace: true })
     const generation = reloadGeneration.current + 1
     reloadGeneration.current = generation
     regionalRequest.current?.controller.abort()
@@ -252,13 +257,20 @@ export function SourceProvider({ children }: { children: ReactNode }) {
         kind: 'fallback',
         data: { status, methodology, regions },
         reason,
+        requested: {
+          competence: requestedParams.get('competencia') ?? '',
+          regionCode: requestedParams.get('regiao') ?? '',
+          macroregionCode: requestedParams.get('macrorregiao') ?? '',
+        },
       })
+      fallbackRequest.current = request
       // Snapshot fixtures form one locked publication. Normalize the two
       // shared parameters together so every route and the URL describe the
       // same fallback context, while all local parameters survive.
-      const next = new URLSearchParams(window.location.search)
+      const next = new URLSearchParams(request.search)
       next.set('competencia', regions.data_through)
       if (fallbackRegion) next.set('regiao', fallbackRegion)
+      next.delete('macrorregiao')
       // Normalizar o snapshot não pode apagar o destino de um link ou F5.
       snapshotNavigationRef.current(
         { search: `?${next}`, hash: window.location.hash },
@@ -281,7 +293,7 @@ export function SourceProvider({ children }: { children: ReactNode }) {
     }
 
     try {
-      const requested = new URLSearchParams(window.location.search).get('competencia')
+      const requested = requestedParams.get('competencia')
       const status = await fetchStatus()
       if (reloadGeneration.current !== generation) return
       if (!status) {
@@ -297,6 +309,7 @@ export function SourceProvider({ children }: { children: ReactNode }) {
         fetchRegioesResumo(Number(competence.slice(0, 4)), Number(competence.slice(5, 7))),
       ])
       if (reloadGeneration.current !== generation) return
+      fallbackRequest.current = null
       setSourceState({ kind: 'live', data: { status, methodology, regions } })
       setRegionalLoadState(regions.items.length === 0 ? 'empty' : 'ready')
     } catch (error) {
