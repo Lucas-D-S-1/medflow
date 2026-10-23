@@ -100,3 +100,28 @@ test('P04: sinais mantêm referência estadual ao selecionar região ou filtrar 
   await expect(page.getByTestId('assistant-thread')).toContainText(/referência estadual/)
   await expect(page.getByTestId('assistant-thread')).not.toContainText('muda os limiares')
 })
+
+test('P05: Tab no celular não entra nos cabeçalhos recortados das tabelas', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await mockLiveSource(page)
+  await page.goto(huUrl)
+  await expect(page.getByTestId('specialty-summary')).toBeVisible()
+  await page.getByTestId('hospital-search').focus()
+  let hiddenSortFocused = false
+  for (let i = 0; i < 20; i++) {
+    await page.keyboard.press('Tab')
+    if (await page.evaluate(() => !!document.activeElement?.closest('.hospital-table thead'))) {
+      hiddenSortFocused = true
+      await capture(page, 'p05-foco-mobile')
+      break
+    }
+  }
+  expect(hiddenSortFocused).toBe(false)
+  for (const button of await page.locator('.hospital-table thead button').all()) await expect(button).toBeHidden()
+  await capture(page, 'p05-foco-mobile')
+  // Redimensionar preserva a ordenação visível por teclado no desktop.
+  await page.setViewportSize({ width: 1440, height: 900 })
+  await expect(page.locator('.hospital-table thead button').first()).toBeVisible()
+  await page.locator('.hospital-table thead button').first().focus()
+  await expect(page.locator('.hospital-table thead button').first()).toBeFocused()
+})
