@@ -172,9 +172,11 @@ export default function SpecialtyTable({
   const absence = comparisonAbsence(selected)
 
   function chooseSpecialty(code: string) {
-    if (code === selectedCode) return
-    clearAssistantQuestion()
-    reportHospitalSummary(null)
+    if (code === selectedCode && searchParams.get('especialidade') === code) return
+    if (code !== selectedCode) {
+      clearAssistantQuestion()
+      reportHospitalSummary(null)
+    }
     const next = new URLSearchParams(searchParams)
     next.set('especialidade', code)
     navigate({ search: `?${next}`, hash })

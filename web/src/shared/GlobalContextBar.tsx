@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { useSource } from './SourceContext'
+import { COMPETENCE_PATTERN, useSource } from './SourceContext'
 import CompetencePicker from './CompetencePicker'
 import { shiftCompetence } from './SourceContext'
 import { formatPeriod } from './format'
@@ -132,7 +132,7 @@ export default function GlobalContextBar() {
                 ? `${regions.find((item) => item.region_code === sourceState.requested.regionCode)?.region_name ?? 'região'} (${sourceState.requested.regionCode})`
                 : 'panorama regional'}
               {sourceState.requested.macroregionCode && ` · rede ${sourceState.requested.macroregionCode}`}
-              {sourceState.requested.competence && ` · ${formatPeriod(sourceState.requested.competence)}`}.
+              {sourceState.requested.competence && ` · ${COMPETENCE_PATTERN.test(sourceState.requested.competence) ? formatPeriod(sourceState.requested.competence) : 'competência inválida'}`}.
               {' '}O recorte pedido foi substituído pelo recorte disponível na contingência. Os filtros ficam travados até a reconexão.
             </p>
             <button type="button" onClick={() => void reload()}>Tentar novamente</button>

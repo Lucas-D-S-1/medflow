@@ -110,7 +110,7 @@ test('P05: Tab no celular não entra nos cabeçalhos recortados das tabelas', as
   let hiddenSortFocused = false
   for (let i = 0; i < 20; i++) {
     await page.keyboard.press('Tab')
-    if (await page.evaluate(() => !!document.activeElement?.closest('.hospital-table thead'))) {
+    if (await page.locator('.hospital-table thead :focus').count()) {
       hiddenSortFocused = true
       await capture(page, 'p05-foco-mobile')
       break
@@ -130,6 +130,8 @@ test('P06: especialidade sobrevive a F5, link compartilhado e histórico sem que
   await mockLiveSource(page)
   await page.goto(huUrl)
   await expect(page.getByTestId('especialidade-row-07').getByRole('button')).toHaveAttribute('aria-pressed', 'true')
+  await page.getByTestId('especialidade-row-07').getByRole('button').click()
+  await expect(page).toHaveURL(/especialidade=07/)
   await page.getByTestId('especialidade-row-03').getByRole('button').click()
   await expect(page.getByTestId('specialty-summary')).toContainText(/Clínica médica/i)
   await capture(page, 'p06-clinica-url')
@@ -155,4 +157,14 @@ test('P06: especialidade sobrevive a F5, link compartilhado e histórico sem que
   await page.getByTestId('especialidade-row-03').getByRole('button').click()
   await page.getByRole('button', { name: 'Trocar hospital', exact: true }).click()
   await expect(page).not.toHaveURL(/especialidade=/)
+})
+
+test('P02: contingência tolera competência malformada em links antigos', async ({ page }) => {
+  const errors: string[] = []
+  page.on('pageerror', (error) => errors.push(error.message))
+  await page.route('**/api/dev/v1/status', route => route.abort())
+  await page.goto('/?competencia=2026-13&regiao=35072#regional')
+  await expect(page.getByRole('alert').filter({ hasText: 'Contingência' })).toContainText('competência inválida')
+  await expect(page.getByTestId('global-region')).toBeDisabled()
+  expect(errors).toEqual([])
 })
