@@ -9,6 +9,7 @@ interface ImportMetaEnv {
   readonly VITE_API_BASE?: string
   /** Preview local reproduzível, explicitamente rotulado como snapshot. */
   readonly VITE_SNAPSHOT_PREVIEW?: string
+  readonly VITE_FLOWIA_HAIKU?: string
 }
 
 interface ImportMeta {

@@ -33,6 +33,7 @@ import {
   assistantContextKey,
   isCurrentSpecialtySummary,
 } from './assistantContext'
+import { askFlowiaHaiku, HAIKU_PILOT } from '../../lib/api/haiku'
 import './AssistantWidget.css'
 
 type RouteKey = 'regional' | 'hospital' | 'metodologia'
@@ -550,11 +551,34 @@ export default function AssistantWidget() {
       ...answer,
       contextLabel: answer.contextLabel ?? contextLabel(requestedSummary),
     }
-    if (sourceState.kind !== 'fallback') return contextualAnswer
+    if (sourceState.kind !== 'fallback') return HAIKU_PILOT ? {
+      ...contextualAnswer,
+      text: `${contextualAnswer.text}\nFonte: metodologia e indicadores do MedFlow (SIH/SUS, CNES e IBGE). Competência: ${sharedCompetence || 'ainda não carregada'}. Limite: dados mensais, sem disponibilidade operacional de leitos.`,
+    } : contextualAnswer
     const competence = sharedCompetence && formatPeriod(sharedCompetence)
     return {
       ...contextualAnswer,
       text: `${contextualAnswer.text} Fonte: snapshot de contingência${competence ? ` até ${competence}` : ''}; esta resposta local não consultou o Oracle.`,
+    }
+  }
+
+  function deterministicFallback(rawQuestion: string): Answer | null {
+    const local = localAnswer(rawQuestion)
+    if (local) return local
+    const normalized = normalize(rawQuestion)
+    const regions = sourceData?.regions
+    if (!regions || regions.pagination.has_more || regions.filters.region_code ||
+        regions.filters.macroregion_code || explicitScopeDiverges(normalized) ||
+        `${regions.filters.year}-${String(regions.filters.month).padStart(2, '0')}` !== sharedCompetence ||
+        !/(quais.*regio|top.*iph|onde.*pressao.*maior)/.test(normalized) ||
+        /hospita/.test(normalized)) return null
+    const top = regions.items.slice().sort((a, b) =>
+      b.iph_percent - a.iph_percent || a.region_code.localeCompare(b.region_code)).slice(0, 5)
+    if (!top.length) return null
+    return {
+      text: `Regiões com maior IPH estimado nos dados carregados:\n${top.map(item =>
+        `${item.region_name}: ${formatDecimal(item.iph_percent)}%`).join('\n')}\nFonte: SIH/SUS e CNES; Gold MedFlow, ${regions.source === 'snapshot' ? 'snapshot de contingência' : 'consulta Oracle já carregada'}. Competência: ${sharedCompetence}. Limite: até 5 regiões. Base mensal; não informa leitos livres nem ocupação real.`,
+      contextLabel: `São Paulo · ${formatPeriod(sharedCompetence)}`,
     }
   }
 
@@ -564,6 +588,10 @@ export default function AssistantWidget() {
   ): Answer | null {
     const normalized = normalize(rawQuestion)
     const methodology = sourceData?.methodology
+    if (/(leito|vaga).*(livre|disponiv|agora|hoje)|receber.*(ja|agora|hoje)|ocupacao.*(real|agora)/.test(normalized)) {
+      return { text: 'Não tenho disponibilidade de leitos em tempo real. A base é mensal por competência; o IPH estima pressão sobre capacidade SUS declarada. Posso mostrar a última competência disponível e seus limites.' }
+    }
+
     // "o que há no índice sazonal?" não casava com nada e ia parar no modelo,
     // que devolvia a definição seguida de um ranking que ninguém pediu — o
     // modo narrate do Select AI sempre consulta.
@@ -1070,12 +1098,10 @@ export default function AssistantWidget() {
         ).slice(0, 5).map(({ code, name }) => ({ code, name })),
         history: historyForRequest(),
       }
-      const response = await askOracleSelectAi(
-        cleanQuestion,
-        context,
-        undefined,
-        controller.signal,
-      )
+      const response = HAIKU_PILOT
+        ? await askFlowiaHaiku(cleanQuestion, context, controller.signal)
+        : await askOracleSelectAi(cleanQuestion, context, undefined, controller.signal)
+      const provenance = 'provenance' in response ? response.provenance : undefined
       if (
         activeRemoteRequest.current !== remoteRequest ||
         currentContextKeyRef.current !== remoteRequest.contextKey
@@ -1083,7 +1109,9 @@ export default function AssistantWidget() {
         return
       }
       registrar(cleanQuestion, {
-        text: response.narrative,
+        text: response.narrative + (provenance
+          ? `\nFonte: ${provenance.dataset}. Competência: ${provenance.competence ?? 'não se aplica'}. Limite: até ${provenance.limit} resultados. ${provenance.limitations}`
+          : ''),
         contextLabel: usedContextLabel,
         sql: response.sql,
         warning: response.warning,
@@ -1098,7 +1126,8 @@ export default function AssistantWidget() {
       // O cliente já distingue cota estourada, contrato inválido e tempo
       // esgotado. Trocar tudo por uma frase única fazia o produto parecer
       // incapaz quando o problema era outro, e apagava a pista do diagnóstico.
-      registrar(cleanQuestion, {
+      const fallback = HAIKU_PILOT ? deterministicFallback(cleanQuestion) : null
+      registrar(cleanQuestion, fallback ?? {
         text:
           error instanceof AssistantRequestError
             ? `${error.message} Tente uma das sugestões abaixo.`
@@ -1138,7 +1167,7 @@ export default function AssistantWidget() {
           <header className="assistant-header">
             <AssistantRobot compact />
             <div>
-              <span className="assistant-eyebrow">FLOWIA · ORACLE SELECT AI</span>
+              <span className="assistant-eyebrow">FLOWIA · ASSISTENTE MEDFLOW</span>
               <h2>Posso ajudar?</h2>
               <p>Contexto: {onEntry ? 'entrada' : routeNames[currentRoute]}</p>
             </div>

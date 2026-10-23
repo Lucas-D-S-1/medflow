@@ -23,7 +23,7 @@ function fallbackDeRotasNoPages(): Plugin {
 }
 
 export default defineConfig(({ mode, command }) => {
-  const env = loadEnv(mode, envDir, '')
+  const env = { ...process.env, ...loadEnv(mode, envDir, '') }
 
   // O proxy só existe no dev server. Um build de produção não fala com o
   // ORDS, então exigir a variável nele quebraria a CI sem motivo — e a
