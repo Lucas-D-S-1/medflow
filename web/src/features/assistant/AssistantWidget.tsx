@@ -753,7 +753,7 @@ export default function AssistantWidget() {
       )
     ) {
       return {
-        text: 'O mapa tem dois modos. No placar de sinais, que é o padrão, cada região acende um sinal quando fica no quintil mais alto do recorte visível: pressão sobre leitos (IPH estimado), mortalidade observada (TMH), permanência média, valor médio aprovado pelo SUS (CMI), atendidos fora da região e ICSAP. Tons mais escuros nesse modo significam mais sinais acesos, não IPH por si só. No modo IPH estimado, a cor mostra a escala relativa por percentis do IPH. Nenhum modo é nota de qualidade ou ocupação real; selecione a região para ver os valores e limites.',
+        text: 'O mapa tem dois modos. No placar de sinais, que é o padrão, cada região acende um sinal quando fica no quintil mais alto da referência estadual na competência: pressão sobre leitos (IPH estimado), mortalidade observada (TMH), permanência média, valor médio aprovado pelo SUS (CMI), atendidos fora da região e ICSAP. Tons mais escuros nesse modo significam mais sinais acesos, não IPH por si só. No modo IPH estimado, a cor mostra a escala relativa por percentis do IPH. Nenhum modo é nota de qualidade ou ocupação real; selecione a região para ver os valores e limites.',
       }
     }
 
@@ -863,7 +863,7 @@ export default function AssistantWidget() {
 
     if (/o que sao os sinais|sinais? acesos|quintil|placar|quantos sinais|indice de priorizacao/.test(normalized)) {
       return {
-        text: 'Os sinais indicam quais dos seis indicadores estão no grupo de valores mais altos do recorte visível, a partir do percentil 80: pressão sobre leitos (IPH estimado), mortalidade observada (TMH), permanência média, valor médio aprovado pelo SUS (CMI), atendidos fora da região e ICSAP. São uma triagem comparativa para investigar, não ranking ou nota de qualidade. Filtrar uma rede regional muda os limiares.',
+        text: 'Os sinais indicam quais dos seis indicadores estão no grupo de valores mais altos da referência estadual na competência, a partir do percentil 80: pressão sobre leitos (IPH estimado), mortalidade observada (TMH), permanência média, valor médio aprovado pelo SUS (CMI), atendidos fora da região e ICSAP. São uma triagem comparativa para investigar, não ranking ou nota de qualidade. Filtrar uma rede regional não altera os limiares da referência estadual.',
       }
     }
 

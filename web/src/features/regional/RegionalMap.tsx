@@ -321,8 +321,8 @@ export default function RegionalMap({
               {!cardSignals
                 ? 'Não foi possível calcular os sinais desta região.'
                 : cardSignals.count > 0
-                  ? `${cardSignals.lit.map(signalLabel).join(', ')} no grupo de valores mais altos do recorte.`
-                  : 'Nenhum dos seis indicadores acendeu um sinal neste recorte.'}
+                  ? `${cardSignals.lit.map(signalLabel).join(', ')} no grupo de valores mais altos da referência estadual.`
+                  : 'Nenhum dos seis indicadores acendeu um sinal na referência estadual.'}
             </p>
             {cardIsSelection && (
               <button type="button" onClick={() => onAskLocal('O que são os sinais?')}>
@@ -373,7 +373,7 @@ export default function RegionalMap({
               <details className="map-card-other" data-testid="map-card-other-indicators">
                 <summary>Outros indicadores</summary>
                 <p>
-                  Os sinais indicam valores no grupo mais alto do recorte; são triagem
+                  Os sinais indicam valores no grupo mais alto da referência estadual; são triagem
                   comparativa, não nota de qualidade.
                 </p>
                 <dl>

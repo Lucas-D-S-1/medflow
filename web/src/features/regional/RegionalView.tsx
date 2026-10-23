@@ -81,7 +81,10 @@ export default function RegionalView({ onViewHospitals }: RegionalViewProps) {
     ? rankedItems.find((item) => item.region_code === sharedRegionCode) ?? null
     : null
   const aggregate = useMemo(() => aggregateRegions(visibleItems), [visibleItems])
-  const signals = useMemo(() => computeSignals(visibleItems), [visibleItems])
+  const signals = useMemo(
+    () => computeSignals(regionalData?.items ?? []),
+    [regionalData],
+  )
   const variations = useMemo(
     () =>
       new Map(
@@ -211,6 +214,10 @@ export default function RegionalView({ onViewHospitals }: RegionalViewProps) {
                           ? 'Sinais por região'
                           : 'IPH estimado por percentis'}
                       </h3>
+                      <p data-testid="signals-reference">
+                        Referência dos sinais: {regionalData.items.length} regiões de São Paulo na competência selecionada.
+                        O filtro de rede não altera os limiares.
+                      </p>
                       <div className="map-metric" role="radiogroup" aria-label="O que a cor mostra">
                         {(['sinais', 'iph'] as const).map((candidate) => (
                           <button
