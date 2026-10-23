@@ -78,10 +78,9 @@ test('sincroniza competência e território entre URL, barra global e rotas', as
   await expect(page).toHaveURL(/busca=teste/)
   await expect(page).toHaveURL(/elegiveis=0/)
 
-  // Limpar só a região conserva a rede como recorte do mapa; cada filtro tem
-  // seu próprio controle de limpeza.
+  // Limpar a região agora remove também a rede e devolve o panorama estadual.
   await page.getByTestId('global-region').selectOption('')
-  await expect(page.getByTestId('global-macroregion')).toHaveValue('3529')
+  await expect(page.getByTestId('global-macroregion')).toHaveValue('')
   expect(new URL(page.url()).searchParams.get('regiao')).toBeNull()
 
   // A busca rápida global saiu da superfície. Nome/CNES pertence à lista
@@ -101,7 +100,7 @@ test('trava o contexto global inteiro no fallback de snapshot', async ({ page })
   await expect(page.getByTestId('global-competence')).toBeDisabled()
   await expect(page.getByTestId('global-macroregion')).toBeDisabled()
   await expect(page.getByTestId('global-region')).toBeDisabled()
-  await expect(page.getByTestId('global-macroregion')).toHaveValue('3529')
+  await expect(page.getByTestId('global-macroregion')).toHaveValue('')
   await expect(page).toHaveURL(/busca=local/)
   await expect(page).toHaveURL(/elegiveis=0/)
 })

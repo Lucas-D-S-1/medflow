@@ -63,9 +63,7 @@ export default function GlobalContextBar() {
   )
     ? sharedMacroregionCode
     : ''
-  const selectableRegions = selectedMacroregionCode
-    ? regions.filter((item) => item.macroregion_code === selectedMacroregionCode)
-    : regions
+  const selectableRegions = regions
 
   return (
     <section className="global-context-bar" aria-label="Filtros regionais">
@@ -115,6 +113,11 @@ export default function GlobalContextBar() {
             </select>
           </label>
         </div>
+        {!isFallback && (sharedRegionCode || sharedMacroregionCode) && (
+          <button className="global-context-clear" type="button" onClick={() => setSharedRegion('')}>
+            Limpar seleção
+          </button>
+        )}
         {sourceState.kind === 'fallback' && (
           <aside className="global-context-fallback" role="alert">
             <strong>Contingência local · {regions.find((item) => item.region_code === sharedRegionCode)?.region_name} · {formatPeriod(sharedCompetence)}</strong>

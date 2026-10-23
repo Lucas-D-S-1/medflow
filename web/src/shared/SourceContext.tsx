@@ -518,12 +518,11 @@ export function SourceProvider({ children }: { children: ReactNode }) {
     (regionCode: string) => {
       if (isFallback) return
       if (regionCode === '') {
-        // Voltar ao panorama larga somente a região escolhida. A rede
-        // regional continua sendo um recorte válido do mapa e pode ser limpa
-        // pelo próprio seletor, sem acoplar os dois controles.
+        // Limpar a seleção devolve o panorama estadual, inclusive após links com rede.
         setSearchParams((current) => {
           const next = new URLSearchParams(current)
           next.delete('regiao')
+          next.delete('macrorregiao')
           next.delete('destino')
           next.delete('hospital')
           return next
@@ -537,10 +536,8 @@ export function SourceProvider({ children }: { children: ReactNode }) {
       setSearchParams((current) => {
         const next = new URLSearchParams(current)
         next.set('regiao', regionCode)
-        const selected = sourceData?.regions.items.find(
-          (item) => item.region_code === regionCode,
-        )
-        if (selected) next.set('macrorregiao', selected.macroregion_code)
+        // Escolher região não impõe uma rede oculta nem bloqueia outros territórios.
+        next.delete('macrorregiao')
         // These local selections depend on the shared region. Competence and
         // unrelated URL parameters remain intact.
         next.delete('destino')
@@ -551,7 +548,7 @@ export function SourceProvider({ children }: { children: ReactNode }) {
       setHospitalSpecialties(null)
       setPendingAssistantQuestion(null)
     },
-    [isFallback, setSearchParams, sourceData],
+    [isFallback, setSearchParams],
   )
 
   const setSharedMacroregion = useCallback(

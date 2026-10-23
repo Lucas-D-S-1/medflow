@@ -213,7 +213,7 @@ test('expõe o mapa com percentis, seleção textual e uma única parada de tabu
   await page.goto('/regional?macrorregiao=3529&regiao=35102')
   // Navegar recomeça no placar de sinais, que é o padrão do mapa.
   await page.getByTestId('map-metric-iph').click()
-  await expect(page.getByTestId('regional-map-svg').locator('[role="button"]')).toHaveCount(4)
+  await expect(page.getByTestId('regional-map-svg').locator('[role="button"]')).toHaveCount(62)
   await expect(page.getByTestId('regional-map-legend')).toContainText(
     `mínimo real ${pt(Math.min(...iphDaMacro3529), 1)}%`,
   )

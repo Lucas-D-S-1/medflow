@@ -144,7 +144,7 @@ export default function RegionalMap({
     .map((feature) => feature.properties.cd_regiao_saude)
     .filter((code) => {
       const item = itemsByRegion.get(code)
-      return Boolean(item && (!selectedMacroregionCode || item.macroregion_code === selectedMacroregionCode))
+      return Boolean(item)
     })
   const rovingCode = interactiveCodes.includes(selectedRegionCode)
     ? selectedRegionCode
@@ -238,6 +238,7 @@ export default function RegionalMap({
           const isVisible = Boolean(
             item && (!selectedMacroregionCode || item.macroregion_code === selectedMacroregionCode),
           )
+          const isInteractive = Boolean(item)
           const isSelected = regionCode === selectedRegionCode
           const label = item
             ? `${feature.properties.nm_regiao_saude}, ${
@@ -259,21 +260,21 @@ export default function RegionalMap({
               d={geometryPath(feature.geometry)}
               className={`regional-map-shape ${toneFor(item)}${isSelected ? ' selected' : ''}${isVisible ? '' : ' filtered-out'}`}
               data-testid={`regional-map-${regionCode}`}
-              role={isVisible ? 'button' : undefined}
-              tabIndex={isVisible && regionCode === rovingCode ? 0 : -1}
-              aria-label={isVisible ? label : undefined}
-              aria-pressed={isVisible ? isSelected : undefined}
-              onMouseEnter={() => isVisible && setHoveredCode(regionCode)}
+              role={isInteractive ? 'button' : undefined}
+              tabIndex={isInteractive && regionCode === rovingCode ? 0 : -1}
+              aria-label={isInteractive ? label : undefined}
+              aria-pressed={isInteractive ? isSelected : undefined}
+              onMouseEnter={() => isInteractive && setHoveredCode(regionCode)}
               onMouseLeave={() => setHoveredCode('')}
-              onFocus={() => isVisible && setHoveredCode(regionCode)}
+              onFocus={() => isInteractive && setHoveredCode(regionCode)}
               onBlur={() => setHoveredCode('')}
               // Clicar de novo na região já escolhida devolve ao panorama: é o
               // gesto que o usuário tenta primeiro para desfazer a seleção.
               onClick={() =>
-                isVisible && onSelect(regionCode === selectedRegionCode ? '' : regionCode)
+                isInteractive && onSelect(regionCode === selectedRegionCode ? '' : regionCode)
               }
               onKeyDown={(event) => {
-                if (!isVisible) return
+                if (!isInteractive) return
                 if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
                   event.preventDefault()
                   moveFocus(regionCode, 1)

@@ -88,7 +88,7 @@
 .regional-map-shape.tone-3 { fill: var(--color-map-3); }
 .regional-map-shape.tone-4 { fill: var(--color-map-4); }
 .regional-map-shape.tone-5, .tone-swatch.tone-5 { fill: var(--color-map-5); background: var(--color-map-5); }
-.regional-map-shape.filtered-out { opacity: .13; pointer-events: none; }
+.regional-map-shape.filtered-out { opacity: .13; }
 .regional-map-shape:hover { stroke: var(--color-hover); stroke-width: 3.5; }
 .regional-map-shape.selected { fill: var(--color-map-selected-fill); stroke: var(--color-selected); stroke-width: 4.5; opacity: 1; }
 .map-hover-label { min-height: 1.5rem; margin: var(--space-2) 0; color: var(--color-text-muted); font-size: var(--font-size-sm); }
