@@ -1042,7 +1042,8 @@ export default function AssistantWidget() {
     }
 
     const deterministic = localAnswer(cleanQuestion, requestedSummary)
-    if (deterministic) {
+    const localExplanation = /o que (e|ha|tem|quer dizer)|que significa|explique|explica|defina|como (interpretar|funciona|ler)|leito.*(livre|disponiv|agora|hoje)/.test(normalizedQuestion)
+    if (deterministic && (!HAIKU_PILOT || localExplanation)) {
       registrar(cleanQuestion, deterministic)
       return
     }

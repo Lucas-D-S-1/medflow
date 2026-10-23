@@ -14,11 +14,14 @@ const response = (status = 'ok', narrative = 'Regiões ordenadas por IPH estimad
 for (const width of [1440, 390]) {
   test.describe(`FlowIA ${width}`, () => {
     test.use({ viewport: { width, height: 900 } })
-    test.beforeEach(async ({ page }) => { await mockLiveSource(page) })
+    test.beforeEach(async ({ page }) => {
+      await mockLiveSource(page)
+      await page.route('**/api/flowia-haiku-live/v1/reserva', route => route.fulfill({ json: { status: 'unavailable' } }))
+    })
 
     test('balao e sugestoes nao enviam uma pergunta paga', async ({ page }) => {
       let calls = 0
-      await page.route('**/api/flowia-haiku/v1/perguntar', async route => {
+      await page.route('**/api/flowia-haiku-live/v1/perguntar', async route => {
         calls++; await route.fulfill({ json: response() })
       })
       await page.goto('/')
@@ -30,7 +33,7 @@ for (const width of [1440, 390]) {
 
     test('pergunta livre usa nova rota e mostra fonte mes e limite', async ({ page }) => {
       let received: Record<string, unknown> | null = null
-      await page.route('**/api/flowia-haiku/v1/perguntar', async route => {
+      await page.route('**/api/flowia-haiku-live/v1/perguntar', async route => {
         received = route.request().postDataJSON()
         await route.fulfill({ json: response() })
       })
@@ -46,12 +49,12 @@ for (const width of [1440, 390]) {
       expect(received).toBeTruthy()
       expect(Object.keys(received!.context as object).sort()).toEqual(['competence', 'history', 'hospital_cnes', 'region_code', 'region_name', 'specialty_code', 'specialty_name'])
       await expect(page.locator('html')).toHaveJSProperty('scrollWidth', width)
-      await page.screenshot({ path: `/home/lucas/orquestracao/20261023/haiku-conversa/qa-${width}.png`, fullPage: true })
+      await page.screenshot({ path: `/home/lucas/orquestracao/20261023/haiku-ligar/qa-mock-${width}.png`, fullPage: true })
     })
 
     test('recusa leitos agora sem qualquer chamada paga', async ({ page }) => {
       let calls = 0
-      await page.route('**/api/flowia-haiku/v1/perguntar', async route => { calls++; await route.abort() })
+      await page.route('**/api/flowia-haiku-live/v1/perguntar', async route => { calls++; await route.abort() })
       await page.goto('/regional')
       await page.getByRole('button', { name: /Posso ajudar/ }).click()
       await page.getByLabel('Faça outra pergunta').fill('Quantos leitos estão disponíveis agora?')
@@ -61,7 +64,7 @@ for (const width of [1440, 390]) {
     })
 
     test('ambiguidade pede esclarecimento', async ({ page }) => {
-      await page.route('**/api/flowia-haiku/v1/perguntar', async route => {
+      await page.route('**/api/flowia-haiku-live/v1/perguntar', async route => {
         await route.fulfill({ json: { ...response('clarify', 'Qual indicador e recorte deseja analisar?'), intent: 'esclarecer' } })
       })
       await page.goto('/regional')
@@ -73,7 +76,7 @@ for (const width of [1440, 390]) {
 
     test('API indisponivel preserva explicacoes locais sem Select AI automatico', async ({ page }) => {
       let legacyCalls = 0
-      await page.route('**/api/flowia-haiku/v1/perguntar', async route => { await route.fulfill({ status: 503, json: {} }) })
+      await page.route('**/api/flowia-haiku-live/v1/perguntar', async route => { await route.fulfill({ status: 503, json: {} }) })
       await page.route('**/assistente/perguntar', async route => { legacyCalls++; await route.abort() })
       await page.goto('/regional')
       await page.getByRole('button', { name: /Posso ajudar/ }).click()
@@ -86,7 +89,7 @@ for (const width of [1440, 390]) {
     })
 
     test('ranking regional continua pelos dados carregados quando API falha', async ({ page }) => {
-      await page.route('**/api/flowia-haiku/v1/perguntar', async route => { await route.fulfill({ status: 503, json: {} }) })
+      await page.route('**/api/flowia-haiku-live/v1/perguntar', async route => { await route.fulfill({ status: 503, json: {} }) })
       await page.goto('/regional')
       await page.getByRole('button', { name: /Posso ajudar/ }).click()
       await page.getByLabel('Faça outra pergunta').fill('Quais regiões têm maior IPH nesta competência?')
@@ -95,19 +98,36 @@ for (const width of [1440, 390]) {
       await expect(page.locator('#medflow-assistant-panel')).toContainText('Limite: até 5 regiões')
     })
 
-    test('prazo completo do Select AI termina em 60s e preserva reserva', async ({ page }) => {
-      await page.route('**/api/flowia-haiku/v1/perguntar', async () => {})
+    test('prazo de 5,2s preserva reserva', async ({ page }) => {
+      await page.route('**/api/flowia-haiku-live/v1/perguntar', async () => {})
       await page.goto('/regional')
       await page.getByRole('button', { name: /Posso ajudar/ }).click()
       await page.clock.install()
       await page.getByLabel('Faça outra pergunta').fill('Quais hospitais concentram a pressão?')
       await page.getByRole('button', { name: 'Enviar pergunta' }).click()
-      await page.clock.fastForward(60_001)
+      await page.clock.fastForward(5_201)
       await expect(page.locator('#medflow-assistant-panel')).toContainText('consulta não respondeu')
     })
 
+    test('reserva Oracle mantém o seguimento quando chamada paga demora', async ({ page }) => {
+      await page.route('**/api/flowia-haiku-live/v1/perguntar', async () => {})
+      await page.route('**/api/flowia-haiku-live/v1/reserva', route => route.fulfill({ json: {
+        ...response('ok', 'AME (CNES 6992560): IPH 117,619%.'), intent: 'reserva',
+      } }))
+      await page.goto('/regional')
+      await page.getByRole('button', { name: /Posso ajudar/ }).click()
+      await page.clock.install()
+      await page.getByLabel('Faça outra pergunta').fill('Qual o hospital com maior pressão?')
+      const reserveReady = page.waitForResponse('**/api/flowia-haiku-live/v1/reserva')
+      await page.getByRole('button', { name: 'Enviar pergunta' }).click()
+      await (await reserveReady).finished()
+      await page.clock.fastForward(5_201)
+      await expect(page.locator('#medflow-assistant-panel')).toContainText('CNES 6992560')
+      await expect(page.getByLabel('Faça outra pergunta')).toBeEnabled()
+    })
+
     test('resposta insegura nao mostra SQL', async ({ page }) => {
-      await page.route('**/api/flowia-haiku/v1/perguntar', async route => {
+      await page.route('**/api/flowia-haiku-live/v1/perguntar', async route => {
         await route.fulfill({ json: response('ok', 'SELECT * FROM user_credentials') })
       })
       await page.goto('/regional')
@@ -120,7 +140,7 @@ for (const width of [1440, 390]) {
 
     test('seguimento curto envia pergunta e resposta anteriores como dados', async ({ page }) => {
       const requests: Array<{context: {history: Array<{question: string; answer: string}>}}> = []
-      await page.route('**/api/flowia-haiku/v1/perguntar', async route => {
+      await page.route('**/api/flowia-haiku-live/v1/perguntar', async route => {
         requests.push(route.request().postDataJSON())
         await route.fulfill({ json: response('ok', 'JUNDIAI: IPH 67,1662% na competência 06/2026.') })
       })
