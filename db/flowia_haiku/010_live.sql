@@ -411,9 +411,25 @@ Pressão especialidade=NR_IPE; nulo não permite ranking; benchmark zero impede 
     rewritten.put('rewritten_question',regexp_replace(
       translate(rewritten.get_string('rewritten_question'),'ÁÀÃÂÉÊÍÓÔÕÚÇáàãâéêíóôõúç','AAAAEEIOOOUCaaaaeeiooouc'),
       '(20[0-9]{2})-(0[1-9]|1[0-2])','\1\2'));
-    if ctx.get_string('hospital_cnes') is not null and ctx.get_string('specialty_code') is not null then
-      rewritten.put('rewritten_question',replace(upper(rewritten.get_string('rewritten_question')),
-        upper(translate(ctx.get_string('hospital_name'),'ÁÀÃÂÉÊÍÓÔÕÚÇ','AAAAEEIOOOUC')),'HOSPITAL'));
+    if ctx.get_string('hospital_cnes') is not null then
+      -- O CNES resolvido basta; nomes/alias podem induzir filtros inexistentes.
+      rewritten.put('rewritten_question',regexp_replace(
+        replace(upper(rewritten.get_string('rewritten_question')),
+          upper(translate(ctx.get_string('hospital_name'),'ÁÀÃÂÉÊÍÓÔÕÚÇ','AAAAEEIOOOUC')),'HOSPITAL'),
+        '(^|[^A-Z])HU([^A-Z]|$)','\1HOSPITAL\2'));
+    end if;
+    if regexp_like(ctx.get_string('hospital_cnes'),'^[0-9]{7}$')
+      and regexp_like(ctx.get_string('region_code'),'^[0-9]{5}$')
+      and regexp_like(ctx.get_string('specialty_code'),'^[0-9]{2}$')
+      and regexp_replace(translate(lower(trim(p_question)),'áàãâéêíóôõúç','aaaaeeiooouc'),'[^a-z0-9 ]','')
+        in ('e a '||translate(lower(ctx.get_string('specialty_name')),'áàãâéêíóôõúç','aaaaeeiooouc'),
+            'e '||translate(lower(ctx.get_string('specialty_name')),'áàãâéêíóôõúç','aaaaeeiooouc')) then
+      -- Completar omissões do Haiku com o recorte resolvido; Select AI ainda gera o SQL.
+      rewritten.put('rewritten_question',rewritten.get_string('rewritten_question')||chr(10)||
+        'Obrigatório: uma agregação condicional no MART_INDICADOR_HOSPITAL_ESPECIALIDADE_MENSAL, sem joins, subconsultas ou GROUP BY. '||
+        'WHERE apenas CD_REGIAO_SAUDE='||ctx.get_string('region_code')||', CD_ESPECIALIDADE_SIH='||ctx.get_string('specialty_code')||
+        ', CD_COMPETENCIA='||replace(month_label,'-','')||'. CD_CNES='||ctx.get_string('hospital_cnes')||
+        ' só condiciona soma QT_INTERNACAO_NOVA do hospital, nunca WHERE. Duas colunas: volume_hospital e participacao_percentual=volume/soma regional vezes 100.');
     end if;
     started:=dbms_utility.get_time;
     execute immediate q'!begin :r:=dbms_cloud_ai.generate(prompt=>:p,profile_name=>'MEDFLOW_GENAI',action=>'showsql'); end;!'
