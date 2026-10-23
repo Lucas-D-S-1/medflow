@@ -37,7 +37,8 @@ export async function askFlowiaHaiku(question: string, context: AssistantContext
   callerSignal?.addEventListener('abort', abort, { once: true })
   onProgress?.('Entendendo a pergunta…')
   const progressTimer = window.setTimeout(() => onProgress?.('Consultando o Oracle…'), 2_500)
-  const timer = window.setTimeout(abort, 15_000)
+  const almostTimer = window.setTimeout(() => onProgress?.('Consultando o Oracle… quase lá'), 10_000)
+  const timer = window.setTimeout(abort, 25_000)
   try {
     const payload = JSON.stringify({ question, context: {
         competence: context.competence, region_code: context.region_code, region_name: context.region_name, hospital_cnes: context.hospital_cnes,
@@ -81,6 +82,7 @@ export async function askFlowiaHaiku(question: string, context: AssistantContext
   } finally {
     window.clearTimeout(timer)
     window.clearTimeout(progressTimer)
+    window.clearTimeout(almostTimer)
     callerSignal?.removeEventListener('abort', abort)
   }
 }

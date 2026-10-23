@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect, type Route } from '@playwright/test'
 import { mockLiveSource } from './apoio'
 
 const pilot = process.env.FLOWIA_HAIKU_E2E === '1'
@@ -49,24 +49,31 @@ for (const width of [1440, 390]) {
       expect(received).toBeTruthy()
       expect(Object.keys(received!.context as object).sort()).toEqual(['competence', 'history', 'hospital_cnes', 'region_code', 'region_name', 'specialty_code', 'specialty_name'])
       await expect(page.locator('html')).toHaveJSProperty('scrollWidth', width)
-      await page.screenshot({ path: `/home/lucas/orquestracao/20261023/haiku-ajuste/qa-mock-${width}.png`, fullPage: true })
+      await page.screenshot({ path: `/home/lucas/orquestracao/20261023/haiku-prazo/evidencias/qa-mock-${width}.png`, fullPage: true })
     })
 
-    test('mostra progresso e espera resposta Haiku além de 5,2s', async ({ page }) => {
-      await page.route('**/api/flowia-haiku-live/v1/perguntar', async route => {
-        await new Promise(resolve => setTimeout(resolve, 6_000))
-        await route.fulfill({ json: response('ok', 'IPH da região: 67,2%.') })
-      })
+    test('mostra quase lá aos 10s e aceita Haiku aos 19s', async ({ page }) => {
+      let paidRoute: Route | undefined
+      await page.route('**/api/flowia-haiku-live/v1/perguntar', route => { paidRoute = route })
       await page.route('**/api/flowia-haiku-live/v1/reserva', route => route.fulfill({ json: {
         ...response('ok', 'Resposta de reserva'), intent: 'reserva',
       } }))
       await page.goto('/regional')
       await page.getByRole('button', { name: /Posso ajudar/ }).click()
+      await page.clock.install({ time: new Date('2026-10-23T12:00:00Z') })
+      await page.clock.pauseAt(new Date('2026-10-23T12:00:01Z'))
       await page.getByLabel('Faça outra pergunta').fill('Qual o IPH da região de Jundiaí?')
       await page.getByRole('button', { name: 'Enviar pergunta' }).click()
       const panel = page.locator('#medflow-assistant-panel')
       await expect(panel.getByRole('status')).toContainText('Entendendo a pergunta…')
-      await expect(panel.getByRole('status')).toContainText('Consultando o Oracle…', { timeout: 4_000 })
+      await expect.poll(() => Boolean(paidRoute)).toBe(true)
+      await page.clock.fastForward(2_500)
+      await expect(panel.getByRole('status')).toHaveText('Consultando o Oracle…')
+      await page.clock.fastForward(7_500)
+      await expect(panel.getByRole('status')).toContainText('Consultando o Oracle… quase lá')
+      await page.clock.fastForward(9_000)
+      await expect(panel).not.toContainText('Resposta de reserva')
+      await paidRoute!.fulfill({ json: response('ok', 'IPH da região: 67,2%.') })
       await expect(panel).toContainText('Origem: Haiku → Oracle', { timeout: 8_000 })
       await expect(panel).not.toContainText('Resposta de reserva')
     })
@@ -117,14 +124,15 @@ for (const width of [1440, 390]) {
       await expect(page.locator('#medflow-assistant-panel')).toContainText('Limite: até 5 regiões')
     })
 
-    test('prazo de 15s preserva reserva', async ({ page }) => {
+    test('prazo de 25s encerra chamada pendente', async ({ page }) => {
       await page.route('**/api/flowia-haiku-live/v1/perguntar', async () => {})
       await page.goto('/regional')
       await page.getByRole('button', { name: /Posso ajudar/ }).click()
-      await page.clock.install()
+      await page.clock.install({ time: new Date('2026-10-23T12:00:00Z') })
+      await page.clock.pauseAt(new Date('2026-10-23T12:00:01Z'))
       await page.getByLabel('Faça outra pergunta').fill('Quais hospitais concentram a pressão?')
       await page.getByRole('button', { name: 'Enviar pergunta' }).click()
-      await page.clock.fastForward(15_001)
+      await page.clock.fastForward(25_001)
       await expect(page.locator('#medflow-assistant-panel')).toContainText('consulta não respondeu')
     })
 
@@ -135,12 +143,16 @@ for (const width of [1440, 390]) {
       } }))
       await page.goto('/regional')
       await page.getByRole('button', { name: /Posso ajudar/ }).click()
-      await page.clock.install()
+      await page.clock.install({ time: new Date('2026-10-23T12:00:00Z') })
+      await page.clock.pauseAt(new Date('2026-10-23T12:00:01Z'))
       await page.getByLabel('Faça outra pergunta').fill('Qual o hospital com maior pressão?')
       const reserveReady = page.waitForResponse('**/api/flowia-haiku-live/v1/reserva')
       await page.getByRole('button', { name: 'Enviar pergunta' }).click()
       await (await reserveReady).finished()
-      await page.clock.fastForward(15_001)
+      await page.clock.fastForward(24_999)
+      await expect(page.locator('#medflow-assistant-panel')).not.toContainText('CNES 6992560')
+      await expect(page.locator('#medflow-assistant-panel').getByRole('status')).toContainText('quase lá')
+      await page.clock.fastForward(2)
       await expect(page.locator('#medflow-assistant-panel')).toContainText('CNES 6992560')
       await expect(page.getByLabel('Faça outra pergunta')).toBeEnabled()
     })
