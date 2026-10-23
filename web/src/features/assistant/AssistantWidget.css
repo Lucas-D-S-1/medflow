@@ -250,3 +250,22 @@
   .assistant-panel { animation: none; }
   .assistant-launcher { transition: none; }
 }
+
+.assistant-entry-bubble { width: min(21rem, calc(100vw - 2rem)); padding: 1rem 1.1rem; background: var(--color-surface); border: var(--border-subtle); border-radius: var(--radius-lg) var(--radius-lg) .25rem var(--radius-lg); box-shadow: var(--shadow-panel); }
+.assistant-entry-bubble > div { display: flex; justify-content: space-between; align-items: center; gap: var(--space-2); }
+.assistant-entry-bubble strong { color: var(--color-live-text); font-size: var(--font-size-sm); }
+.assistant-entry-bubble > div > button { min-width: 2.75rem; min-height: 2.75rem; border: none; background: none; color: var(--color-text-muted); cursor: pointer; }
+.assistant-entry-bubble p { margin: var(--space-2) 0 var(--space-3); color: var(--color-heading); line-height: 1.45; }
+.assistant-entry-bubble .assistant-entry-actions { justify-content: start; flex-wrap: wrap; }
+.assistant-entry-bubble .assistant-entry-actions button { min-height: 2.75rem; padding: .6rem .9rem; background: var(--color-surface-soft); border: var(--border-subtle); border-radius: var(--radius-md); color: var(--color-heading); font-size: var(--font-size-sm); font-weight: 600; cursor: pointer; }
+.assistant-entry-bubble .assistant-entry-actions button:first-child { background: var(--color-accent-strong); color: var(--color-surface); }
+@media (min-width: 1001px) { .entry-page { padding-bottom: 10rem; } }
+@media (max-width: 1000px) {
+  .entry-assistant { position: static; padding: 0 1rem 2rem; }
+  .entry-assistant .assistant-entry-bubble { width: min(25rem, 100%); }
+  .entry-assistant .assistant-panel { max-height: 38rem; width: min(30rem, 100%); }
+}
+@media (prefers-reduced-motion: reduce) { .assistant-launcher { transition: none; } .assistant-launcher:hover { transform: none; } }
+
+/* Em fontes, o assistente fica após o conteúdo para não cobrir referências. */
+.sources-assistant { position: static; width: min(74rem, calc(100% - 2rem)); margin: 0 auto; padding: 0 0 var(--space-6); }

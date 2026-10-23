@@ -8,6 +8,7 @@ import '@fontsource/dm-sans/latin-700.css'
 import '@fontsource/manrope/latin-600.css'
 import '@fontsource/manrope/latin-700.css'
 import App from './App'
+import { isEntryLocation, withEntryIntent } from './shared/entryNavigation'
 import './styles/tokens.css'
 import './styles.css'
 import './shared/components.css'
@@ -33,11 +34,19 @@ function rewriteLegacyPath() {
   window.history.replaceState(
     window.history.state,
     '',
-    `${base}/${window.location.search}${anchor}`,
+    `${base}/${withEntryIntent(window.location.search, false)}${anchor}`,
   )
 }
 
 rewriteLegacyPath()
+
+// Registra a intenção antes de SourceProvider acrescentar competência/região.
+// A URL mantém essa intenção ao recarregar e ao restaurar o histórico.
+const basePath = import.meta.env.BASE_URL.replace(/\/$/, '')
+const initialPath = window.location.pathname.slice(basePath.length) || '/'
+if (isEntryLocation({ pathname: initialPath, search: window.location.search, hash: window.location.hash })) {
+  window.history.replaceState(window.history.state, '', `${window.location.pathname}${withEntryIntent(window.location.search, true)}${window.location.hash}`)
+}
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

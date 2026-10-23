@@ -7,7 +7,7 @@ import {
   useState,
   type ReactNode,
 } from 'react'
-import { useLocation, useSearchParams } from 'react-router-dom'
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import {
   fetchMethodology,
   getMethodologySnapshot,
@@ -160,9 +160,10 @@ export function SourceProvider({ children }: { children: ReactNode }) {
   // Endereços fora das duas páginas reais são transitórios: a rede de
   // segurança do roteador ainda vai reescrevê-los. Normalizar a URL nesse
   // intervalo faz a escrita ser desfeita pelo redirecionamento seguinte.
-  const onCanonicalRoute = pathname === '/' || pathname === '/metodologia'
-  const setSearchParamsRef = useRef(setSearchParams)
-  setSearchParamsRef.current = setSearchParams
+  const onCanonicalRoute = pathname === '/' || pathname === '/metodologia' || pathname === '/metodologia/tecnico'
+  const navigate = useNavigate()
+  const snapshotNavigationRef = useRef(navigate)
+  snapshotNavigationRef.current = navigate
   const [sourceState, setSourceState] = useState<SourceState>({ kind: 'loading' })
   const [regionalLoadState, setRegionalLoadState] =
     useState<RegionalLoadState>('idle')
@@ -255,12 +256,14 @@ export function SourceProvider({ children }: { children: ReactNode }) {
       // Snapshot fixtures form one locked publication. Normalize the two
       // shared parameters together so every route and the URL describe the
       // same fallback context, while all local parameters survive.
-      setSearchParamsRef.current((current) => {
-        const next = new URLSearchParams(current)
-        next.set('competencia', regions.data_through)
-        if (fallbackRegion) next.set('regiao', fallbackRegion)
-        return next
-      }, { replace: true })
+      const next = new URLSearchParams(window.location.search)
+      next.set('competencia', regions.data_through)
+      if (fallbackRegion) next.set('regiao', fallbackRegion)
+      // Normalizar o snapshot não pode apagar o destino de um link ou F5.
+      snapshotNavigationRef.current(
+        { search: `?${next}`, hash: window.location.hash },
+        { replace: true },
+      )
       setRegionalLoadState(regions.items.length === 0 ? 'empty' : 'ready')
     }
 

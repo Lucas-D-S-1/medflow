@@ -1,3 +1,5 @@
+import { entryQuestions } from '../../shared/publicNavigation'
+import { isEntryLocation } from '../../shared/entryNavigation'
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import { useLocation } from 'react-router-dom'
 import { useActiveSection } from '../../shared/useActiveSection'
@@ -226,6 +228,9 @@ function AssistantRobot({ compact = false }: { compact?: boolean }) {
 
 export default function AssistantWidget() {
   const location = useLocation()
+  const onEntry = isEntryLocation(location)
+  const [bubbleOpen, setBubbleOpen] = useState(true)
+  const [suggestionIndex, setSuggestionIndex] = useState(0)
   const {
     sourceState,
     sharedCompetence,
@@ -251,11 +256,11 @@ export default function AssistantWidget() {
   // três seções dividem o mesmo endereço.
   const activeSection = useActiveSection(
     ANALYSIS_SECTIONS,
-    location.pathname === '/',
+    location.pathname === '/' && !onEntry,
   )
   const currentRoute: RouteKey = location.pathname.startsWith('/metodologia')
     ? 'metodologia'
-    : isRouteKey(activeSection)
+    : !onEntry && isRouteKey(activeSection)
       ? activeSection
       : 'regional'
   const sourceData =
@@ -1119,7 +1124,15 @@ export default function AssistantWidget() {
   }
 
   return (
-    <aside className="assistant-widget" aria-label="FlowIA, assistente do MedFlow">
+    <aside className={`assistant-widget${onEntry ? ' entry-assistant' : location.pathname === '/metodologia' ? ' sources-assistant' : ''}`} aria-label="FlowIA, assistente do MedFlow">
+      {onEntry && !isOpen && bubbleOpen && <section className="assistant-entry-bubble" aria-label="Sugestão do FlowIA">
+        <div><strong>FlowIA</strong><button type="button" aria-label="Fechar sugestão" onClick={() => setBubbleOpen(false)}>×</button></div>
+        <p>{entryQuestions[suggestionIndex]}</p>
+        <div className="assistant-entry-actions">
+          <button type="button" onClick={() => { setQuestion(entryQuestions[suggestionIndex]); setIsOpen(true) }}>Perguntar</button>
+          <button type="button" onClick={() => setSuggestionIndex((index) => (index + 1) % entryQuestions.length)}>Outra pergunta</button>
+        </div>
+      </section>}
       {isOpen ? (
         <section className="assistant-panel" id="medflow-assistant-panel" aria-live="polite">
           <header className="assistant-header">
@@ -1127,7 +1140,7 @@ export default function AssistantWidget() {
             <div>
               <span className="assistant-eyebrow">FLOWIA · ORACLE SELECT AI</span>
               <h2>Posso ajudar?</h2>
-              <p>Contexto: {routeNames[currentRoute]}</p>
+              <p>Contexto: {onEntry ? 'entrada' : routeNames[currentRoute]}</p>
             </div>
             <button
               className="assistant-close"
@@ -1153,7 +1166,7 @@ export default function AssistantWidget() {
                   type="button"
                   key={suggestion}
                   disabled={!sourceData || isLoading}
-                  onClick={() => void ask(suggestion)}
+                  onClick={() => { if (onEntry) setQuestion(suggestion); else void ask(suggestion) }}
                 >
                   {suggestion}
                 </button>
@@ -1223,7 +1236,7 @@ export default function AssistantWidget() {
           ref={launcherRef}
           className="assistant-launcher"
           type="button"
-          onClick={() => setIsOpen(true)}
+          onClick={() => { if (onEntry && !bubbleOpen) setBubbleOpen(true); else setIsOpen(true) }}
           aria-expanded="false"
           aria-controls="medflow-assistant-panel"
           aria-label="Abrir FlowIA — Posso ajudar?"
