@@ -76,42 +76,41 @@ function Shell() {
             </svg>
             <span>MedFlow</span>
           </Link>
-          {/*
-            O direcionador não troca de tela: ele diz onde você está na mesma
-            investigação e rola até a etapa escolhida.
-          */}
           <nav aria-label="Principal">
+            <Link to={{ pathname: '/', search: withEntryIntent(location.search, true) }} className={onEntry ? 'active' : undefined} aria-current={onEntry ? 'page' : undefined}>Início</Link>
             <Link to={{ pathname: '/', search: withEntryIntent(location.search, false) }} className={onAnalysis ? 'active' : undefined} aria-current={onAnalysis ? 'page' : undefined}>Dados</Link>
             <Link to={routeWithContext('/metodologia')} className={location.pathname.startsWith('/metodologia') ? 'active' : undefined} aria-current={location.pathname.startsWith('/metodologia') ? 'page' : undefined}>Fontes e indicadores</Link>
           </nav>
-          {onAnalysis && <nav className="analysis-nav" aria-label="Etapas da análise">
-            {SECTIONS.map((section) => (
-              <Link
-                key={section.id}
-                to={{ pathname: '/', search: withEntryIntent(location.search, false), hash: `#${section.id}` }}
-                onClick={(event) => {
-                  if (onAnalysis && location.hash === `#${section.id}`) {
-                    event.preventDefault()
-                    requestAnalysisAnchor(section.id)
-                  }
-                }}
-                className={onAnalysis && activeSection === section.id ? 'active' : undefined}
-                aria-current={
-                  onAnalysis && activeSection === section.id ? 'true' : undefined
-                }
-                data-testid={`anchor-${section.id}`}
-              >
-                {section.label}
-                {sectionSuffix[section.id] && (
-                  <small data-testid={`anchor-context-${section.id}`}>
-                    {sectionSuffix[section.id]}
-                  </small>
-                )}
-              </Link>
-            ))}
-          </nav>}
         </header>
       </div>
+
+      {/* Os atalhos e o recorte pertencem à análise, fora do cabeçalho comum. */}
+      {onAnalysis && <nav className="analysis-nav" aria-label="Etapas da análise">
+        {SECTIONS.map((section) => (
+          <Link
+            key={section.id}
+            to={{ pathname: '/', search: withEntryIntent(location.search, false), hash: `#${section.id}` }}
+            onClick={(event) => {
+              if (onAnalysis && location.hash === `#${section.id}`) {
+                event.preventDefault()
+                requestAnalysisAnchor(section.id)
+              }
+            }}
+            className={onAnalysis && activeSection === section.id ? 'active' : undefined}
+            aria-current={
+              onAnalysis && activeSection === section.id ? 'true' : undefined
+            }
+            data-testid={`anchor-${section.id}`}
+          >
+            {section.label}
+            {sectionSuffix[section.id] && (
+              <small data-testid={`anchor-context-${section.id}`}>
+                {sectionSuffix[section.id]}
+              </small>
+            )}
+          </Link>
+        ))}
+      </nav>}
 
       <Routes>
         <Route path="/" element={onEntry ? <InicioView /> : <AnalisePage />} />
