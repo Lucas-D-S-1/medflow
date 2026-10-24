@@ -85,7 +85,7 @@ test('renderiza a competência e a versão do contrato recebidas do Oracle', asy
 
   await page.getByRole('link', { name: 'Fontes e indicadores', exact: true }).click()
   await page.getByRole('link', { name: 'Detalhes técnicos ›' }).click()
-  await expect(page.getByTestId('methodology-data-through')).toContainText(`Gold publicada até ${snapshotCompetenciaBR}`)
+  await expect(page.getByTestId('methodology-data-through')).toContainText(`Base publicada até ${snapshotCompetenciaBR}`)
   await expect(page.getByTestId('coverage-regions')).toHaveText('62')
   await expect(page.getByTestId('coverage-competencies')).toHaveText(
     String(coberturaMetodologia.competencies),
@@ -99,11 +99,10 @@ test('renderiza a competência e a versão do contrato recebidas do Oracle', asy
   await expect(page.getByTestId('coverage-stay-days')).toHaveText(
     pt(coberturaMetodologia.stay_days),
   )
-  await expect(
-    page.getByRole('heading', { name: 'Por que Oracle neste MVP?' }),
-  ).toBeVisible()
-  await expect(page.locator('.database-decision')).toContainText('25 / 25')
+  await page.getByText('Por que Oracle neste MVP?', { exact: true }).click()
+  await expect(page.locator('.decision-details')).toContainText('25 / 25')
   await expect(page.getByTestId('gold-updated-at')).toContainText('2026')
+  await page.getByTestId('formula-cmi').locator('summary').click()
   await expect(page.getByTestId('formula-cmi')).toContainText('fator de correção IPCA')
   await expect(page.getByTestId('formula-iph')).toContainText('Pressão estimada sobre capacidade declarada, não ocupação física real.')
   await expect(page.getByTestId('cut-ipr')).toContainText('20 casos hospital/CID')
@@ -439,19 +438,14 @@ test('mantém a metodologia colapsável', async ({ page }) => {
     page.getByText('permanência média hospital/especialidade', { exact: false }),
   ).toHaveCount(1)
 
-  // Cinco, não seis: reconciliação e limites subiram para blocos visíveis, e
-  // cortes absorveu os estados de ausência, que são o mesmo assunto visto dos
-  // dois lados.
-  const details = page.locator('.methodology-details details')
-  await expect(details).toHaveCount(5)
-  await expect(details.first()).not.toHaveAttribute('open', '')
-  await details.first().locator('summary').click()
-  const detailHeight = await details.first().locator('.detail-scroll').evaluate(
-    (element) =>
-      (element as unknown as { getBoundingClientRect: () => { height: number } })
-        .getBoundingClientRect().height,
-  )
-  expect(detailHeight).toBeLessThanOrEqual(0.45 * 720 + 1)
+  const formulas = page.locator('.technical-formulas > details')
+  await expect(formulas).toHaveCount((methodologySnapshot.formulas as unknown[]).length)
+  await expect(page.getByTestId('formula-iph')).toHaveAttribute('open', '')
+  await expect(page.getByTestId('formula-ipe')).not.toHaveAttribute('open', '')
+  await page.getByTestId('formula-ipe').locator('summary').click()
+  await expect(page.getByTestId('formula-ipe')).toHaveAttribute('open', '')
+  await expect(page.getByTestId('formula-ipe')).toHaveCSS('max-height', 'none')
+
 })
 
 test('a escala do placar usa a rampa inteira, do melhor ao pior do recorte', async ({ page }) => {
@@ -505,7 +499,20 @@ test('hierarquiza a região no painel e preserva os seis sinais recolhidos', asy
   await expect(disclosure).toContainText('Permanência acima dos pares (IPE)')
   await expect(page.getByTestId('state-total-mom').locator('..')).toContainText('maio/2026')
   await expect(page.getByTestId('state-total-yoy').locator('..')).toContainText('junho/2025')
-  await page.getByTestId('regional-map-35073').hover()
+  // SVG paths are irregular: the bounding-box center can belong to another region.
+  await page.evaluate(`document.querySelector('[data-testid="regional-map-35073"]').scrollIntoView({ block: 'center', behavior: 'instant' })`)
+  const point = await page.evaluate<{ x: number; y: number } | null>(`(() => {
+    const path = document.querySelector('[data-testid="regional-map-35073"]')
+    const box = path.getBBox()
+    for (const dx of [.5, .25, .75, .1, .9]) for (const dy of [.5, .25, .75, .1, .9]) {
+      const local = new DOMPoint(box.x + box.width * dx, box.y + box.height * dy)
+      const screen = local.matrixTransform(path.getScreenCTM())
+      if (path.isPointInFill(local) && document.elementFromPoint(screen.x, screen.y) === path) return { x: screen.x, y: screen.y }
+    }
+    return null
+  })()`)
+  expect(point).not.toBeNull()
+  await page.mouse.move(point!.x, point!.y)
   const preview = page.getByTestId('regional-map-tooltip')
   await expect(preview).toContainText('JUNDIAI')
   await expect(preview.getByRole('button')).toHaveCount(0)
@@ -581,6 +588,7 @@ test('a metodologia responde as duas metades do proprio titulo', async ({ page }
   await expect(page.getByTestId('reconciliation-patient_days_cross_mart')).toContainText(
     'diferença: 0',
   )
+  await page.getByText(/Ver os \d+ limites publicados/).click()
   await expect(page.getByTestId('methodology-limits')).toBeVisible()
   await expect(page.getByTestId('methodology-limits')).toContainText('sem ajuste de risco')
 

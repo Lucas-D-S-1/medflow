@@ -1,4 +1,5 @@
 import { Link, Navigate, Route, Routes, useLocation } from 'react-router-dom'
+import { rememberAnalysisReading } from './shared/analysisReturn'
 import { SourceProvider } from './shared/SourceContext'
 import InicioView from './features/inicio/InicioView'
 import TechnicalView from './features/metodologia/TechnicalView'
@@ -57,7 +58,7 @@ function Shell() {
           <nav aria-label="Principal">
             <Link to={{ pathname: '/', search: withEntryIntent(location.search, true) }} className={onEntry ? 'active' : undefined} aria-current={onEntry ? 'page' : undefined}>Início</Link>
             <Link to={{ pathname: '/', search: withEntryIntent(location.search, false) }} className={onAnalysis ? 'active' : undefined} aria-current={onAnalysis ? 'page' : undefined}>Dados</Link>
-            <Link to={routeWithContext('/metodologia')} className={location.pathname.startsWith('/metodologia') ? 'active' : undefined} aria-current={location.pathname.startsWith('/metodologia') ? 'page' : undefined}>Fontes e indicadores</Link>
+            <Link to={routeWithContext('/metodologia')} onClick={() => { if (onAnalysis) rememberAnalysisReading(location) }} className={location.pathname.startsWith('/metodologia') ? 'active' : undefined} aria-current={location.pathname.startsWith('/metodologia') ? 'page' : undefined}>Fontes e indicadores</Link>
           </nav>
         </header>
       </div>

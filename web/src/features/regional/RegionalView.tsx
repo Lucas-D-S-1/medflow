@@ -306,6 +306,7 @@ export default function RegionalView({ onViewHospitals }: RegionalViewProps) {
           </>
         )}
       </div>
+      <div id="regional-flowia" className="analysis-flowia" />
     </section>
   )
 }

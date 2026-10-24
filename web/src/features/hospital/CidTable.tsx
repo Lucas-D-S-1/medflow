@@ -1,12 +1,9 @@
+import { useReadingState } from '../../shared/useReadingState'
 import type { CidItem, CidResponse } from './hospitalCids'
-import {
-  SortableHeader,
-  useSortableRows,
-  type SortableColumn,
-} from '../../shared/useSortableRows'
+import { SortableHeader, useSortableRows, type SortableColumn } from '../../shared/useSortableRows'
 import { formatDecimal, formatInteger, formatPercent } from '../../shared/format'
 
-const PREVIEW_SIZE = 10
+const PREVIEW_SIZE = 5
 
 /** Por que a comparação não é elegível, com o motivo do contrato. */
 const MOTIVO_INELEGIVEL: Record<Exclude<CidItem['sample_status'], 'suficiente'>, string> = {
@@ -51,8 +48,13 @@ export default function CidTable({
     COLUMNS,
     'internacoes',
     (item) => item.cid_code,
+    `cids:${data.filters.cnes}:${data.contract_version}:${eligibleOnly}`,
   )
-  const visibleItems = sorted.slice(0, PREVIEW_SIZE)
+  const [visible, setVisible] = useReadingState(
+    `cids-visible:${data.filters.cnes}:${data.contract_version}:${eligibleOnly}`,
+    PREVIEW_SIZE,
+  )
+  const visibleItems = sorted.slice(0, visible)
 
   return (
     <section className="hospital-panel" aria-labelledby="hospital-cid-title">
@@ -61,9 +63,9 @@ export default function CidTable({
           <p className="section-kicker">DIAGNÓSTICOS E PARES</p>
           <h2 id="hospital-cid-title">Índice de permanência relativa por diagnóstico</h2>
           <p>
-            IPR compara a permanência média do hospital com a dos demais hospitais da
-            região no mesmo diagnóstico, no período agregado. Acima de 1 significa
-            permanência maior que a dos pares; não é medida de qualidade nem de desfecho.
+            IPR compara a permanência média do hospital com a dos demais hospitais da região no
+            mesmo diagnóstico, no período agregado. Acima de 1 significa permanência maior que a dos
+            pares; não é medida de qualidade nem de desfecho.
           </p>
         </div>
         <strong data-testid="cid-count">
@@ -88,7 +90,7 @@ export default function CidTable({
         </span>
       </div>
 
-      <div className="hospital-table-wrap rolagem-interna">
+      <div className="hospital-table-wrap">
         <table
           className="hospital-table hospital-cid-table"
           aria-label="Diagnósticos do hospital por internações novas"
@@ -108,8 +110,7 @@ export default function CidTable({
                 <td data-label="Diagnóstico">
                   <strong>{item.cid_description}</strong>
                   <small>
-                    {item.cid_code} · capítulo {item.chapter_code} ·{' '}
-                    {item.chapter_description}
+                    {item.cid_code} · capítulo {item.chapter_code} · {item.chapter_description}
                   </small>
                 </td>
                 <td data-label="Internações">
@@ -153,7 +154,16 @@ export default function CidTable({
         <p className="cid-truncado" data-testid="cid-truncado">
           Mostrando os {formatInteger(visibleItems.length)} diagnósticos de maior volume de{' '}
           {formatInteger(data.pagination.count)}
-          {eligibleOnly ? ' elegíveis' : ''}. Os demais não são exibidos nesta tela.
+          {eligibleOnly ? ' elegíveis' : ''}.
+          {visible < data.items.length && (
+            <button
+              className="secondary-action"
+              type="button"
+              onClick={() => setVisible((current) => current + PREVIEW_SIZE)}
+            >
+              Ver mais diagnósticos
+            </button>
+          )}
         </p>
       )}
     </section>

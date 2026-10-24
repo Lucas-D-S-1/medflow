@@ -51,6 +51,7 @@ export default function PositionBar({
         <span className="position-median" style={{ left: `${at(distribution.median)}%` }} />
         <span className="position-marker" style={{ left: `${at(value)}%` }} />
       </div>
+      {!showLegend && <small className="position-scale">Escala {format(floor)} a {format(ceiling)}</small>}
       {showLegend && <p className="position-legend">
         <strong>
           {percentile >= 50

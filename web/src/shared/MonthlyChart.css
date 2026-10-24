@@ -1,0 +1,11 @@
+.monthly-chart { min-width: 0; margin-top: var(--space-3); }
+.monthly-chart svg { display: block; width: 100%; overflow: visible; }
+.monthly-chart text { font: 12px var(--font-body); fill: var(--color-text); }
+.monthly-grid { stroke: var(--color-neutral-bg); }
+.monthly-line { fill: none; stroke: var(--color-accent-strong); stroke-width: 3; stroke-linejoin: round; }
+.monthly-hit { fill: transparent; cursor: pointer; }
+.monthly-dot { fill: var(--color-accent-strong); pointer-events: none; }
+.monthly-point:focus { outline: none; }
+.monthly-point:focus .monthly-dot, .monthly-point[aria-pressed='true'] .monthly-dot { fill: var(--color-heading); stroke: var(--color-accent-strong); stroke-width: 3; }
+.monthly-point:focus .monthly-hit { stroke: var(--color-accent-strong); stroke-width: 2; }
+.monthly-readout { min-height: 2.8em; font-size: var(--font-size-sm); color: var(--color-text); }
