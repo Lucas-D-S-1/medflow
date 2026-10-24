@@ -1,6 +1,6 @@
 # Dicionário da camada Gold — MedFlow
 
-Contrato de esquema `0.4.0`, gerado automaticamente em `2026-08-28T14:35:42.675113+00:00`.
+Contrato de esquema `0.5.0`, gerado automaticamente em `2026-10-24T14:55:55.040167+00:00`.
 
 ## Responsabilidade da camada
 
@@ -18,7 +18,7 @@ Pressão estimada, capacidade e volume mensal por hospital.
 
 - Caminho: `data/gold/marts/mart_indicador_hospital_mensal.parquet`
 - Grão: uma linha por hospital e competência
-- Linhas: 19,341
+- Linhas: 20,637
 - Chave lógica: `cd_cnes`, `cd_competencia`
 
 | coluna | tipo | nulos | significado |
@@ -45,23 +45,23 @@ Pressão estimada, capacidade e volume mensal por hospital.
 | `nm_macrorregiao_saude` | `object` | 0 | Nome oficial da macrorregião de saúde. |
 | `cd_tipo_unidade` | `string` | 0 | Código CNES do tipo de unidade. |
 | `nm_tipo_unidade` | `object` | 0 | Descrição do tipo de unidade. |
-| `nr_iph_estimado` | `float64` | 146 | Razão entre pacientes-dia estimados e leitos-dia declarados. |
-| `pc_iph_estimado` | `float64` | 146 | IPH estimado expresso em percentual. |
+| `nr_iph_estimado` | `float64` | 156 | Razão entre pacientes-dia estimados e leitos-dia declarados. |
+| `pc_iph_estimado` | `float64` | 156 | IPH estimado expresso em percentual. |
 | `st_capacidade` | `object` | 0 | Estado da disponibilidade de capacidade SUS para calcular o IPH. |
 | `fl_acima_capacidade_declarada` | `int8` | 0 | Indica IPH estimado superior à capacidade declarada; sinaliza investigação, não ocupação comprovada. |
-| `pc_tmh` | `float64` | 1,049 | Óbitos em internações novas divididos pelas internações novas, em percentual. |
-| `vl_cmi` | `float64` | 1,049 | Valor nominal aprovado nas internações novas dividido pela quantidade de internações novas. |
-| `nr_permanencia_media` | `float64` | 1,049 | Soma dos dias de permanência dividida pela quantidade de internações novas. |
+| `pc_tmh` | `float64` | 1,097 | Óbitos em internações novas divididos pelas internações novas, em percentual. |
+| `vl_cmi` | `float64` | 1,097 | Valor nominal aprovado nas internações novas dividido pela quantidade de internações novas. |
+| `nr_permanencia_media` | `float64` | 1,097 | Soma dos dias de permanência dividida pela quantidade de internações novas. |
 | `st_amostra` | `object` | 0 | Estado da amostra segundo os mínimos definidos no contrato do indicador. |
 | `qt_especialidade_ipe_elegivel` | `int64` | 0 | Quantidade referente a especialidade ipe elegivel. |
-| `nr_ipe_mediana` | `float64` | 4,576 | Valor numérico referente a ipe mediana. |
+| `nr_ipe_mediana` | `float64` | 4,882 | Valor numérico referente a ipe mediana. |
 | `qt_especialidade_ipe_acima_referencia` | `int64` | 0 | Quantidade referente a especialidade ipe acima referencia. |
-| `pc_especialidade_ipe_acima_referencia` | `float64` | 4,576 | Percentual referente a especialidade ipe acima referencia. |
+| `pc_especialidade_ipe_acima_referencia` | `float64` | 4,882 | Percentual referente a especialidade ipe acima referencia. |
 | `nr_indice_ipca` | `Float64` | 0 | Número-índice mensal do IPCA/IBGE, tabela SIDRA 1737, variável 2266. |
 | `nr_fator_correcao_ipca` | `Float64` | 0 | Fator que atualiza o valor nominal da competência para o preço de referência explícito. |
 | `cd_competencia_preco_referencia` | `object` | 0 | Competência AAAAMM para a qual os valores reais foram corrigidos pelo IPCA. |
 | `vl_aprovado_internacao_nova_real_soma` | `Float64` | 0 | Soma dos valores aprovados para internações novas corrigida pelo IPCA para o preço de referência. |
-| `vl_cmi_real` | `float64` | 1,049 | Valor aprovado médio corrigido pelo IPCA para a competência indicada em cd_competencia_preco_referencia. |
+| `vl_cmi_real` | `float64` | 1,097 | Valor aprovado médio corrigido pelo IPCA para a competência indicada em cd_competencia_preco_referencia. |
 
 ## `mart_indicador_hospital_especialidade_mensal`
 
@@ -69,7 +69,7 @@ TMH e CMI por hospital, especialidade e competência.
 
 - Caminho: `data/gold/marts/mart_indicador_hospital_especialidade_mensal.parquet`
 - Grão: uma linha por hospital, especialidade e competência
-- Linhas: 54,328
+- Linhas: 58,017
 - Chave lógica: `cd_cnes`, `cd_especialidade_sih`, `cd_competencia`
 
 | coluna | tipo | nulos | significado |
@@ -96,8 +96,8 @@ TMH e CMI por hospital, especialidade e competência.
 | `qt_internacao_benchmark_especialidade` | `int64` | 0 | Internações novas dos demais hospitais da região na mesma especialidade. |
 | `qt_dia_permanencia_benchmark_especialidade` | `int32` | 0 | Dias de permanência dos demais hospitais da região na mesma especialidade. |
 | `qt_hospital_benchmark_especialidade` | `int64` | 0 | Quantidade de outros hospitais que compõem o benchmark da especialidade. |
-| `nr_permanencia_media_benchmark_especialidade` | `float64` | 2,584 | Permanência média dos demais hospitais da região na mesma especialidade, em dias. |
-| `nr_ipe` | `float64` | 19,587 | Permanência média do hospital na especialidade dividida pela dos demais hospitais da mesma região, na mesma especialidade e competência. |
+| `nr_permanencia_media_benchmark_especialidade` | `float64` | 2,752 | Permanência média dos demais hospitais da região na mesma especialidade, em dias. |
+| `nr_ipe` | `float64` | 20,910 | Permanência média do hospital na especialidade dividida pela dos demais hospitais da mesma região, na mesma especialidade e competência. |
 | `st_amostra_ipe` | `object` | 0 | Elegibilidade do IPE: suficiente, benchmark_zero ou amostra_insuficiente. |
 | `nr_indice_ipca` | `Float64` | 0 | Número-índice mensal do IPCA/IBGE, tabela SIDRA 1737, variável 2266. |
 | `nr_fator_correcao_ipca` | `Float64` | 0 | Fator que atualiza o valor nominal da competência para o preço de referência explícito. |
@@ -111,7 +111,7 @@ Diagnósticos, permanência e benchmark por hospital, especialidade e competênc
 
 - Caminho: `data/gold/marts/mart_indicador_hospital_especialidade_cid_mensal.parquet`
 - Grão: uma linha por hospital, competência, especialidade e CID principal
-- Linhas: 2,495,111
+- Linhas: 2,669,093
 - Chave lógica: `cd_cnes`, `cd_competencia`, `cd_especialidade_sih`, `cd_cid_principal`
 
 | coluna | tipo | nulos | significado |
@@ -134,12 +134,12 @@ Diagnósticos, permanência e benchmark por hospital, especialidade e competênc
 | `qt_dia_permanencia_soma` | `int32` | 0 | Soma de DIAS_PERM apenas das internações novas; permanência observada, não pacientes-dia reconstruídos para o IPH, ocupação ou calendário. |
 | `nr_permanencia_media_hospital` | `float64` | 0 | Soma dos dias de permanência dividida pelas internações novas do hospital no grão. |
 | `pc_internacao_especialidade` | `float64` | 0 | Participação percentual do CID nas internações novas do hospital, na mesma especialidade e competência. |
-| `pc_dia_permanencia_especialidade` | `float64` | 37,770 | Participação percentual do CID nos dias de permanência do hospital, na mesma especialidade e competência; nula quando o total de dias é zero. |
+| `pc_dia_permanencia_especialidade` | `float64` | 40,608 | Participação percentual do CID nos dias de permanência do hospital, na mesma especialidade e competência; nula quando o total de dias é zero. |
 | `qt_internacao_benchmark` | `int64` | 0 | Quantidade de internações no benchmark regional, excluído o hospital avaliado. |
 | `qt_dia_permanencia_benchmark` | `int32` | 0 | Dias de permanência dos demais hospitais no benchmark regional do mesmo grão. |
 | `qt_hospital_benchmark` | `int64` | 0 | Quantidade de outros hospitais que compõem o benchmark. |
-| `nr_permanencia_media_benchmark` | `float64` | 1,179,656 | Dias de permanência divididos pelas internações dos demais hospitais do benchmark. |
-| `nr_ipr` | `float64` | 2,480,440 | Permanência média do hospital/CID dividida pelo benchmark regional que exclui o hospital. |
+| `nr_permanencia_media_benchmark` | `float64` | 1,261,914 | Dias de permanência divididos pelas internações dos demais hospitais do benchmark. |
+| `nr_ipr` | `float64` | 2,653,444 | Permanência média do hospital/CID dividida pelo benchmark regional que exclui o hospital. |
 | `st_amostra` | `object` | 0 | Estado da amostra segundo os mínimos definidos no contrato do indicador. |
 
 ## `mart_indicador_hospital_cid_periodo`
@@ -148,7 +148,7 @@ IPR por hospital e diagnóstico no período completo.
 
 - Caminho: `data/gold/marts/mart_indicador_hospital_cid_periodo.parquet`
 - Grão: uma linha por hospital e CID principal
-- Linhas: 455,054
+- Linhas: 470,978
 - Chave lógica: `cd_cnes`, `cd_cid_principal`
 
 | coluna | tipo | nulos | significado |
@@ -165,11 +165,11 @@ IPR por hospital e diagnóstico no período completo.
 | `qt_internacao_nova` | `int64` | 0 | Quantidade de internações novas, identificadas por AIH normal. |
 | `qt_dia_permanencia_soma` | `int32` | 0 | Soma de DIAS_PERM apenas das internações novas; permanência observada, não pacientes-dia reconstruídos para o IPH, ocupação ou calendário. |
 | `qt_internacao_benchmark` | `int64` | 0 | Quantidade de internações no benchmark regional, excluído o hospital avaliado. |
-| `qt_dia_permanencia_benchmark` | `int32` | 0 | Quantidade referente a dia permanencia benchmark. |
+| `qt_dia_permanencia_benchmark` | `int32` | 0 | Dias de permanência dos demais hospitais no benchmark regional do mesmo grão. |
 | `qt_hospital_benchmark` | `int64` | 0 | Quantidade de outros hospitais que compõem o benchmark. |
-| `nr_permanencia_media_hospital` | `float64` | 0 | Valor numérico referente a permanencia media hospital. |
-| `nr_permanencia_media_benchmark` | `float64` | 95,542 | Valor numérico referente a permanencia media benchmark. |
-| `nr_ipr` | `float64` | 423,602 | Permanência média do hospital/CID dividida pelo benchmark regional que exclui o hospital. |
+| `nr_permanencia_media_hospital` | `float64` | 0 | Soma dos dias de permanência dividida pelas internações novas do hospital no grão. |
+| `nr_permanencia_media_benchmark` | `float64` | 97,078 | Dias de permanência divididos pelas internações dos demais hospitais do benchmark. |
+| `nr_ipr` | `float64` | 437,630 | Permanência média do hospital/CID dividida pelo benchmark regional que exclui o hospital. |
 | `st_amostra` | `object` | 0 | Estado da amostra segundo os mínimos definidos no contrato do indicador. |
 
 ## `mart_indicador_regiao_mensal`
@@ -178,7 +178,7 @@ Indicadores consolidados para mapa e visão executiva regional.
 
 - Caminho: `data/gold/marts/mart_indicador_regiao_mensal.parquet`
 - Grão: uma linha por região de saúde e competência
-- Linhas: 1,860
+- Linhas: 1,984
 - Chave lógica: `cd_regiao_saude`, `cd_competencia`
 
 | coluna | tipo | nulos | significado |
@@ -221,9 +221,9 @@ Indicadores consolidados para mapa e visão executiva regional.
 | `pc_variacao_sazonal` | `float64` | 1,488 | Variação percentual correspondente ao índice de sazonalidade. |
 | `st_indice_sazonalidade` | `object` | 0 | Estado de calculabilidade do índice sazonal. |
 | `qt_hospital_especialidade_ipe_elegivel` | `int64` | 0 | Quantidade referente a hospital especialidade ipe elegivel. |
-| `nr_ipe_mediana` | `float64` | 317 | Valor numérico referente a ipe mediana. |
+| `nr_ipe_mediana` | `float64` | 337 | Valor numérico referente a ipe mediana. |
 | `qt_hospital_especialidade_ipe_acima_referencia` | `int64` | 0 | Quantidade referente a hospital especialidade ipe acima referencia. |
-| `pc_hospital_especialidade_ipe_acima_referencia` | `float64` | 317 | Percentual referente a hospital especialidade ipe acima referencia. |
+| `pc_hospital_especialidade_ipe_acima_referencia` | `float64` | 337 | Percentual referente a hospital especialidade ipe acima referencia. |
 | `nr_indice_ipca` | `Float64` | 0 | Número-índice mensal do IPCA/IBGE, tabela SIDRA 1737, variável 2266. |
 | `nr_fator_correcao_ipca` | `Float64` | 0 | Fator que atualiza o valor nominal da competência para o preço de referência explícito. |
 | `cd_competencia_preco_referencia` | `object` | 0 | Competência AAAAMM para a qual os valores reais foram corrigidos pelo IPCA. |
@@ -259,7 +259,7 @@ Tabela analítica mart_fluxo_assistencial_regiao_mensal.
 
 - Caminho: `data/gold/marts/mart_fluxo_assistencial_regiao_mensal.parquet`
 - Grão: granularidade documentada pelo pipeline produtor
-- Linhas: 31,033
+- Linhas: 33,137
 - Chave lógica: sem unicidade assumida; usar o identificador da fonte e a competência
 
 | coluna | tipo | nulos | significado |
@@ -272,8 +272,8 @@ Tabela analítica mart_fluxo_assistencial_regiao_mensal.
 | `st_fluxo_assistencial` | `object` | 0 | Classificação do fluxo: intrarregional, interregional_sp ou entrada_outro_estado. |
 | `qt_internacao_nova` | `int64` | 0 | Quantidade de internações novas, identificadas por AIH normal. |
 | `nm_origem_residencia` | `object` | 0 | Nome da região de residência ou indicação de residência fora de São Paulo. |
-| `cd_macrorregiao_origem` | `string` | 1,578 | Macrorregião de saúde da residência; nula para residentes fora de SP. |
-| `nm_macrorregiao_origem` | `object` | 1,578 | Nome da macrorregião de residência; nulo para residentes fora de SP. |
+| `cd_macrorregiao_origem` | `string` | 1,688 | Macrorregião de saúde da residência; nula para residentes fora de SP. |
+| `nm_macrorregiao_origem` | `object` | 1,688 | Nome da macrorregião de residência; nulo para residentes fora de SP. |
 | `nm_regiao_saude_atendimento` | `object` | 0 | Nome da região de saúde do hospital que realizou o atendimento. |
 | `cd_macrorregiao_atendimento` | `string` | 0 | Macrorregião de saúde do hospital que realizou o atendimento. |
 | `nm_macrorregiao_atendimento` | `object` | 0 | Nome da macrorregião de saúde do hospital que realizou o atendimento. |
@@ -286,7 +286,7 @@ Tabela analítica mart_icsap_regiao_mensal.
 
 - Caminho: `data/gold/marts/mart_icsap_regiao_mensal.parquet`
 - Grão: granularidade documentada pelo pipeline produtor
-- Linhas: 35,340
+- Linhas: 37,696
 - Chave lógica: sem unicidade assumida; usar o identificador da fonte e a competência
 
 | coluna | tipo | nulos | significado |
