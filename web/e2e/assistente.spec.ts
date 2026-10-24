@@ -195,8 +195,8 @@ test('troca as sugestões junto com a etapa visível', async ({ page }) => {
   await expect(page.locator('.assistant-suggestions button')).toHaveCount(2)
 
   await page.getByRole('link', { name: 'Hospital' }).click()
-  await expect(page.getByRole('button', { name: 'Como interpretar?' })).toBeVisible()
-  await expect(page.getByRole('button', { name: 'O que verificar?' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Como interpretar o IPE?' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'O que é o IPE?' })).toBeVisible()
   await expect(page.locator('.assistant-suggestions button')).toHaveCount(2)
 })
 
@@ -1164,8 +1164,8 @@ test('mantém somente os dois atalhos locais de cada etapa', async ({ page }) =>
   await expect(page.locator('#medflow-assistant-panel')).toContainText(
     'Contexto: visão hospitalar',
   )
-  await expect(suggestions.getByRole('button', { name: 'Como interpretar?' })).toBeVisible()
-  await expect(suggestions.getByRole('button', { name: 'O que verificar?' })).toBeVisible()
+  await expect(suggestions.getByRole('button', { name: 'Como interpretar o IPE?' })).toBeVisible()
+  await expect(suggestions.getByRole('button', { name: 'O que é o IPE?' })).toBeVisible()
   await expect(suggestions.getByRole('button')).toHaveCount(2)
 })
 

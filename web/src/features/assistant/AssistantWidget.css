@@ -292,3 +292,41 @@
  .app-shell:has(.analysis-page) .inline-assistant .assistant-launcher { padding: 6px; }
  .app-shell:has(.analysis-page) .inline-assistant .assistant-launcher .assistant-robot { width: 32px; height: 32px; }
 }
+
+/* Ao abrir, reserva espaço no desktop e mantém o composer dentro da viewport. */
+.app-shell .assistant-widget:has(.assistant-panel) {
+  position: fixed;
+  inset: auto 1rem 1rem auto;
+  z-index: 40;
+  width: 22rem;
+  max-width: calc(100vw - 2rem);
+  margin: 0;
+  padding: 0;
+}
+.assistant-widget .assistant-panel {
+  width: 100%;
+  height: min(43rem, calc(100dvh - 9rem));
+  max-height: calc(100dvh - 9rem);
+}
+.assistant-body { min-height: 0; overscroll-behavior: contain; }
+.analysis-flowia:has(.assistant-panel) { min-height: 0; }
+@media (min-width: 1280px) {
+  .app-shell:has(.assistant-panel) > .page-main {
+    width: min(74rem, calc(100% - 26rem));
+    margin-left: max(1.5rem, calc((100vw - 100rem) / 2));
+    margin-right: 24.5rem;
+  }
+}
+@media (max-width: 560px) {
+  .app-shell .assistant-widget:has(.assistant-panel) {
+    right: .75rem;
+    bottom: .75rem;
+    width: calc(100vw - 1.5rem);
+    max-width: none;
+  }
+  .assistant-widget .assistant-panel {
+    width: 100%;
+    height: min(43rem, calc(100dvh - 9rem));
+    max-height: calc(100dvh - 9rem);
+  }
+}

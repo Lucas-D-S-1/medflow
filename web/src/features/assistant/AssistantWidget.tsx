@@ -332,7 +332,9 @@ export default function AssistantWidget() {
   const currentContextKeyRef = useRef(currentContextKey)
   currentContextKeyRef.current = currentContextKey
 
-  const suggestedQuestions = quickQuestions[currentRoute]
+  const suggestedQuestions = currentRoute === 'hospital' && !activeHospitalSummary
+    ? ['O que é o IPE?', 'Como interpretar o IPE?']
+    : quickQuestions[currentRoute]
 
   const activeHospitalSpecialties = useMemo<HospitalSpecialtyContext | null>(() => {
     const params = new URLSearchParams(location.search)
@@ -354,7 +356,7 @@ export default function AssistantWidget() {
   }, [isOpen, location.pathname, onEntry, isOpen ? null : currentRoute])
 
   useEffect(() => {
-    if (isOpen) window.setTimeout(() => inputRef.current?.focus(), 80)
+    if (isOpen) window.setTimeout(() => inputRef.current?.focus({ preventScroll: true }), 80)
   }, [isOpen])
 
   useEffect(() => {
