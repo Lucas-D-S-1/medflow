@@ -80,7 +80,7 @@ test('atalhos hospitalares sem hospital selecionado oferecem explicação útil'
   await page.goto('/?inicio=0#hospital')
   await page.locator('#hospital').scrollIntoViewIfNeeded()
   await page.getByRole('button', { name: /Abrir FlowIA/ }).click()
-  await page.getByRole('button', { name: 'Como interpretar o IPE?', exact: true }).click()
+  await page.getByRole('button', { name: 'O que é o IPE?', exact: true }).click()
   await expect(page.locator('.assistant-answer').last()).toContainText('Índice de Permanência por Especialidade')
   await expect(page.locator('.assistant-answer').last()).not.toContainText('Selecione um hospital')
   expect(posts).toBe(0)

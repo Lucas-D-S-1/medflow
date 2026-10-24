@@ -333,7 +333,7 @@ export default function AssistantWidget() {
   currentContextKeyRef.current = currentContextKey
 
   const suggestedQuestions = currentRoute === 'hospital' && !activeHospitalSummary
-    ? ['O que é o IPE?', 'Como interpretar o IPE?']
+    ? ['O que é IPH?', 'O que é o IPE?']
     : quickQuestions[currentRoute]
 
   const activeHospitalSpecialties = useMemo<HospitalSpecialtyContext | null>(() => {
