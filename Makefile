@@ -58,6 +58,9 @@ inventario:  ## inventário SHA-256 dos artefatos de dados
 fixtures:  ## regrava os 10 snapshots do webapp a partir da API ao vivo
 	cd web && $(DOTENV_WEB) node scripts/gerar-mocks.ts
 
+fixtures-local:  ## offline: exporta os nove snapshots a partir dos Parquets Gold
+	$(PY) scripts/gerar_fixtures_gold.py $(ARGS)
+
 fixtures-conferir:  ## não escreve; falha se algum snapshot estiver desatualizado
 	cd web && $(DOTENV_WEB) node scripts/gerar-mocks.ts --conferir
 
