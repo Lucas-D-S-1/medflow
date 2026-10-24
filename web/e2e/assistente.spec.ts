@@ -255,8 +255,8 @@ test('envia somente pergunta livre ao Oracle Select AI e mostra SQL auditável',
   await expect(panel).toContainText('FlowIA')
   await expect(panel).toContainText('Pressão e evasão devem ser lidas')
   await expect(panel).toContainText(`Contexto usado: JUNDIAI · ${snapshotCompetenciaBR}`)
-  await panel.getByText('Ver SQL gerado e validado').click()
-  await expect(panel.locator('pre')).toContainText('select nm_regiao_saude')
+  await panel.getByText('Ver query').click()
+  await expect(panel.locator('pre')).toContainText(/SELECT\s+nm_regiao_saude/)
   await expect(panel).toContainText('assistente da análise')
 })
 
@@ -330,7 +330,7 @@ test('executa Q1 e Q2 canônicos no São Vicente com conjunto estruturado e zero
   await expect(first).toContainText('Saúde mental - clínico (87): 50 internações, 328 dias')
   expect(await first.innerText()).toMatch(/Clínica médica[\s\S]*Cirurgia[\s\S]*Saúde mental/)
   await expect(first).toContainText('Ordenação: total de dias de permanência')
-  await expect(first).toContainText('Fonte: dados do MedFlow consultados diretamente, junho/2026')
+  await expect(first).not.toContainText(/Fonte:|comparação descritiva|sem ajuste de risco/i)
 
   await input.fill(Q2_SAO_VICENTE)
   await page.getByRole('button', { name: 'Enviar pergunta' }).click()
@@ -343,9 +343,7 @@ test('executa Q1 e Q2 canônicos no São Vicente com conjunto estruturado e zero
   await expect(followUp).toContainText('Saúde mental - clínico (87)')
   await expect(followUp).toContainText('F609 — Transtorno não especificado da personalidade: 7 internações, 83 dias')
   await expect(followUp).toContainText('Sem outros hospitais neste recorte')
-  await expect(followUp).toContainText(
-    'Fonte: dados do MedFlow consultados diretamente, junho/2026',
-  )
+  await expect(followUp).not.toContainText(/Fonte:|comparação descritiva|sem ajuste de risco/i)
   expect(await followUp.innerText()).toMatch(/Clínica médica[\s\S]*Cirurgia[\s\S]*Saúde mental/)
   expect(diagnosticRankingCalls).toBe(3)
   expect(diagnosticSpecialties).toEqual(['03', '01', '87'])
@@ -1182,7 +1180,7 @@ test('os dois botões do resumo são locais, contextuais e nunca fazem POST', as
   await expect(resumo).toBeVisible()
 
   const perguntas = [
-    ['Como interpretar?', 'comparação é descritiva'],
+    ['Como interpretar?', 'Não indica qualidade do atendimento'],
     ['O que verificar?', 'perfil e gravidade dos casos'],
   ] as const
   for (const [pergunta, resposta] of perguntas) {
