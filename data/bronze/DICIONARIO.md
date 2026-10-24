@@ -1,6 +1,6 @@
 # Dicionário da camada Bronze — MedFlow
 
-Contrato de esquema `0.4.0`, gerado automaticamente em `2026-08-28T12:28:26.367072+00:00`.
+Contrato de esquema `0.5.0`, gerado automaticamente em `2026-10-24T14:51:49.429619+00:00`.
 
 ## Responsabilidade da camada
 
@@ -14,7 +14,7 @@ Registros SIH/RD preservados com linhagem técnica.
 
 - Caminho: `data/bronze/parquet/sih_rd_sp_2024_2026.parquet`
 - Grão: uma linha conforme o registro original da fonte mensal
-- Linhas: 7,284,476
+- Linhas: 7,793,976
 - Chave lógica: sem unicidade assumida; usar o identificador da fonte e a competência
 
 | coluna | tipo | nulos | significado |
@@ -143,7 +143,7 @@ Registros CNES/LT preservados com linhagem técnica.
 
 - Caminho: `data/bronze/parquet/cnes_lt_sp_2024_2026.parquet`
 - Grão: uma linha conforme o registro original da fonte mensal
-- Linhas: 251,457
+- Linhas: 268,107
 - Chave lógica: sem unicidade assumida; usar o identificador da fonte e a competência
 
 | coluna | tipo | nulos | significado |

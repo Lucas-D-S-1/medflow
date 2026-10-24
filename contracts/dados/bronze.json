@@ -1,7 +1,7 @@
 {
   "camada": "bronze",
-  "versao_contrato": "0.4.0",
-  "gerado_em_utc": "2026-08-28T12:28:26.367072+00:00",
+  "versao_contrato": "0.5.0",
+  "gerado_em_utc": "2026-10-24T14:51:49.429619+00:00",
   "principios": [
     "Arquivos de origem são imutáveis e preservados no formato recebido.",
     "DBF é cache técnico intermediário; Parquet é serialização fiel e reproduzível.",
@@ -14,7 +14,7 @@
       "descricao": "Registros SIH/RD preservados com linhagem técnica.",
       "grao": "uma linha conforme o registro original da fonte mensal",
       "chave_primaria_logica": [],
-      "linhas": 7284476,
+      "linhas": 7793976,
       "colunas": [
         {
           "nome": "UF_ZI",
@@ -843,7 +843,7 @@
       "descricao": "Registros CNES/LT preservados com linhagem técnica.",
       "grao": "uma linha conforme o registro original da fonte mensal",
       "chave_primaria_logica": [],
-      "linhas": 251457,
+      "linhas": 268107,
       "colunas": [
         {
           "nome": "CNES",
