@@ -36,6 +36,23 @@ import {
 import { askFlowiaHaiku, HAIKU_PILOT } from '../../lib/api/haiku'
 import './AssistantWidget.css'
 
+function QueryDisclosure({ sql }: { sql: string }) {
+  const [formatted, setFormatted] = useState(sql)
+  useEffect(() => {
+    let active = true
+    void import('sql-formatter').then(({ formatDialect, plsql }) => {
+      if (active) setFormatted(formatDialect(sql, { dialect: plsql, keywordCase: 'upper' }))
+    }).catch(() => { /* Preserve the executed SQL if formatting is unavailable. */ })
+    return () => { active = false }
+  }, [sql])
+  return (
+    <details>
+      <summary>Ver query</summary>
+      <pre><code>{formatted}</code></pre>
+    </details>
+  )
+}
+
 type RouteKey = 'regional' | 'hospital' | 'metodologia'
 type Answer = {
   text: string
@@ -552,14 +569,10 @@ export default function AssistantWidget() {
       ...answer,
       contextLabel: answer.contextLabel ?? contextLabel(requestedSummary),
     }
-    if (sourceState.kind !== 'fallback') return HAIKU_PILOT ? {
-      ...contextualAnswer,
-      text: `${contextualAnswer.text}\nFonte: metodologia e indicadores do MedFlow (SIH/SUS, CNES e IBGE). Competência: ${sharedCompetence || 'ainda não carregada'}. Limite: dados mensais, sem disponibilidade operacional de leitos.`,
-    } : contextualAnswer
-    const competence = sharedCompetence && formatPeriod(sharedCompetence)
+    if (sourceState.kind !== 'fallback') return contextualAnswer
     return {
       ...contextualAnswer,
-      text: `${contextualAnswer.text} Fonte: snapshot de contingência${competence ? ` até ${competence}` : ''}; esta resposta local não consultou o Oracle.`,
+      text: `${contextualAnswer.text} Dados do snapshot de contingência; esta resposta local não consultou o Oracle.`,
     }
   }
 
@@ -578,7 +591,7 @@ export default function AssistantWidget() {
     if (!top.length) return null
     return {
       text: `Regiões com maior IPH estimado nos dados carregados:\n${top.map(item =>
-        `${item.region_name}: ${formatDecimal(item.iph_percent)}%`).join('\n')}\nFonte: SIH/SUS e CNES; Gold MedFlow, ${regions.source === 'snapshot' ? 'snapshot de contingência' : 'consulta Oracle já carregada'}. Competência: ${sharedCompetence}. Limite: até 5 regiões. Base mensal; não informa leitos livres nem ocupação real.`,
+        `${item.region_name}: ${formatDecimal(item.iph_percent)}%`).join('\n')}\nIPH é estimativa, não ocupação em tempo real.`,
       contextLabel: `São Paulo · ${formatPeriod(sharedCompetence)}`,
     }
   }
@@ -657,7 +670,7 @@ export default function AssistantWidget() {
               (item, index) =>
                 `${index + 1}. ${item.name} (${item.code}): ${formatInteger(item.newAdmissions)} internações, ${formatInteger(item.stayDaysTotal)} dias, média ${item.averageStayDays === null ? 'não calculada' : `${formatDecimal(item.averageStayDays)} dias`}; ${specialtyReference(item)}.`,
             )
-            .join('\n')}\nOrdenação: ${ordenarPorDias ? 'total de dias de permanência' : 'volume de internações'}. Referência regional: mesmo mês e especialidade; hospital excluído; comparação sem ajuste de risco. Diferenças são descritivas e não demonstram causa ou qualidade.\nFonte: dados do MedFlow consultados diretamente, ${formatPeriodLong(activeHospitalSpecialties.competence)}.`,
+            .join('\n')}\nOrdenação: ${ordenarPorDias ? 'total de dias de permanência' : 'volume de internações'}. Referência regional: mesmo mês e especialidade; hospital excluído. Não indica qualidade do atendimento.`,
           specialtySet: {
             cnes: activeHospitalSpecialties.cnes,
             competence: activeHospitalSpecialties.competence,
@@ -707,7 +720,7 @@ export default function AssistantWidget() {
                 ? `A permanência local foi ${formatDecimal(summary.averageStayDays)} dias; os demais hospitais não têm permanência registrada para formar a referência.`
                 : `A permanência local foi ${formatDecimal(summary.averageStayDays)} dias, sem referência válida publicada.`
         return {
-          text: `${summary.specialtyName} teve ${formatInteger(summary.newAdmissions)} internações: ${hospitalShare} e ${regionShare}. ${stay} A comparação é descritiva, sem ajuste de risco, e não demonstra causa ou qualidade.`,
+          text: `${summary.specialtyName} teve ${formatInteger(summary.newAdmissions)} internações: ${hospitalShare} e ${regionShare}. ${stay} Não indica qualidade do atendimento.`,
           contextLabel: contextLabel(summary),
         }
       }
@@ -729,7 +742,7 @@ export default function AssistantWidget() {
 
     if (pedidoExplicacao && /(\btmh\b|mortalidade hospitalar)/.test(normalized)) {
       return {
-        text: 'TMH é a Taxa de Mortalidade Hospitalar: óbitos divididos por internações novas, multiplicados por 100. É mortalidade observada, sem ajuste de risco clínico; serve para triagem de variação e não mede causalmente a qualidade do hospital.',
+        text: 'TMH é a Taxa de Mortalidade Hospitalar: óbitos divididos por internações novas, multiplicados por 100. É mortalidade observada; ajuda a identificar variação e não é nota de qualidade do hospital.',
       }
     }
 
@@ -821,7 +834,7 @@ export default function AssistantWidget() {
       (/\bipe\b/.test(normalized) && /acima de 1|ruim|bom|qualidade|como ler/.test(normalized))
     ) {
       return {
-        text: 'IPE é o Índice de Permanência por Especialidade: a permanência média do hospital naquela especialidade dividida pela dos demais hospitais da mesma região, na mesma especialidade e competência, com o próprio hospital fora do benchmark. Acima de 1 é permanência maior que a dos pares. Não é nota de qualidade: compara permanência observada, sem ajuste de risco.',
+        text: 'IPE é o Índice de Permanência por Especialidade: a permanência média do hospital naquela especialidade dividida pela dos demais hospitais da mesma região, na mesma especialidade e competência, com o próprio hospital fora do benchmark. Acima de 1 é permanência maior que a dos pares. Compara permanência observada; não é nota de qualidade.',
       }
     }
 
@@ -865,7 +878,7 @@ export default function AssistantWidget() {
       /(mapa|regiao|significa|quer dizer|como ler|o que e|entender)/.test(normalized)
     ) {
       return {
-        text: 'Não é posição num ranking: é uma contagem. O primeiro número são as comparações hospital-especialidade da região em que a permanência do hospital ficou acima da dos pares na mesma especialidade; o segundo são todas as comparações elegíveis da região naquela competência. "97 de 237" significa que, das 237 comparações possíveis ali, 97 ficaram acima. Quanto maior a proporção, mais frequente é a permanência acima dos pares dentro da própria região — e ela não é medida de qualidade, porque não há ajuste de risco.',
+        text: 'Não é posição num ranking: é uma contagem. O primeiro número são as comparações hospital-especialidade da região em que a permanência do hospital ficou acima da dos pares na mesma especialidade; o segundo são todas as comparações elegíveis da região naquela competência. "97 de 237" significa que, das 237 comparações possíveis ali, 97 ficaram acima. Quanto maior a proporção, mais frequente é a permanência acima dos pares dentro da própria região — e ela não é medida de qualidade.',
       }
     }
 
@@ -880,7 +893,7 @@ export default function AssistantWidget() {
 
     if (/faixa|mediana.*par|quartil|barra de posicao|o que e tipico|percentil/.test(normalized)) {
       return {
-        text: 'A barra sob cada indicador mostra como os pares se distribuem: a área destacada é a metade central do grupo, entre o primeiro e o terceiro quartil, e o traço é a mediana. O ponto é este hospital. Ela responde o que é típico entre semelhantes, não o que é bom: se estar acima é bom ou ruim depende do indicador e do contexto clínico, e essa leitura continua com quem analisa. Não há ajuste de risco.',
+        text: 'A barra sob cada indicador mostra como os pares se distribuem: a área destacada é a metade central do grupo, entre o primeiro e o terceiro quartil, e o traço é a mediana. O ponto é este hospital. Ela responde o que é típico entre semelhantes, não o que é bom: se estar acima é bom ou ruim depende do indicador e do contexto clínico, e essa leitura continua com quem analisa.',
       }
     }
 
@@ -1017,7 +1030,7 @@ export default function AssistantWidget() {
           return
         }
         registrar(cleanQuestion, {
-          text: `${diagnosisRankingText(specialtySet.items, responses)}\nReferência regional: mesmo mês, especialidade e CID; hospital excluído; comparação sem ajuste de risco. Os estados não comparáveis não sustentam causalidade.\nFonte: dados do MedFlow consultados diretamente, ${formatPeriodLong(specialtySet.competence)}.`,
+          text: `${diagnosisRankingText(specialtySet.items, responses)}\nReferência regional: mesmo mês, especialidade e CID; hospital excluído. Não indica qualidade do atendimento.`,
           contextLabel: `${selectedHospitalName ?? specialtySet.cnes} · ${formatInteger(specialtySet.items.length)} especialidades · ${formatPeriod(specialtySet.competence)}`,
           specialtySet,
         })
@@ -1103,7 +1116,6 @@ export default function AssistantWidget() {
       const response = HAIKU_PILOT
         ? await askFlowiaHaiku(cleanQuestion, context, controller.signal, setQueryProgress)
         : await askOracleSelectAi(cleanQuestion, context, undefined, controller.signal)
-      const provenance = 'provenance' in response ? response.provenance : undefined
       if (
         activeRemoteRequest.current !== remoteRequest ||
         currentContextKeyRef.current !== remoteRequest.contextKey
@@ -1111,9 +1123,7 @@ export default function AssistantWidget() {
         return
       }
       registrar(cleanQuestion, {
-        text: response.narrative + ('origin' in response ? `\nOrigem: ${response.origin === 'haiku' ? 'Haiku → Oracle' : 'reserva Oracle'}.` : '') + (provenance
-          ? `\nFonte: ${provenance.dataset}. Competência: ${provenance.competence ?? 'não se aplica'}. Limite: até ${provenance.limit} resultados. ${provenance.limitations}`
-          : ''),
+        text: response.narrative,
         contextLabel: usedContextLabel,
         sql: response.sql,
         warning: response.warning,
@@ -1219,10 +1229,7 @@ export default function AssistantWidget() {
                         <p className="assistant-warning">{turn.answer.warning}</p>
                       )}
                       {turn.answer.sql && (
-                        <details>
-                          <summary>Ver SQL gerado e validado</summary>
-                          <pre>{turn.answer.sql}</pre>
-                        </details>
+                        <QueryDisclosure sql={turn.answer.sql} />
                       )}
                     </article>
                   </div>

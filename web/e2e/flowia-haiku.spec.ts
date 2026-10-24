@@ -31,11 +31,11 @@ for (const width of [1440, 390]) {
       expect(calls).toBe(0)
     })
 
-    test('pergunta livre usa nova rota e mostra fonte mes e limite', async ({ page }) => {
+    test('pergunta livre mostra SQL recolhido e formatado sem rodape', async ({ page }) => {
       let received: Record<string, unknown> | null = null
       await page.route('**/api/flowia-haiku-live/v1/perguntar', async route => {
         received = route.request().postDataJSON()
-        await route.fulfill({ json: response() })
+        await route.fulfill({ json: { ...response(), sql: "SELECT * FROM (SELECT NM_REGIAO_SAUDE, PC_IPH_ESTIMADO FROM MART_INDICADOR_REGIAO_MENSAL WHERE CD_COMPETENCIA = '202606') WHERE ROWNUM<=5" } })
       })
       await page.goto('/regional?regiao=35073')
       await page.getByRole('button', { name: /Posso ajudar/ }).click()
@@ -43,13 +43,16 @@ for (const width of [1440, 390]) {
       await page.getByRole('button', { name: 'Enviar pergunta' }).click()
       const panel = page.locator('#medflow-assistant-panel')
       await expect(panel).toContainText('Regiões ordenadas')
-      await expect(panel).toContainText('Fonte: SIH/SUS e CNES')
-      await expect(panel).toContainText('Competência: 2026-06')
-      await expect(panel).toContainText('Limite: até 5 resultados')
+      await expect(panel).not.toContainText(/Fonte:|Origem:|Comparação descritiva/i)
+      const disclosure = panel.locator('details')
+      await expect(disclosure).not.toHaveAttribute('open', '')
+      await panel.getByText('Ver query', { exact: true }).click()
+      await expect(disclosure.locator('pre')).toContainText('MART_INDICADOR_REGIAO_MENSAL')
+      await expect(disclosure.locator('pre')).toContainText(/SELECT\s*\n/)
       expect(received).toBeTruthy()
       expect(Object.keys(received!.context as object).sort()).toEqual(['competence', 'history', 'hospital_cnes', 'region_code', 'region_name', 'specialty_code', 'specialty_name'])
       await expect(page.locator('html')).toHaveJSProperty('scrollWidth', width)
-      await page.screenshot({ path: `/home/lucas/orquestracao/20261023/haiku-prazo/evidencias/qa-mock-${width}.png`, fullPage: true })
+
     })
 
     test('mostra quase lá aos 10s e aceita Haiku aos 19s', async ({ page }) => {
@@ -74,7 +77,8 @@ for (const width of [1440, 390]) {
       await page.clock.fastForward(9_000)
       await expect(panel).not.toContainText('Resposta de reserva')
       await paidRoute!.fulfill({ json: response('ok', 'IPH da região: 67,2%.') })
-      await expect(panel).toContainText('Origem: Haiku → Oracle', { timeout: 8_000 })
+      await expect(panel).toContainText('IPH da região: 67,2%.', { timeout: 8_000 })
+      await expect(panel).not.toContainText('Origem:')
       await expect(panel).not.toContainText('Resposta de reserva')
     })
 
@@ -121,7 +125,7 @@ for (const width of [1440, 390]) {
       await page.getByLabel('Faça outra pergunta').fill('Quais regiões têm maior IPH nesta competência?')
       await page.getByRole('button', { name: 'Enviar pergunta' }).click()
       await expect(page.locator('#medflow-assistant-panel')).toContainText('Regiões com maior IPH estimado nos dados carregados')
-      await expect(page.locator('#medflow-assistant-panel')).toContainText('Limite: até 5 regiões')
+      await expect(page.locator('#medflow-assistant-panel')).not.toContainText('Fonte:')
     })
 
     test('prazo de 25s encerra chamada pendente', async ({ page }) => {
