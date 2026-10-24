@@ -1,6 +1,6 @@
 # Dicionário da camada Bronze — MedFlow
 
-Contrato de esquema `0.5.0`, gerado automaticamente em `2026-10-24T14:51:49.429619+00:00`.
+Contrato de esquema `0.5.0`, gerado automaticamente em `2026-10-24T15:00:26.047565+00:00`.
 
 ## Responsabilidade da camada
 
@@ -232,7 +232,7 @@ Página oficial da CONCLA usada para natureza jurídica.
 
 ### `cnes_estabelecimentos_atuais`
 
-Respostas atuais da API CNES para os hospitais observados.
+Cadastros atuais CNES: API e fichas oficiais identificadas por registro no cache.
 
 - Caminho: `data/bronze/origem/referencias/ms_cnes_estabelecimentos_atuais_raw.json`
 - Fonte: https://apidadosabertos.saude.gov.br/cnes/estabelecimentos/{cnes}
