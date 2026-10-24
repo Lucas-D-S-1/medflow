@@ -1,6 +1,7 @@
 import { Link, useLocation } from 'react-router-dom'
 import { withEntryIntent } from '../../shared/entryNavigation'
 import { sourceSections } from '../../shared/publicNavigation'
+import EntryVideo from './EntryVideo'
 import './InicioView.css'
 
 const steps = [
@@ -18,23 +19,24 @@ export default function InicioView() {
           <span className="entry-kicker">Inteligência em saúde pública · São Paulo</span>
           <h1 id="entry-title">Muitos dados públicos. Um caminho claro até o problema.</h1>
           <p>O MedFlow ajuda o gestor de saúde a descobrir onde a rede está sob pressão, entender o porquê e decidir para onde olhar primeiro.</p>
-          <div className="entry-actions">
-            <Link className="entry-cta primary" to={{ pathname: '/', search: withEntryIntent(search, false) }}>Explorar os dados <span aria-hidden="true">→</span></Link>
-            <Link className="entry-cta" to={{ pathname: '/metodologia', search }}>Ver fontes e indicadores</Link>
-          </div>
         </div>
-        <section className="entry-journey" aria-labelledby="journey-title">
-          <div className="entry-track" aria-hidden="true"><span /></div>
-          <div>
-            <h2 id="journey-title">Como a investigação anda</h2>
-            <ol>
-              {steps.map((step) => <li key={step.title} className="entry-step">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d={step.path} /></svg>
-                <div><h3>{step.title}</h3><p>{step.text}</p></div>
-              </li>)}
-            </ol>
-          </div>
-        </section>
+        <EntryVideo />
+        <div className="entry-actions">
+          <Link className="entry-cta primary" to={{ pathname: '/', search: withEntryIntent(search, false) }}>Explorar os dados <span aria-hidden="true">→</span></Link>
+          <Link className="entry-cta" to={{ pathname: '/metodologia', search }}>Ver fontes e indicadores</Link>
+        </div>
+      </section>
+      <section className="entry-journey" aria-labelledby="journey-title">
+        <div className="entry-track" aria-hidden="true"><span /></div>
+        <div>
+          <h2 id="journey-title">Como a investigação anda</h2>
+          <ol>
+            {steps.map((step) => <li key={step.title} className="entry-step">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d={step.path} /></svg>
+              <div><h3>{step.title}</h3><p>{step.text}</p></div>
+            </li>)}
+          </ol>
+        </div>
       </section>
       <section className="entry-faq" aria-labelledby="faq-title">
         <h2 id="faq-title">Perguntas frequentes</h2>
