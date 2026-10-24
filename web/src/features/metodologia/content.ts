@@ -27,7 +27,7 @@ export const sources = [
   [
     "Inflação — IPCA",
     "IBGE / SIDRA",
-    "Correção dos valores aprovados para permitir a leitura em preços de junho de 2026.",
+    "Correção dos valores aprovados para permitir a leitura em preços da competência de referência IPCA indicada na metodologia.",
     "[Tabela oficial do IPCA](https://sidra.ibge.gov.br/tabela/1737)"
   ],
   [
@@ -41,7 +41,7 @@ export const sources = [
 export const periods = [
   [
     "Internações e leitos SUS",
-    "Dados organizados por mês, de janeiro de 2024 a junho de 2026."
+    "Dados organizados por mês, de janeiro de 2024 até a competência indicada nos metadados."
   ],
   [
     "População usada nas taxas",
@@ -53,7 +53,7 @@ export const periods = [
   ],
   [
     "Valores corrigidos pela inflação",
-    "Preços de junho de 2026."
+    "Competência de referência IPCA indicada nos metadados."
   ]
 ]
 
@@ -85,7 +85,7 @@ export const indicators = [
   ],
   [
     "Valor aprovado por internação — CMI",
-    "Divide o valor aprovado no SIH pelas internações novas; a correção aplica o IPCA para expressar o resultado em preços de junho de 2026.",
+    "Divide o valor aprovado no SIH pelas internações novas; a correção aplica o IPCA para expressar o resultado em preços da competência de referência IPCA indicada na metodologia.",
     "Não é o custo contábil completo da internação."
   ],
   [

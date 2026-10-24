@@ -18,7 +18,9 @@ benchmark e limitação em cada tela. A decisão e a ação continuam com as equ
 locais.
 
 Recorte solicitado: Estado de São Paulo, competências de 2024 a 2026. Recorte
-disponível e validado: **2024-01 a 2026-06 (30 meses)**.
+alvo desta branch: **2024-01 a 2026-08 (32 meses)**. A preparação é local;
+Oracle e site publicado continuam no recorte anterior até liberação e reconciliação.
+Confira `data/gold/qualidade/METADADOS.json` para a cobertura materializada.
 
 ## Os três formatos de dado, e o papel de cada um
 
@@ -377,8 +379,14 @@ automaticamente as competências comuns novas de SIH/RD e CNES/LT.
 outro, use o ambiente:
 
 ```bash
-MEDFLOW_PERIODO_FINAL=2026-07 make bronze silver gold
+MEDFLOW_PERIODO_FINAL=2026-08 make bronze silver gold
 ```
+
+Para preparar snapshots sem Oracle, use `make fixtures-local`. O comando lê
+os Parquets Gold e valida os envelopes contra o OpenAPI, com origem `snapshot`.
+Para reconstruir DBCs sem baixar referências HTTP, use
+`medflow bronze --sobrescrever --referencias-cache`. Essa opção exige todas as
+referências no cache; a Gold exige IPCA para todos os meses, sem imputação.
 
 Os notebooks em `notebooks/` continuam sendo a leitura narrada do pipeline,
 mas não são mais o motor.

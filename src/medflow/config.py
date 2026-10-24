@@ -4,7 +4,7 @@ Tudo que antes estava fixo em célula de notebook ou constante de módulo passa
 por aqui e aceita variável de ambiente. O objetivo é concreto: rodar outra
 competência sem editar uma linha de código.
 
-    MEDFLOW_PERIODO_FINAL=2026-06 medflow bronze
+    MEDFLOW_PERIODO_FINAL=2026-08 medflow bronze
 
 Variáveis reconhecidas, todas opcionais:
 
@@ -13,7 +13,7 @@ Variáveis reconhecidas, todas opcionais:
 | `MEDFLOW_BASE` | raiz do repositório | onde ficam `data/` e `contracts/` |
 | `MEDFLOW_UF` | `SP` | a unidade da Federação do recorte |
 | `MEDFLOW_PERIODO_INICIAL` | `2024-01` | primeira competência |
-| `MEDFLOW_PERIODO_FINAL` | `2026-05` | última competência aceita |
+| `MEDFLOW_PERIODO_FINAL` | `2026-08` | última competência aceita |
 | `MEDFLOW_LOG_NIVEL` | `INFO` | verbosidade |
 | `MEDFLOW_LOG_FORMATO` | `texto` | `texto` ou `json` |
 """
@@ -30,13 +30,9 @@ from pathlib import Path
 
 PADRAO_COMPETENCIA = re.compile(r"^(\d{4})-(\d{2})$")
 
-# Última competência do recorte oficial, avançada para 2026-06 na fatia 5b e
-# reconciliada ponta a ponta: Silver, Gold, carga do Oracle e 36/36 no banco.
-# O padrão precisa acompanhar o recorte entregue — um clone limpo que rode
-# `make bronze silver gold` tem de reproduzir os números publicados, não os da
-# revisão anterior.
+# Recorte da preparação local. Carga Oracle e publicação exigem liberação separada.
 PERIODO_INICIAL_PADRAO = "2024-01"
-PERIODO_FINAL_PADRAO = "2026-06"
+PERIODO_FINAL_PADRAO = "2026-08"
 UF_PADRAO = "SP"
 
 

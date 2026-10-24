@@ -243,7 +243,7 @@ create table mart_indicador_hospital_mensal (
 );
 
 comment on table mart_indicador_hospital_mensal is
-  'Fato mensal por hospital: pressao estimada sobre a capacidade declarada (IPH), taxa de mortalidade hospitalar (TMH) e custo medio por internacao (CMI). Uma linha por CNES e competencia, 2024-01 a 2026-06. Para leituras anuais, agregue as competencias antes de ranquear: ordenar as linhas mensais direto responde qual mes foi extremo, nao qual hospital. IPH e pressao estimada contra capacidade declarada no CNES, nunca ocupacao real de leito, taxa de ocupacao ou leitos ocupados.';
+  'Fato mensal por hospital: pressao estimada sobre a capacidade declarada (IPH), taxa de mortalidade hospitalar (TMH) e custo medio por internacao (CMI). Uma linha por CNES e competencia, 2024-01 a 2026-08. Para leituras anuais, agregue as competencias antes de ranquear: ordenar as linhas mensais direto responde qual mes foi extremo, nao qual hospital. IPH e pressao estimada contra capacidade declarada no CNES, nunca ocupacao real de leito, taxa de ocupacao ou leitos ocupados.';
 comment on column mart_indicador_hospital_mensal.cd_cnes is 'Codigo de sete digitos do estabelecimento no CNES.';
 comment on column mart_indicador_hospital_mensal.nr_ano_competencia is 'Ano da competencia de processamento.';
 comment on column mart_indicador_hospital_mensal.nr_mes_competencia is 'Componente de mes (1 a 12), nao ordena competencias entre anos. Nunca use MAX desta coluna para achar o dado mais recente; use MAX(CD_COMPETENCIA).';
@@ -548,7 +548,7 @@ create table mart_indicador_regiao_mensal (
 );
 
 comment on table mart_indicador_regiao_mensal is
-  'Visao executiva mensal por regiao, uma linha por regiao e competencia, 2024-01 a 2026-06. Medidas de oferta usam o hospital; medidas populacionais usam residencia. O recorte observa hospitais de SP e nao enxerga residentes paulistas internados fora do estado, nem qualquer outra UF. Para leituras anuais, agregue as competencias antes de ranquear. Esta base nao mede ocupacao de leito: se a pergunta pedir taxa de ocupacao, responda com o IPH e diga que e pressao estimada sobre capacidade SUS declarada. Nao ha dado em tempo real; a menor granularidade temporal e a competencia mensal.';
+  'Visao executiva mensal por regiao, uma linha por regiao e competencia, 2024-01 a 2026-08. Medidas de oferta usam o hospital; medidas populacionais usam residencia. O recorte observa hospitais de SP e nao enxerga residentes paulistas internados fora do estado, nem qualquer outra UF. Para leituras anuais, agregue as competencias antes de ranquear. Esta base nao mede ocupacao de leito: se a pergunta pedir taxa de ocupacao, responda com o IPH e diga que e pressao estimada sobre capacidade SUS declarada. Nao ha dado em tempo real; a menor granularidade temporal e a competencia mensal.';
 comment on column mart_indicador_regiao_mensal.cd_regiao_saude is 'Codigo oficial de cinco digitos da regiao de saude.';
 comment on column mart_indicador_regiao_mensal.nm_regiao_saude is 'Nome oficial da regiao de saude.';
 comment on column mart_indicador_regiao_mensal.cd_macrorregiao_saude is 'Codigo oficial da macrorregiao de saude.';

@@ -38,7 +38,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 from medflow.contratos import VERSAO_CONTRATO  # noqa: E402
 
 CONTRATO_ESPERADO = VERSAO_CONTRATO
-COMPETENCIA_ESPERADA = "2026-06"
+COMPETENCIA_ESPERADA = "2026-08"
 REGIOES_ESPERADAS = 62
 
 TEMPO_LIMITE = 30
@@ -122,11 +122,11 @@ class Preflight:
     def endpoints(self) -> None:
         # Um por visão, mais os que a demonstração costuma abrir.
         casos = [
-            ("Visão regional", "/regioes/resumo?ano=2026&mes=6&limit=1"),
+            ("Visão regional", "/regioes/resumo?ano=2026&mes=8&limit=1"),
             ("Série regional", "/regioes/35163/serie?limit=1"),
-            ("Fluxos", "/fluxos?ano=2026&mes=6&origem=35163&limit=1"),
-            ("ICSAP", "/icsap?ano=2026&mes=6&regiao=35163&limit=1"),
-            ("Hospitais", "/hospitais?ano=2026&mes=6&regiao=35163&limit=1"),
+            ("Fluxos", "/fluxos?ano=2026&mes=8&origem=35163&limit=1"),
+            ("ICSAP", "/icsap?ano=2026&mes=8&regiao=35163&limit=1"),
+            ("Hospitais", "/hospitais?ano=2026&mes=8&regiao=35163&limit=1"),
             ("Metodologia", "/metodologia"),
         ]
         for nome, caminho in casos:
@@ -140,14 +140,14 @@ class Preflight:
             )
 
     def volumetria(self) -> None:
-        codigo, corpo = self.buscar("/regioes/resumo?ano=2026&mes=6&limit=1")
+        codigo, corpo = self.buscar("/regioes/resumo?ano=2026&mes=8&limit=1")
         if codigo != 200 or not corpo:
             return
         total = corpo.get("pagination", {}).get("count")
         self.registrar(
             "As 62 regiões estão lá",
             total == REGIOES_ESPERADAS,
-            f"{total} região(ões) em 2026-06",
+            f"{total} região(ões) em {COMPETENCIA_ESPERADA}",
             "A carga não está completa.",
         )
 

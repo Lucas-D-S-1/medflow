@@ -2,11 +2,10 @@
 -- MedFlow — reconciliação da Gold carregada no Autonomous AI Lakehouse
 -- Conecte como MEDFLOW, depois de rodar carregar_gold.py.
 --
--- Os valores esperados vêm dos contratos versionados em contracts/dados e do
--- metadado seletivo do mart aditivo da migração 07. Toda linha deve sair
--- como "ok". Qualquer
--- DIVERGENTE significa que a carga não reproduz o gate técnico aprovado e o
--- dashboard não deve ser construído sobre essa base.
+-- Invariantes independentes de competencia: totais cruzados entre marts,
+-- cobertura dos estados e grade mensal. Nao substituem a comparacao da carga
+-- com os Parquets de origem (carregar_gold.py --conferir e reconciliacao).
+-- Toda linha deve sair como "ok"; DIVERGENTE exige investigar antes de publicar.
 -- =====================================================================
 
 set pagesize 200
@@ -17,214 +16,122 @@ column obtido        format 999g999g999
 column estado        format a12
 
 with conferencia (ordem, metrica, esperado, obtido) as (
-
-  -- Contagem de linhas por tabela
-  select 1, 'linhas dim_geografia_regiao', 62,
+  select 1, 'regioes oficiais',
+         62,
          (select count(*) from dim_geografia_regiao) from dual
   union all
-  select 2, 'linhas dim_geografia_municipio', 645,
+  select 2, 'municipios oficiais',
+         645,
          (select count(*) from dim_geografia_municipio) from dual
   union all
-  select 3, 'linhas dim_territorio_municipal', 96,
+  select 3, 'distritos municipais',
+         96,
          (select count(*) from dim_territorio_municipal) from dual
   union all
-  select 4, 'linhas dim_hospital_territorio_atual', 107,
-         (select count(*) from dim_hospital_territorio_atual) from dual
+  select 4, 'grupos ICSAP',
+         19,
+         (select count(distinct cd_grupo_icsap) from mart_icsap_regiao_mensal) from dual
   union all
-  select 5, 'linhas dim_hospital_alias', 2,
-         (select count(*) from dim_hospital_alias) from dual
-  union all
-  select 6, 'linhas mart_indicador_hospital_mensal', 19341,
-         (select count(*) from mart_indicador_hospital_mensal) from dual
-  union all
-  select 7, 'linhas mart_indicador_hospital_especialidade_mensal', 54328,
-         (select count(*) from mart_indicador_hospital_especialidade_mensal) from dual
-  union all
-  select 8, 'linhas mart_indicador_hospital_cid_periodo', 455054,
-         (select count(*) from mart_indicador_hospital_cid_periodo) from dual
-  union all
-  select 9, 'linhas mart_indicador_regiao_mensal', 1860,
+  select 5, 'grade regional mensal',
+         62 * (select count(distinct cd_competencia) from mart_indicador_hospital_mensal),
          (select count(*) from mart_indicador_regiao_mensal) from dual
   union all
-  select 10, 'linhas mart_indicador_regiao_periodo', 62,
-         (select count(*) from mart_indicador_regiao_periodo) from dual
-
-  -- Reconciliação do total de internações novas: os quatro marts partem do
-  -- mesmo fato e têm de fechar no mesmo número.
-  union all
-  select 11, 'internacoes novas em hospital_mensal', 7150693,
-         (select sum(qt_internacao_nova) from mart_indicador_hospital_mensal) from dual
-  union all
-  select 12, 'internacoes novas em especialidade_mensal', 7150693,
-         (select sum(qt_internacao_nova) from mart_indicador_hospital_especialidade_mensal) from dual
-  union all
-  select 13, 'internacoes novas em hospital_cid_periodo', 7150693,
-         (select sum(qt_internacao_nova) from mart_indicador_hospital_cid_periodo) from dual
-  union all
-  select 14, 'internacoes novas em regiao_mensal', 7150693,
-         (select sum(qt_internacao_nova) from mart_indicador_regiao_mensal) from dual
-  union all
-  select 15, 'internacoes novas em regiao_periodo', 7150693,
-         (select sum(qt_internacao_nova) from mart_indicador_regiao_periodo) from dual
-
-  -- Métricas do gate técnico
-  union all
-  select 16, 'pacientes-dia estimados', 33593969,
-         (select sum(qt_paciente_dia_estimado) from mart_indicador_hospital_mensal) from dual
-  union all
-  select 17, 'hospitais-mes acima da capacidade declarada', 511,
-         (select sum(fl_acima_capacidade_declarada) from mart_indicador_hospital_mensal) from dual
-  union all
-  select 18, 'hospitais-mes sem leito SUS declarado', 146,
-         (select count(*) from mart_indicador_hospital_mensal
-          where st_capacidade = 'sem_leito_sus_declarado') from dual
-  union all
-  select 19, 'IPH nulo por ausencia de leito SUS declarado', 146,
-         (select count(*) from mart_indicador_hospital_mensal
-          where nr_iph_estimado is null) from dual
-  union all
-  select 20, 'combinacoes IPR elegiveis', 31452,
-         (select count(*) from mart_indicador_hospital_cid_periodo
-          where nr_ipr is not null) from dual
-  union all
-  select 21, 'combinacoes IPR com amostra suficiente', 31452,
-         (select count(*) from mart_indicador_hospital_cid_periodo
-          where st_amostra = 'suficiente') from dual
-  union all
-  select 22, 'linhas TMH/CMI com amostra suficiente', 37257,
-         (select count(*) from mart_indicador_hospital_especialidade_mensal
-          where st_amostra = 'suficiente') from dual
-  union all
-  select 23, 'linhas de IS calculadas', 372,
-         (select count(*) from mart_indicador_regiao_mensal
-          where nr_indice_sazonalidade is not null) from dual
-  union all
-  select 24, 'linhas de IS com estado calculado', 372,
-         (select count(*) from mart_indicador_regiao_mensal
-          where st_indice_sazonalidade = 'calculado') from dual
-
-  -- Cardinalidades do recorte
-  union all
-  select 25, 'competencias distintas', 30,
+  select 6, 'competencias contiguas',
+         (select months_between(to_date(max(cd_competencia),'YYYYMM'),to_date(min(cd_competencia),'YYYYMM')) + 1 from mart_indicador_hospital_mensal),
          (select count(distinct cd_competencia) from mart_indicador_hospital_mensal) from dual
   union all
-  select 26, 'hospitais distintos', 655,
-         (select count(distinct cd_cnes) from mart_indicador_hospital_mensal) from dual
+  select 7, 'internacoes reconciliadas mart_indicador_hospital_especialidade_mensal',
+         (select sum(qt_internacao_nova) from mart_indicador_hospital_mensal),
+         (select sum(qt_internacao_nova) from mart_indicador_hospital_especialidade_mensal) from dual
   union all
-  select 27, 'regioes de saude distintas', 62,
-         (select count(distinct cd_regiao_saude) from mart_indicador_regiao_mensal) from dual
+  select 8, 'internacoes reconciliadas mart_indicador_hospital_cid_periodo',
+         (select sum(qt_internacao_nova) from mart_indicador_hospital_mensal),
+         (select sum(qt_internacao_nova) from mart_indicador_hospital_cid_periodo) from dual
   union all
-  select 28, 'municipios na dimensao de geografia', 645,
-         (select count(distinct cd_municipio_ibge_7) from dim_geografia_municipio) from dual
-
-  -- Novos produtos territoriais do contrato 0.3.0
+  select 9, 'internacoes reconciliadas mart_indicador_regiao_mensal',
+         (select sum(qt_internacao_nova) from mart_indicador_hospital_mensal),
+         (select sum(qt_internacao_nova) from mart_indicador_regiao_mensal) from dual
   union all
-  select 29, 'linhas mart_fluxo_assistencial_regiao_mensal', 31033,
-         (select count(*) from mart_fluxo_assistencial_regiao_mensal) from dual
+  select 10, 'internacoes reconciliadas mart_indicador_regiao_periodo',
+         (select sum(qt_internacao_nova) from mart_indicador_hospital_mensal),
+         (select sum(qt_internacao_nova) from mart_indicador_regiao_periodo) from dual
   union all
-  select 30, 'linhas mart_icsap_regiao_mensal', 35340,
-         (select count(*) from mart_icsap_regiao_mensal) from dual
-  union all
-  select 31, 'internacoes novas no fluxo origem-destino', 7150693,
+  select 11, 'internacoes reconciliadas mart_fluxo_assistencial_regiao_mensal',
+         (select sum(qt_internacao_nova) from mart_indicador_hospital_mensal),
          (select sum(qt_internacao_nova) from mart_fluxo_assistencial_regiao_mensal) from dual
   union all
-  select 32, 'internacoes de residentes SP observadas', 7089959,
-         (select sum(qt_internacao_residente_observada) from mart_indicador_regiao_mensal) from dual
+  select 12, 'internacoes reconciliadas mart_indicador_hospital_especialidade_cid_mensal',
+         (select sum(qt_internacao_nova) from mart_indicador_hospital_mensal),
+         (select sum(qt_internacao_nova) from mart_indicador_hospital_especialidade_cid_mensal) from dual
   union all
-  select 33, 'residentes fora de SP atendidos', 60734,
-         (select sum(qt_internacao_recebida_fora_sp) from mart_indicador_regiao_mensal) from dual
+  select 13, 'qt_paciente_dia_estimado hospital/regiao',
+         (select sum(qt_paciente_dia_estimado) from mart_indicador_hospital_mensal),
+         (select sum(qt_paciente_dia_estimado) from mart_indicador_regiao_mensal) from dual
   union all
-  select 34, 'ICSAP no resumo regional', 988453,
-         (select sum(qt_internacao_icsap_residente_observada) from mart_indicador_regiao_mensal) from dual
+  select 14, 'qt_dia_permanencia_soma hospital/regiao',
+         (select sum(qt_dia_permanencia_soma) from mart_indicador_hospital_mensal),
+         (select sum(qt_dia_permanencia_soma) from mart_indicador_regiao_mensal) from dual
   union all
-  select 35, 'ICSAP no detalhamento por grupo', 988453,
+  select 15, 'ICSAP resumo/grupos',
+         (select sum(qt_internacao_icsap_residente_observada) from mart_indicador_regiao_mensal),
          (select sum(qt_internacao_icsap) from mart_icsap_regiao_mensal) from dual
   union all
-  select 36, 'evasao intrastadual observada', 939143,
-         (select sum(qt_evasao_intrastadual_observada) from mart_indicador_regiao_mensal) from dual
-  union all
-  select 37, 'atracao entre regioes de SP', 939143,
+  select 16, 'fluxo interregional',
+         (select sum(qt_evasao_intrastadual_observada) from mart_indicador_regiao_mensal),
          (select sum(qt_internacao_recebida_outra_regiao_sp) from mart_indicador_regiao_mensal) from dual
   union all
-  select 38, 'competencia do preco de referencia IPCA', 202606,
+  select 17, 'residencia e oferta',
+         (select sum(qt_internacao_nova) from mart_indicador_hospital_mensal),
+         (select sum(qt_internacao_residente_observada) from mart_indicador_regiao_mensal) + (select sum(qt_internacao_recebida_fora_sp) from mart_indicador_regiao_mensal) from dual
+  union all
+  select 18, 'referencia IPCA acompanha recorte',
+         (select to_number(max(cd_competencia)) from mart_indicador_regiao_mensal),
          (select to_number(max(cd_competencia_preco_referencia)) from mart_indicador_regiao_mensal) from dual
   union all
-  select 39, 'grupos ICSAP distintos', 19,
-         (select count(distinct cd_grupo_icsap) from mart_icsap_regiao_mensal) from dual
-
-  -- Indice de permanencia por especialidade, contrato 0.4.0. Os tres gates
-  -- juntos provam que a cobertura publicada e a que foi medida: elegiveis,
-  -- benchmark zerado e amostra insuficiente somam as 54.328 linhas do mart,
-  -- entao nenhuma linha ficou sem estado.
+  select 19, 'IPE suficiente/elegivel',
+         (select count(*) from mart_indicador_hospital_especialidade_mensal where st_amostra_ipe = 'suficiente'),
+         (select count(*) from mart_indicador_hospital_especialidade_mensal where nr_ipe is not null) from dual
   union all
-  select 40, 'linhas com IPE elegivel', 34741,
-         (select count(*) from mart_indicador_hospital_especialidade_mensal
-          where nr_ipe is not null) from dual
+  select 20, 'IPE estados completos',
+         (select count(*) from mart_indicador_hospital_especialidade_mensal),
+         (select count(*) from mart_indicador_hospital_especialidade_mensal where st_amostra_ipe in ('suficiente','benchmark_zero','amostra_insuficiente')) from dual
   union all
-  select 41, 'linhas com amostra de IPE suficiente', 34741,
-         (select count(*) from mart_indicador_hospital_especialidade_mensal
-          where st_amostra_ipe = 'suficiente') from dual
+  select 21, 'IPE resumo hospitais',
+         (select count(*) from mart_indicador_hospital_especialidade_mensal where nr_ipe is not null),
+         (select sum(qt_especialidade_ipe_elegivel) from mart_indicador_hospital_mensal) from dual
   union all
-  select 42, 'linhas de IPE com benchmark zerado', 689,
-         (select count(*) from mart_indicador_hospital_especialidade_mensal
-          where st_amostra_ipe = 'benchmark_zero') from dual
+  select 22, 'IPE resumo regioes',
+         (select count(*) from mart_indicador_hospital_especialidade_mensal where nr_ipe is not null),
+         (select sum(qt_hospital_especialidade_ipe_elegivel) from mart_indicador_regiao_mensal) from dual
   union all
-  select 43, 'linhas de IPE com amostra insuficiente', 18898,
-         (select count(*) from mart_indicador_hospital_especialidade_mensal
-          where st_amostra_ipe = 'amostra_insuficiente') from dual
-
-  -- Resumo do IPE, contrato 0.5.0. O indice sobe de grao para a lista
-  -- hospitalar e para o mapa; estes gates provam que subir nao perdeu nem
-  -- inventou linha: as tres contagens tem de dar o mesmo numero.
+  select 23, 'IPE acima da referencia',
+         (select sum(qt_especialidade_ipe_acima_referencia) from mart_indicador_hospital_mensal),
+         (select sum(qt_hospital_especialidade_ipe_acima_referencia) from mart_indicador_regiao_mensal) from dual
   union all
-  select 44, 'IPE elegivel somado no mart de hospitais', 34741,
-         (select sum(qt_especialidade_ipe_elegivel)
-          from mart_indicador_hospital_mensal) from dual
+  select 24, 'IPR estados completos',
+         (select count(*) from mart_indicador_hospital_cid_periodo),
+         (select count(*) from mart_indicador_hospital_cid_periodo where st_amostra in ('suficiente','benchmark_zero','amostra_insuficiente')) from dual
   union all
-  select 45, 'IPE elegivel somado no mart de regioes', 34741,
-         (select sum(qt_hospital_especialidade_ipe_elegivel)
-          from mart_indicador_regiao_mensal) from dual
+  select 25, 'IPR elegivel/suficiente',
+         (select count(*) from mart_indicador_hospital_cid_periodo where st_amostra = 'suficiente'),
+         (select count(*) from mart_indicador_hospital_cid_periodo where nr_ipr is not null) from dual
   union all
-  select 46, 'IPE acima de 1 somado no mart de hospitais', 13688,
-         (select sum(qt_especialidade_ipe_acima_referencia)
-          from mart_indicador_hospital_mensal) from dual
+  select 26, 'diagnosticos estados completos',
+         (select count(*) from mart_indicador_hospital_especialidade_cid_mensal),
+         (select count(*) from mart_indicador_hospital_especialidade_cid_mensal where st_amostra in ('suficiente','benchmark_zero','amostra_insuficiente')) from dual
   union all
-  select 47, 'IPE acima de 1 somado no mart de regioes', 13688,
-         (select sum(qt_hospital_especialidade_ipe_acima_referencia)
-          from mart_indicador_regiao_mensal) from dual
-
-  -- Diagnosticos por especialidade e competencia, migracao aditiva 07.
-  -- Os tres estados fecham a cardinalidade e IPR so existe no estado suficiente.
+  select 27, 'diagnosticos elegivel/suficiente',
+         (select count(*) from mart_indicador_hospital_especialidade_cid_mensal where st_amostra = 'suficiente'),
+         (select count(*) from mart_indicador_hospital_especialidade_cid_mensal where nr_ipr is not null) from dual
   union all
-  select 48, 'linhas mart diagnostico por especialidade', 2495111,
-         (select count(*)
-          from mart_indicador_hospital_especialidade_cid_mensal) from dual
-  union all
-  select 49, 'internacoes novas no diagnostico por especialidade', 7150693,
-         (select sum(qt_internacao_nova)
-          from mart_indicador_hospital_especialidade_cid_mensal) from dual
-  union all
-  select 50, 'diagnosticos por especialidade comparaveis', 14671,
-         (select count(*)
-          from mart_indicador_hospital_especialidade_cid_mensal
-          where st_amostra = 'suficiente' and nr_ipr is not null) from dual
-  union all
-  select 51, 'diagnosticos por especialidade benchmark zero', 53769,
-         (select count(*)
-          from mart_indicador_hospital_especialidade_cid_mensal
-          where st_amostra = 'benchmark_zero' and nr_ipr is null) from dual
-  union all
-  select 52, 'diagnosticos por especialidade amostra insuficiente', 2426671,
-         (select count(*)
-          from mart_indicador_hospital_especialidade_cid_mensal
-          where st_amostra = 'amostra_insuficiente' and nr_ipr is null) from dual
+  select 28, 'IPH denominador nulo',
+         (select count(*) from mart_indicador_hospital_mensal where st_capacidade = 'sem_leito_sus_declarado'),
+         (select count(*) from mart_indicador_hospital_mensal where nr_iph_estimado is null) from dual
 )
-select metrica,
-       esperado,
-       obtido,
+select metrica, esperado, obtido,
        case when obtido = esperado then 'ok' else 'DIVERGENTE' end as estado
-from   conferencia
-order  by ordem;
+from conferencia
+order by ordem;
 
 prompt
 prompt Integridade referencial: as consultas abaixo devem retornar zero linhas.

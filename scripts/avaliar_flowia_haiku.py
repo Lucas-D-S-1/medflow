@@ -56,12 +56,12 @@ def evaluate(env_file, key_env, cases, output):
     with connect(env_file) as connection, connection.cursor() as cursor:
         connection.call_timeout = 60000
         cursor.execute("set transaction read only")
-        cursor.execute("select cd_regiao_saude,nm_regiao_saude from vw_api_regioes_resumo where cd_competencia='202606'")
+        cursor.execute("select cd_regiao_saude,nm_regiao_saude from vw_api_regioes_resumo where cd_competencia=(select max(cd_competencia) from mart_indicador_regiao_mensal)")
         regions = [dict(zip([d[0].lower() for d in cursor.description], r, strict=True)) for r in cursor.fetchall()]
         hospitals_columns = ["cd_cnes", "nm_hospital_atual"]
-        cursor.execute("select cd_cnes,nm_hospital_atual from vw_api_hospitais where cd_competencia='202606'")
+        cursor.execute("select cd_cnes,nm_hospital_atual from vw_api_hospitais where cd_competencia=(select max(cd_competencia) from mart_indicador_regiao_mensal)")
         hospitals = [dict(zip(hospitals_columns, row, strict=True)) for row in cursor.fetchall()]
-        cursor.execute("select cd_cnes,cd_especialidade_sih,nm_especialidade from vw_api_hospital_especialidades where cd_competencia='202606'")
+        cursor.execute("select cd_cnes,cd_especialidade_sih,nm_especialidade from vw_api_hospital_especialidades where cd_competencia=(select max(cd_competencia) from mart_indicador_regiao_mensal)")
         specialties = [dict(zip([d[0].lower() for d in cursor.description], row, strict=True)) for row in cursor.fetchall()]
         for case in cases:
             # Reserva máxima da rodada: Haiku + duas gerações OCI, sem retries.
