@@ -125,7 +125,7 @@ DESCRICOES_EXATAS = {
     "cd_tipo_unidade": "Código CNES do tipo de unidade.",
     "nm_tipo_unidade": "Descrição do tipo de unidade.",
     "cd_esfera_administrativa_cnes_lt": "Código bruto da esfera administrativa no CNES/LT.",
-    "nm_esfera_administrativa_atual": "Descrição atual da esfera administrativa obtida na API do CNES.",
+    "nm_esfera_administrativa_atual": "Esfera atual da API CNES; nula em ficha oficial que informa apenas natureza jurídica.",
     "cd_natureza_juridica": "Código CONCLA da natureza jurídica.",
     "nm_natureza_juridica": "Descrição CONCLA da natureza jurídica.",
     "cd_tipo_gestao": "Código do tipo de gestão do estabelecimento.",

@@ -1,7 +1,7 @@
 """As nove dimensões da Silver.
 
 `dim_hospital` e `dim_municipio` carregam a ressalva cadastral do projeto: nome
-e esfera vêm da fotografia **atual** do CNES, não de uma fotografia histórica
+e esfera (quando disponível) vêm da fotografia **atual** do CNES, não de uma fotografia histórica
 de 2024-2026. Por isso o sufixo `_atual` e a flag
 `fl_cadastro_atual_nao_historico`.
 """
@@ -325,6 +325,29 @@ def _regioes_oficiais(entrada: EntradaSilver) -> pd.DataFrame:
     ].drop_duplicates("municipio_cod6")
 
 
+def validar_esfera_cadastro(cadastro: pd.DataFrame) -> None:
+    """Aceita campo extinto ausente somente em ficha oficial com natureza válida.
+
+    A Portaria SAS/MS 1.319/2014, arts. 6–7, substituiu esfera por natureza
+    jurídica. Não confundir gestão SUS com esfera nem inferir uma da outra.
+    """
+    ausentes = cadastro[cadastro.descricao_esfera_administrativa.isna()]
+    for registro in ausentes.to_dict("records"):
+        codigo = str(registro["codigo_cnes"]).replace(".0", "").zfill(7)
+        natureza = str(registro.get("descricao_natureza_juridica_estabelecimento", ""))
+        for campo, modulo in [("_fonte_url", "Mod_Conjunto"),
+                               ("_fonte_natureza_url", "Mod_Bas_Caracterizacao")]:
+            url = str(registro.get(campo, ""))
+            assert re.fullmatch(
+                rf"https://cnes2\.datasus\.gov\.br/{modulo}\.asp"
+                rf"\?VCo_Unidade=\d{{6}}{codigo}", url
+            ), f"CNES {codigo}: esfera ausente sem ficha oficial rastreável"
+        assert natureza in DEPARA_NAT_JUR, (
+            f"CNES {codigo}: esfera ausente sem natureza jurídica reconhecida"
+        )
+        assert registro.get("data_atualizacao"), f"CNES {codigo}: cadastro sem data"
+
+
 def dimensao_hospital(entrada: EntradaSilver) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Devolve `dim_hospital` e as regiões oficiais, reusadas por `dim_municipio`."""
     cnes = entrada.cnes
@@ -346,6 +369,7 @@ def dimensao_hospital(entrada: EntradaSilver) -> tuple[pd.DataFrame, pd.DataFram
     regioes_oficiais = _regioes_oficiais(entrada)
 
     cadastro_atual = pd.DataFrame(entrada.cnes_atual_payload["registros"])
+    validar_esfera_cadastro(cadastro_atual)
     cadastro_atual["CNES"] = (
         cadastro_atual.codigo_cnes.astype("string")
         .str.replace(r"\.0$", "", regex=True)
