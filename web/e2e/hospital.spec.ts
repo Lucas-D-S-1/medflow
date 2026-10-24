@@ -7,6 +7,7 @@
 
 import { expect, test, type Page } from '@playwright/test'
 import {
+  decimal,
   cidAsma,
   cidMaisFrequente,
   competenciaAnterior,
@@ -39,48 +40,49 @@ test('abre diagnósticos na especialidade, reordena o conjunto e permite expandi
   page,
 }) => {
   await mockLiveSource(page)
-  await page.goto(`/?competencia=${snapshotCompetencia}&regiao=35073&hospital=3012212#hospital`)
+  await page.goto(`/?competencia=${snapshotCompetencia}&regiao=35073&hospital=3012212&especialidade=07#hospital`)
 
   await expect(page.getByTestId('specialty-diagnosis-meta')).toContainText(
     'ordenados por total de dias',
   )
-  await expect(page.locator('[data-testid^="specialty-diagnosis-row-"]')).toHaveCount(10)
-  await expect(page.getByTestId('specialty-diagnosis-row-J219')).toContainText(
-    'Bronquite aguda não especificada',
-  )
-  await expect(page.getByTestId('specialty-diagnosis-row-J219')).toContainText(
-    'Amostra insuficiente para comparar',
-  )
-  await expect(page.getByTestId('specialty-diagnosis-row-J219')).toContainText(
-    '11 internações, 43 dias e 4 outros hospitais',
-  )
-  await expect(page.getByTestId('specialty-diagnosis-row-P228')).toContainText(
-    'Sem outros hospitais neste recorte',
-  )
-
-  for (let pageNumber = 0; pageNumber < 8; pageNumber += 1) {
+  await expect(page.locator('[data-testid^="specialty-diagnosis-row-"]')).toHaveCount(5)
+  while (await page.getByTestId('specialty-diagnosis-more').count()) {
     await page.getByTestId('specialty-diagnosis-more').click()
   }
   await expect(page.locator('[data-testid^="specialty-diagnosis-row-"]')).toHaveCount(
-    (specialtyDiagnosisSnapshot.items as unknown[]).length,
+    itens(specialtyDiagnosisSnapshot).length,
   )
-  await expect(page.getByTestId('specialty-diagnosis-row-K219')).toBeVisible()
+  await expect(page.getByTestId(`specialty-diagnosis-row-${itens(specialtyDiagnosisSnapshot).at(-1)!.cid_code}`)).toBeVisible()
 
-  await page.getByTestId('specialty-diagnosis-order').selectOption('media')
+  const insufficient = itens(specialtyDiagnosisSnapshot).find(
+    (item) => item.sample_status === 'amostra_insuficiente' && Number(item.benchmark_hospitals) > 0,
+  )!
+  const noPeers = itens(specialtyDiagnosisSnapshot).find((item) => Number(item.benchmark_hospitals) === 0)!
+  const insufficientRow = page.getByTestId(`specialty-diagnosis-row-${insufficient.cid_code}`)
+  await expect(insufficientRow).toContainText(String(insufficient.cid_description))
+  await expect(insufficientRow).toContainText('Amostra insuficiente para comparar')
+  await expect(insufficientRow).toContainText(
+    `${pt(insufficient.benchmark_admissions as number)} internações, ${pt(insufficient.benchmark_stay_days_total as number)} dias e ${pt(insufficient.benchmark_hospitals as number)} outros hospitais`,
+  )
+  await expect(page.getByTestId(`specialty-diagnosis-row-${noPeers.cid_code}`)).toContainText(
+    'Sem outros hospitais neste recorte',
+  )
+
+  await page.locator('.specialty-diagnosis-table').getByRole('button', { name: /^Média/ }).click()
   await expect(page.getByTestId('specialty-diagnosis-meta')).toContainText(
     'ordenados por média de permanência',
   )
   await expect(page.locator('.specialty-diagnosis-table tbody tr').first()).toHaveAttribute(
     'data-testid',
-    'specialty-diagnosis-row-D649',
+    `specialty-diagnosis-row-${[...itens(specialtyDiagnosisSnapshot)].sort((a, b) => Number(b.average_stay_days) - Number(a.average_stay_days) || String(a.cid_code).localeCompare(String(b.cid_code)))[0].cid_code}`,
   )
-  await page.getByTestId('specialty-diagnosis-order').selectOption('internacoes')
+  await page.locator('.specialty-diagnosis-table').getByRole('button', { name: /^Internações/ }).click()
   await expect(page.getByTestId('specialty-diagnosis-meta')).toContainText(
     'ordenados por volume de internações',
   )
   await expect(page.locator('.specialty-diagnosis-table tbody tr').first()).toHaveAttribute(
     'data-testid',
-    'specialty-diagnosis-row-J219',
+    `specialty-diagnosis-row-${[...itens(specialtyDiagnosisSnapshot)].sort((a, b) => Number(b.new_admissions) - Number(a.new_admissions) || String(a.cid_code).localeCompare(String(b.cid_code)))[0].cid_code}`,
   )
 })
 
@@ -128,7 +130,7 @@ test('explica benchmark zero, identificador desconhecido e participação sem di
       })
     },
   )
-  await page.goto(`/?competencia=${snapshotCompetencia}&regiao=35073&hospital=3012212#hospital`)
+  await page.goto(`/?competencia=${snapshotCompetencia}&regiao=35073&hospital=3012212&especialidade=07#hospital`)
   await expect(page.getByTestId('specialty-diagnosis-row---')).toContainText(
     'Identificador desconhecido; não comparável',
   )
@@ -140,15 +142,15 @@ test('explica benchmark zero, identificador desconhecido e participação sem di
   )
 })
 
-test('snapshot de contingência cobre os 85 CIDs e distingue recorte não coberto', async ({
+test('snapshot de contingência cobre os CIDs publicados e distingue recorte não coberto', async ({
   page,
 }) => {
   await page.route('**/api/dev/v1/status', async (route) => {
     await route.abort('connectionfailed')
   })
-  await page.goto(`/?competencia=${snapshotCompetencia}&regiao=35073&hospital=3012212#hospital`)
-  await expect(page.getByTestId('specialty-diagnosis-meta')).toContainText('85 diagnósticos')
-  await expect(page.locator('[data-testid^="specialty-diagnosis-row-"]')).toHaveCount(10)
+  await page.goto(`/?competencia=${snapshotCompetencia}&regiao=35073&hospital=3012212&especialidade=07#hospital`)
+  await expect(page.getByTestId('specialty-diagnosis-meta')).toContainText(`${paginacao(specialtyDiagnosisSnapshot).count} diagnósticos`)
+  await expect(page.locator('[data-testid^="specialty-diagnosis-row-"]')).toHaveCount(5)
   await page.getByTestId('especialidade-row-02').click()
   await expect(page.getByTestId('specialty-diagnosis-snapshot-unavailable')).toHaveText(
     'Este recorte não está incluído na cópia local parcial.',
@@ -159,15 +161,16 @@ test('snapshot de contingência cobre os 85 CIDs e distingue recorte não cobert
 test('paginação além do fim mantém count global e has_more falso', async ({ page }) => {
   await mockLiveSource(page)
   await page.goto('/?inicio=0')
-  const envelope = await page.evaluate(async () => {
+  const envelope = await page.evaluate(async (competence) => {
+    const [year, month] = competence.split('-')
     const response = await fetch(
-      '/api/dev/v1/hospitais/3012212/especialidades/07/diagnosticos?ano=2026&mes=6&ordenar=dias&limit=10&offset=999',
+      `/api/dev/v1/hospitais/3012212/especialidades/07/diagnosticos?ano=${year}&mes=${Number(month)}&ordenar=dias&limit=10&offset=999`,
     )
     return response.json()
-  }) as { items: unknown[]; pagination: { count: number; has_more: boolean } }
+  }, snapshotCompetencia) as { items: unknown[]; pagination: { count: number; has_more: boolean } }
 
   expect(envelope.items).toEqual([])
-  expect(envelope.pagination.count).toBe(85)
+  expect(envelope.pagination.count).toBe(paginacao(specialtyDiagnosisSnapshot).count)
   expect(envelope.pagination.has_more).toBe(false)
 })
 
@@ -196,7 +199,7 @@ test('resposta vazia de outro recorte é inválida, não ausência real', async 
       })
     },
   )
-  await page.goto(`/?competencia=${snapshotCompetencia}&regiao=35073&hospital=3012212#hospital`)
+  await page.goto(`/?competencia=${snapshotCompetencia}&regiao=35073&hospital=3012212&especialidade=07#hospital`)
   await expect(page.getByTestId('specialty-diagnosis-error')).toBeVisible()
   await expect(page.getByTestId('specialty-diagnosis-absent')).toHaveCount(0)
 })
@@ -257,7 +260,7 @@ test('ignora diagnóstico atrasado depois da troca de especialidade', async ({ p
     },
   )
 
-  await page.goto(`/?competencia=${snapshotCompetencia}&regiao=35073&hospital=3012212#hospital`)
+  await page.goto(`/?competencia=${snapshotCompetencia}&regiao=35073&hospital=3012212&especialidade=07#hospital`)
   await expect(page.getByTestId('especialidade-count')).toHaveText('4 de 4 especialidades')
   await page.getByTestId('especialidade-row-02').click()
 
@@ -267,7 +270,7 @@ test('ignora diagnóstico atrasado depois da troca de especialidade', async ({ p
   await page.waitForTimeout(350)
   await expect(page.getByTestId('specialty-diagnosis-row-O820')).toBeVisible()
   await expect(page.getByTestId('specialty-diagnosis-row-J219')).toHaveCount(0)
-  await expect(page.getByRole('heading', { name: /Principais diagnósticos · Obstetrícia/ })).toBeVisible()
+  await expect(page.getByRole('heading', { name: /Diagnósticos de Obstetrícia/ })).toBeVisible()
 })
 
 test('ignora diagnóstico atrasado depois da troca de competência', async ({ page }) => {
@@ -304,7 +307,7 @@ test('ignora diagnóstico atrasado depois da troca de competência', async ({ pa
     },
   )
 
-  await page.goto(`/?competencia=${snapshotCompetencia}&regiao=35073&hospital=3012212#hospital`)
+  await page.goto(`/?competencia=${snapshotCompetencia}&regiao=35073&hospital=3012212&especialidade=07#hospital`)
   await escolherCompetencia(page, '2025-05')
   await expect(page.getByTestId('specialty-diagnosis-row-A090')).toContainText(
     'Resposta da nova competência',
@@ -317,7 +320,7 @@ test('ignora diagnóstico atrasado depois da troca de competência', async ({ pa
 async function expectAnchorBelowHeader(page: Page, selector: '#hospital-detail' | '#hospital-list') {
   const viewport = page.viewportSize()
   if (!viewport) throw new Error('Viewport indisponível para validar a âncora hospitalar.')
-  const expectedMargin = viewport.width <= 760 ? 148 : 84
+  const expectedMargin = viewport.width <= 680 ? 128 : viewport.width <= 760 ? 148 : 84
   await expect
     .poll(() =>
       page.locator(selector).evaluate((element) =>
@@ -406,7 +409,7 @@ test('busca canônica por nome/CNES sem alterar seleção, universo ou ordenaç�
     if (/\/hospitais\?/.test(request.url())) hospitalRequests.push(request.url())
   })
 
-  await page.goto(`/hospital?competencia=${snapshotCompetencia}&regiao=35073&hospital=3012212`)
+  await page.goto(`/hospital?competencia=${snapshotCompetencia}&regiao=35073&hospital=3012212&especialidade=07`)
   await page.getByTestId('hospital-sort-hospital').click()
   await expect(page.getByTestId('hospital-sort-hospital').locator('..')).toHaveAttribute('aria-sort', 'ascending')
 
@@ -418,7 +421,7 @@ test('busca canônica por nome/CNES sem alterar seleção, universo ou ordenaç�
     `1 de ${paginacao(hospitalListSnapshot).count} hospitais`,
   )
   await expect(page.getByTestId('hospital-row-3012212')).toBeVisible()
-  await expect(page.getByTestId('peer-value-admissions')).toContainText('885')
+  await expect(page.getByTestId('peer-value-admissions')).toContainText(pt(linhaSerieHospital.new_admissions as number))
 
   await search.fill('1221')
   await expect(page.getByTestId('hospital-row-3012212')).toBeVisible()
@@ -499,15 +502,13 @@ test('abre a série mensal do hospital selecionado com denominadores e CMI nomin
     })
   })
 
-  await page.goto(`/hospital?competencia=${snapshotCompetencia}&regiao=35073&hospital=3012212`)
+  await page.goto(`/hospital?competencia=${snapshotCompetencia}&regiao=35073&hospital=3012212&especialidade=07`)
 
   const history = page.getByRole('button', { name: /Evolução mensal do hospital/ })
-  await expect(history).toHaveAttribute('aria-expanded', 'false')
-  await expect(page.getByTestId('serie-count')).toHaveCount(0)
-  await history.focus()
-  await history.press('Enter')
   await expect(history).toHaveAttribute('aria-expanded', 'true')
-  await expect(page.getByTestId('serie-count')).toHaveText(
+  await expect(page.getByTestId('hospital-series-chart')).toBeVisible()
+  await page.locator('#hospital-history-content').getByText('Valores, amostras e denominadores', { exact: true }).click()
+  await expect(page.getByTestId('serie-count')).toContainText(
     `6 de ${paginacao(hospitalSeriesSnapshot).count} competências`,
   )
   await expect(page.getByTestId(`serie-row-${snapshotCompetencia}`)).toContainText(snapshotCompetenciaBR)
@@ -533,54 +534,19 @@ test('abre a série mensal do hospital selecionado com denominadores e CMI nomin
       name: `Ver todas as ${paginacao(hospitalSeriesSnapshot).count} competências`,
     })
     .click()
-  await expect(page.getByTestId('serie-count')).toHaveText(
+  await expect(page.getByTestId('serie-count')).toContainText(
     `${paginacao(hospitalSeriesSnapshot).count} de ${paginacao(hospitalSeriesSnapshot).count} competências`,
   )
   await expect(page.getByTestId('serie-row-2024-01')).toBeVisible()
 
-  // A série inteira fica numa tabela só, que rola dentro de si. Antes as
-  // competências além das seis primeiras iam para um segundo painel abaixo, e
-  // a lista ficava partida em dois lugares.
   await expect(page.locator('.hospital-series-table')).toHaveCount(1)
-  const rolagem = await page
-    .locator('#hospital-series-rows')
-    .evaluate((el) => {
-      // O tsconfig das specs não carrega a lib DOM; o resto do arquivo também
-      // descreve estruturalmente o que usa.
-      const caixa = el as unknown as { clientHeight: number; scrollHeight: number }
-      return { visivel: caixa.clientHeight, total: caixa.scrollHeight }
-    })
-  expect(rolagem.total).toBeGreaterThan(rolagem.visivel)
+  await expect(page.locator('#hospital-series-rows')).toHaveCSS('max-height', 'none')
 
   // O IPE também na evolução mensal: a série responde "isso é de agora ou vem
   // de antes?", e sem ele o indicador novo só existia na foto do mês.
   await expect(page.getByTestId(`serie-ipe-${snapshotCompetencia}`)).toHaveText(
     pt(linhaSerieHospital.ipe_median as number, 2),
   )
-
-  // Chegar no fim da lista não pode prender a página. O quadro tinha
-  // `overscroll-behavior: contain`, e a rolagem parava ali: quem descia a
-  // página ficava travado num quadro que nem parecia rolável.
-  const caixa = page.locator('#hospital-series-rows')
-  await caixa.scrollIntoViewIfNeeded()
-  const quadro = await caixa.boundingBox()
-  await page.mouse.move(quadro!.x + quadro!.width / 2, quadro!.y + 80)
-  for (let i = 0; i < 12; i++) {
-    await page.mouse.wheel(0, 200)
-    await page.waitForTimeout(50)
-  }
-  const interno = await caixa.evaluate((el) => {
-    const c = el as unknown as { scrollTop: number; scrollHeight: number; clientHeight: number }
-    return { fim: c.scrollTop >= c.scrollHeight - c.clientHeight - 2 }
-  })
-  expect(interno.fim).toBe(true)
-  const paginaAntes = await page.evaluate(() => (globalThis as unknown as { scrollY: number }).scrollY)
-  for (let i = 0; i < 5; i++) {
-    await page.mouse.wheel(0, 200)
-    await page.waitForTimeout(50)
-  }
-  const paginaDepois = await page.evaluate(() => (globalThis as unknown as { scrollY: number }).scrollY)
-  expect(paginaDepois).toBeGreaterThan(paginaAntes)
 
   // Ordenar vale para a série inteira, não só para a metade visível.
   await page.getByTestId('serie-sort-iph').click()
@@ -607,7 +573,7 @@ test('mostra o perfil por especialidade somando as internações do hospital', a
     })
   })
 
-  await page.goto(`/hospital?competencia=${snapshotCompetencia}&regiao=35073&hospital=3012212`)
+  await page.goto(`/hospital?competencia=${snapshotCompetencia}&regiao=35073&hospital=3012212&especialidade=07`)
 
   // O IPE também sobe de grão: a lista hospitalar mostra a mediana entre as
   // especialidades comparáveis do hospital, o mesmo índice um degrau acima.
@@ -630,12 +596,8 @@ test('mostra o perfil por especialidade somando as internações do hospital', a
   )
   // A tabela responde às quatro perguntas da jornada e deixa a comparação
   // técnica no detalhe: permanência local, referência e universo comparável.
-  await expect(page.getByTestId('especialidade-row-07')).toContainText(
-    `referência ${pt(especialidadePediatria.average_stay_benchmark as number, 2)} dias`,
-  )
-  await expect(page.getByTestId('especialidade-row-07')).toContainText(
-    `${pt(especialidadePediatria.benchmark_hospitals as number)} outros hospitais`,
-  )
+  await expect(page.getByTestId('specialty-summary-reference')).toContainText(`${decimal(especialidadePediatria.average_stay_benchmark as number)} dias`)
+  await expect(page.getByTestId('specialty-summary')).toContainText(`${pt(especialidadePediatria.benchmark_hospitals as number)} outros hospitais`)
   const totalPublicado = itens(specialtySnapshot).reduce(
     (total, item) => total + (item.new_admissions as number),
     0,
@@ -662,7 +624,7 @@ test('compara diagnósticos com pares elegíveis e explica quem não é elegíve
     })
   })
 
-  await page.goto(`/hospital?competencia=${snapshotCompetencia}&regiao=35073&hospital=3012212`)
+  await page.goto(`/hospital?competencia=${snapshotCompetencia}&regiao=35073&hospital=3012212&especialidade=07`)
   await page.getByTestId('diagnostics-toggle').click()
 
   // Referência regional visível junto da comparação.
@@ -698,7 +660,7 @@ test('compara diagnósticos com pares elegíveis e explica quem não é elegíve
   )
 
   // A lista é truncada e diz isso.
-  await expect(page.getByTestId('cid-truncado')).toContainText('10 diagnósticos de maior volume')
+  await expect(page.getByTestId('cid-truncado')).toContainText('5 diagnósticos de maior volume')
   await expect(page.getByTestId('cid-truncado')).toContainText(
     pt(contextoCid.hospital_eligible_combinations),
   )
@@ -723,13 +685,13 @@ test('isola falha dos diagnósticos sem derrubar especialidades nem série', asy
     await route.abort('connectionfailed')
   })
 
-  await page.goto(`/hospital?competencia=${snapshotCompetencia}&regiao=35073&hospital=3012212`)
+  await page.goto(`/hospital?competencia=${snapshotCompetencia}&regiao=35073&hospital=3012212&especialidade=07`)
 
   await page.getByTestId('diagnostics-toggle').click()
   await expect(page.getByTestId('cid-error')).toContainText('Diagnósticos indisponíveis')
   await expect(page.getByTestId('especialidade-count')).toHaveText('4 de 4 especialidades')
-  await expect(page.getByRole('button', { name: /Evolução mensal do hospital/ })).toHaveAttribute('aria-expanded', 'false')
-  await expect(page.getByTestId('serie-count')).toHaveCount(0)
+  await expect(page.getByRole('button', { name: /Evolução mensal do hospital/ })).toHaveAttribute('aria-expanded', 'true')
+  await expect(page.getByTestId('hospital-series-chart')).toBeVisible()
   await expect(page.getByTestId('hospital-count')).toHaveText(
     `${paginacao(hospitalListSnapshot).count} de ${paginacao(hospitalListSnapshot).count} hospitais`,
   )
@@ -750,14 +712,13 @@ test('isola falha da série sem derrubar a lista de hospitais', async ({ page })
     await route.abort('connectionfailed')
   })
 
-  await page.goto(`/hospital?competencia=${snapshotCompetencia}&regiao=35073&hospital=3012212`)
+  await page.goto(`/hospital?competencia=${snapshotCompetencia}&regiao=35073&hospital=3012212&especialidade=07`)
 
-  await page.getByRole('button', { name: /Evolução mensal do hospital/ }).click()
   await expect(page.getByTestId('serie-error')).toContainText('Série do hospital indisponível')
   await expect(page.getByTestId('hospital-count')).toHaveText(
     `${paginacao(hospitalListSnapshot).count} de ${paginacao(hospitalListSnapshot).count} hospitais`,
   )
-  await expect(page.getByTestId('source-badge')).toHaveCount(0)
+  await expect(page.getByTestId('source-badge')).toContainText('Base mensal')
 })
 test('trocar a região limpa o hospital selecionado da URL', async ({ page }) => {
   await mockLiveSource(page)
@@ -772,7 +733,7 @@ test('trocar a região limpa o hospital selecionado da URL', async ({ page }) =>
     })
   })
 
-  await page.goto(`/hospital?competencia=${snapshotCompetencia}&regiao=35073&hospital=3012212`)
+  await page.goto(`/hospital?competencia=${snapshotCompetencia}&regiao=35073&hospital=3012212&especialidade=07`)
   await expect(page.getByTestId('hospital-select-3012212')).toHaveText('Selecionado')
 
   await page.getByTestId('global-region').selectOption('35011')
@@ -854,7 +815,7 @@ test('busca sem resultado preserva o campo para o usuário voltar atrás', async
   await expect(page.getByTestId('hospital-count')).toBeVisible()
 })
 
-test('abre pares primeiro, mantém histórico recolhido e troca hospital com foco correto', async ({ page }) => {
+test('abre pares e gráfico mensal, mantém valores sob demanda e troca hospital com foco correto', async ({ page }) => {
   await mockLiveSource(page)
   await page.goto(`/?competencia=${snapshotCompetencia}&regiao=35073#hospital`)
 
@@ -862,22 +823,23 @@ test('abre pares primeiro, mantém histórico recolhido e troca hospital com foc
   await expect(page.locator('#hospital-detail')).toBeFocused()
   await expect(page.getByTestId('peer-value-iph')).toBeVisible()
   await expect(page.getByTestId('peer-value-stay')).toBeVisible()
-  await expect(page.getByTestId('peer-value-admissions')).toContainText('885')
+  await expect(page.getByTestId('peer-value-admissions')).toContainText(pt(linhaSerieHospital.new_admissions as number))
   await expect(page.getByTestId('peer-more')).not.toHaveAttribute('open', '')
-  await expect(page.locator('.hospital-specialty-table')).toBeVisible()
+  await expect(page.locator('.specialty-choices')).toBeVisible()
 
   const history = page.getByRole('button', { name: /Evolução mensal do hospital/ })
-  await expect(history).toHaveAttribute('aria-expanded', 'false')
-  await expect(page.locator('.hospital-series-table')).toHaveCount(0)
+  await expect(history).toHaveAttribute('aria-expanded', 'true')
+  await expect(page.getByTestId('hospital-series-chart')).toBeVisible()
+  await expect(page.locator('.hospital-series-table')).not.toBeVisible()
 
   const peersY = (await page.locator('.hospital-peers').boundingBox())?.y ?? 0
   const historyY = (await page.locator('.hospital-history:not(.hospital-diagnostics)').boundingBox())?.y ?? 0
-  const specialtyY = (await page.locator('.hospital-specialty-table').boundingBox())?.y ?? 0
+  const specialtyY = (await page.locator('.specialty-choices').boundingBox())?.y ?? 0
   expect(peersY).toBeLessThan(historyY)
   expect(historyY).toBeLessThan(specialtyY)
 
   await history.click()
-  await expect(history).toHaveAttribute('aria-expanded', 'true')
+  await expect(history).toHaveAttribute('aria-expanded', 'false')
   await escolherCompetencia(page, '2025-05')
   await expect(page.getByRole('button', { name: /Evolução mensal do hospital/ })).toHaveAttribute('aria-expanded', 'true')
 
@@ -940,7 +902,7 @@ test('sem pares do mesmo porte na regiao, a regua sobe e a tela avisa', async ({
 
   // Cair calado num grupo diferente do anunciado seria pior do que não
   // comparar: o número mudaria de significado sem avisar.
-  await expect(page.getByTestId('peer-rebaixado')).toContainText('não há 3 hospitais')
+  await expect(page.getByTestId('peer-rebaixado')).toContainText('Não há pelo menos 3 outros hospitais')
   await expect(page.getByTestId('peer-criterio')).toContainText('no estado')
 })
 
@@ -971,7 +933,7 @@ test('snapshot não declara pares estaduais sem o universo completo', async ({ p
     await route.abort('connectionfailed')
   })
 
-  await page.goto(`/?competencia=${snapshotCompetencia}&regiao=35073&hospital=3012212#hospital`)
+  await page.goto(`/?competencia=${snapshotCompetencia}&regiao=35073&hospital=3012212&especialidade=07#hospital`)
 
   await expect(page.getByTestId('peer-snapshot-limited')).toContainText(
     'está indisponível nesta cópia',
@@ -1000,7 +962,7 @@ test('separa participação no hospital da participação regional da especialid
     })
   })
 
-  await page.goto(`/hospital?competencia=${snapshotCompetencia}&regiao=35073&hospital=3012212`)
+  await page.goto(`/hospital?competencia=${snapshotCompetencia}&regiao=35073&hospital=3012212&especialidade=07`)
 
   const totalPublicado = itens(specialtySnapshot).reduce(
     (total, item) => total + (item.new_admissions as number),
@@ -1033,7 +995,7 @@ test('separa participação no hospital da participação regional da especialid
   )
 
   await expect(
-    page.getByRole('columnheader', { name: /Participação no hospital/ }),
+    page.getByTestId('specialty-summary').locator('dt').first(),
   ).toBeVisible()
   await expect(pediatria).toHaveAttribute('data-label', 'Participação no hospital')
   await expect(page.getByTestId('specialty-summary').locator('dt').first()).toHaveText(
@@ -1072,9 +1034,9 @@ test('rotula explicitamente a participação quando a cobertura de especialidade
     })
   })
 
-  await page.goto(`/?competencia=${snapshotCompetencia}&regiao=35073&hospital=3012212#hospital`)
+  await page.goto(`/?competencia=${snapshotCompetencia}&regiao=35073&hospital=3012212&especialidade=07#hospital`)
   const label = 'Participação nas especialidades disponíveis'
-  await expect(page.getByRole('columnheader', { name: new RegExp(label) })).toBeVisible()
+  await expect(page.getByTestId('specialty-summary').locator('dt').first()).toBeVisible()
   await expect(page.getByTestId('especialidade-participacao-07')).toHaveAttribute(
     'data-label',
     label,
@@ -1090,7 +1052,7 @@ test('o resumo invalida hospital e competência anteriores antes de mostrar a no
   await mockLiveSource(page)
   const hospitalInicial = acharItem(hospitalListSnapshot, 'cnes', '3012212')
 
-  await page.goto(`/?competencia=${snapshotCompetencia}&regiao=35073&hospital=3012212#hospital`)
+  await page.goto(`/?competencia=${snapshotCompetencia}&regiao=35073&hospital=3012212&especialidade=07#hospital`)
   const resumo = page.getByTestId('specialty-summary')
   await expect(resumo).toContainText(hospitalInicial.hospital_name as string)
 
@@ -1171,7 +1133,7 @@ test('o helper e a tela explicam zero, nulo e amostra insuficiente no resumo', a
     })
   })
 
-  await page.goto(`/?competencia=${snapshotCompetencia}&regiao=35073&hospital=3012212#hospital`)
+  await page.goto(`/?competencia=${snapshotCompetencia}&regiao=35073&hospital=3012212&especialidade=07#hospital`)
   const resumo = page.getByTestId('specialty-summary')
   await expect(resumo).toContainText('Amostra insuficiente para comparar')
 

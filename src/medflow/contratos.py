@@ -125,7 +125,7 @@ DESCRICOES_EXATAS = {
     "cd_tipo_unidade": "Código CNES do tipo de unidade.",
     "nm_tipo_unidade": "Descrição do tipo de unidade.",
     "cd_esfera_administrativa_cnes_lt": "Código bruto da esfera administrativa no CNES/LT.",
-    "nm_esfera_administrativa_atual": "Descrição atual da esfera administrativa obtida na API do CNES.",
+    "nm_esfera_administrativa_atual": "Esfera atual da API CNES; nula em ficha oficial que informa apenas natureza jurídica.",
     "cd_natureza_juridica": "Código CONCLA da natureza jurídica.",
     "nm_natureza_juridica": "Descrição CONCLA da natureza jurídica.",
     "cd_tipo_gestao": "Código do tipo de gestão do estabelecimento.",
@@ -834,7 +834,7 @@ def documentar_bronze(*, base: Path, manifesto: dict[str, Any]) -> None:
         "malha_municipal_ibge_2024": "Malha municipal oficial de São Paulo usada para formar as regiões do BI.",
         "cid10_datasus": "Pacote original das tabelas CID-10 do DATASUS.",
         "natureza_juridica_concla": "Página oficial da CONCLA usada para natureza jurídica.",
-        "cnes_estabelecimentos_atuais": "Respostas atuais da API CNES para os hospitais observados.",
+        "cnes_estabelecimentos_atuais": "Cadastros atuais CNES: API e fichas oficiais identificadas por registro no cache.",
         "geosampa_distrito_municipal": "GeoJSON bruto dos 96 distritos municipais do GeoSampa.",
         "geosampa_subprefeitura": "GeoJSON bruto das subprefeituras do GeoSampa.",
         "geosampa_coordenadoria_regional_saude": (

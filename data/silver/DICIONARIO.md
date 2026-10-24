@@ -1,6 +1,6 @@
 # Dicionário da camada Silver — MedFlow
 
-Contrato de esquema `0.4.0`, gerado automaticamente em `2026-08-28T12:28:17.419998+00:00`.
+Contrato de esquema `0.5.0`, gerado automaticamente em `2026-10-24T14:54:09.819958+00:00`.
 
 ## Responsabilidade da camada
 
@@ -14,7 +14,7 @@ Calendário mensal do recorte analítico.
 
 - Caminho: `data/silver/dimensoes/dim_tempo.parquet`
 - Grão: uma linha por competência
-- Linhas: 30
+- Linhas: 32
 - Chave lógica: `cd_competencia`
 
 | coluna | tipo | nulos | significado |
@@ -32,7 +32,7 @@ Cadastro conformado dos hospitais presentes no SIH.
 
 - Caminho: `data/silver/dimensoes/dim_hospital.parquet`
 - Grão: uma linha por CNES
-- Linhas: 655
+- Linhas: 657
 - Chave lógica: `cd_cnes`
 
 | coluna | tipo | nulos | significado |
@@ -51,7 +51,7 @@ Cadastro conformado dos hospitais presentes no SIH.
 | `nm_macrorregiao_saude` | `object` | 0 | Nome oficial da macrorregião de saúde. |
 | `nm_hospital_atual` | `object` | 0 | Nome fantasia atual do estabelecimento; não representa histórico mensal. |
 | `nm_razao_social_hospital_atual` | `object` | 0 | Razão social atual do estabelecimento. |
-| `nm_esfera_administrativa_atual` | `object` | 0 | Descrição atual da esfera administrativa obtida na API do CNES. |
+| `nm_esfera_administrativa_atual` | `object` | 2 | Esfera atual da API CNES; nula em ficha oficial que informa apenas natureza jurídica. |
 | `dt_atualizacao_cadastro_cnes` | `object` | 0 | Data de atualização informada pela fotografia atual do CNES. |
 | `ds_origem_regiao` | `object` | 0 | Fonte usada para atribuir a região analítica. |
 | `fl_regiao_conflitante` | `int8` | 0 | Indica hospital com mais de uma região declarada no histórico CNES/LT. |
@@ -178,7 +178,7 @@ Diagnósticos CID-10 observados no recorte.
 
 - Caminho: `data/silver/dimensoes/dim_cid.parquet`
 - Grão: uma linha por CID principal
-- Linhas: 9,513
+- Linhas: 9,557
 - Chave lógica: `cd_cid_principal`
 
 | coluna | tipo | nulos | significado |
@@ -216,7 +216,7 @@ AIHs aprovadas enriquecidas e tipadas para análise.
 
 - Caminho: `data/silver/fatos/fato_internacao.parquet`
 - Grão: uma linha por registro mensal de AIH
-- Linhas: 7,284,476
+- Linhas: 7,793,976
 - Chave lógica: sem unicidade assumida; usar o identificador da fonte e a competência
 
 | coluna | tipo | nulos | significado |
@@ -260,7 +260,7 @@ AIHs aprovadas enriquecidas e tipadas para análise.
 | `ds_unidade_idade` | `object` | 0 | Descrição da unidade usada para registrar a idade. |
 | `nr_idade_ano_aproximada` | `float64` | 1 | Idade aproximada em anos calculada a partir do valor e da unidade informados. |
 | `cd_sexo` | `string` | 0 | Código de sexo informado no SIH. |
-| `ds_sexo` | `object` | 10 | Descrição do código de sexo. |
+| `ds_sexo` | `object` | 29 | Descrição do código de sexo. |
 | `cd_carater_internacao` | `string` | 0 | Código do caráter da internação. |
 | `ds_carater_internacao` | `object` | 0 | Descrição do caráter da internação. |
 | `cd_complexidade` | `string` | 0 | Código do nível de complexidade do procedimento. |
@@ -287,7 +287,7 @@ Capacidade de leitos declarada no CNES.
 
 - Caminho: `data/silver/fatos/fato_leito_mensal.parquet`
 - Grão: uma linha por hospital e competência
-- Linhas: 19,341
+- Linhas: 20,637
 - Chave lógica: `cd_cnes`, `cd_competencia`
 
 | coluna | tipo | nulos | significado |

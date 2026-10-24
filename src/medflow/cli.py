@@ -78,6 +78,10 @@ def main(argv: list[str] | None = None) -> int:
 
     p_bronze = sub.add_parser("bronze", help="ingestão fiel das fontes oficiais")
     p_bronze.add_argument(
+        "--referencias-cache", action="store_true",
+        help="usa referências preservadas, sem consultar HTTP; DBC continua pelo FTP",
+    )
+    p_bronze.add_argument(
         "--sobrescrever",
         action="store_true",
         help="reconsolida os Parquet mesmo que já cubram o recorte atual",
@@ -115,7 +119,10 @@ def main(argv: list[str] | None = None) -> int:
     if args.comando == "bronze":
         from medflow.bronze import executar as executar_bronze
 
-        manifesto = executar_bronze(config=config, sobrescrever=_sobrescrever(args))
+        manifesto = executar_bronze(
+            config=config, sobrescrever=_sobrescrever(args),
+            referencias_cache=args.referencias_cache,
+        )
         _imprimir(manifesto["checks"])
         return 0
 

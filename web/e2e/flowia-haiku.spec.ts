@@ -19,14 +19,14 @@ for (const width of [1440, 390]) {
       await page.route('**/api/flowia-haiku-live/v1/reserva', route => route.fulfill({ json: { status: 'unavailable' } }))
     })
 
-    test('balao e sugestoes nao enviam uma pergunta paga', async ({ page }) => {
+    test('entrada sem balão abre assistente sem pergunta paga', async ({ page }) => {
       let calls = 0
       await page.route('**/api/flowia-haiku-live/v1/perguntar', async route => {
         calls++; await route.fulfill({ json: response() })
       })
       await page.goto('/')
-      await page.getByRole('button', { name: 'Outra pergunta', exact: true }).click()
-      await page.getByRole('button', { name: 'Perguntar', exact: true }).click()
+      await expect(page.getByRole('region', { name: 'Sugestão do FlowIA' })).toHaveCount(0)
+      await page.getByRole('button', { name: /Abrir FlowIA/ }).click()
       await expect(page.locator('#medflow-assistant-panel')).toBeVisible()
       expect(calls).toBe(0)
     })

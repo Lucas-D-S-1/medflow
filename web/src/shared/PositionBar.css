@@ -58,3 +58,4 @@
 .position-legend strong { color: var(--color-heading); }
 .position-legend span,
 .position-legend small { color: var(--color-text-muted); }
+.position-scale { display: block; margin-top: var(--space-1); font-size: var(--font-size-sm); color: var(--color-text); }

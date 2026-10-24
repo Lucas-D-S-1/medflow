@@ -269,3 +269,26 @@
 
 /* Em fontes, o assistente fica após o conteúdo para não cobrir referências. */
 .sources-assistant { position: static; width: min(74rem, calc(100% - 2rem)); margin: 0 auto; padding: 0 0 var(--space-6); }
+
+/* Closed launcher uses the free margin; the open panel enters the current section. */
+.app-shell:has(.analysis-page) > .assistant-widget,
+.app-shell:has(.technical-page) > .assistant-widget { position: static; width: min(74rem, calc(100% - 2rem)); margin: 0 auto; padding-bottom: var(--space-6); }
+.analysis-flowia { display: block; min-height: 76px; margin: 0; }
+.assistant-widget.inline-assistant { position: static; width: 100%; margin: 0; padding: 0; }
+.inline-assistant .assistant-panel { width: min(30rem, 100%); }
+@media (min-width: 1280px) {
+ .app-shell:has(.analysis-page) > .assistant-widget { position: fixed; right: 0; bottom: 1.5rem; width: auto; margin: 0; padding: 0; }
+ .app-shell:has(.analysis-page) > .assistant-widget .assistant-launcher { min-width: 0; padding: .5rem; border-radius: var(--radius-pill) 0 0 var(--radius-pill); }
+ .app-shell:has(.analysis-page) > .assistant-widget .assistant-launcher > span:last-child { display: none; }
+}
+@media (min-width: 1280px) {
+ .app-shell:has(.analysis-page) .inline-assistant:has(.assistant-launcher) { position: fixed; right: 0; bottom: 1.5rem; width: auto; z-index: 40; }
+ .app-shell:has(.analysis-page) .inline-assistant .assistant-launcher { min-width: 0; padding: .5rem; border-radius: var(--radius-pill) 0 0 var(--radius-pill); }
+ .app-shell:has(.analysis-page) .inline-assistant .assistant-launcher > span:last-child { display: none; }
+}
+
+@media (min-width: 1280px) {
+ .analysis-flowia { min-height: 0; }
+ .app-shell:has(.analysis-page) .inline-assistant .assistant-launcher { padding: 6px; }
+ .app-shell:has(.analysis-page) .inline-assistant .assistant-launcher .assistant-robot { width: 32px; height: 32px; }
+}

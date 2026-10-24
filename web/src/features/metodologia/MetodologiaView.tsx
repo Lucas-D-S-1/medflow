@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { Link, useLocation } from 'react-router-dom'
+import { resumableAnalysis } from '../../shared/analysisReturn'
 import MetricCard from '../../shared/MetricCard'
 import StatePanel from '../../shared/StatePanel'
 import SourceBadge from '../../shared/SourceBadge'
@@ -31,6 +32,7 @@ function ContentTable({ headers, rows, label }: { headers: string[]; rows: strin
 export default function MetodologiaView() {
   const { sourceState, reload } = useSource()
   const location = useLocation()
+  const analysisOrigin = resumableAnalysis(location.search)
   const data = sourceState.kind === 'live' || sourceState.kind === 'fallback' ? sourceState.data.methodology : null
 
   useEffect(() => {
@@ -105,6 +107,7 @@ export default function MetodologiaView() {
           <p>Pacientes-dia, dias de permanência e diárias faturadas são medidas diferentes. Não devem ser trocadas entre si.</p>
         </div></details>
       </section>
+      {analysisOrigin && <p className="sources-resume"><Link to={{ pathname: '/', search: analysisOrigin.search, hash: analysisOrigin.hash || '#hospital-detail' }} state={{ analysisReturnKey: analysisOrigin.key }}>Retomar análise{analysisOrigin.hospitalLabel ? ` de ${analysisOrigin.hospitalLabel}` : ''}{analysisOrigin.specialtyLabel ? ` · ${analysisOrigin.specialtyLabel}` : ''}</Link></p>}
       <footer className="sources-footer"><Link id="technical-link" to={{ pathname: '/metodologia/tecnico', search: location.search }} state={{ technicalOriginKey: location.key }} onClick={(event) => {
         if (event.button === 0 && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey) rememberTechnicalOrigin(location)
       }}>Detalhes técnicos ›</Link><span>Ômega Urban Tech · Challenge Oracle · FIAP 2026</span></footer>

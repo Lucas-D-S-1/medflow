@@ -2,20 +2,22 @@
 
 ## Reconciliações
 
-- `internacoes_novas_reconciliadas`: 7,150,693
-- `pacientes_dia_estimados`: 33,593,969
+- `internacoes_novas_reconciliadas`: 7,651,693
+- `pacientes_dia_estimados`: 35,982,297
 - `regioes_saude`: 62
-- `competencias`: 30
-- `internacoes_residentes_sp_observadas`: 7,089,959
-- `internacoes_residentes_fora_sp_atendidas`: 60,734
-- `internacoes_icsap_residentes_sp_observadas`: 988,453
-- `fluxos_origem_destino_mensais`: 31,033
-- `linhas_is_calculadas`: 372
-- `combinacoes_ipr_elegiveis`: 31,452
-- `cobertura_internacoes_ipr_pct`: 57.489
-- `linhas_tmh_cmi_amostra_suficiente`: 37,257
-- `hospitais_mes_acima_capacidade_declarada`: 511
-- `hospitais_mes_sem_leito_sus_declarado`: 146
+- `competencias`: 32
+- `internacoes_residentes_sp_observadas`: 7,586,565
+- `internacoes_residentes_fora_sp_atendidas`: 65,128
+- `internacoes_icsap_residentes_sp_observadas`: 1,057,859
+- `fluxos_origem_destino_mensais`: 33,137
+- `linhas_is_calculadas`: 496
+- `combinacoes_ipr_elegiveis`: 33,348
+- `combinacoes_diagnostico_especialidade_mensal`: 2,669,093
+- `combinacoes_diagnostico_especialidade_comparaveis`: 15,649
+- `cobertura_internacoes_ipr_pct`: 58.235
+- `linhas_tmh_cmi_amostra_suficiente`: 39,780
+- `hospitais_mes_acima_capacidade_declarada`: 549
+- `hospitais_mes_sem_leito_sus_declarado`: 156
 
 ## Limites de interpretação
 

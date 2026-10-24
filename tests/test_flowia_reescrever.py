@@ -105,3 +105,11 @@ def test_zero_benchmark_is_explained_without_inventing_pressure():
     assert "Não é possível identificar maior pressão" in text
     assert "razão IPE é indefinida" in text
     assert "SIH/SUS e CNES" in text
+
+
+def test_competencia_vem_do_contexto_e_prompt_nao_fixa_junho():
+    req = build_request('Até que competência vão os dados?', {'competence': '2026-08'}, [])
+    data = json.loads(req['messages'][0]['content'])
+    assert data['context']['competence'] == '2026-08'
+    assert 'MAX(CD_COMPETENCIA)' in req['system']
+    assert '202606' not in req['system']

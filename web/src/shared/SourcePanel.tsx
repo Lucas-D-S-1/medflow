@@ -66,9 +66,9 @@ export default function SourcePanel() {
           testId="contract-version"
         />
         <MetricCard
-          label="Gold atualizada em"
+          label="Base publicada em"
           value={formatDatabaseTime(methodology.gold_updated_at)}
-          detail="manifesto da Gold publicada"
+          detail="manifesto da publicação · horário de Brasília"
           testId="gold-updated-at"
         />
         <MetricCard

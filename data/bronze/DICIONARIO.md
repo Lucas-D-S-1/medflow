@@ -1,6 +1,6 @@
 # Dicionário da camada Bronze — MedFlow
 
-Contrato de esquema `0.4.0`, gerado automaticamente em `2026-08-28T12:28:26.367072+00:00`.
+Contrato de esquema `0.5.0`, gerado automaticamente em `2026-10-24T15:00:26.047565+00:00`.
 
 ## Responsabilidade da camada
 
@@ -14,7 +14,7 @@ Registros SIH/RD preservados com linhagem técnica.
 
 - Caminho: `data/bronze/parquet/sih_rd_sp_2024_2026.parquet`
 - Grão: uma linha conforme o registro original da fonte mensal
-- Linhas: 7,284,476
+- Linhas: 7,793,976
 - Chave lógica: sem unicidade assumida; usar o identificador da fonte e a competência
 
 | coluna | tipo | nulos | significado |
@@ -143,7 +143,7 @@ Registros CNES/LT preservados com linhagem técnica.
 
 - Caminho: `data/bronze/parquet/cnes_lt_sp_2024_2026.parquet`
 - Grão: uma linha conforme o registro original da fonte mensal
-- Linhas: 251,457
+- Linhas: 268,107
 - Chave lógica: sem unicidade assumida; usar o identificador da fonte e a competência
 
 | coluna | tipo | nulos | significado |
@@ -232,7 +232,7 @@ Página oficial da CONCLA usada para natureza jurídica.
 
 ### `cnes_estabelecimentos_atuais`
 
-Respostas atuais da API CNES para os hospitais observados.
+Cadastros atuais CNES: API e fichas oficiais identificadas por registro no cache.
 
 - Caminho: `data/bronze/origem/referencias/ms_cnes_estabelecimentos_atuais_raw.json`
 - Fonte: https://apidadosabertos.saude.gov.br/cnes/estabelecimentos/{cnes}

@@ -31,9 +31,6 @@ type RegionalMapProps = {
   onHoverChange?: (regionCode: string) => void
   /** Sinais acesos e variações por região, para o cartão de valores. */
   signals?: Map<string, RegionSignals>
-  /** O que a cor representa. O placar de sinais consome os seis indicadores;
-   *  o IPH é um deles isolado. */
-  colorBy?: 'iph' | 'sinais'
   variations?: Map<string, { mom: number | null; yoy: number | null }>
   competence: string
   comparisonPeriods: { previous: string; yearAgo: string }
@@ -42,7 +39,6 @@ type RegionalMapProps = {
 }
 
 const mapData = JSON.parse(regionalMapAsset) as MapFeatureCollection
-const SIGNAL_TOTAL = SIGNALS.length
 const MAP_WIDTH = 1_000
 const MAP_HEIGHT = 620
 const MAP_PADDING = 16
@@ -120,7 +116,6 @@ export default function RegionalMap({
   comparisonPeriods,
   onAskLocal,
   onViewHospitals,
-  colorBy = 'iph',
   compact = false,
 }: RegionalMapProps) {
   const [ownHoveredCode, setOwnHoveredCode] = useState('')
@@ -151,23 +146,9 @@ export default function RegionalMap({
   const rovingCode = interactiveCodes.includes(selectedRegionCode)
     ? selectedRegionCode
     : interactiveCodes[0]
-  // Colorir pelo placar de sinais não usa percentis: a escala já é discreta e
-  // pequena, de zero a seis, e reparti-la em quintis inventaria um corte onde
-  // a contagem já é o corte.
-  const bySignals = colorBy === 'sinais' && signals !== undefined
-  const metricOf = (item: RegionalSummaryItem) =>
-    bySignals ? (signals?.get(item.region_code)?.count ?? 0) : item.iph_percent
+  const metricOf = (item: RegionalSummaryItem) => item.iph_percent
   const values = visibleItems.map(metricOf).sort((a, b) => a - b)
-  // Os cortes do placar eram fixos em 0, 1, 2 e 3. Como o recorte publicado
-  // chega no máximo a 3 dos 6 sinais, os dois tons escuros nunca eram usados:
-  // o mapa inteiro ficava na metade clara da rampa, e a legenda mostrava um
-  // tom que região nenhuma tinha. Agora a escala se estica até o máximo
-  // observado, então o pior do recorte é sempre o tom mais escuro e o melhor
-  // é sempre o mais claro.
-  const observedMax = bySignals ? (values.at(-1) ?? 0) : 0
-  const thresholds = bySignals
-    ? [0.2, 0.4, 0.6, 0.8].map((fracao) => fracao * observedMax)
-    : [0.2, 0.4, 0.6, 0.8].map((percentile) => quantile(values, percentile))
+  const thresholds = [0.2, 0.4, 0.6, 0.8].map((percentile) => quantile(values, percentile))
   const hoveredItem = itemsByRegion.get(hoveredCode)
   // Com um território escolhido o cartão fica nele por padrão: os valores da
   // região selecionada não podem depender de manter o ponteiro parado em cima.
@@ -228,9 +209,7 @@ export default function RegionalMap({
       >
         <title id="regional-map-title">Mapa das 62 regiões de saúde de São Paulo</title>
         <desc id="regional-map-description">
-          {bySignals
-            ? 'As cores vão do mais claro, nenhum sinal aceso, ao mais escuro, o maior placar observado nesta competência.'
-            : 'As cores usam percentis do IPH estimado na competência selecionada.'}{' '}
+          As cores usam percentis do IPH estimado na competência selecionada.
           Use as setas para navegar pelas regiões e Enter ou espaço para selecionar. Ativar a
           região já selecionada volta ao panorama, sem território escolhido.
         </desc>
@@ -243,11 +222,7 @@ export default function RegionalMap({
           const isInteractive = Boolean(item)
           const isSelected = regionCode === selectedRegionCode
           const label = item
-            ? `${feature.properties.nm_regiao_saude}, ${
-                bySignals
-                  ? `${signals?.get(regionCode)?.count ?? 0} de ${SIGNAL_TOTAL} sinais acesos`
-                  : `IPH estimado ${formatPercent(item.iph_percent)}`
-              }, amostra de ${formatInteger(item.new_admissions)} internações novas${
+            ? `${feature.properties.nm_regiao_saude}, IPH estimado ${formatPercent(item.iph_percent)}, amostra de ${formatInteger(item.new_admissions)} internações novas${
                 isSelected ? '. Selecionada: ative novamente para voltar ao panorama' : ''
               }`
             : `${feature.properties.nm_regiao_saude}, sem dados para a competência selecionada`
@@ -416,24 +391,9 @@ export default function RegionalMap({
         </p>
       )}
       <div className="regional-map-legend" aria-label="Legenda do IPH estimado" data-testid="regional-map-legend">
-        {bySignals ? (
-          <>
-            {/* A legenda descreve o que está na tela: cravar "quatro ou mais"
-                anunciaria um tom que pode não existir na competência. */}
-            <span><i className="tone-swatch tone-1" /> {formatInteger(values[0] ?? 0)} de {SIGNAL_TOTAL} sinais</span>
-            <span><i className="tone-swatch tone-5" /> até {formatInteger(values.at(-1) ?? 0)} de {SIGNAL_TOTAL}</span>
-            <small>
-              Contagem de indicadores no quintil mais alto do recorte. É placar de
-              sinais para priorizar investigação, não nota de qualidade.
-            </small>
-          </>
-        ) : (
-          <>
-            <span><i className="tone-swatch tone-1" /> mínimo real {formatPercent(values[0] ?? 0)}</span>
-            <span><i className="tone-swatch tone-5" /> máximo real {formatPercent(values.at(-1) ?? 0)}</span>
-            <small>Escala visual relativa por percentis desta competência; não é classificação clínica.</small>
-          </>
-        )}
+        <span><i className="tone-swatch tone-1" /> mínimo real {formatPercent(values[0] ?? 0)}</span>
+        <span><i className="tone-swatch tone-5" /> máximo real {formatPercent(values.at(-1) ?? 0)}</span>
+        <small>Escala visual relativa por percentis desta competência; não é classificação clínica.</small>
       </div>
     </div>
   )

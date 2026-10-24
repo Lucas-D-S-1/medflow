@@ -1,7 +1,7 @@
 {
   "camada": "gold",
-  "versao_contrato": "0.4.0",
-  "gerado_em_utc": "2026-08-28T14:35:42.675113+00:00",
+  "versao_contrato": "0.5.0",
+  "gerado_em_utc": "2026-10-24T14:55:55.040167+00:00",
   "principios": [
     "Marts orientados às perguntas de gestão e ao consumo no BI.",
     "Toda métrica expõe amostra, numerador, denominador ou estado de calculabilidade.",
@@ -21,7 +21,7 @@
         "cd_cnes",
         "cd_competencia"
       ],
-      "linhas": 19341,
+      "linhas": 20637,
       "colunas": [
         {
           "nome": "cd_cnes",
@@ -181,14 +181,14 @@
           "nome": "nr_iph_estimado",
           "tipo": "float64",
           "aceita_nulo": true,
-          "nulos": 146,
+          "nulos": 156,
           "descricao": "Razão entre pacientes-dia estimados e leitos-dia declarados."
         },
         {
           "nome": "pc_iph_estimado",
           "tipo": "float64",
           "aceita_nulo": true,
-          "nulos": 146,
+          "nulos": 156,
           "descricao": "IPH estimado expresso em percentual."
         },
         {
@@ -209,21 +209,21 @@
           "nome": "pc_tmh",
           "tipo": "float64",
           "aceita_nulo": true,
-          "nulos": 1049,
+          "nulos": 1097,
           "descricao": "Óbitos em internações novas divididos pelas internações novas, em percentual."
         },
         {
           "nome": "vl_cmi",
           "tipo": "float64",
           "aceita_nulo": true,
-          "nulos": 1049,
+          "nulos": 1097,
           "descricao": "Valor nominal aprovado nas internações novas dividido pela quantidade de internações novas."
         },
         {
           "nome": "nr_permanencia_media",
           "tipo": "float64",
           "aceita_nulo": true,
-          "nulos": 1049,
+          "nulos": 1097,
           "descricao": "Soma dos dias de permanência dividida pela quantidade de internações novas."
         },
         {
@@ -244,7 +244,7 @@
           "nome": "nr_ipe_mediana",
           "tipo": "float64",
           "aceita_nulo": true,
-          "nulos": 4576,
+          "nulos": 4882,
           "descricao": "Valor numérico referente a ipe mediana."
         },
         {
@@ -258,7 +258,7 @@
           "nome": "pc_especialidade_ipe_acima_referencia",
           "tipo": "float64",
           "aceita_nulo": true,
-          "nulos": 4576,
+          "nulos": 4882,
           "descricao": "Percentual referente a especialidade ipe acima referencia."
         },
         {
@@ -293,7 +293,7 @@
           "nome": "vl_cmi_real",
           "tipo": "float64",
           "aceita_nulo": true,
-          "nulos": 1049,
+          "nulos": 1097,
           "descricao": "Valor aprovado médio corrigido pelo IPCA para a competência indicada em cd_competencia_preco_referencia."
         }
       ]
@@ -308,7 +308,7 @@
         "cd_especialidade_sih",
         "cd_competencia"
       ],
-      "linhas": 54328,
+      "linhas": 58017,
       "colunas": [
         {
           "nome": "cd_cnes",
@@ -468,14 +468,14 @@
           "nome": "nr_permanencia_media_benchmark_especialidade",
           "tipo": "float64",
           "aceita_nulo": true,
-          "nulos": 2584,
+          "nulos": 2752,
           "descricao": "Permanência média dos demais hospitais da região na mesma especialidade, em dias."
         },
         {
           "nome": "nr_ipe",
           "tipo": "float64",
           "aceita_nulo": true,
-          "nulos": 19587,
+          "nulos": 20910,
           "descricao": "Permanência média do hospital na especialidade dividida pela dos demais hospitais da mesma região, na mesma especialidade e competência."
         },
         {
@@ -533,7 +533,7 @@
         "cd_especialidade_sih",
         "cd_cid_principal"
       ],
-      "linhas": 2495111,
+      "linhas": 2669093,
       "colunas": [
         {
           "nome": "cd_cnes",
@@ -665,7 +665,7 @@
           "nome": "pc_dia_permanencia_especialidade",
           "tipo": "float64",
           "aceita_nulo": true,
-          "nulos": 37770,
+          "nulos": 40608,
           "descricao": "Participação percentual do CID nos dias de permanência do hospital, na mesma especialidade e competência; nula quando o total de dias é zero."
         },
         {
@@ -693,14 +693,14 @@
           "nome": "nr_permanencia_media_benchmark",
           "tipo": "float64",
           "aceita_nulo": true,
-          "nulos": 1179656,
+          "nulos": 1261914,
           "descricao": "Dias de permanência divididos pelas internações dos demais hospitais do benchmark."
         },
         {
           "nome": "nr_ipr",
           "tipo": "float64",
           "aceita_nulo": true,
-          "nulos": 2480440,
+          "nulos": 2653444,
           "descricao": "Permanência média do hospital/CID dividida pelo benchmark regional que exclui o hospital."
         },
         {
@@ -721,7 +721,7 @@
         "cd_cnes",
         "cd_cid_principal"
       ],
-      "linhas": 455054,
+      "linhas": 470978,
       "colunas": [
         {
           "nome": "cd_cnes",
@@ -812,7 +812,7 @@
           "tipo": "int32",
           "aceita_nulo": false,
           "nulos": 0,
-          "descricao": "Quantidade referente a dia permanencia benchmark."
+          "descricao": "Dias de permanência dos demais hospitais no benchmark regional do mesmo grão."
         },
         {
           "nome": "qt_hospital_benchmark",
@@ -826,20 +826,20 @@
           "tipo": "float64",
           "aceita_nulo": false,
           "nulos": 0,
-          "descricao": "Valor numérico referente a permanencia media hospital."
+          "descricao": "Soma dos dias de permanência dividida pelas internações novas do hospital no grão."
         },
         {
           "nome": "nr_permanencia_media_benchmark",
           "tipo": "float64",
           "aceita_nulo": true,
-          "nulos": 95542,
-          "descricao": "Valor numérico referente a permanencia media benchmark."
+          "nulos": 97078,
+          "descricao": "Dias de permanência divididos pelas internações dos demais hospitais do benchmark."
         },
         {
           "nome": "nr_ipr",
           "tipo": "float64",
           "aceita_nulo": true,
-          "nulos": 423602,
+          "nulos": 437630,
           "descricao": "Permanência média do hospital/CID dividida pelo benchmark regional que exclui o hospital."
         },
         {
@@ -860,7 +860,7 @@
         "cd_regiao_saude",
         "cd_competencia"
       ],
-      "linhas": 1860,
+      "linhas": 1984,
       "colunas": [
         {
           "nome": "cd_regiao_saude",
@@ -1132,7 +1132,7 @@
           "nome": "nr_ipe_mediana",
           "tipo": "float64",
           "aceita_nulo": true,
-          "nulos": 317,
+          "nulos": 337,
           "descricao": "Valor numérico referente a ipe mediana."
         },
         {
@@ -1146,7 +1146,7 @@
           "nome": "pc_hospital_especialidade_ipe_acima_referencia",
           "tipo": "float64",
           "aceita_nulo": true,
-          "nulos": 317,
+          "nulos": 337,
           "descricao": "Percentual referente a hospital especialidade ipe acima referencia."
         },
         {
@@ -1281,7 +1281,7 @@
       "descricao": "Tabela analítica mart_fluxo_assistencial_regiao_mensal.",
       "grao": "granularidade documentada pelo pipeline produtor",
       "chave_primaria_logica": [],
-      "linhas": 31033,
+      "linhas": 33137,
       "colunas": [
         {
           "nome": "cd_origem_residencia",
@@ -1343,14 +1343,14 @@
           "nome": "cd_macrorregiao_origem",
           "tipo": "string",
           "aceita_nulo": true,
-          "nulos": 1578,
+          "nulos": 1688,
           "descricao": "Macrorregião de saúde da residência; nula para residentes fora de SP."
         },
         {
           "nome": "nm_macrorregiao_origem",
           "tipo": "object",
           "aceita_nulo": true,
-          "nulos": 1578,
+          "nulos": 1688,
           "descricao": "Nome da macrorregião de residência; nulo para residentes fora de SP."
         },
         {
@@ -1396,7 +1396,7 @@
       "descricao": "Tabela analítica mart_icsap_regiao_mensal.",
       "grao": "granularidade documentada pelo pipeline produtor",
       "chave_primaria_logica": [],
-      "linhas": 35340,
+      "linhas": 37696,
       "colunas": [
         {
           "nome": "cd_regiao_saude",

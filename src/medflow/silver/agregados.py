@@ -203,7 +203,8 @@ def reconciliar(
     assert metricas["cids_sem_capitulo"] == 0
     assert metricas["cids_sem_descricao"] == 0
     assert metricas["hospitais_sem_nome_atual"] == 0
-    assert metricas["hospitais_sem_esfera_atual"] == 0
+    # Ausências do campo extinto são verificadas em validar_esfera_cadastro;
+    # continuam contadas, sem imputação. Natureza jurídica permanece obrigatória.
     assert metricas["hospitais_sem_natureza_juridica"] == 0
     assert metricas["registros_sem_regiao"] == 0
     assert set(fato.CNES) <= set(dim_hospital.CNES)

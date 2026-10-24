@@ -7,6 +7,9 @@
 
 import { expect, test } from '@playwright/test'
 import {
+  mesExtenso,
+  snapshotMesAnterior,
+  snapshotAnoAnterior,
   coberturaMetodologia,
   iphDaMacro3529,
   methodologySnapshot,
@@ -85,7 +88,7 @@ test('renderiza a competência e a versão do contrato recebidas do Oracle', asy
 
   await page.getByRole('link', { name: 'Fontes e indicadores', exact: true }).click()
   await page.getByRole('link', { name: 'Detalhes técnicos ›' }).click()
-  await expect(page.getByTestId('methodology-data-through')).toContainText(`Gold publicada até ${snapshotCompetenciaBR}`)
+  await expect(page.getByTestId('methodology-data-through')).toContainText(`Base publicada até ${snapshotCompetenciaBR}`)
   await expect(page.getByTestId('coverage-regions')).toHaveText('62')
   await expect(page.getByTestId('coverage-competencies')).toHaveText(
     String(coberturaMetodologia.competencies),
@@ -99,11 +102,10 @@ test('renderiza a competência e a versão do contrato recebidas do Oracle', asy
   await expect(page.getByTestId('coverage-stay-days')).toHaveText(
     pt(coberturaMetodologia.stay_days),
   )
-  await expect(
-    page.getByRole('heading', { name: 'Por que Oracle neste MVP?' }),
-  ).toBeVisible()
-  await expect(page.locator('.database-decision')).toContainText('25 / 25')
+  await page.getByText('Por que Oracle neste MVP?', { exact: true }).click()
+  await expect(page.locator('.decision-details')).toContainText('25 / 25')
   await expect(page.getByTestId('gold-updated-at')).toContainText('2026')
+  await page.getByTestId('formula-cmi').locator('summary').click()
   await expect(page.getByTestId('formula-cmi')).toContainText('fator de correção IPCA')
   await expect(page.getByTestId('formula-iph')).toContainText('Pressão estimada sobre capacidade declarada, não ocupação física real.')
   await expect(page.getByTestId('cut-ipr')).toContainText('20 casos hospital/CID')
@@ -192,9 +194,6 @@ test('expõe o mapa com percentis, seleção textual e uma única parada de tabu
 
   await page.goto('/regional?regiao=35073')
 
-  // O mapa abre colorido pelo placar de sinais. Este teste é sobre a escala por
-  // percentis do IPH, então ele declara o indicador que exercita.
-  await page.getByTestId('map-metric-iph').click()
 
   const map = page.getByTestId('regional-map-svg')
   await expect(map).not.toHaveAttribute('role', 'img')
@@ -212,8 +211,6 @@ test('expõe o mapa com percentis, seleção textual e uma única parada de tabu
   await expect(page.getByTestId('regional-map-selection')).not.toContainText('JUNDIAI')
 
   await page.goto('/regional?macrorregiao=3529&regiao=35102')
-  // Navegar recomeça no placar de sinais, que é o padrão do mapa.
-  await page.getByTestId('map-metric-iph').click()
   await expect(page.getByTestId('regional-map-svg').locator('[role="button"]')).toHaveCount(62)
   await expect(page.getByTestId('regional-map-legend')).toContainText(
     `mínimo real ${pt(Math.min(...iphDaMacro3529), 1)}%`,
@@ -275,7 +272,7 @@ test('renderiza a série regional persistida com competência, amostra e denomin
   await expect(iphHistorical).toContainText(
     `−${pt(Math.abs((serieRegionalAtual.iph_percent as number) - iphAverage), 1)} p.p.`,
   )
-  await expect(iphHistorical).toContainText(`Média acumulada até junho/2026: ${pt(iphAverage, 1)}%`)
+  await expect(iphHistorical).toContainText(`Média acumulada até ${mesExtenso(snapshotCompetencia)}: ${pt(iphAverage, 1)}%`)
   await expect(iphHistorical).toContainText(
     `${pt(iphItems.length)} competências desde janeiro/2024`,
   )
@@ -287,7 +284,7 @@ test('renderiza a série regional persistida com competência, amostra e denomin
   const iphCurrentPoint = page.getByTestId(`regional-series-point-${snapshotCompetencia}`)
   await expect(iphCurrentPoint).toHaveAttribute(
     'aria-label',
-    new RegExp(`Média acumulada até junho/2026: ${pt(iphAverage, 1)}%; ${iphItems.length} competências desde janeiro/2024`),
+    new RegExp(`Média acumulada até ${mesExtenso(snapshotCompetencia)}: ${pt(iphAverage, 1)}%; ${iphItems.length} competências desde janeiro/2024`),
   )
   await iphCurrentPoint.hover()
   const iphTooltip = page.getByRole('tooltip')
@@ -296,7 +293,7 @@ test('renderiza a série regional persistida com competência, amostra e denomin
     `${pt(serieRegionalAtual.estimated_patient_days as number)} pacientes-dia / ${pt(serieRegionalAtual.declared_capacity_bed_days as number)} leitos-dia declarados`,
   )
   await expect(iphTooltip).toContainText(
-    `Média acumulada até junho/2026: ${pt(iphAverage, 1)}% · ${pt(iphItems.length)} competências`,
+    `Média acumulada até ${mesExtenso(snapshotCompetencia)}: ${pt(iphAverage, 1)}% · ${pt(iphItems.length)} competências`,
   )
   await iphCurrentPoint.focus()
   await iphCurrentPoint.press('Escape')
@@ -439,52 +436,30 @@ test('mantém a metodologia colapsável', async ({ page }) => {
     page.getByText('permanência média hospital/especialidade', { exact: false }),
   ).toHaveCount(1)
 
-  // Cinco, não seis: reconciliação e limites subiram para blocos visíveis, e
-  // cortes absorveu os estados de ausência, que são o mesmo assunto visto dos
-  // dois lados.
-  const details = page.locator('.methodology-details details')
-  await expect(details).toHaveCount(5)
-  await expect(details.first()).not.toHaveAttribute('open', '')
-  await details.first().locator('summary').click()
-  const detailHeight = await details.first().locator('.detail-scroll').evaluate(
-    (element) =>
-      (element as unknown as { getBoundingClientRect: () => { height: number } })
-        .getBoundingClientRect().height,
-  )
-  expect(detailHeight).toBeLessThanOrEqual(0.45 * 720 + 1)
+  const formulas = page.locator('.technical-formulas > details')
+  await expect(formulas).toHaveCount((methodologySnapshot.formulas as unknown[]).length)
+  await expect(page.getByTestId('formula-iph')).toHaveAttribute('open', '')
+  await expect(page.getByTestId('formula-ipe')).not.toHaveAttribute('open', '')
+  await page.getByTestId('formula-ipe').locator('summary').click()
+  await expect(page.getByTestId('formula-ipe')).toHaveAttribute('open', '')
+  await expect(page.getByTestId('formula-ipe')).toHaveCSS('max-height', 'none')
+
 })
 
-test('a escala do placar usa a rampa inteira, do melhor ao pior do recorte', async ({ page }) => {
+test('o mapa abre apenas em IPH com legenda e escala por percentis', async ({ page }) => {
   await mockLiveSource(page)
   await page.goto(`/?competencia=${snapshotCompetencia}`)
   await expect(page.locator('.regional-map-shape')).toHaveCount(62)
-
-  // Os cortes eram fixos em 0, 1, 2 e 3. Como o recorte publicado chega no
-  // máximo a 3 dos 6 sinais, os dois tons escuros nunca apareciam: o mapa
-  // inteiro ficava na metade clara, e a legenda exibia um tom que região
-  // nenhuma tinha. Sem o tom mais escuro em uso, "quem é o pior" não se vê.
   await expect(page.locator('.regional-map-shape.tone-1').first()).toBeVisible()
   await expect(page.locator('.regional-map-shape.tone-5').first()).toBeVisible()
-})
-
-test('o mapa pode colorir pelo placar que consome os seis indicadores', async ({ page }) => {
-  await mockLiveSource(page)
-  await page.goto(`/?competencia=${snapshotCompetencia}`)
-
-  // O padrão é o placar: ele é o que responde "onde olhar primeiro", enquanto
-  // o IPH sozinho é um dos seis sinais que ele conta.
-  await expect(page.locator('#map-title')).toContainText('Sinais por região')
-  await expect(page.getByTestId('regional-map-legend')).toContainText('sinais')
-  await expect(page.getByTestId('regional-map-legend')).toContainText(
-    'não nota de qualidade',
-  )
-
-  await page.getByTestId('map-metric-iph').click()
+  await expect(page.locator('#regional-title')).toHaveText('Pressão sobre leitos (IPH) por região')
   await expect(page.locator('#map-title')).toContainText('IPH estimado')
+  await expect(page.getByRole('radiogroup', { name: 'O que a cor mostra' })).toHaveCount(0)
+  await expect(page.locator('[data-testid^="map-metric-"]')).toHaveCount(0)
   await expect(page.getByTestId('regional-map-legend')).toContainText('mínimo real')
-
-  await page.getByTestId('map-metric-sinais').click()
-  await expect(page.locator('#map-title')).toContainText('Sinais por região')
+  await expect(page.getByTestId('regional-map-legend')).toContainText('máximo real')
+  await expect(page.getByTestId('regional-map-legend')).not.toContainText('sinais')
+  await expect(page.getByTestId('regional-map-35073')).toHaveAttribute('aria-label', /IPH estimado/)
 })
 
 test('hierarquiza a região no painel e preserva os seis sinais recolhidos', async ({ page }) => {
@@ -503,9 +478,26 @@ test('hierarquiza a região no painel e preserva os seis sinais recolhidos', asy
   await expect(disclosure.locator('[data-signal]')).toHaveCount(6)
   await expect(disclosure.locator('[data-signal="tmh"]')).toContainText('sinal aceso')
   await expect(disclosure).toContainText('Permanência acima dos pares (IPE)')
-  await expect(page.getByTestId('state-total-mom').locator('..')).toContainText('maio/2026')
-  await expect(page.getByTestId('state-total-yoy').locator('..')).toContainText('junho/2025')
-  await page.getByTestId('regional-map-35073').hover()
+  await expect(page.getByTestId('state-total-mom').locator('..')).toContainText(mesExtenso(snapshotMesAnterior))
+  await expect(page.getByTestId('state-total-yoy').locator('..')).toContainText(mesExtenso(snapshotAnoAnterior))
+  // SVG paths are irregular: the bounding-box center can belong to another region.
+  await page.evaluate(`document.querySelector('[data-testid="regional-map-35073"]').scrollIntoView({ block: 'center', behavior: 'instant' })`)
+  const point = await page.evaluate<{ x: number; y: number } | null>(`(() => {
+    const path = document.querySelector('[data-testid="regional-map-35073"]')
+    const box = path.getBBox()
+    for (const dx of [.5, .25, .75, .1, .9]) for (const dy of [.5, .25, .75, .1, .9]) {
+      const local = new DOMPoint(box.x + box.width * dx, box.y + box.height * dy)
+      const screen = local.matrixTransform(path.getScreenCTM())
+      if (path.isPointInFill(local)) {
+        const rect = path.getBoundingClientRect()
+        return { x: screen.x - rect.left, y: screen.y - rect.top }
+      }
+    }
+    return null
+  })()`)
+  expect(point).not.toBeNull()
+  // Hover aguarda a estabilidade do SVG e refaz a rolagem se o layout mudou.
+  await page.getByTestId('regional-map-35073').hover({ position: point! })
   const preview = page.getByTestId('regional-map-tooltip')
   await expect(preview).toContainText('JUNDIAI')
   await expect(preview.getByRole('button')).toHaveCount(0)
@@ -522,7 +514,7 @@ test('não transforma comparação ausente de internações novas em zero', asyn
     const year = Number(url.searchParams.get('ano'))
     const month = Number(url.searchParams.get('mes'))
     const competence = `${year}-${String(month).padStart(2, '0')}`
-    const isComparison = competence === '2026-05' || competence === '2025-06'
+    const isComparison = competence === snapshotMesAnterior || competence === snapshotAnoAnterior
     await route.fulfill({
       contentType: 'application/json',
       body: JSON.stringify({
@@ -581,6 +573,7 @@ test('a metodologia responde as duas metades do proprio titulo', async ({ page }
   await expect(page.getByTestId('reconciliation-patient_days_cross_mart')).toContainText(
     'diferença: 0',
   )
+  await page.getByText(/Ver os \d+ limites publicados/).click()
   await expect(page.getByTestId('methodology-limits')).toBeVisible()
   await expect(page.getByTestId('methodology-limits')).toContainText('sem ajuste de risco')
 

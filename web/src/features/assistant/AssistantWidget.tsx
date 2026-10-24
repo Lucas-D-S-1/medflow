@@ -1,6 +1,7 @@
-import { entryQuestions } from '../../shared/publicNavigation'
 import { isEntryLocation } from '../../shared/entryNavigation'
-import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type FormEvent } from 'react'
+import { recentAnalysisSection } from '../../shared/analysisNavigation'
+import { createPortal } from 'react-dom'
 import { useLocation } from 'react-router-dom'
 import { useActiveSection } from '../../shared/useActiveSection'
 import {
@@ -247,8 +248,6 @@ function AssistantRobot({ compact = false }: { compact?: boolean }) {
 export default function AssistantWidget() {
   const location = useLocation()
   const onEntry = isEntryLocation(location)
-  const [bubbleOpen, setBubbleOpen] = useState(true)
-  const [suggestionIndex, setSuggestionIndex] = useState(0)
   const {
     sourceState,
     sharedCompetence,
@@ -259,6 +258,7 @@ export default function AssistantWidget() {
     clearAssistantQuestion,
   } = useSource()
   const [isOpen, setIsOpen] = useState(false)
+  const [inlineHost, setInlineHost] = useState<HTMLElement | null>(null)
   const [question, setQuestion] = useState('')
   // O fio inteiro, não a última rodada. Guardar só uma fazia a pergunta
   // seguinte apagar a anterior da tela e da memória do modelo.
@@ -345,6 +345,13 @@ export default function AssistantWidget() {
     }
     return hospitalSpecialties
   }, [hospitalSpecialties, location.search, sharedCompetence])
+
+  // Keep the open panel in the section that launched it. Moving it to the
+  // document footer would change the visible analysis and its context.
+  useLayoutEffect(() => {
+    setInlineHost(location.pathname === '/' && !onEntry
+      ? document.getElementById(`${isOpen ? recentAnalysisSection() ?? currentRoute : currentRoute}-flowia`) : null)
+  }, [isOpen, location.pathname, onEntry, isOpen ? null : currentRoute])
 
   useEffect(() => {
     if (isOpen) window.setTimeout(() => inputRef.current?.focus(), 80)
@@ -1164,16 +1171,8 @@ export default function AssistantWidget() {
     window.requestAnimationFrame(() => launcherRef.current?.focus())
   }
 
-  return (
-    <aside className={`assistant-widget${onEntry ? ' entry-assistant' : location.pathname === '/metodologia' ? ' sources-assistant' : ''}`} aria-label="FlowIA, assistente do MedFlow">
-      {onEntry && !isOpen && bubbleOpen && <section className="assistant-entry-bubble" aria-label="Sugestão do FlowIA">
-        <div><strong>FlowIA</strong><button type="button" aria-label="Fechar sugestão" onClick={() => setBubbleOpen(false)}>×</button></div>
-        <p>{entryQuestions[suggestionIndex]}</p>
-        <div className="assistant-entry-actions">
-          <button type="button" onClick={() => { setQuestion(entryQuestions[suggestionIndex]); setIsOpen(true) }}>Perguntar</button>
-          <button type="button" onClick={() => setSuggestionIndex((index) => (index + 1) % entryQuestions.length)}>Outra pergunta</button>
-        </div>
-      </section>}
+  const widget = (
+    <aside className={`assistant-widget${inlineHost ? ' inline-assistant' : ''}${onEntry ? ' entry-assistant' : location.pathname === '/metodologia' ? ' sources-assistant' : ''}`} aria-label="FlowIA, assistente do MedFlow">
       {isOpen ? (
         <section className="assistant-panel" id="medflow-assistant-panel" aria-live="polite">
           <header className="assistant-header">
@@ -1274,7 +1273,7 @@ export default function AssistantWidget() {
           ref={launcherRef}
           className="assistant-launcher"
           type="button"
-          onClick={() => { if (onEntry && !bubbleOpen) setBubbleOpen(true); else setIsOpen(true) }}
+          onClick={() => setIsOpen(true)}
           aria-expanded="false"
           aria-controls="medflow-assistant-panel"
           aria-label="Abrir FlowIA — Posso ajudar?"
@@ -1288,4 +1287,5 @@ export default function AssistantWidget() {
       )}
     </aside>
   )
+  return inlineHost ? createPortal(widget, inlineHost) : widget
 }

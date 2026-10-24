@@ -31,7 +31,7 @@ def descomprimir(contexto: ContextoBronze) -> int:
         for ano, mes in contexto.competencias:
             dbc = contexto.caminho_dbc(grupo, ano, mes)
             dbf = contexto.caminho_dbf(grupo, ano, mes)
-            if not dbf.exists():
+            if not dbf.exists() or contexto.sobrescrever:
                 datasus_dbc.decompress(str(dbc), str(dbf))
                 logger.info("convertido %s", dbf.name, extra={"competencia": f"{ano}-{mes:02d}"})
                 convertidos += 1

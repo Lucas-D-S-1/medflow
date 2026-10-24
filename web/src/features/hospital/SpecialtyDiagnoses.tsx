@@ -1,3 +1,4 @@
+import { useReadingState } from '../../shared/useReadingState'
 import { useEffect, useRef, useState } from 'react'
 import { useSource } from '../../shared/SourceContext'
 import { formatDecimal, formatInteger, formatPercent, formatPeriod } from '../../shared/format'
@@ -14,7 +15,7 @@ type LoadState =
   | { kind: 'idle' | 'loading' | 'absent' | 'snapshot-unavailable' | 'error' }
   | { kind: 'ready'; key: string; data: SpecialtyDiagnosisResponse }
 
-const PREVIEW_SIZE = 10
+const PREVIEW_SIZE = 5
 const ORDER_LABELS: Record<SpecialtyDiagnosisOrder, string> = {
   dias: 'total de dias',
   internacoes: 'volume de internações',
@@ -24,22 +25,18 @@ const ORDER_LABELS: Record<SpecialtyDiagnosisOrder, string> = {
 function comparison(item: SpecialtyDiagnosisItem) {
   const raw = `${formatInteger(item.benchmark_admissions)} internações, ${formatInteger(item.benchmark_stay_days_total)} dias e ${formatInteger(item.benchmark_hospitals)} outros hospitais`
   if (item.sample_status !== 'suficiente') {
-    const reason = item.specialty_code === '--' || item.cid_code === '--'
-      ? 'Identificador desconhecido; não comparável'
-      : item.benchmark_hospitals === 0 || item.benchmark_admissions === 0
-        ? 'Sem outros hospitais neste recorte'
-        : item.sample_status === 'benchmark_zero' || item.benchmark_stay_days_total === 0
-          ? 'Pares sem dias de permanência registrados'
-          : 'Amostra insuficiente para comparar'
+    const reason =
+      item.specialty_code === '--' || item.cid_code === '--'
+        ? 'Identificador desconhecido; não comparável'
+        : item.benchmark_hospitals === 0 || item.benchmark_admissions === 0
+          ? 'Sem outros hospitais neste recorte'
+          : item.sample_status === 'benchmark_zero' || item.benchmark_stay_days_total === 0
+            ? 'Pares sem dias de permanência registrados'
+            : 'Amostra insuficiente para comparar'
     return (
       <>
         <strong>{reason}</strong>
-        <small>
-          {raw}
-          {item.average_stay_benchmark === null
-            ? ''
-            : ` · média dos pares ${formatDecimal(item.average_stay_benchmark)} dias`}
-        </small>
+        <small>{raw}</small>
       </>
     )
   }
@@ -65,7 +62,12 @@ export default function SpecialtyDiagnoses({
   specialtyName: string
 }) {
   const { sourceState } = useSource()
-  const [orderBy, setOrderBy] = useState<SpecialtyDiagnosisOrder>('dias')
+  const readingKey = `diagnoses:${cnes}:${competence}:${specialtyCode}`
+  const [orderBy, setOrderBy] = useReadingState<SpecialtyDiagnosisOrder>(
+    `${readingKey}:order`,
+    'dias',
+  )
+  const [descending, setDescending] = useReadingState(`${readingKey}:direction`, true)
   const [visible, setVisible] = useState(PREVIEW_SIZE)
   const [state, setState] = useState<LoadState>({ kind: 'idle' })
   const request = useRef<{ id: number; controller: AbortController } | null>(null)
@@ -93,9 +95,7 @@ export default function SpecialtyDiagnoses({
           snapshot.filters.specialty_code === specialtyCode &&
           snapshot.data_through === competence
         setState(
-          matches
-            ? { kind: 'ready', key, data: snapshot }
-            : { kind: 'snapshot-unavailable' },
+          matches ? { kind: 'ready', key, data: snapshot } : { kind: 'snapshot-unavailable' },
         )
       } catch {
         setState({ kind: 'error' })
@@ -129,28 +129,41 @@ export default function SpecialtyDiagnoses({
   }, [cnes, competence, key, month, orderBy, sourceState.kind, specialtyCode, year])
 
   return (
-    <section className="specialty-diagnoses" aria-labelledby="specialty-diagnoses-title">
+    <section
+      id="specialty-diagnoses"
+      tabIndex={-1}
+      className="hospital-panel specialty-diagnoses"
+      aria-labelledby="specialty-diagnoses-title"
+    >
       <div className="specialty-diagnoses-heading">
         <div>
           <p className="section-kicker">DIAGNÓSTICOS NA ESPECIALIDADE</p>
-          <h3 id="specialty-diagnoses-title">Principais diagnósticos · {specialtyName}</h3>
+          <h3 id="specialty-diagnoses-title">
+            Diagnósticos de {specialtyName} · {formatPeriod(competence)}
+          </h3>
           <p>
-            Competência de processamento {formatPeriod(competence)} · SIH/SUS · CID
-            principal. Referência regional: mesmo mês, especialidade e CID; hospital
-            excluído; comparação sem ajuste de risco.
+            Competência de processamento {formatPeriod(competence)} · SIH/SUS · CID principal.
+            Referência regional: mesmo mês, especialidade e CID; hospital excluído; comparação sem
+            ajuste de risco.
           </p>
         </div>
-        <label>
+        <label className="mobile-sort">
           Ordenar por
           <select
             value={orderBy}
             data-testid="specialty-diagnosis-order"
-            onChange={(event) => setOrderBy(event.target.value as SpecialtyDiagnosisOrder)}
+            onChange={(event) => {
+              setOrderBy(event.target.value as SpecialtyDiagnosisOrder)
+              setDescending(true)
+            }}
           >
             <option value="dias">Total de dias</option>
             <option value="internacoes">Internações</option>
             <option value="media">Média de permanência</option>
           </select>
+          <button type="button" onClick={() => setDescending((current) => !current)}>
+            {descending ? '↓ Maior primeiro' : '↑ Menor primeiro'}
+          </button>
         </label>
       </div>
 
@@ -191,52 +204,87 @@ export default function SpecialtyDiagnoses({
               <thead>
                 <tr>
                   <th>Diagnóstico principal</th>
-                  <th>Internações</th>
-                  <th>Dias</th>
-                  <th>Média</th>
+                  {(
+                    [
+                      ['internacoes', 'Internações'],
+                      ['dias', 'Dias'],
+                      ['media', 'Média'],
+                    ] as const
+                  ).map(([id, label]) => (
+                    <th
+                      key={id}
+                      scope="col"
+                      aria-sort={
+                        orderBy === id ? (descending ? 'descending' : 'ascending') : 'none'
+                      }
+                    >
+                      <button
+                        type="button"
+                        className="hospital-sort"
+                        onClick={() => {
+                          if (orderBy === id) setDescending((current) => !current)
+                          else {
+                            setOrderBy(id)
+                            setDescending(true)
+                          }
+                        }}
+                      >
+                        {label} {orderBy === id ? (descending ? '↓' : '↑') : '↕'}
+                      </button>
+                    </th>
+                  ))}
                   <th>Referência regional</th>
                 </tr>
               </thead>
               <tbody>
-                {data.items.slice(0, visible).map((item) => (
-                  <tr
-                    key={item.cid_code}
-                    data-testid={`specialty-diagnosis-row-${item.cid_code}`}
-                  >
-                    <td data-label="Diagnóstico principal">
-                      <strong>{item.cid_description}</strong>
-                      <small>
-                        CID {item.cid_code} · {item.chapter_description}
-                      </small>
-                    </td>
-                    <td data-label="Internações">
-                      <strong>{formatInteger(item.new_admissions)}</strong>
-                      <small>{formatPercent(item.admission_share_percent)} do volume</small>
-                    </td>
-                    <td data-label="Dias">
-                      <strong>{formatInteger(item.stay_days_total)}</strong>
-                      <small>
-                        {item.stay_day_share_percent === null
-                          ? 'Sem dias registrados para calcular participação'
-                          : `${formatPercent(item.stay_day_share_percent)} dos dias`}
-                      </small>
-                    </td>
-                    <td data-label="Média">
-                      <strong>{formatDecimal(item.average_stay_days)} dias</strong>
-                      <small>soma de dias ÷ internações</small>
-                    </td>
-                    <td data-label="Referência regional">{comparison(item)}</td>
-                  </tr>
-                ))}
+                {(descending ? data.items : [...data.items].reverse())
+                  .slice(0, visible)
+                  .map((item) => (
+                    <tr
+                      key={item.cid_code}
+                      data-testid={`specialty-diagnosis-row-${item.cid_code}`}
+                    >
+                      <td data-label="Diagnóstico principal">
+                        <strong>{item.cid_description}</strong>
+                        <small>
+                          CID {item.cid_code} · {item.chapter_description}
+                        </small>
+                      </td>
+                      <td data-label="Internações">
+                        <strong>{formatInteger(item.new_admissions)}</strong>
+                        <small>{formatPercent(item.admission_share_percent)} do volume</small>
+                      </td>
+                      <td data-label="Dias">
+                        <strong>{formatInteger(item.stay_days_total)}</strong>
+                        <small>
+                          {item.stay_day_share_percent === null
+                            ? 'Sem dias registrados para calcular participação'
+                            : `${formatPercent(item.stay_day_share_percent)} dos dias`}
+                        </small>
+                      </td>
+                      <td data-label="Média">
+                        <strong>{formatDecimal(item.average_stay_days)} dias</strong>
+                        <small>soma de dias ÷ internações</small>
+                      </td>
+                      <td data-label="Referência regional">{comparison(item)}</td>
+                    </tr>
+                  ))}
               </tbody>
             </table>
           </div>
+          <p className="diagnosis-count">
+            {formatInteger(Math.min(visible, data.items.length))} de{' '}
+            {formatInteger(data.pagination.count)} diagnósticos · SIH/SUS · base mensal MedFlow ·{' '}
+            {formatPeriod(competence)}
+          </p>
           {visible < data.items.length && (
             <button
               type="button"
               className="secondary-action"
               data-testid="specialty-diagnosis-more"
-              onClick={() => setVisible((current) => Math.min(current + PREVIEW_SIZE, data.items.length))}
+              onClick={() =>
+                setVisible((current) => Math.min(current + PREVIEW_SIZE, data.items.length))
+              }
             >
               Mostrar mais diagnósticos ({formatInteger(data.items.length - visible)} restantes)
             </button>
