@@ -1,7 +1,7 @@
 {
   "camada": "silver",
-  "versao_contrato": "0.4.0",
-  "gerado_em_utc": "2026-08-28T12:28:17.419998+00:00",
+  "versao_contrato": "0.5.0",
+  "gerado_em_utc": "2026-10-24T14:54:09.819958+00:00",
   "principios": [
     "Dados tipados, conformados, reconciliados e prontos para reuso.",
     "Somente dimensões e fatos; indicadores e benchmarks pertencem à Gold.",
@@ -16,7 +16,7 @@
       "chave_primaria_logica": [
         "cd_competencia"
       ],
-      "linhas": 30,
+      "linhas": 32,
       "colunas": [
         {
           "nome": "nr_ano_competencia",
@@ -70,7 +70,7 @@
       "chave_primaria_logica": [
         "cd_cnes"
       ],
-      "linhas": 655,
+      "linhas": 657,
       "colunas": [
         {
           "nome": "cd_cnes",
@@ -173,9 +173,9 @@
         {
           "nome": "nm_esfera_administrativa_atual",
           "tipo": "object",
-          "aceita_nulo": false,
-          "nulos": 0,
-          "descricao": "Descrição atual da esfera administrativa obtida na API do CNES."
+          "aceita_nulo": true,
+          "nulos": 2,
+          "descricao": "Esfera atual da API CNES; nula em ficha oficial que informa apenas natureza jurídica."
         },
         {
           "nome": "dt_atualizacao_cadastro_cnes",
@@ -662,7 +662,7 @@
       "chave_primaria_logica": [
         "cd_cid_principal"
       ],
-      "linhas": 9513,
+      "linhas": 9557,
       "colunas": [
         {
           "nome": "cd_cid_principal",
@@ -783,7 +783,7 @@
       "descricao": "AIHs aprovadas enriquecidas e tipadas para análise.",
       "grao": "uma linha por registro mensal de AIH",
       "chave_primaria_logica": [],
-      "linhas": 7284476,
+      "linhas": 7793976,
       "colunas": [
         {
           "nome": "id_aih",
@@ -1062,7 +1062,7 @@
           "nome": "ds_sexo",
           "tipo": "object",
           "aceita_nulo": true,
-          "nulos": 10,
+          "nulos": 29,
           "descricao": "Descrição do código de sexo."
         },
         {
@@ -1209,7 +1209,7 @@
         "cd_cnes",
         "cd_competencia"
       ],
-      "linhas": 19341,
+      "linhas": 20637,
       "colunas": [
         {
           "nome": "cd_cnes",

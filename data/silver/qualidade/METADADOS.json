@@ -1,7 +1,7 @@
 {
   "camada": "silver",
-  "versao_contrato": "0.4.0",
-  "gerado_em_utc": "2026-08-28T12:28:17.425184+00:00",
+  "versao_contrato": "0.5.0",
+  "gerado_em_utc": "2026-10-24T14:54:09.827476+00:00",
   "competencias": [
     "202401",
     "202402",
@@ -32,45 +32,47 @@
     "202603",
     "202604",
     "202605",
-    "202606"
+    "202606",
+    "202607",
+    "202608"
   ],
-  "bronze_sha256": "fa850a4caaeca60b6c23f13c0cf13018a5e6bdd67c564a4954773fb2dcd3d513",
+  "bronze_sha256": "813ca98845fd9df53c8799cb73d294910989d5ad8ac9cb9ace026eee471e8879",
   "metricas": {
-    "linhas_sih_reconciliadas": 7284476,
-    "linhas_cnes_reconciliadas": 251457,
-    "aih_aprovadas": 7284476,
-    "aih_distintas": 7155059,
-    "internacoes_novas": 7150693,
-    "continuacoes_longa_permanencia": 133783,
+    "linhas_sih_reconciliadas": 7793976,
+    "linhas_cnes_reconciliadas": 268107,
+    "aih_aprovadas": 7793976,
+    "aih_distintas": 7656059,
+    "internacoes_novas": 7651693,
+    "continuacoes_longa_permanencia": 142283,
     "especialidades_sem_depara": 0,
     "hospitais_sem_match_cnes": 0,
     "cids_sem_capitulo": 0,
     "cids_sem_descricao": 0,
     "hospitais_sem_nome_atual": 0,
-    "hospitais_sem_esfera_atual": 0,
+    "hospitais_sem_esfera_atual": 2,
     "hospitais_sem_natureza_juridica": 0,
     "registros_sem_regiao": 0,
     "internacoes_novas_sem_regiao": 0,
-    "hospitais_regiao_conflitante": 4,
-    "qt_diarias_igual_dias_perm_pct": 70.013,
-    "qt_zero_dias_perm_positivo": 187827,
-    "cruza_mes_pct": 15.0697,
-    "competencia_diverge_saida_pct": 18.7715,
-    "tmh_internacoes_novas_pct": 5.1114,
-    "proxy_iph_media_hospital_mes": 0.472897
+    "hospitais_regiao_conflitante": 5,
+    "qt_diarias_igual_dias_perm_pct": 69.9235,
+    "qt_zero_dias_perm_positivo": 200898,
+    "cruza_mes_pct": 15.0675,
+    "competencia_diverge_saida_pct": 18.7351,
+    "tmh_internacoes_novas_pct": 5.1094,
+    "proxy_iph_media_hospital_mes": 0.472647
   },
   "tabelas": {
     "dim_tempo": {
       "caminho": "data/silver/dimensoes/dim_tempo.parquet",
-      "linhas": 30,
+      "linhas": 32,
       "colunas": 6,
-      "sha256": "104a4fefe9d3fef52225dbaea1730d14ff671fd40915e2ec1609b751954f473d"
+      "sha256": "79b0ffffc0b2805e2c5ed2157c88e279f032c19a64652b4937fac6e3f484bd2a"
     },
     "dim_hospital": {
       "caminho": "data/silver/dimensoes/dim_hospital.parquet",
-      "linhas": 655,
+      "linhas": 657,
       "colunas": 24,
-      "sha256": "1c2a6f83ac298a26ef1b76d7d4cc5c7ee5005f7c1919a983093cd94907ae2a83"
+      "sha256": "f6531ce3e6acf923c2f2a90bf6dc3c2ac00bc166157ff32c64ba3f9df1dc91ef"
     },
     "dim_hospital_alias": {
       "caminho": "data/silver/dimensoes/dim_hospital_alias.parquet",
@@ -100,13 +102,13 @@
       "caminho": "data/silver/dimensoes/dim_especialidade.parquet",
       "linhas": 15,
       "colunas": 4,
-      "sha256": "7906696c6b41fdd0e70179103647959d8ca64d18b919bca0cb86f251d135284b"
+      "sha256": "446b11d5e0f13edb673b396b4283379f487ca7cda09591e186c3844a0b8c00a2"
     },
     "dim_cid": {
       "caminho": "data/silver/dimensoes/dim_cid.parquet",
-      "linhas": 9513,
+      "linhas": 9557,
       "colunas": 9,
-      "sha256": "ae4de5c84fe652e9660e1102c52d0a78b771038ed3bb15f5f8901bb0cf400dd2"
+      "sha256": "5cf36a26d5d4b5a5ba1f5d9b4fbf0648afd019fed6c137228cd0fb2c591caf14"
     },
     "dim_dominio": {
       "caminho": "data/silver/dimensoes/dim_dominio.parquet",
@@ -116,15 +118,15 @@
     },
     "fato_internacao": {
       "caminho": "data/silver/fatos/fato_internacao.parquet",
-      "linhas": 7284476,
+      "linhas": 7793976,
       "colunas": 59,
-      "sha256": "a903da1168ee3a5ce64250db946e5777df7fdf7350716a71849ae649f0c46f43"
+      "sha256": "959eb25ec75aeeb89fa436d0e74b2497cdba125005edbc99bf7f32fef29cf19c"
     },
     "fato_leito_mensal": {
       "caminho": "data/silver/fatos/fato_leito_mensal.parquet",
-      "linhas": 19341,
+      "linhas": 20637,
       "colunas": 9,
-      "sha256": "3d5072a54794b44cf8803d25e3b63379664f42898ad8b36fa2f40430bcc9adfd"
+      "sha256": "98021a8af8043e30e624f4f8c19d2b3f1966422676a2c8d8a36a002550ccc34b"
     }
   }
 }
