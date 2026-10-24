@@ -143,3 +143,18 @@
   font-weight: 700;
 }
 .decision-details .decision-table-wrap { margin-top: 0; }
+
+.technical-back {
+  min-height: 44px;
+  margin-top: var(--space-6);
+  padding: 0 var(--space-4);
+  border: var(--border-subtle);
+  border-radius: var(--radius-md);
+  color: var(--color-accent-strong);
+  background: var(--color-surface);
+  font-weight: 700;
+  cursor: pointer;
+}
+.methodology-page > .view-header { padding-top: var(--space-5); }
+.methodology-page .source-badge { white-space: normal; }
+.methodology-page .source-badge > span { flex-shrink: 0; }

@@ -120,12 +120,12 @@ export default function GlobalContextBar() {
         )}
         {sourceState.kind === 'fallback' && (
           <aside className="global-context-fallback" role="alert">
-            <strong>Contingência local · {regions.find((item) => item.region_code === sharedRegionCode)?.region_name} · {formatPeriod(sharedCompetence)}</strong>
+            <strong>Cópia local parcial · {regions.find((item) => item.region_code === sharedRegionCode)?.region_name} · {formatPeriod(sharedCompetence)}</strong>
             <p>
               {sourceState.reason === 'invalid-contract'
-                ? 'O Oracle respondeu em formato inesperado. '
-                : 'A consulta ao Oracle falhou ou excedeu o tempo limite. '}
-              Exibimos somente a cópia local de Jundiaí em {formatPeriod(sharedCompetence)}; nenhuma fonte foi misturada.
+                ? 'A fonte respondeu em formato inesperado. '
+                : 'A consulta aos dados está indisponível. '}
+              Exibimos somente a cópia local de Jundiaí em {formatPeriod(sharedCompetence)}; a cobertura é parcial e alguns detalhes dos hospitais não estão incluídos.
             </p>
             <p>
               Pedido original: {sourceState.requested.regionCode
@@ -133,7 +133,7 @@ export default function GlobalContextBar() {
                 : 'panorama regional'}
               {sourceState.requested.macroregionCode && ` · rede ${sourceState.requested.macroregionCode}`}
               {sourceState.requested.competence && ` · ${COMPETENCE_PATTERN.test(sourceState.requested.competence) ? formatPeriod(sourceState.requested.competence) : 'competência inválida'}`}.
-              {' '}O recorte pedido foi substituído pelo recorte disponível na contingência. Os filtros ficam travados até a reconexão.
+              {' '}O recorte pedido foi substituído pelo disponível na cópia local. Os filtros ficam desabilitados até a reconexão.
             </p>
             <button type="button" onClick={() => void reload()}>Tentar novamente</button>
           </aside>

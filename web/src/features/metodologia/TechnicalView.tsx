@@ -1,3 +1,6 @@
+import { useLayoutEffect, useRef } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
+import { technicalOrigin } from './technicalNavigation'
 import MetricCard from '../../shared/MetricCard'
 import SourcePanel from '../../shared/SourcePanel'
 import { useSource } from '../../shared/SourceContext'
@@ -43,6 +46,24 @@ function scoreTotal(option: (typeof databaseDecision)[number]) {
 
 export default function TechnicalView() {
   const { sourceState } = useSource()
+  const location = useLocation()
+  const navigate = useNavigate()
+  const heading = useRef<HTMLHeadingElement>(null)
+  const origin = technicalOrigin(location.state, location.search)
+
+  useLayoutEffect(() => {
+    const target = location.hash ? document.getElementById(location.hash.slice(1)) : null
+    if (target) {
+      target.setAttribute('tabindex', '-1')
+      target.scrollIntoView({ behavior: 'instant', block: 'start' })
+      target.focus({ preventScroll: true })
+    } else {
+      window.scrollTo({ top: 0, behavior: 'instant' })
+      heading.current?.focus({ preventScroll: true })
+      const frame = requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: 'instant' }))
+      return () => cancelAnimationFrame(frame)
+    }
+  }, [location.key, location.hash, sourceState.kind])
   const data =
     sourceState.kind === 'live' || sourceState.kind === 'fallback'
       ? sourceState.data.methodology
@@ -50,9 +71,13 @@ export default function TechnicalView() {
 
   return (
     <main className="page-main methodology-page">
+      <button className="technical-back" type="button" onClick={() => {
+        if (origin) navigate(-1)
+        else navigate({ pathname: '/metodologia', search: location.search }, { replace: true })
+      }}>← Voltar</button>
       <header className="view-header">
         <p className="section-kicker">METODOLOGIA E QUALIDADE</p>
-        <h1>Posso confiar no número e quais são seus limites?</h1>
+        <h1 ref={heading} tabIndex={-1}>Posso confiar no número e quais são seus limites?</h1>
         <p>
           Consulte cobertura, reconciliações, fórmulas e cortes sem confundir um dado
           administrativo agregado com afirmação clínica individual.

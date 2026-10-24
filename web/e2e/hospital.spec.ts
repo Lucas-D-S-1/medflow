@@ -151,7 +151,7 @@ test('snapshot de contingência cobre os 85 CIDs e distingue recorte não cobert
   await expect(page.locator('[data-testid^="specialty-diagnosis-row-"]')).toHaveCount(10)
   await page.getByTestId('especialidade-row-02').click()
   await expect(page.getByTestId('specialty-diagnosis-snapshot-unavailable')).toHaveText(
-    'Este recorte não está disponível no snapshot de contingência.',
+    'Este recorte não está incluído na cópia local parcial.',
   )
   await expect(page.getByTestId('specialty-diagnosis-absent')).toHaveCount(0)
 })
@@ -974,7 +974,7 @@ test('snapshot não declara pares estaduais sem o universo completo', async ({ p
   await page.goto(`/?competencia=${snapshotCompetencia}&regiao=35073&hospital=3012212#hospital`)
 
   await expect(page.getByTestId('peer-snapshot-limited')).toContainText(
-    'não é declarada neste preview',
+    'está indisponível nesta cópia',
   )
   await expect(page.getByTestId('peer-criterio')).toHaveCount(0)
   await expect(page.locator('[data-testid^="peer-bar-"]')).toHaveCount(0)
