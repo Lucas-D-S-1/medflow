@@ -7,6 +7,9 @@
 
 import { expect, test } from '@playwright/test'
 import {
+  mesExtenso,
+  snapshotMesAnterior,
+  snapshotAnoAnterior,
   coberturaMetodologia,
   iphDaMacro3529,
   methodologySnapshot,
@@ -275,7 +278,7 @@ test('renderiza a série regional persistida com competência, amostra e denomin
   await expect(iphHistorical).toContainText(
     `−${pt(Math.abs((serieRegionalAtual.iph_percent as number) - iphAverage), 1)} p.p.`,
   )
-  await expect(iphHistorical).toContainText(`Média acumulada até junho/2026: ${pt(iphAverage, 1)}%`)
+  await expect(iphHistorical).toContainText(`Média acumulada até ${mesExtenso(snapshotCompetencia)}: ${pt(iphAverage, 1)}%`)
   await expect(iphHistorical).toContainText(
     `${pt(iphItems.length)} competências desde janeiro/2024`,
   )
@@ -287,7 +290,7 @@ test('renderiza a série regional persistida com competência, amostra e denomin
   const iphCurrentPoint = page.getByTestId(`regional-series-point-${snapshotCompetencia}`)
   await expect(iphCurrentPoint).toHaveAttribute(
     'aria-label',
-    new RegExp(`Média acumulada até junho/2026: ${pt(iphAverage, 1)}%; ${iphItems.length} competências desde janeiro/2024`),
+    new RegExp(`Média acumulada até ${mesExtenso(snapshotCompetencia)}: ${pt(iphAverage, 1)}%; ${iphItems.length} competências desde janeiro/2024`),
   )
   await iphCurrentPoint.hover()
   const iphTooltip = page.getByRole('tooltip')
@@ -296,7 +299,7 @@ test('renderiza a série regional persistida com competência, amostra e denomin
     `${pt(serieRegionalAtual.estimated_patient_days as number)} pacientes-dia / ${pt(serieRegionalAtual.declared_capacity_bed_days as number)} leitos-dia declarados`,
   )
   await expect(iphTooltip).toContainText(
-    `Média acumulada até junho/2026: ${pt(iphAverage, 1)}% · ${pt(iphItems.length)} competências`,
+    `Média acumulada até ${mesExtenso(snapshotCompetencia)}: ${pt(iphAverage, 1)}% · ${pt(iphItems.length)} competências`,
   )
   await iphCurrentPoint.focus()
   await iphCurrentPoint.press('Escape')
@@ -503,8 +506,8 @@ test('hierarquiza a região no painel e preserva os seis sinais recolhidos', asy
   await expect(disclosure.locator('[data-signal]')).toHaveCount(6)
   await expect(disclosure.locator('[data-signal="tmh"]')).toContainText('sinal aceso')
   await expect(disclosure).toContainText('Permanência acima dos pares (IPE)')
-  await expect(page.getByTestId('state-total-mom').locator('..')).toContainText('maio/2026')
-  await expect(page.getByTestId('state-total-yoy').locator('..')).toContainText('junho/2025')
+  await expect(page.getByTestId('state-total-mom').locator('..')).toContainText(mesExtenso(snapshotMesAnterior))
+  await expect(page.getByTestId('state-total-yoy').locator('..')).toContainText(mesExtenso(snapshotAnoAnterior))
   await page.getByTestId('regional-map-35073').hover()
   const preview = page.getByTestId('regional-map-tooltip')
   await expect(preview).toContainText('JUNDIAI')
@@ -522,7 +525,7 @@ test('não transforma comparação ausente de internações novas em zero', asyn
     const year = Number(url.searchParams.get('ano'))
     const month = Number(url.searchParams.get('mes'))
     const competence = `${year}-${String(month).padStart(2, '0')}`
-    const isComparison = competence === '2026-05' || competence === '2025-06'
+    const isComparison = competence === snapshotMesAnterior || competence === snapshotAnoAnterior
     await route.fulfill({
       contentType: 'application/json',
       body: JSON.stringify({

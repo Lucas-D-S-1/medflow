@@ -77,6 +77,21 @@ export const goldMetadata = JSON.parse(
 export const snapshotCompetencia = statusSnapshot.data_through
 export const snapshotCompetenciaBR = `${snapshotCompetencia.slice(5)}/${snapshotCompetencia.slice(0, 4)}`
 
+/** Datas esperadas derivadas do recorte, sem memorizar junho. */
+export function mesExtenso(competencia: string): string {
+  const [year, month] = competencia.split('-').map(Number)
+  const date = new Date(Date.UTC(year, month - 1, 1))
+  return `${date.toLocaleString('pt-BR', { month: 'long', timeZone: 'UTC' })}/${year}`
+}
+const [snapshotYear, snapshotMonth] = snapshotCompetencia.split('-').map(Number)
+export const snapshotMesAnterior = new Date(Date.UTC(snapshotYear, snapshotMonth - 2, 1)).toISOString().slice(0, 7)
+export const snapshotAnoAnterior = `${snapshotYear - 1}-${String(snapshotMonth).padStart(2, '0')}`
+
+/** Decimal com uma ou duas casas, conforme exibido nas referências. */
+export function decimal(valor: number): string {
+  return valor.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 2 })
+}
+
 /** Número no formato que o produto usa, a partir do próprio snapshot. */
 export function pt(valor: number, casas = 0): string {
   return valor.toLocaleString('pt-BR', {

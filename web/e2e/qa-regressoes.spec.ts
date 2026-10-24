@@ -1,3 +1,4 @@
+import { itens as itensDoSnapshot, specialtySnapshot as perfilAtual } from './apoio'
 import { expect, test, type Page } from '@playwright/test'
 import { escolherCompetencia, mockLiveSource, snapshotCompetencia, snapshotCompetenciaBR } from './apoio'
 
@@ -127,10 +128,12 @@ test('P05: Tab no celular não entra nos cabeçalhos recortados das tabelas', as
   await expect(page.locator('.hospital-table thead button').first()).toBeFocused()
 })
 
+const initialSpecialty = [...itensDoSnapshot(perfilAtual)].sort((a, b) => Number(b.new_admissions) - Number(a.new_admissions) || String(a.specialty_code).localeCompare(String(b.specialty_code)))[0].specialty_code
+
 test('P06: especialidade sobrevive a F5, link compartilhado e histórico sem quebrar link antigo', async ({ page, context }) => {
   await mockLiveSource(page)
   await page.goto(huUrl)
-  await expect(page.getByTestId('especialidade-row-07').getByRole('button')).toHaveAttribute('aria-pressed', 'true')
+  await expect(page.getByTestId(`especialidade-row-${initialSpecialty}`).getByRole('button')).toHaveAttribute('aria-pressed', 'true')
   await page.getByTestId('especialidade-row-07').getByRole('button').click()
   await expect(page).toHaveURL(/especialidade=07/)
   await page.getByTestId('especialidade-row-03').getByRole('button').click()
@@ -152,9 +155,9 @@ test('P06: especialidade sobrevive a F5, link compartilhado e histórico sem que
   await expect(shared.getByTestId('especialidade-row-03').getByRole('button')).toHaveAttribute('aria-pressed', 'true')
   await shared.close()
   await page.goto(huUrl.replace('#hospital-detail', '&especialidade=99#hospital-detail'))
-  await expect(page.getByTestId('especialidade-row-07').getByRole('button')).toHaveAttribute('aria-pressed', 'true')
+  await expect(page.getByTestId(`especialidade-row-${initialSpecialty}`).getByRole('button')).toHaveAttribute('aria-pressed', 'true')
   await page.goto(huUrl)
-  await expect(page.getByTestId('especialidade-row-07').getByRole('button')).toHaveAttribute('aria-pressed', 'true')
+  await expect(page.getByTestId(`especialidade-row-${initialSpecialty}`).getByRole('button')).toHaveAttribute('aria-pressed', 'true')
   await page.getByTestId('especialidade-row-03').getByRole('button').click()
   await page.getByRole('button', { name: 'Trocar hospital', exact: true }).click()
   await expect(page).not.toHaveURL(/especialidade=/)

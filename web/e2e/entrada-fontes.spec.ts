@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { mockLiveSource, snapshotCompetencia } from './apoio'
+import { mockLiveSource, snapshotCompetencia, especialidadePediatria, coberturaMetodologia, decimal, pt } from './apoio'
 
 for (const viewport of [{ width: 1440, height: 900 }, { width: 820, height: 1180 }, { width: 390, height: 844 }]) {
   test(`entrada, investigação e fontes em ${viewport.width}`, async ({ page }) => {
@@ -39,13 +39,13 @@ for (const viewport of [{ width: 1440, height: 900 }, { width: 820, height: 1180
     await page.getByTestId('hospital-select-3012212').click()
     await page.getByTestId('especialidade-row-07').click()
     await expect(page.getByTestId('specialty-summary')).toContainText(/Pediatria/i)
-    await expect(page.getByTestId('specialty-summary-local-stay')).toContainText('5,11')
+    await expect(page.getByTestId('specialty-summary-local-stay')).toContainText(decimal(especialidadePediatria.average_stay_days as number))
     await capture('dados-pediatria')
     await page.reload()
     await expect(page.locator('#hospital-detail')).toBeVisible()
     await page.getByRole('link', { name: 'Fontes e indicadores', exact: true }).click()
     await expect(page.getByRole('heading', { name: 'Fontes e indicadores', exact: true })).toBeVisible()
-    await expect(page.getByTestId('sources-coverage')).toHaveText('62 regiões · 655 hospitais')
+    await expect(page.getByTestId('sources-coverage')).toHaveText(`${pt(coberturaMetodologia.regions)} regiões · ${pt(coberturaMetodologia.hospitals)} hospitais`)
     await expect(page.getByTestId('sources-update')).toHaveText('Mensal')
     await capture('fontes')
     await expect(page.locator('main')).not.toContainText(/Gold|\/v1|manifesto|relógio do banco|versão|2024 e 2025/i)
@@ -115,7 +115,7 @@ test('fontes mantém carregamento, ausência e contingência identificados', asy
   await expect(page.getByTestId('loading-state')).toBeVisible()
   release()
   await expect(page.getByTestId('fallback-note')).toContainText('cópia local')
-  await expect(page.getByTestId('sources-coverage')).toHaveText('62 regiões · 655 hospitais')
+  await expect(page.getByTestId('sources-coverage')).toHaveText(`${pt(coberturaMetodologia.regions)} regiões · ${pt(coberturaMetodologia.hospitals)} hospitais`)
   await expect(page.getByTestId('fallback-note').getByRole('button', { name: 'Tentar novamente' })).toBeVisible()
   await page.getByRole('navigation', { name: 'Nesta página' }).locator('a[href$="#iph"]').click()
   await page.reload()
