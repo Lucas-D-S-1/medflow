@@ -190,7 +190,7 @@ export default function HospitalPeers({
         </p>
       )}
 
-      {rebaixado && !snapshotLimited && (
+      {rebaixado && !waiting && !statewideFailed && !snapshotLimited && (
         <p className="peer-caveat" data-testid="peer-rebaixado">
           Em {regionName} não há {MIN_PEERS} hospitais na faixa de {group.porte} para
           comparar, então a régua subiu para o estado, no mesmo porte.
@@ -215,16 +215,16 @@ export default function HospitalPeers({
 
       {statewideFailed && (
         <StatePanel kind="error" title="Grupo de pares indisponível" testId="peer-error">
-          Não foi possível carregar a lista de hospitais agora, então não há com quem
-          comparar. Os indicadores do hospital continuam disponíveis.
+          Não foi possível carregar a lista necessária para comparar os hospitais agora.
+          A comparação está indisponível.
         </StatePanel>
       )}
 
       {snapshotLimited && (
-        <StatePanel kind="empty" title="Pares estaduais fora do snapshot" testId="peer-snapshot-limited">
-          A contingência contém os hospitais de Jundiaí, mas não a lista estadual
+        <StatePanel kind="empty" title="Comparação estadual não incluída na cópia local" testId="peer-snapshot-limited">
+          A cópia local parcial contém os hospitais de Jundiaí, mas não a lista estadual
           completa exigida por este grupo de porte. Por isso a comparação com pares
-          não é declarada neste preview.
+          está indisponível nesta cópia.
         </StatePanel>
       )}
 

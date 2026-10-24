@@ -30,7 +30,7 @@ type Props = {
 export function RegionalOverview({ items, stateItems, selected, aggregate, competence, scopeLabel, mom, signals, onViewHospitals }: Props) {
   const { setSharedRegion, sourceState } = useSource()
   const hasStateComparison = sourceState.kind === 'live'
-  const stateDetail = (value: string) => hasStateComparison ? `estado: ${value}` : 'estado indisponível na contingência'
+  const stateDetail = (value: string) => hasStateComparison ? `estado: ${value}` : 'comparação estadual não incluída na cópia local'
   const state = aggregateRegions(stateItems)
   const ranking = [...stateItems].sort((a, b) => b.iph_percent - a.iph_percent || a.region_code.localeCompare(b.region_code))
   const rank = selected ? ranking.findIndex((item) => item.region_code === selected.region_code) + 1 : 0

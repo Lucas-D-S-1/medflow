@@ -166,7 +166,7 @@ export default function SpecialtyDiagnoses({
       )}
       {state.kind === 'snapshot-unavailable' && (
         <p className="diagnosis-state" data-testid="specialty-diagnosis-snapshot-unavailable">
-          Este recorte não está disponível no snapshot de contingência.
+          Este recorte não está incluído na cópia local parcial.
         </p>
       )}
       {state.kind === 'error' && (
@@ -183,7 +183,7 @@ export default function SpecialtyDiagnoses({
               {ORDER_LABELS[orderBy]}
             </span>
             <span>
-              Fonte: {data.source === 'oracle-live' ? 'Oracle / Gold MedFlow' : 'snapshot local'}
+              Fonte: {data.source === 'oracle-live' ? 'Base mensal MedFlow' : 'cópia local parcial'}
             </span>
           </div>
           <div className="hospital-table-wrap">

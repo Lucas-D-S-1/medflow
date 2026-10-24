@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test'
-import { escolherCompetencia, mockLiveSource, snapshotCompetencia } from './apoio'
+import { escolherCompetencia, mockLiveSource, snapshotCompetencia, snapshotCompetenciaBR } from './apoio'
 
 const routes = [
   { path: '/?inicio=1', active: 'Início', analysis: false },
@@ -112,7 +112,7 @@ for (const width of [1440, 390]) {
       await page.reload()
       await page.getByRole('link', { name: 'Detalhes técnicos ›' }).click()
       await page.reload()
-      await expect(page.getByTestId('source-badge')).toHaveText('Oracle ao vivo')
+      await expect(page.getByTestId('source-badge')).toHaveText(`Base mensal · dados até ${snapshotCompetenciaBR}`)
       await expect(menu(page).getByRole('link', { name: 'Fontes e indicadores', exact: true })).toHaveAttribute('aria-current', 'page')
       await menu(page).getByRole('link', { name: 'Dados', exact: true }).click()
       await assertSlice()

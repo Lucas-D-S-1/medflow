@@ -18,7 +18,9 @@ export function validateHaikuAnswer(value: unknown): HaikuAnswer {
   if (!record(value) || !['ok', 'refused', 'clarify', 'no_data'].includes(String(value.status)) ||
       !INTENTS.has(String(value.intent)) || value.source !== 'oracle-approved-query' ||
       typeof value.narrative !== 'string' || !value.narrative.trim() ||
-      containsOracleOrRawSql(value.narrative) || !record(value.provenance)) {
+      containsOracleOrRawSql(value.narrative) ||
+      !(value.sql === null || value.sql === undefined || (typeof value.sql === 'string' && value.sql.length <= 32767 && /^\s*(SELECT|WITH)\b/i.test(value.sql))) ||
+      !record(value.provenance)) {
     throw new AssistantRequestError('A resposta veio incompleta. Use uma das sugestões ou os painéis.')
   }
   const p = value.provenance
@@ -27,7 +29,7 @@ export function validateHaikuAnswer(value: unknown): HaikuAnswer {
       p.limit !== 5 || typeof p.limitations !== 'string' || !p.limitations.trim()) {
     throw new AssistantRequestError('A resposta não trouxe fonte e limites completos.')
   }
-  return { narrative: value.narrative, sql: null, warning: null, origin: value.intent === 'reserva' ? 'reserva' : 'haiku', provenance: p as Provenance }
+  return { narrative: value.narrative, sql: typeof value.sql === 'string' ? value.sql : null, warning: null, origin: value.intent === 'reserva' ? 'reserva' : 'haiku', provenance: p as Provenance }
 }
 
 export async function askFlowiaHaiku(question: string, context: AssistantContext, callerSignal?: AbortSignal, onProgress?: (text: string) => void): Promise<HaikuAnswer> {

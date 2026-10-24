@@ -37,7 +37,7 @@ test('@live renderiza os números reais do Oracle pelo proxy relativo', async ({
   await expect(page.getByTestId('source-badge')).toHaveCount(0)
   await page.getByRole('link', { name: 'Fontes e indicadores', exact: true }).click()
   await page.getByRole('link', { name: 'Detalhes técnicos ›' }).click()
-  await expect(page.getByTestId('source-badge')).toHaveText('Oracle ao vivo')
+  await expect(page.getByTestId('source-badge')).toHaveText(`Base mensal · dados até ${ultimaCompetenciaBR}`)
   // Derivado do manifesto da Bronze, não memorizado: quando o DATASUS publica
   // uma competência nova e o pipeline avança, este teste tem de acompanhar a
   // realidade em vez de falhar por estar velho.
@@ -68,11 +68,11 @@ test('usa somente o snapshot quando o Oracle falha', async ({ page }) => {
   await page.getByRole('link', { name: 'Fontes e indicadores', exact: true }).click()
   await page.getByRole('link', { name: 'Detalhes técnicos ›' }).click()
   await expect(page.getByTestId('source-badge')).toContainText(
-    `Contingência — snapshot até ${snapshotCompetencia}`,
+    `Cópia local parcial · dados até ${snapshotCompetenciaBR}`,
   )
   await expect(page.getByTestId('data-through')).toHaveText(snapshotCompetenciaBR)
   await expect(page.getByTestId('contract-version')).toHaveText('v0.5.0')
-  await expect(page.getByTestId('fallback-note')).toContainText('nenhuma fonte foi misturada')
+  await expect(page.getByTestId('fallback-note')).toContainText('usa somente uma cópia local parcial')
   await expect(page.getByTestId('coverage-regions')).toHaveText('62')
   await expect(page.getByTestId('coverage-admissions')).toHaveText(
     pt(coberturaMetodologia.new_admissions),
@@ -117,9 +117,9 @@ test('não descreve contrato inválido como indisponibilidade do Oracle', async 
 
   await page.goto('/metodologia/tecnico')
 
-  await expect(page.getByTestId('source-badge')).toContainText('Contingência')
+  await expect(page.getByTestId('source-badge')).toContainText('Cópia local parcial')
   await expect(page.getByTestId('fallback-note')).toContainText(
-    'O Oracle respondeu, mas o conteúdo veio em um formato inesperado',
+    'A fonte respondeu, mas o conteúdo veio em um formato inesperado',
   )
   await expect(page.getByTestId('fallback-note')).not.toContainText(
     'Oracle não respondeu',
@@ -150,10 +150,10 @@ test('@live não mistura metodologia snapshot com status Oracle ao vivo', async 
   await page.goto('/metodologia/tecnico')
 
   await expect(page.getByTestId('source-badge')).toContainText(
-    `Contingência — snapshot até ${snapshotCompetencia}`,
+    `Cópia local parcial · dados até ${snapshotCompetenciaBR}`,
   )
   await expect(page.getByTestId('fallback-note')).toContainText(
-    'O Oracle respondeu, mas o conteúdo veio em um formato inesperado',
+    'A fonte respondeu, mas o conteúdo veio em um formato inesperado',
   )
   await expect(page.getByTestId('coverage-regions')).toHaveText('62')
   await expect(page.getByTestId('coverage-admissions')).toHaveText(
@@ -187,9 +187,9 @@ test('rejeita snapshot, competência, versão e horário inválidos na resposta 
 
     await page.goto('/metodologia/tecnico')
 
-    await expect(page.getByTestId('source-badge')).toContainText('Contingência')
+    await expect(page.getByTestId('source-badge')).toContainText('Cópia local parcial')
     await expect(page.getByTestId('fallback-note')).toContainText(
-      'O Oracle respondeu, mas o conteúdo veio em um formato inesperado',
+      'A fonte respondeu, mas o conteúdo veio em um formato inesperado',
     )
     await expect(page.getByTestId('data-through')).toHaveText(snapshotCompetenciaBR)
   }

@@ -21,7 +21,7 @@ export default function SourcePanel() {
     return (
       <section className="source-panel">
         <StatePanel kind="empty" title="Nenhuma competência publicada" testId="empty-state">
-          A fonte respondeu normalmente, mas ainda não possui dados Gold disponíveis.
+          A fonte respondeu normalmente, mas ainda não possui dados disponíveis.
         </StatePanel>
       </section>
     )
@@ -32,11 +32,11 @@ export default function SourcePanel() {
       <section className="source-panel">
         <StatePanel
           kind="error"
-          title="Fonte e contingência indisponíveis"
+          title="Dados e cópia local indisponíveis"
           testId="error-state"
           action={<button type="button" onClick={() => void reload()}>Tentar novamente</button>}
         >
-          Não foi possível carregar o Oracle nem o snapshot local.
+          Não foi possível carregar os dados nem a cópia local.
         </StatePanel>
       </section>
     )
@@ -74,7 +74,7 @@ export default function SourcePanel() {
         <MetricCard
           label="Última verificação"
           value={formatDatabaseTime(status.database_time)}
-          detail={sourceState.kind === 'live' ? 'relógio do banco' : 'geração do snapshot'}
+          detail={sourceState.kind === 'live' ? 'relógio do banco' : 'geração da cópia local'}
           testId="last-checked-at"
         />
       </div>
@@ -83,9 +83,9 @@ export default function SourcePanel() {
           <span aria-hidden="true">i</span>
           <p>
             {sourceState.reason === 'invalid-contract'
-              ? 'O Oracle respondeu, mas o conteúdo veio em um formato inesperado. '
-              : 'A consulta ao Oracle falhou ou excedeu o tempo limite. '}
-            Esta sessão usa somente o snapshot local; nenhuma fonte foi misturada. Você pode{' '}
+              ? 'A fonte respondeu, mas o conteúdo veio em um formato inesperado. '
+              : 'A consulta aos dados está indisponível. '}
+            Esta sessão usa somente uma cópia local parcial, com período e cobertura fixos. Alguns hospitais e detalhes não estão incluídos. Você pode{' '}
             <button type="button" onClick={() => void reload()}>tentar novamente</button>.
           </p>
         </div>
