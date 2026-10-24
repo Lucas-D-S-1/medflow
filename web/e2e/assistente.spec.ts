@@ -79,6 +79,7 @@ async function mockSaoVicenteQ1Q2(page: import('@playwright/test').Page) {
         ...specialtySnapshot,
         source: 'oracle-live',
         database_time: '2026-09-17T12:00:00-03:00',
+        data_through: '2026-06',
         filters: { cnes: '2786435', year: 2026, month: 6 },
         hospital: { ...(specialtySnapshot.hospital as object), cnes: '2786435', new_admissions_total: 1372 },
         pagination: { limit: 200, offset: 0, count: 3, has_more: false, order: 'new_admissions_desc' },
@@ -584,7 +585,7 @@ test('envia ao backend no máximo cinco especialidades estruturadas do conjunto 
     })
   })
 
-  await page.goto(`/?competencia=${snapshotCompetencia}&regiao=35073&hospital=3012212#hospital`)
+  await page.goto(`/?competencia=${snapshotCompetencia}&regiao=35073&hospital=3012212&especialidade=07#hospital`)
   await expect(page.getByTestId('especialidade-count')).toHaveText('4 de 4 especialidades')
   await page.getByRole('link', { name: 'Hospital' }).click()
   await page.getByRole('button', { name: /Posso ajudar/ }).click()
@@ -604,11 +605,11 @@ test('envia ao backend no máximo cinco especialidades estruturadas do conjunto 
   expect(sentContext!.hospital_cnes).toBe('3012212')
   expect(sentContext!.competence).toBe(snapshotCompetencia)
   expect(sentContext!.intent).toBe('pergunta_livre')
-  expect(sentContext!.specialties).toEqual([
-    { code: '07', name: 'Pediatria' },
-    { code: '02', name: 'Obstetrícia' },
-    { code: '01', name: 'Cirurgia' },
-  ])
+  expect(sentContext!.specialties).toEqual(
+    [...itens(specialtySnapshot)]
+      .sort((a, b) => Number(b.new_admissions) - Number(a.new_admissions))
+      .slice(0, 3).map((item) => ({ code: item.specialty_code, name: item.specialty_name })),
+  )
 })
 
 test('todas as especialidades mantém mais de cinco no conjunto local e não ressuscita conjunto antigo', async ({
@@ -639,7 +640,7 @@ test('todas as especialidades mantém mais de cinco no conjunto local e não res
       body: JSON.stringify({
         ...specialtySnapshot,
         source: 'oracle-live',
-        filters: { cnes: '3012212', year: 2026, month: 6 },
+        filters: { ...(specialtySnapshot.filters as object), cnes: '3012212' },
         pagination: { limit: 200, offset: 0, count: 6, has_more: false, order: 'new_admissions_desc' },
         items,
       }),
@@ -656,7 +657,7 @@ test('todas as especialidades mantém mais de cinco no conjunto local e não res
     })
   })
 
-  await page.goto(`/?competencia=${snapshotCompetencia}&regiao=35073&hospital=3012212#hospital`)
+  await page.goto(`/?competencia=${snapshotCompetencia}&regiao=35073&hospital=3012212&especialidade=07#hospital`)
   await expect(page.getByTestId('especialidade-count')).toHaveText('6 de 6 especialidades')
   await page.getByRole('link', { name: 'Hospital' }).click()
   await page.getByRole('button', { name: /Posso ajudar/ }).click()
@@ -1032,7 +1033,7 @@ test('trocar especialidade invalida resposta remota pendente e preserva resposta
   })
 
   await page.goto(
-    `/?competencia=${snapshotCompetencia}&regiao=35073&hospital=3012212#hospital`,
+    `/?competencia=${snapshotCompetencia}&regiao=35073&hospital=3012212&especialidade=07#hospital`,
   )
   const summary = page.getByTestId('specialty-summary')
   await expect(summary).toContainText(/Pediatria/i)
@@ -1175,7 +1176,7 @@ test('os dois botões do resumo são locais, contextuais e nunca fazem POST', as
     await route.abort()
   })
 
-  await page.goto(`/?competencia=${snapshotCompetencia}&regiao=35073&hospital=3012212#hospital`)
+  await page.goto(`/?competencia=${snapshotCompetencia}&regiao=35073&hospital=3012212&especialidade=07#hospital`)
   const resumo = page.getByTestId('specialty-summary')
   await expect(resumo).toBeVisible()
 
@@ -1219,7 +1220,7 @@ test('invalida atalho local pendente quando hospital, competência ou especialid
     await route.abort()
   })
 
-  await page.goto(`/?competencia=${snapshotCompetencia}&regiao=35073&hospital=3012212#hospital`)
+  await page.goto(`/?competencia=${snapshotCompetencia}&regiao=35073&hospital=3012212&especialidade=07#hospital`)
   await expect(page.getByTestId('specialty-summary')).toContainText('HU HOSPITAL UNIVERSITARIO')
 
   await page.evaluate(`(() => {
@@ -1282,7 +1283,7 @@ test('Como interpretar só narra permanência quando a amostra comparável é su
     })
   })
 
-  const url = `/?competencia=${snapshotCompetencia}&regiao=35073&hospital=3012212#hospital`
+  const url = `/?competencia=${snapshotCompetencia}&regiao=35073&hospital=3012212&especialidade=07#hospital`
   await page.goto(url)
   await page.getByTestId('specialty-summary').getByRole('button', { name: 'Como interpretar?' }).click()
   let answer = page.locator('.assistant-answer').last()
@@ -1311,7 +1312,7 @@ test('preserva o resumo ao repetir a competência e selecionar a RRAS da região
     await route.abort()
   })
 
-  await page.goto(`/?competencia=${snapshotCompetencia}&regiao=35073&hospital=3012212#hospital`)
+  await page.goto(`/?competencia=${snapshotCompetencia}&regiao=35073&hospital=3012212&especialidade=07#hospital`)
   const resumo = page.getByTestId('specialty-summary')
   await expect(resumo).toContainText('HU HOSPITAL UNIVERSITARIO')
   await expect(resumo).toContainText(/Pediatria/i)
@@ -1356,7 +1357,7 @@ test('snapshot mantém perguntas locais identificadas e recusa pergunta livre se
     await route.abort()
   })
 
-  await page.goto('/?regiao=35073&hospital=3012212#hospital')
+  await page.goto('/?regiao=35073&hospital=3012212&especialidade=07#hospital')
   const resumo = page.getByTestId('specialty-summary')
   await expect(resumo).toBeVisible()
   await resumo

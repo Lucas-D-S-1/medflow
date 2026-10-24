@@ -8,7 +8,7 @@ DOTENV  := $(PY) -m dotenv -f .env run --
 # os alvos de frontend rodam dentro de web/, então o .env fica um nível acima
 DOTENV_WEB := ../$(PY) -m dotenv -f ../.env run --
 
-.PHONY: fixtures fixtures-conferir fixtures-carimbo help setup setup-py pipeline bronze silver gold geografia validar inventario test test-completo test-py test-web test-web-ci test-web-live lint estilo contrato contrato-publico reconciliar reconciliar-completo reconciliar-publico web-install web-browser web-build web-e2e oracle-ping oracle-migrar-territorio apex-verificar preflight select-ai-sincronizar-territorio select-ai-revalidar oracle-carregar ords-publicar limpar
+.PHONY: fixtures fixtures-local fixtures-conferir fixtures-carimbo help setup setup-py pipeline bronze silver gold geografia validar inventario test test-completo test-py test-web test-web-ci test-web-live lint estilo contrato contrato-publico reconciliar reconciliar-completo reconciliar-publico web-install web-browser web-build web-e2e oracle-ping oracle-migrar-territorio apex-verificar preflight select-ai-sincronizar-territorio select-ai-revalidar oracle-carregar ords-publicar limpar
 
 help:  ## lista os alvos disponíveis
 	@grep -hE '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) \
@@ -55,8 +55,11 @@ validar:  ## validação integrada das três camadas contra os contratos
 inventario:  ## inventário SHA-256 dos artefatos de dados
 	$(PY) -m medflow.cli inventario
 
-fixtures:  ## regrava os 10 snapshots do webapp a partir da API ao vivo
+fixtures:  ## regrava os nove snapshots do webapp a partir da API ao vivo
 	cd web && $(DOTENV_WEB) node scripts/gerar-mocks.ts
+
+fixtures-local:  ## offline: exporta os nove snapshots a partir dos Parquets Gold
+	$(PY) scripts/gerar_fixtures_gold.py $(ARGS)
 
 fixtures-conferir:  ## não escreve; falha se algum snapshot estiver desatualizado
 	cd web && $(DOTENV_WEB) node scripts/gerar-mocks.ts --conferir

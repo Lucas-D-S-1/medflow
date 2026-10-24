@@ -16,7 +16,7 @@ from medflow.bronze.contexto import ContextoBronze
 from medflow.bronze.conversao import consolidar_todos, descomprimir
 from medflow.bronze.ingestao import baixar
 from medflow.bronze.manifesto import gerar as gerar_manifesto
-from medflow.bronze.referencias import baixar_todas
+from medflow.bronze.referencias import baixar_todas, carregar_cache
 from medflow.config import Config, obter_logger
 
 logger = obter_logger("bronze")
@@ -37,6 +37,7 @@ def executar(
     config: Config | None = None,
     base: Path | None = None,
     sobrescrever: bool = False,
+    referencias_cache: bool = False,
 ) -> dict[str, Any]:
     """Executa a Bronze inteira e devolve o manifesto.
 
@@ -72,7 +73,7 @@ def executar(
     baixar(contexto)
     descomprimir(contexto)
     evolucao_esquema = consolidar_todos(contexto)
-    referencias = baixar_todas(contexto)
+    referencias = carregar_cache(contexto) if referencias_cache else baixar_todas(contexto)
 
     manifesto = gerar_manifesto(contexto, referencias, evolucao_esquema)
     documentar_bronze(base=base, manifesto=manifesto)

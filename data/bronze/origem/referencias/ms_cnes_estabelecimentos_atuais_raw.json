@@ -24808,6 +24808,17 @@
       "data_atualizacao": "2026-02-14"
     },
     {
+      "codigo_cnes": 8161402,
+      "codigo_municipio": 350950,
+      "nome_fantasia": "CASA DE SAUDE HOSPITAL SAO LEOPOLDO MANDIC",
+      "nome_razao_social": "ASSOCIACAO SAO LEOPOLDO MANDIC SLMANDIC",
+      "descricao_esfera_administrativa": null,
+      "data_atualizacao": "2026-10-20",
+      "descricao_natureza_juridica_estabelecimento": "3999",
+      "_fonte_url": "https://cnes2.datasus.gov.br/Mod_Conjunto.asp?VCo_Unidade=3509508161402",
+      "_fonte_natureza_url": "https://cnes2.datasus.gov.br/Mod_Bas_Caracterizacao.asp?VCo_Unidade=3509508161402"
+    },
+    {
       "codigo_cnes": 8187908,
       "numero_cnpj_entidade": "46523171000104",
       "nome_razao_social": "HOSPITAL DA CRIANCA DR ANTONIO CELSO GIGLIO",
@@ -24884,6 +24895,17 @@
       "codigo_nivel_hierarquia_unidade": null,
       "codigo_esfera_administrativa_unidade": "E ",
       "data_atualizacao": "2026-07-15"
+    },
+    {
+      "codigo_cnes": 8397430,
+      "codigo_municipio": 353760,
+      "nome_fantasia": "HOSPITAL MUNICIPAL DE PERUIBE",
+      "nome_razao_social": "MUNICIPIO DE PERUIBE",
+      "descricao_esfera_administrativa": null,
+      "data_atualizacao": "2026-10-23",
+      "descricao_natureza_juridica_estabelecimento": "1279",
+      "_fonte_url": "https://cnes2.datasus.gov.br/Mod_Conjunto.asp?VCo_Unidade=3537608397430",
+      "_fonte_natureza_url": "https://cnes2.datasus.gov.br/Mod_Bas_Caracterizacao.asp?VCo_Unidade=3537608397430"
     },
     {
       "codigo_cnes": 9232141,
@@ -25547,6 +25569,26 @@
       "codigo_nivel_hierarquia_unidade": null,
       "codigo_esfera_administrativa_unidade": "M ",
       "data_atualizacao": "2026-01-07"
+    }
+  ],
+  "atualizacoes_parciais": [
+    {
+      "extraido_em_utc": "2026-10-24T14:49:30.773596+00:00",
+      "codigos": [
+        "8161402",
+        "8397430"
+      ],
+      "fonte": "https://cnes2.datasus.gov.br/",
+      "observacao": "Ficha oficial; esfera extinta não inferida; natureza jurídica preservada. Demais registros e data original não atualizados."
+    },
+    {
+      "extraido_em_utc": "2026-10-24T14:50:44.686495+00:00",
+      "codigos": [
+        "8161402",
+        "8397430"
+      ],
+      "fonte": "https://cnes2.datasus.gov.br/",
+      "observacao": "Ficha oficial; esfera extinta não inferida; natureza jurídica preservada. Demais registros e data original não atualizados."
     }
   ]
 }

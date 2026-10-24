@@ -350,11 +350,19 @@ def test_snapshot_runtime_cobre_recorte_completo_e_reproduz_o_mart():
             / "web/src/mocks/hospital-diagnosticos-especialidade-3012212-07.json"
         ).read_text(encoding="utf-8")
     )
+    manifesto = json.loads(
+        (RAIZ / "data/bronze/MANIFESTO.json").read_text(encoding="utf-8")
+    )
+    competencia = manifesto["recorte"]["ultima_competencia_comum"]
+    assert snapshot["data_through"].replace("-", "") == competencia
+    assert (snapshot["filters"]["year"], snapshot["filters"]["month"]) == (
+        int(competencia[:4]), int(competencia[4:])
+    )
     recorte = pd.read_parquet(
         mart_path,
         filters=[
             ("cd_cnes", "==", "3012212"),
-            ("cd_competencia", "==", "202606"),
+            ("cd_competencia", "==", competencia),
             ("cd_especialidade_sih", "==", "07"),
         ],
     ).sort_values(
@@ -366,13 +374,17 @@ def test_snapshot_runtime_cobre_recorte_completo_e_reproduz_o_mart():
     assert snapshot["pagination"] == {
         "limit": 2000,
         "offset": 0,
-        "count": 85,
+        "count": len(recorte),
         "has_more": False,
         "order": "stay_days_desc",
     }
-    assert len(snapshot["items"]) == len(recorte) == 85
-    assert sum(item["new_admissions"] for item in snapshot["items"]) == 339
-    assert sum(item["stay_days_total"] for item in snapshot["items"]) == 1732
+    assert len(snapshot["items"]) == len(recorte) > 0
+    assert sum(item["new_admissions"] for item in snapshot["items"]) == int(
+        recorte.qt_internacao_nova.sum()
+    )
+    assert sum(item["stay_days_total"] for item in snapshot["items"]) == int(
+        recorte.qt_dia_permanencia_soma.sum()
+    )
     assert [item["cid_code"] for item in snapshot["items"]] == recorte[
         "cd_cid_principal"
     ].tolist()

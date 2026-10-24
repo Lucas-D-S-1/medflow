@@ -23,7 +23,7 @@ import subprocess
 import urllib.parse
 import urllib.request
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -305,4 +305,46 @@ def baixar_todas(contexto: ContextoBronze) -> ReferenciasBronze:
     logger.info(
         "estabelecimentos CNES atuais: %d", len(ref.cnes_atual_payload["registros"])
     )
+    return ref
+
+
+def carregar_cache(contexto: ContextoBronze) -> ReferenciasBronze:
+    """Reconstitui linhagem das referências preservadas sem qualquer download.
+
+    A cobertura do IPCA é conferida pela Gold. Não estende a série nem fabrica
+    cadastro para hospitais novos. Arquivo ausente falha antes das leituras.
+    """
+    nomes = [
+        "ibge_municipios_sp_raw.json", "ms_regioes_saude_sp_raw.json",
+        "macrorregiao_de_saude_csv.zip", "datasus_cid10_2008.zip",
+        "ibge_concla_natureza_juridica_2021.html", "ibge_ipca_numero_indice_raw.json",
+        "ms_cnes_estabelecimentos_atuais_raw.json",
+        *(f"{nome}_raw.json" for nome in CAMADAS_GEOSAMPA),
+    ]
+    for caminho in [*(contexto.dir_referencias / nome for nome in nomes),
+                    contexto.dir_geografia / "SP_Municipios_2024.zip"]:
+        if not caminho.is_file():
+            raise FileNotFoundError(f"Referência ausente no cache: {caminho}")
+    cache = replace(contexto, sobrescrever=False)
+    ref = ReferenciasBronze()
+    for leitor in (_baixar_ibge, _baixar_regioes, _baixar_malha, _baixar_cid10,
+                   _baixar_concla, _baixar_territorio_municipal):
+        leitor(cache, ref)
+    ipca = cache.dir_referencias / "ibge_ipca_numero_indice_raw.json"
+    periodos = sorted(item["D3C"] for item in json.loads(ipca.read_bytes())[1:])
+    ref.url_ipca = URL_IPCA_MODELO.format(periodo=f"{periodos[0]}-{periodos[-1]}")
+    ref.arquivos["ipca_ibge"] = ipca
+    cnes = cache.dir_referencias / "ms_cnes_estabelecimentos_atuais_raw.json"
+    ref.cnes_atual_payload = json.loads(cnes.read_bytes())
+    ref.codigos_cnes = sorted(
+        pd.read_parquet(cache.arquivo_sih, columns=["CNES"])
+        .CNES.astype("string").str.strip().str.zfill(7).unique()
+    )
+    presentes = {str(item["codigo_cnes"]).replace(".0", "").zfill(7)
+                 for item in ref.cnes_atual_payload["registros"]}
+    faltantes = set(ref.codigos_cnes) - presentes
+    if faltantes:
+        raise RuntimeError(f"CNES atual ausente no cache (rede desativada): {sorted(faltantes)}")
+    ref.arquivos["cnes_estabelecimentos_atuais"] = cnes
+    logger.warning("Referências preservadas do cache; IPCA até %s", periodos[-1])
     return ref

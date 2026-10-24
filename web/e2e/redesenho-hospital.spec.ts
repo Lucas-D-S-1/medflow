@@ -1,5 +1,10 @@
 import { expect, test } from '@playwright/test'
-import { mockLiveSource, snapshotCompetencia } from './apoio'
+import { itens, linhaSerieHospital, mockLiveSource, pt, snapshotCompetencia, snapshotCompetenciaBR, specialtySnapshot } from './apoio'
+import { hospitalShare, regionalShare, selectInitialSpecialty, type SpecialtyMetricItem } from '../src/features/hospital/specialtyMetrics'
+
+const specialties = itens(specialtySnapshot) as unknown as SpecialtyMetricItem[]
+const selectedSpecialty = selectInitialSpecialty(specialties)!
+const publishedAdmissions = specialties.reduce((total, item) => total + item.new_admissions, 0)
 
 for (const width of [1440, 820, 390]) {
   test(`redesenho preserva ordenação, referências e leitura em ${width}`, async ({ page }) => {
@@ -30,8 +35,8 @@ for (const width of [1440, 820, 390]) {
     await page.getByRole('radio', { name: 'Internações novas', exact: true }).last().click()
     await page.getByTestId('peer-more').locator('summary').click()
     await expect(page.getByTestId('peer-value-ipe')).toBeVisible()
-    await expect(page.getByTestId('specialty-summary-hospital-share')).toHaveText('38,3%')
-    await expect(page.getByTestId('specialty-summary-share')).toHaveText('75,7%')
+    await expect(page.getByTestId('specialty-summary-hospital-share')).toHaveText(`${pt(hospitalShare(selectedSpecialty, publishedAdmissions)!, 1)}%`)
+    await expect(page.getByTestId('specialty-summary-share')).toHaveText(`${pt(regionalShare(selectedSpecialty)!, 1)}%`)
     await expect(page.locator('[data-testid^="specialty-diagnosis-row-"]')).toHaveCount(5)
     if (width > 680) {
       const days = page.locator('.specialty-diagnosis-table').getByRole('button', { name: /^Dias/ })
@@ -64,11 +69,11 @@ test('gráfico mensal hospitalar preserva lacunas, competência e unidades', asy
   const points = page.locator('[data-testid^="hospital-series-point-"]')
   await expect(points).toHaveCount(12)
   await points.last().focus()
-  await expect(page.locator('.monthly-readout')).toContainText('06/2026')
+  await expect(page.locator('.monthly-readout')).toContainText(snapshotCompetenciaBR)
   await expect(page.locator('.monthly-readout')).toContainText('leitos-dia')
   await page.getByRole('radio', { name: 'Internações novas', exact: true }).last().click()
-  await expect(page.getByTestId('hospital-series-point-2026-06')).toHaveAttribute(
+  await expect(page.getByTestId(`hospital-series-point-${snapshotCompetencia}`)).toHaveAttribute(
     'aria-label',
-    /Internações novas: 885/,
+    new RegExp(`Internações novas: ${pt(linhaSerieHospital.new_admissions as number)}`),
   )
 })

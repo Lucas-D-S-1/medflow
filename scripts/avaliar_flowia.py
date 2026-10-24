@@ -54,7 +54,7 @@ class Caso:
     @property
     def contexto(self) -> str:
         return (
-            f"tela={self.rota}; competencia=202606"
+            f"tela={self.rota}; competencia=202608"
             f" (formato AAAAMM, igual ao da coluna CD_COMPETENCIA); "
             f"regiao={self.regiao}; "
             f"codigo_regiao={self.codigo_regiao}; "
@@ -100,7 +100,7 @@ select max(cd_competencia) as mes_mais_recente
 from mart_indicador_regiao_mensal
 """,
         rotulo="mes_mais_recente",
-        narrativa_grupos=(("junho", "06/2026", "2026-06", "202606"),),
+        narrativa_grupos=(("agosto", "08/2026", "2026-08", "202608"),),
         conferir_rotulo_na_narrativa=False,
     ),
     Caso(

@@ -6,7 +6,7 @@
  */
 
 import { expect, test } from '@playwright/test'
-import { itens, mockLiveSource, pt, regionalSnapshot, snapshotCompetencia } from './apoio'
+import { mesExtenso, snapshotMesAnterior, snapshotAnoAnterior, itens, mockLiveSource, pt, regionalSnapshot, snapshotCompetencia } from './apoio'
 
 test('reúne território e hospital em uma página só', async ({ page }) => {
   const consoleErrors: string[] = []
@@ -257,8 +257,8 @@ test('o panorama mostra os totais do recorte, somados e não promediados', async
     pt(soma('new_admissions')),
   )
   const stateAdmissions = page.getByTestId('state-total-admissions').locator('..')
-  await expect(stateAdmissions).toContainText('Em relação a maio/2026')
-  await expect(stateAdmissions).toContainText('Em relação a junho/2025')
+  await expect(stateAdmissions).toContainText(`Em relação a ${mesExtenso(snapshotMesAnterior)}`)
+  await expect(stateAdmissions).toContainText(`Em relação a ${mesExtenso(snapshotAnoAnterior)}`)
   await expect(stateAdmissions).not.toContainText('MoM')
   await expect(stateAdmissions).not.toContainText('YoY')
 

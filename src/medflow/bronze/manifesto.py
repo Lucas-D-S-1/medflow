@@ -140,6 +140,16 @@ def gerar(
             "MS_DEMAS_regioes_saude_csv": URL_REGIOES_CSV,
             "IBGE_malha_municipal_2024": URL_MALHA_IBGE,
             "MS_DEMAS_cnes_atual": URL_CNES_MODELO,
+            **{
+                f"MS_CNES_ficha_{registro['codigo_cnes']}": registro["_fonte_url"]
+                for registro in ref.cnes_atual_payload["registros"]
+                if registro.get("_fonte_url")
+            },
+            **{
+                f"MS_CNES_natureza_{registro['codigo_cnes']}": registro["_fonte_natureza_url"]
+                for registro in ref.cnes_atual_payload["registros"]
+                if registro.get("_fonte_natureza_url")
+            },
             "DATASUS_CID10": URL_CID10,
             "IBGE_CONCLA_natureza_juridica": URL_CONCLA,
             "IBGE_IPCA_tabela_1737_variavel_2266": ref.url_ipca,

@@ -119,9 +119,11 @@ def main():
                     )
                 else:
                     out = cursor.var(oracledb.DB_TYPE_CLOB)
+                    cursor.execute("select max(cd_competencia) from mart_indicador_regiao_mensal")
+                    month = str(cursor.fetchone()[0])
                     context = json.dumps(
                         {
-                            "competence": "2026-06",
+                            "competence": f"{month[:4]}-{month[4:]}",
                             "region_code": "35073",
                             "hospital_cnes": "3012212",
                             "specialty_code": "07",

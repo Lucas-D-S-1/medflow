@@ -114,21 +114,24 @@ test('reproduz a média real de Jundiaí a partir da fixture pública preservada
       'utf8',
     ),
   ) as { items: RegionalInsightPoint[] }
-  const cumulative = regionalIphCumulativeAverages(fixture.items, '2026-06')
+  const competence = [...fixture.items].map((item) => item.competence).sort().at(-1)!
+  const expected = fixture.items.reduce((sum, item) => sum + (item.iph_percent ?? 0), 0) / fixture.items.length
+  const latest = fixture.items.find((item) => item.competence === competence)!
+  const cumulative = regionalIphCumulativeAverages(fixture.items, competence)
   const current = cumulative.at(-1)
 
-  expect(current?.competence).toBe('2026-06')
-  expect(current?.competences).toBe(30)
+  expect(current?.competence).toBe(competence)
+  expect(current?.competences).toBe(fixture.items.length)
   expect(current?.startCompetence).toBe('2024-01')
-  expect(current?.average).toBeCloseTo(81.37068, 5)
-  const comparison = regionalInsight(fixture.items, '2026-06', 'iph')
+  expect(current?.average).toBeCloseTo(expected, 5)
+  const comparison = regionalInsight(fixture.items, competence, 'iph')
     .historicalComparison
   expect(comparison).toMatchObject({
-    competences: 30,
+    competences: fixture.items.length,
     startCompetence: '2024-01',
   })
-  expect(comparison?.reference).toBeCloseTo(81.37068, 5)
-  expect(comparison?.difference).toBeCloseTo(-14.20448, 5)
+  expect(comparison?.reference).toBeCloseTo(expected, 5)
+  expect(comparison?.difference).toBeCloseTo(latest.iph_percent! - expected, 5)
 })
 
 test('calcula internações em percentual apenas com referências positivas', () => {

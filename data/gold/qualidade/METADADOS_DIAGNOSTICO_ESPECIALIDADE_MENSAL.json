@@ -1,17 +1,17 @@
 {
   "camada": "gold",
   "tabela": "mart_indicador_hospital_especialidade_cid_mensal",
-  "versao_contrato": "0.4.0",
-  "gerado_em_utc": "2026-09-17T16:09:00.664303+00:00",
+  "versao_contrato": "0.5.0",
+  "gerado_em_utc": "2026-10-24T14:56:23.615892+00:00",
   "origem": "data/silver/fatos/fato_internacao.parquet",
   "destino": "data/gold/marts/mart_indicador_hospital_especialidade_cid_mensal.parquet",
   "assinatura": {
-    "silver_sha256": "a903da1168ee3a5ce64250db946e5777df7fdf7350716a71849ae649f0c46f43",
-    "mart_sha256": "ab9b01e24ba94ac4fbac5dc72496ca4ec96a193e993e738ec655a5f6353576c7",
-    "linhas": 2495111,
+    "silver_sha256": "959eb25ec75aeeb89fa436d0e74b2497cdba125005edbc99bf7f32fef29cf19c",
+    "mart_sha256": "14ff1e4400b5506f191d4309ae65fa3a22f77aead8568d98f042bdde44bdf41d",
+    "linhas": 2669093,
     "colunas": 25,
-    "internacoes_novas": 7150693,
-    "dias_permanencia": 33155867,
-    "comparaveis": 14671
+    "internacoes_novas": 7651693,
+    "dias_permanencia": 35459087,
+    "comparaveis": 15649
   }
 }
