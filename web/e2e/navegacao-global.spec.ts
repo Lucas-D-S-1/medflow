@@ -1,10 +1,10 @@
 import { expect, test, type Page } from '@playwright/test'
-import { escolherCompetencia, mockLiveSource } from './apoio'
+import { escolherCompetencia, mockLiveSource, snapshotCompetencia } from './apoio'
 
 const routes = [
   { path: '/?inicio=1', active: 'Início', analysis: false },
   { path: '/?inicio=0', active: 'Dados', analysis: true },
-  { path: '/?competencia=2026-06&regiao=35073&hospital=3012212', active: 'Dados', analysis: true },
+  { path: `/?competencia=${snapshotCompetencia}&regiao=35073&hospital=3012212`, active: 'Dados', analysis: true },
   { path: '/metodologia', active: 'Fontes e indicadores', analysis: false },
   { path: '/metodologia/tecnico', active: 'Fontes e indicadores', analysis: false },
 ]
@@ -86,8 +86,8 @@ for (const width of [1440, 390]) {
       await page.goto('/?inicio=1&competencia=2026-05')
       await menu(page).getByRole('link', { name: 'Dados', exact: true }).click()
       await expect(page.getByTestId('global-competence')).toBeEnabled()
-      await escolherCompetencia(page, '2026-06')
-      await expect(page.getByTestId('global-competence')).toHaveAttribute('data-value', '2026-06')
+      await escolherCompetencia(page, snapshotCompetencia)
+      await expect(page.getByTestId('global-competence')).toHaveAttribute('data-value', snapshotCompetencia)
       await expect(page.getByTestId('regional-filter-loading')).toHaveCount(0)
       await page.getByTestId('global-region').selectOption('35073')
       await page.getByRole('button', { name: /Ver os .* hospitais da região ↓/ }).click()
@@ -98,10 +98,10 @@ for (const width of [1440, 390]) {
       await expect(page.getByTestId('assistant-thread')).toContainText(/Pediatria/i)
       await page.getByRole('button', { name: 'Fechar assistente' }).click()
       const slice = Object.fromEntries(new URL(page.url()).searchParams)
-      expect(slice).toMatchObject({ inicio: '0', competencia: '2026-06', regiao: '35073', hospital: '3012212', especialidade: '07' })
+      expect(slice).toMatchObject({ inicio: '0', competencia: snapshotCompetencia, regiao: '35073', hospital: '3012212', especialidade: '07' })
       const assertSlice = async () => {
         expect(Object.fromEntries(new URL(page.url()).searchParams)).toEqual(slice)
-        await expect(page.getByTestId('global-competence')).toHaveAttribute('data-value', '2026-06')
+        await expect(page.getByTestId('global-competence')).toHaveAttribute('data-value', snapshotCompetencia)
         await expect(page.getByTestId('global-region')).toHaveValue('35073')
         await expect(page.getByTestId('global-macroregion')).toHaveValue(slice.macrorregiao ?? '')
         await expect(page.getByTestId('specialty-summary')).toContainText(/Pediatria/i)

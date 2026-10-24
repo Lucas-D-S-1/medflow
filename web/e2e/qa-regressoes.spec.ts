@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test'
-import { escolherCompetencia, mockLiveSource, snapshotCompetencia } from './apoio'
+import { escolherCompetencia, mockLiveSource, snapshotCompetencia, snapshotCompetenciaBR } from './apoio'
 
 const huUrl = `/?competencia=${snapshotCompetencia}&regiao=35073&hospital=3012212#hospital-detail`
 async function capture(page: Page, name: string) {
@@ -28,7 +28,7 @@ test('P01: pares do mês anterior somem enquanto a nova competência carrega', a
   await expect(page.getByTestId('peer-loading')).toHaveCount(0)
   await expect(page.getByTestId('peer-criterio')).toBeVisible()
   await escolherCompetencia(page, snapshotCompetencia)
-  await expect(page.getByTestId('specialty-summary')).toContainText('06/2026')
+  await expect(page.getByTestId('specialty-summary')).toContainText(snapshotCompetenciaBR)
   await expect(page.getByTestId('peer-criterio')).toBeVisible()
 })
 
@@ -46,7 +46,7 @@ for (const width of [1440, 390]) {
     await expect(notice).toContainText('05/2026')
     await expect(notice).toContainText('35072')
     await expect(notice).toContainText(/JUNDIA[IÍ]/i)
-    await expect(notice).toContainText('06/2026')
+    await expect(notice).toContainText(snapshotCompetenciaBR)
     await expect(notice).toContainText(/substitu[ií]do/i)
     unavailable = false
     await notice.getByRole('button', { name: 'Tentar novamente' }).click()
