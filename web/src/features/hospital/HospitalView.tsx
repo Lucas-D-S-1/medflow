@@ -470,13 +470,13 @@ export default function HospitalView() {
                       </StatePanel>
                     )}
                     {seriesState.kind === 'absent' && (
-                      <StatePanel kind="empty" title="Hospital sem série publicada" testId="serie-absent">
-                        Não há série publicada para o CNES selecionado.
+                      <StatePanel kind="empty" title={sourceState.kind === 'fallback' ? 'Série não incluída na cópia local' : 'Hospital sem série publicada'} testId="serie-absent">
+                        {sourceState.kind === 'fallback' ? 'O histórico deste hospital não está incluído na cópia local parcial.' : 'Não há série publicada para o CNES selecionado.'}
                       </StatePanel>
                     )}
                     {seriesState.kind === 'error' && (
                       <StatePanel kind="error" title="Série do hospital indisponível" testId="serie-error">
-                        O histórico não respondeu; a comparação com pares permanece válida.
+                        Não foi possível carregar o histórico deste hospital agora.
                       </StatePanel>
                     )}
                     {seriesState.kind === 'ready' && <HospitalSeries data={seriesState.data} />}
@@ -495,11 +495,12 @@ export default function HospitalView() {
           {specialtyState.kind === 'absent' && (
             <StatePanel
               kind="empty"
-              title="Sem especialidade publicada"
+              title={sourceState.kind === 'fallback' ? 'Especialidades não incluídas na cópia local' : 'Sem especialidade publicada'}
               testId="especialidade-absent"
             >
-              A fonte respondeu normalmente, mas não há especialidade publicada para esse
-              hospital em {formatPeriod(selectedCompetence)}.
+              {sourceState.kind === 'fallback'
+                ? `As especialidades deste hospital em ${formatPeriod(selectedCompetence)} não estão incluídas na cópia local parcial.`
+                : `A fonte respondeu normalmente, mas não há especialidade publicada para esse hospital em ${formatPeriod(selectedCompetence)}.`}
             </StatePanel>
           )}
           {specialtyState.kind === 'error' && (
@@ -509,7 +510,7 @@ export default function HospitalView() {
               testId="especialidade-error"
             >
               A consulta de especialidades não respondeu ou devolveu conteúdo inesperado.
-              A série e a lista acima não foram afetadas.
+              Tente novamente mais tarde.
             </StatePanel>
           )}
           {specialtyData && selectedHospital && (
@@ -548,15 +549,16 @@ export default function HospitalView() {
                     </StatePanel>
                   )}
                   {cidState.kind === 'absent' && (
-                    <StatePanel kind="empty" title="Sem diagnóstico publicado" testId="cid-absent">
-                      A fonte respondeu normalmente, mas não há diagnóstico publicado para esse
-                      hospital no período agregado.
+                    <StatePanel kind="empty" title={sourceState.kind === 'fallback' ? 'Diagnósticos não incluídos na cópia local' : 'Sem diagnóstico publicado'} testId="cid-absent">
+                      {sourceState.kind === 'fallback'
+                        ? 'Os diagnósticos deste hospital no período agregado não estão incluídos na cópia local parcial.'
+                        : 'A fonte respondeu normalmente, mas não há diagnóstico publicado para esse hospital no período agregado.'}
                     </StatePanel>
                   )}
                   {cidState.kind === 'error' && (
                     <StatePanel kind="error" title="Diagnósticos indisponíveis" testId="cid-error">
                       A consulta de diagnósticos não respondeu ou devolveu conteúdo inesperado.
-                      Os blocos acima não foram afetados.
+                      Tente novamente mais tarde.
                     </StatePanel>
                   )}
                   {cidState.kind === 'ready' &&

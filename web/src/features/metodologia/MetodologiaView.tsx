@@ -7,6 +7,7 @@ import { useSource } from '../../shared/SourceContext'
 import { formatPeriod } from '../../shared/format'
 import { sourceSections } from '../../shared/publicNavigation'
 import { indicators, periods, sources } from './content'
+import { rememberTechnicalOrigin, sourcesReturnPosition } from './technicalNavigation'
 import './FontesView.css'
 
 function LinkedText({ text }: { text: string }) {
@@ -33,6 +34,14 @@ export default function MetodologiaView() {
   const data = sourceState.kind === 'live' || sourceState.kind === 'fallback' ? sourceState.data.methodology : null
 
   useEffect(() => {
+    const returnY = sourcesReturnPosition(location.key)
+    if (returnY !== undefined) {
+      const frame = requestAnimationFrame(() => {
+        window.scrollTo({ top: returnY, behavior: 'instant' })
+        document.getElementById('technical-link')?.focus({ preventScroll: true })
+      })
+      return () => cancelAnimationFrame(frame)
+    }
     const target = document.getElementById(location.hash.slice(1))
     if (!target) { window.scrollTo(0, 0); return }
     const frame = requestAnimationFrame(() => {
@@ -51,10 +60,10 @@ export default function MetodologiaView() {
       <header><h1>Fontes e indicadores</h1><p className="sources-lead">Veja de onde vêm os dados, quais meses estão disponíveis e o que os indicadores ajudam a entender.</p></header>
       {sourceState.kind === 'loading' && <StatePanel kind="loading" title="Consultando a fonte" testId="loading-state">Carregando o período e a cobertura publicados.</StatePanel>}
       {sourceState.kind === 'empty' && <StatePanel kind="empty" title="Nenhuma competência publicada" testId="empty-state">A fonte respondeu normalmente, mas ainda não possui dados disponíveis.</StatePanel>}
-      {sourceState.kind === 'error' && <StatePanel kind="error" title="Fonte e contingência indisponíveis" testId="error-state" action={<button type="button" onClick={() => void reload()}>Tentar novamente</button>}>Não foi possível carregar os dados nem a cópia local.</StatePanel>}
+      {sourceState.kind === 'error' && <StatePanel kind="error" title="Dados e cópia local indisponíveis" testId="error-state" action={<button type="button" onClick={() => void reload()}>Tentar novamente</button>}>Não foi possível carregar os dados nem a cópia local.</StatePanel>}
       {sourceState.kind === 'fallback' && <aside className="sources-warning" data-testid="fallback-note" role="status">
         <SourceBadge kind="fallback" dataThrough={sourceState.data.status.data_through} />
-        <p>{sourceState.reason === 'invalid-contract' ? 'A fonte respondeu, mas o conteúdo veio em um formato inesperado. ' : 'A consulta à fonte está indisponível. '}Esta sessão usa uma cópia local com período e cobertura fixos. <button type="button" onClick={() => void reload()}>Tentar novamente</button>.</p>
+        <p>{sourceState.reason === 'invalid-contract' ? 'A fonte respondeu, mas o conteúdo veio em um formato inesperado. ' : 'A consulta à fonte está indisponível. '}Esta sessão usa uma cópia local parcial, com período e cobertura fixos. Alguns hospitais e detalhes não estão incluídos. <button type="button" onClick={() => void reload()}>Tentar novamente</button>.</p>
       </aside>}
       <section id="fontes" tabIndex={-1}>
         <h2>De onde vêm os dados?</h2>
@@ -96,7 +105,9 @@ export default function MetodologiaView() {
           <p>Pacientes-dia, dias de permanência e diárias faturadas são medidas diferentes. Não devem ser trocadas entre si.</p>
         </div></details>
       </section>
-      <footer className="sources-footer"><Link to={{ pathname: '/metodologia/tecnico', search: location.search }}>Detalhes técnicos ›</Link><span>Ômega Urban Tech · Challenge Oracle · FIAP 2026</span></footer>
+      <footer className="sources-footer"><Link id="technical-link" to={{ pathname: '/metodologia/tecnico', search: location.search }} state={{ technicalOriginKey: location.key }} onClick={(event) => {
+        if (event.button === 0 && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey) rememberTechnicalOrigin(location)
+      }}>Detalhes técnicos ›</Link><span>Ômega Urban Tech · Challenge Oracle · FIAP 2026</span></footer>
     </main>
   </div>
 }
