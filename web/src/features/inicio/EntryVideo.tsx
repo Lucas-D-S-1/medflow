@@ -1,7 +1,8 @@
 import { useRef, useState } from 'react'
 
-// Substitua os três arquivos deste caminho para atualizar o filme, sem mudar a tela.
+// Ao substituir a mídia, atualize a versão para renovar o cache dos três arquivos.
 const VIDEO_PATH = `${import.meta.env.BASE_URL}video/medflow`
+const VIDEO_VERSION = 'v11.1'
 
 export default function EntryVideo() {
   const videoRef = useRef<HTMLVideoElement>(null)
@@ -29,7 +30,7 @@ export default function EntryVideo() {
         <video
           ref={videoRef}
           aria-label="Vídeo do MedFlow"
-          poster={`${VIDEO_PATH}.jpg`}
+          poster={`${VIDEO_PATH}.jpg?v=${VIDEO_VERSION}`}
           preload="none"
           controls={started}
           playsInline
@@ -37,8 +38,8 @@ export default function EntryVideo() {
           width="1280"
           height="720"
         >
-          <source src={`${VIDEO_PATH}.mp4`} type="video/mp4" />
-          <track kind="captions" src={`${VIDEO_PATH}.pt-BR.vtt`} srcLang="pt-BR" label="Português" default />
+          <source src={`${VIDEO_PATH}.mp4?v=${VIDEO_VERSION}`} type="video/mp4" />
+          <track kind="captions" src={`${VIDEO_PATH}.pt-BR.vtt?v=${VIDEO_VERSION}`} srcLang="pt-BR" label="Português" default />
         </video>
         {!started && <button className="entry-video-play" type="button" aria-label="Assistir ao vídeo do MedFlow, 2 minutos" onClick={play}>
           <span className="entry-video-play-icon" aria-hidden="true">▶</span>
