@@ -1,3 +1,4 @@
+import { useReadingState } from '../../shared/useReadingState'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { HospitalItem, HospitalListResponse } from './hospitais'
 import { filterHospitals } from './hospitalSearch'
@@ -19,14 +20,39 @@ const COLUMNS: {
 }[] = [
   { id: 'hospital', label: 'Hospital', numeric: false, value: (item) => item.hospital_name },
   { id: 'admissions', label: 'Internações', numeric: true, value: (item) => item.new_admissions },
-  { id: 'iph', label: 'Pressão sobre leitos (IPH)', numeric: true, value: (item) => item.iph_percent },
-  { id: 'tmh', label: 'Mortalidade observada (TMH)', numeric: true, value: (item) => item.tmh_percent },
-  { id: 'stay', label: 'Permanência média', numeric: true, value: (item) => item.average_stay_days },
-  { id: 'cmi', label: 'Valor médio aprovado pelo SUS (CMI real)', numeric: true, value: (item) => item.cmi_real },
+  {
+    id: 'iph',
+    label: 'Pressão sobre leitos (IPH)',
+    numeric: true,
+    value: (item) => item.iph_percent,
+  },
+  {
+    id: 'tmh',
+    label: 'Mortalidade observada (TMH)',
+    numeric: true,
+    value: (item) => item.tmh_percent,
+  },
+  {
+    id: 'stay',
+    label: 'Permanência média',
+    numeric: true,
+    value: (item) => item.average_stay_days,
+  },
+  {
+    id: 'cmi',
+    label: 'Valor médio aprovado pelo SUS (CMI real)',
+    numeric: true,
+    value: (item) => item.cmi_real,
+  },
   // A mediana entre as especialidades comparáveis do hospital. Ordenar por ela
   // responde "quem fica mais tempo que os pares", que é outra pergunta que
   // nenhuma das colunas acima respondia.
-  { id: 'ipe', label: 'Permanência ante os pares (IPE)', numeric: true, value: (item) => item.ipe_median },
+  {
+    id: 'ipe',
+    label: 'Permanência ante os pares (IPE)',
+    numeric: true,
+    value: (item) => item.ipe_median,
+  },
 ]
 
 /**
@@ -95,8 +121,10 @@ export default function HospitalTable({
     return () => window.clearTimeout(timer)
   }, [draft, onSearchChange])
 
-  const [sortBy, setSortBy] = useState<ColumnId>('admissions')
-  const [descending, setDescending] = useState(true)
+  const readingKey = `hospitals:${data.data_through}:${data.region.region_code}`
+  const [moreMetrics, setMoreMetrics] = useReadingState(`${readingKey}:metrics`, false)
+  const [sortBy, setSortBy] = useReadingState<ColumnId>(`${readingKey}:sort`, 'admissions')
+  const [descending, setDescending] = useReadingState(`${readingKey}:descending`, true)
 
   const column = COLUMNS.find((candidate) => candidate.id === sortBy) as (typeof COLUMNS)[number]
   const items = useMemo(() => {
@@ -106,7 +134,8 @@ export default function HospitalTable({
       const b = column.value(right)
       // Indicador não calculado vai para o fim em qualquer direção: ausência
       // não é o menor valor, é ausência de comparação.
-      if (a === null && b === null) return left.hospital_name.localeCompare(right.hospital_name, 'pt-BR')
+      if (a === null && b === null)
+        return left.hospital_name.localeCompare(right.hospital_name, 'pt-BR')
       if (a === null) return 1
       if (b === null) return -1
       if (typeof a === 'string' || typeof b === 'string') {
@@ -125,20 +154,24 @@ export default function HospitalTable({
     setDescending(COLUMNS.find((candidate) => candidate.id === id)?.numeric ?? true)
   }
 
-  // A lista completa vira dois blocos em vez de uma tabela só. Uma seção única
-  // com todos os hospitais passa de metade da altura da página em telas
-  // estreitas, que é o limite que esta interface se impôs.
   function renderTable(items: HospitalItem[], label: string) {
     return (
-      <div className="hospital-table-wrap rolagem-interna">
-        <table className="hospital-table" aria-label={label}>
+      <div className="hospital-table-wrap hospital-list-wrap">
+        <table
+          className={`hospital-table hospital-list-table${moreMetrics ? ' with-more' : ''}`}
+          aria-label={label}
+        >
           <thead>
             <tr>
-              {COLUMNS.map((item) => (
+              {COLUMNS.filter(
+                (item) => moreMetrics || !['tmh', 'cmi', 'ipe'].includes(item.id),
+              ).map((item) => (
                 <th
                   key={item.id}
                   scope="col"
-                  aria-sort={sortBy === item.id ? (descending ? 'descending' : 'ascending') : 'none'}
+                  aria-sort={
+                    sortBy === item.id ? (descending ? 'descending' : 'ascending') : 'none'
+                  }
                 >
                   <button
                     type="button"
@@ -171,13 +204,13 @@ export default function HospitalTable({
                 <td data-label="Hospital">
                   <strong>{item.hospital_name}</strong>
                   <small>
-                    CNES {item.cnes} · {item.unit_type_name} ·{' '}
-                    {formatInteger(item.sus_beds)} leitos SUS
+                    CNES {item.cnes} · {item.unit_type_name} · {formatInteger(item.sus_beds)} leitos
+                    SUS
                   </small>
                   {item.district_code && (
                     <small>
-                      Distrito {item.district_code} · CRS {item.health_coordinator_code ?? '—'} · STS{' '}
-                      {item.health_technical_supervision_code ?? '—'}
+                      Distrito {item.district_code} · CRS {item.health_coordinator_code ?? '—'} ·
+                      STS {item.health_technical_supervision_code ?? '—'}
                     </small>
                   )}
                   {item.sample_status === 'amostra_insuficiente' && (
@@ -188,7 +221,6 @@ export default function HospitalTable({
                 </td>
                 <td data-label="Internações">
                   <strong>{formatInteger(item.new_admissions)}</strong>
-                  <small>{formatInteger(item.deaths)} óbitos</small>
                 </td>
                 <td data-label="IPH estimado">
                   <Valor
@@ -196,6 +228,9 @@ export default function HospitalTable({
                     formatar={formatPercent}
                     motivo={motivoAusencia(item, 'iph')}
                   />
+                  {item.average_stay_days !== null && item.average_stay_days < 1 && (
+                    <small className="marca-amostra">giro sobre capacidade; não é ocupação</small>
+                  )}
                   {item.above_declared_capacity === 1 && (
                     <small
                       className="marca-capacidade"
@@ -205,7 +240,7 @@ export default function HospitalTable({
                     </small>
                   )}
                 </td>
-                <td data-label="TMH">
+                <td data-label="TMH" hidden={!moreMetrics}>
                   <Valor
                     valor={item.tmh_percent}
                     formatar={formatPercent}
@@ -219,14 +254,14 @@ export default function HospitalTable({
                     motivo={motivoAusencia(item, 'derivado')}
                   />
                 </td>
-                <td data-label="Valor médio aprovado pelo SUS (CMI real)">
+                <td data-label="Valor médio aprovado pelo SUS (CMI real)" hidden={!moreMetrics}>
                   <Valor
                     valor={item.cmi_real}
                     formatar={formatCurrency}
                     motivo={motivoAusencia(item, 'derivado')}
                   />
                 </td>
-                <td data-label="IPE">
+                <td data-label="IPE" hidden={!moreMetrics}>
                   {item.ipe_median === null ? (
                     <em className="valor-ausente">sem especialidade comparável</em>
                   ) : (
@@ -249,7 +284,7 @@ export default function HospitalTable({
                     data-testid={`hospital-select-${item.cnes}`}
                     onClick={() => onSelect(item.cnes)}
                   >
-                    {item.cnes === selectedCnes ? 'Selecionado' : 'Abrir'}
+                    {item.cnes === selectedCnes ? 'Selecionado' : 'Abrir hospital'}
                   </button>
                 </td>
               </tr>
@@ -271,6 +306,10 @@ export default function HospitalTable({
         <div>
           <p className="section-kicker">HOSPITAIS</p>
           <h2 id="hospital-list-title">Hospitais de {data.region.region_name}</h2>
+          <p>
+            {formatInteger(data.items.length)} hospitais ·{' '}
+            {data.data_through.split('-').reverse().join('/')}
+          </p>
         </div>
         <div className="hospital-list-tools">
           <div className="hospital-inline-search">
@@ -303,9 +342,47 @@ export default function HospitalTable({
         </div>
       </div>
 
-      {/* A lista vem inteira e rola dentro de si: nenhuma seção pode ocupar
-          mais que metade da altura da página, e paginar em dois blocos
-          escondia justamente os extremos que a ordenação existe para achar. */}
+      <div className="hospital-table-controls">
+        <button
+          className="secondary-action"
+          type="button"
+          aria-expanded={moreMetrics}
+          onClick={() => {
+            if (moreMetrics && ['tmh', 'cmi', 'ipe'].includes(sortBy)) {
+              setSortBy('admissions')
+              setDescending(true)
+            }
+            setMoreMetrics((current) => !current)
+          }}
+        >
+          {moreMetrics ? 'Menos indicadores' : 'Mais indicadores'}
+        </button>
+        <label className="mobile-sort">
+          Ordenar por
+          <select
+            value={sortBy}
+            onChange={(event) => {
+              const id = event.target.value as ColumnId
+              setSortBy(id)
+              setDescending(COLUMNS.find((c) => c.id === id)?.numeric ?? false)
+              if (['tmh', 'cmi', 'ipe'].includes(id)) setMoreMetrics(true)
+            }}
+          >
+            {COLUMNS.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.label}
+              </option>
+            ))}
+          </select>
+          <button
+            type="button"
+            aria-label="Inverter direção da ordenação"
+            onClick={() => setDescending((current) => !current)}
+          >
+            {descending ? '↓ Maior primeiro' : '↑ Menor primeiro'}
+          </button>
+        </label>
+      </div>
       {items.length === 0 ? (
         <StatePanel
           kind="empty"

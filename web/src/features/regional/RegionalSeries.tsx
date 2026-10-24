@@ -1,3 +1,5 @@
+import { useChartWidth } from '../../shared/MonthlyChart'
+import { useReadingState } from '../../shared/useReadingState'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type {
   RegionalSeriesItem,
@@ -46,14 +48,13 @@ const INDICATORS: Record<RegionalInsightMetric, IndicatorConfig> = {
 }
 
 const INDICATOR_IDS = Object.keys(INDICATORS) as RegionalInsightMetric[]
-const CHART_WIDTH = 760
 const CHART_HEIGHT = 250
 const CHART_LEFT = 58
 const CHART_RIGHT = 22
 const CHART_TOP = 30
 const CHART_BOTTOM = 44
 
-function chartPath(values: Array<number | null>, minimum: number, maximum: number) {
+function chartPath(values: Array<number | null>, minimum: number, maximum: number, CHART_WIDTH: number) {
   const range = maximum - minimum || 1
   const usableWidth = CHART_WIDTH - CHART_LEFT - CHART_RIGHT
   const usableHeight = CHART_HEIGHT - CHART_TOP - CHART_BOTTOM
@@ -85,8 +86,10 @@ export default function RegionalSeries({
   data: RegionalSeriesResponse
   selectedCompetence: string
 }) {
-  const [indicatorId, setIndicatorId] = useState<RegionalInsightMetric>('iph')
-  const [showAllHistory, setShowAllHistory] = useState(false)
+  const { ref: chartContainer, width: CHART_WIDTH } = useChartWidth()
+  const readingKey = `regional-series:${data.region.region_code}:${selectedCompetence}`
+  const [indicatorId, setIndicatorId] = useReadingState<RegionalInsightMetric>(`${readingKey}:metric`, 'iph')
+  const [showAllHistory, setShowAllHistory] = useReadingState(`${readingKey}:all`, false)
   const [tooltipCompetence, setTooltipCompetence] = useState<string | null>(null)
   const tooltipCloseTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const indicator = INDICATORS[indicatorId]
@@ -118,8 +121,8 @@ export default function RegionalSeries({
   const minimum = numericValues.length ? Math.min(...numericValues) : 0
   const maximum = numericValues.length ? Math.max(...numericValues) : 0
   const range = maximum - minimum || 1
-  const path = chartPath(values, minimum, maximum)
-  const cumulativePath = chartPath(cumulativeValues, minimum, maximum)
+  const path = chartPath(values, minimum, maximum, CHART_WIDTH)
+  const cumulativePath = chartPath(cumulativeValues, minimum, maximum, CHART_WIDTH)
   const chartPoints = slots
     .map(({ competence, item }, index) => {
       const value = values[index]
@@ -168,7 +171,6 @@ export default function RegionalSeries({
     : null
 
   useEffect(() => {
-    setShowAllHistory(false)
     setTooltipCompetence(null)
   }, [data.region.region_code, selectedCompetence])
 
@@ -254,12 +256,12 @@ export default function RegionalSeries({
           <span>{indicatorId === 'iph' ? 'Média acumulada' : 'Mesmo mês em anos anteriores'}</span>
           <strong>
             {insight.historicalComparison
-              ? formatDifference(indicatorId, insight.historicalComparison.difference)
+              ? indicatorId === 'iph' ? indicator.format(insight.historicalComparison.reference) : formatDifference(indicatorId, insight.historicalComparison.difference)
               : 'indisponível'}
           </strong>
           <small>
             {insight.historicalComparison
-              ? `${historicalLabel}: ${indicator.format(insight.historicalComparison.reference)}${cumulativeContext ? ` · ${cumulativeContext}` : ''}`
+              ? `${historicalLabel}: ${indicator.format(insight.historicalComparison.reference)}${cumulativeContext ? ` · ${cumulativeContext} · diferença ${formatDifference(indicatorId, insight.historicalComparison.difference)}` : ''}`
               : insight.historicalReason === 'fora-periodo-alvo'
                 ? 'Fora do período-alvo da sazonalidade publicada'
                 : insight.historicalReason === 'referencia-zero'
@@ -286,7 +288,7 @@ export default function RegionalSeries({
 
       {numericValues.length > 0 && firstCompetence && lastCompetence ? (
         <div className="series-chart" data-testid="regional-series-chart">
-          <div className="series-chart-canvas">
+          <div className="series-chart-canvas" ref={chartContainer}>
             <svg
               viewBox={`0 0 ${CHART_WIDTH} ${CHART_HEIGHT}`}
               aria-labelledby="regional-series-chart-title regional-series-chart-description"
@@ -318,7 +320,8 @@ export default function RegionalSeries({
                   key={competence}
                   className="series-data-point"
                   data-testid={`regional-series-point-${competence}`}
-                  role="img"
+                  role="button"
+                  onClick={() => showTooltip(competence)}
                   tabIndex={0}
                   aria-label={`${formatPeriod(competence)} · ${indicator.label}: ${indicator.format(value)}. ${indicator.detail(item)}${indicatorId === 'iph' && cumulativeIph ? `. Média acumulada até ${formatPeriodLong(competence)}: ${indicator.format(cumulativeIph.average)}; ${formatInteger(cumulativeIph.competences)} competências desde ${formatPeriodLong(cumulativeIph.startCompetence)}` : ''}`}
                   aria-describedby={tooltipCompetence === competence ? 'regional-series-tooltip' : undefined}
@@ -328,9 +331,10 @@ export default function RegionalSeries({
                   onBlur={scheduleTooltipClose}
                   onKeyDown={(event) => {
                     if (event.key === 'Escape') hideTooltip()
+                    if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); showTooltip(competence) }
                   }}
                 >
-                  <circle className="series-point-hit" cx={x} cy={y} r={13} />
+                  <circle className="series-point-hit" cx={x} cy={y} r={22} />
                   <circle
                     className={competence === selectedCompetence ? 'series-point selected' : 'series-point'}
                     cx={x}
@@ -348,7 +352,7 @@ export default function RegionalSeries({
                 role="tooltip"
                 className={[
                   'series-tooltip',
-                  tooltipPoint.x < 150 ? 'align-start' : tooltipPoint.x > 610 ? 'align-end' : '',
+                  tooltipPoint.x < 150 ? 'align-start' : tooltipPoint.x > CHART_WIDTH - 150 ? 'align-end' : '',
                   tooltipPoint.y < 95 ? 'place-below' : 'place-above',
                 ].filter(Boolean).join(' ')}
                 style={{

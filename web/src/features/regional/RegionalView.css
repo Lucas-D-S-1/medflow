@@ -427,3 +427,16 @@
   .series-window-control { align-items: flex-start; flex-direction: column; }
   .series-table-scroll { overflow-x: auto; }
 }
+
+/* Continuation: same typography as the hospital series at every viewport. */
+.regional-series-panel { padding: var(--space-5) var(--space-6); }
+.regional-series-panel p, .regional-series-panel small, .regional-series-panel .series-insights span, .regional-series-panel .series-window-control { color: var(--color-text); font-size: var(--font-size-sm); }
+.series-indicator-selector button { min-height: 44px; }
+.series-indicator-selector button[aria-checked='true'] { background: var(--color-heading); }
+.regional-series-panel .series-chart-canvas svg { height: 250px; max-height: none; }
+.regional-series-panel .series-axis-label { font: 12px var(--font-body); fill: var(--color-text); }
+.regional-series-panel summary, .regional-series-panel button { min-height: 44px; }
+.regional-series-panel summary { align-content: center; }
+@media (max-width: 680px) { .regional-series-panel { padding: var(--space-4); } }
+
+.regional-series-panel .block-heading p:last-child { color: var(--color-text); }

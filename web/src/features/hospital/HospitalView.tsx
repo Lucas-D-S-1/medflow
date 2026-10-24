@@ -1,3 +1,4 @@
+import { useReadingState } from '../../shared/useReadingState'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import {
@@ -35,6 +36,7 @@ import { COMPETENCE_PATTERN, useSource } from '../../shared/SourceContext'
 import { requestAnalysisAnchor } from '../../shared/analysisNavigation'
 import { formatInteger, formatPeriod } from '../../shared/format'
 import './HospitalView.css'
+import './Redesign.css'
 
 type ListState =
   | { kind: 'idle' | 'loading' | 'error' | 'absent' }
@@ -64,8 +66,9 @@ export default function HospitalView() {
   const [seriesState, setSeriesState] = useState<SeriesState>({ kind: 'idle' })
   const [specialtyState, setSpecialtyState] = useState<SpecialtyState>({ kind: 'idle' })
   const [cidState, setCidState] = useState<CidState>({ kind: 'idle' })
-  const [historyOpen, setHistoryOpen] = useState(false)
-  const [diagnosticsOpen, setDiagnosticsOpen] = useState(false)
+  const readingKey = `hospital:${sharedCompetence}:${searchParams.get('hospital') ?? ''}`
+  const [historyOpen, setHistoryOpen] = useReadingState(`${readingKey}:history`, true)
+  const [diagnosticsOpen, setDiagnosticsOpen] = useReadingState(`${readingKey}:diagnostics`, false)
   const listRequest = useRef<AbortController | null>(null)
   const seriesRequest = useRef<AbortController | null>(null)
   const specialtyRequest = useRef<AbortController | null>(null)
@@ -112,15 +115,8 @@ export default function HospitalView() {
     sourceState.kind === 'error' ||
     (sourceData !== null && (!selectedRegion || listMatchesSelection))
 
-  // Trocar hospital fecha o histórico. Recarregar o mesmo CNES por mudança de
-  // competência desmonta o detalhe por instantes, mas preserva a escolha.
-  useEffect(() => {
-    setHistoryOpen(false)
-    setDiagnosticsOpen(false)
-  }, [urlHospital])
-
   // A lista estadual só é buscada quando há um hospital aberto: ela existe
-  // para montar o grupo de pares por tipo e porte, e ninguém paga por ela
+  // para montar o grupo de pares por porte, e ninguém paga por ela
   // enquanto está apenas olhando a região.
   useEffect(() => {
     statewideRequest.current?.abort()
@@ -366,12 +362,12 @@ export default function HospitalView() {
       data-anchor-ready={hospitalAnchorReady ? 'true' : undefined}
       tabIndex={-1}
     >
-      <div className="view-intro">
+      {!selectedHospital && !list && <div className="view-intro hospital-section-intro">
         <div>
           <p className="section-kicker">HOSPITAL</p>
           <h2 id="hospital-section-title">Hospitais da região</h2>
         </div>
-      </div>
+      </div>}
 
       {sourceState.kind === 'loading' && (
         <StatePanel kind="loading" title="Carregando hospitais" testId="hospital-loading">
@@ -449,7 +445,7 @@ export default function HospitalView() {
                 onChangeHospital={clearHospital}
               />
 
-              <section className="hospital-history" aria-labelledby="hospital-history-title">
+              <section id="hospital-evolution" className="hospital-history" aria-labelledby="hospital-history-title">
                 <button
                   type="button"
                   aria-expanded={historyOpen}
@@ -479,12 +475,10 @@ export default function HospitalView() {
                         Não foi possível carregar o histórico deste hospital agora.
                       </StatePanel>
                     )}
-                    {seriesState.kind === 'ready' && <HospitalSeries data={seriesState.data} />}
+                    {seriesState.kind === 'ready' && <HospitalSeries data={seriesState.data} selectedCompetence={selectedCompetence} />}
                   </div>
                 )}
               </section>
-            </div>
-          )}
 
           {(specialtyState.kind === 'loading' ||
             (specialtyState.kind === 'ready' && !specialtyData && selectedCnes)) && (
@@ -521,7 +515,7 @@ export default function HospitalView() {
           )}
 
           {selectedHospital && (
-            <section className="hospital-history hospital-diagnostics" aria-labelledby="hospital-diagnostics-title">
+            <section id="hospital-diagnostics" className="hospital-history hospital-diagnostics" aria-labelledby="hospital-diagnostics-title">
               <button
                 type="button"
                 aria-expanded={diagnosticsOpen}
@@ -535,7 +529,7 @@ export default function HospitalView() {
                     Diagnósticos · período agregado
                   </strong>
                   <span className="diagnostics-period">
-                    {formatInteger(sourceData.methodology.coverage.competencies)} competências
+                    {eligibleOnly ? 'Diagnósticos elegíveis · ' : 'Todos os diagnósticos · '}{formatInteger(sourceData.methodology.coverage.competencies)} competências
                     até {formatPeriod(sourceData.status.data_through)}
                   </span>
                 </span>
@@ -574,8 +568,11 @@ export default function HospitalView() {
               )}
             </section>
           )}
+            </div>
+          )}
         </>
       )}
+      <div id="hospital-flowia" className="analysis-flowia" />
     </section>
   )
 }

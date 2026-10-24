@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
+import { useReadingState } from './useReadingState'
 
 /**
  * Ordenação de tabela, com a mesma regra em todo o produto.
@@ -26,9 +27,11 @@ export function useSortableRows<Row>(
   columns: SortableColumn<Row>[],
   initial: string,
   tiebreak: (row: Row) => string,
+  readingKey?: string,
 ) {
-  const [sortBy, setSortBy] = useState(initial)
-  const [descending, setDescending] = useState(
+  const [sortBy, setSortBy] = useReadingState(readingKey ? `${readingKey}:sort` : undefined, initial)
+  const [descending, setDescending] = useReadingState(
+    readingKey ? `${readingKey}:direction` : undefined,
     columns.find((column) => column.id === initial)?.numeric ?? true,
   )
   const column = columns.find((candidate) => candidate.id === sortBy) ?? columns[0]

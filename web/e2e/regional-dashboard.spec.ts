@@ -62,7 +62,7 @@ test('contingência de uma região não se apresenta como comparação ou rankin
   await page.route('**/api/dev/v1/**', (route) => route.abort())
   await page.goto('/?competencia=2026-06&inicio=0')
   await expect(page.getByTestId('regional-selected-name')).toHaveText('JUNDIAI')
-  await expect(page.getByTestId('regional-overview')).toContainText('estado indisponível na contingência')
+  await expect(page.getByTestId('regional-overview')).toContainText('comparação estadual não incluída na cópia local')
   await expect(page.getByTestId('regional-rank')).toHaveCount(0)
   await expect(page.getByRole('button', { name: '✕ Voltar ao estado', exact: true })).toBeDisabled()
 })

@@ -1,6 +1,8 @@
 import { entryQuestions } from '../../shared/publicNavigation'
 import { isEntryLocation } from '../../shared/entryNavigation'
-import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type FormEvent } from 'react'
+import { recentAnalysisSection } from '../../shared/analysisNavigation'
+import { createPortal } from 'react-dom'
 import { useLocation } from 'react-router-dom'
 import { useActiveSection } from '../../shared/useActiveSection'
 import {
@@ -259,6 +261,7 @@ export default function AssistantWidget() {
     clearAssistantQuestion,
   } = useSource()
   const [isOpen, setIsOpen] = useState(false)
+  const [inlineHost, setInlineHost] = useState<HTMLElement | null>(null)
   const [question, setQuestion] = useState('')
   // O fio inteiro, não a última rodada. Guardar só uma fazia a pergunta
   // seguinte apagar a anterior da tela e da memória do modelo.
@@ -345,6 +348,13 @@ export default function AssistantWidget() {
     }
     return hospitalSpecialties
   }, [hospitalSpecialties, location.search, sharedCompetence])
+
+  // Keep the open panel in the section that launched it. Moving it to the
+  // document footer would change the visible analysis and its context.
+  useLayoutEffect(() => {
+    setInlineHost(location.pathname === '/' && !onEntry
+      ? document.getElementById(`${isOpen ? recentAnalysisSection() ?? currentRoute : currentRoute}-flowia`) : null)
+  }, [isOpen, location.pathname, onEntry, isOpen ? null : currentRoute])
 
   useEffect(() => {
     if (isOpen) window.setTimeout(() => inputRef.current?.focus(), 80)
@@ -1164,8 +1174,8 @@ export default function AssistantWidget() {
     window.requestAnimationFrame(() => launcherRef.current?.focus())
   }
 
-  return (
-    <aside className={`assistant-widget${onEntry ? ' entry-assistant' : location.pathname === '/metodologia' ? ' sources-assistant' : ''}`} aria-label="FlowIA, assistente do MedFlow">
+  const widget = (
+    <aside className={`assistant-widget${inlineHost ? ' inline-assistant' : ''}${onEntry ? ' entry-assistant' : location.pathname === '/metodologia' ? ' sources-assistant' : ''}`} aria-label="FlowIA, assistente do MedFlow">
       {onEntry && !isOpen && bubbleOpen && <section className="assistant-entry-bubble" aria-label="Sugestão do FlowIA">
         <div><strong>FlowIA</strong><button type="button" aria-label="Fechar sugestão" onClick={() => setBubbleOpen(false)}>×</button></div>
         <p>{entryQuestions[suggestionIndex]}</p>
@@ -1288,4 +1298,5 @@ export default function AssistantWidget() {
       )}
     </aside>
   )
+  return inlineHost ? createPortal(widget, inlineHost) : widget
 }

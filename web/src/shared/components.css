@@ -93,3 +93,4 @@
   .source-badge { margin-top: var(--space-3); }
   .metric-grid { grid-template-columns: 1fr; }
 }
+.source-badge.live > span, .source-badge.fallback > span { box-shadow: none; }
