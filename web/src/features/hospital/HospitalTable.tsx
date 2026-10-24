@@ -250,7 +250,7 @@ export default function HospitalTable({
                 <td data-label="Permanência média">
                   <Valor
                     valor={item.average_stay_days}
-                    formatar={formatDecimal}
+                    formatar={(value) => `${formatDecimal(value)} dias`}
                     motivo={motivoAusencia(item, 'derivado')}
                   />
                 </td>

@@ -96,7 +96,7 @@ test('P04: sinais mantêm referência estadual ao selecionar região ou filtrar 
   await page.mouse.move(0, 0)
   await capture(page, 'p04-sinais-rede')
   await expect(score).toHaveText(statewideScore)
-  await expect(page.getByTestId('signals-reference')).toContainText('62 regiões de São Paulo')
+  await expect(page.getByTestId('iph-reference')).toContainText('62 regiões de São Paulo')
   await page.getByRole('button', { name: 'O que são os sinais?', exact: true }).click()
   await expect(page.getByTestId('assistant-thread')).toContainText(/referência estadual/)
   await expect(page.getByTestId('assistant-thread')).not.toContainText('muda os limiares')

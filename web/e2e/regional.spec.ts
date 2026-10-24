@@ -191,9 +191,6 @@ test('expõe o mapa com percentis, seleção textual e uma única parada de tabu
 
   await page.goto('/regional?regiao=35073')
 
-  // O mapa abre colorido pelo placar de sinais. Este teste é sobre a escala por
-  // percentis do IPH, então ele declara o indicador que exercita.
-  await page.getByTestId('map-metric-iph').click()
 
   const map = page.getByTestId('regional-map-svg')
   await expect(map).not.toHaveAttribute('role', 'img')
@@ -211,8 +208,6 @@ test('expõe o mapa com percentis, seleção textual e uma única parada de tabu
   await expect(page.getByTestId('regional-map-selection')).not.toContainText('JUNDIAI')
 
   await page.goto('/regional?macrorregiao=3529&regiao=35102')
-  // Navegar recomeça no placar de sinais, que é o padrão do mapa.
-  await page.getByTestId('map-metric-iph').click()
   await expect(page.getByTestId('regional-map-svg').locator('[role="button"]')).toHaveCount(62)
   await expect(page.getByTestId('regional-map-legend')).toContainText(
     `mínimo real ${pt(Math.min(...iphDaMacro3529), 1)}%`,
@@ -448,37 +443,20 @@ test('mantém a metodologia colapsável', async ({ page }) => {
 
 })
 
-test('a escala do placar usa a rampa inteira, do melhor ao pior do recorte', async ({ page }) => {
+test('o mapa abre apenas em IPH com legenda e escala por percentis', async ({ page }) => {
   await mockLiveSource(page)
   await page.goto(`/?competencia=${snapshotCompetencia}`)
   await expect(page.locator('.regional-map-shape')).toHaveCount(62)
-
-  // Os cortes eram fixos em 0, 1, 2 e 3. Como o recorte publicado chega no
-  // máximo a 3 dos 6 sinais, os dois tons escuros nunca apareciam: o mapa
-  // inteiro ficava na metade clara, e a legenda exibia um tom que região
-  // nenhuma tinha. Sem o tom mais escuro em uso, "quem é o pior" não se vê.
   await expect(page.locator('.regional-map-shape.tone-1').first()).toBeVisible()
   await expect(page.locator('.regional-map-shape.tone-5').first()).toBeVisible()
-})
-
-test('o mapa pode colorir pelo placar que consome os seis indicadores', async ({ page }) => {
-  await mockLiveSource(page)
-  await page.goto(`/?competencia=${snapshotCompetencia}`)
-
-  // O padrão é o placar: ele é o que responde "onde olhar primeiro", enquanto
-  // o IPH sozinho é um dos seis sinais que ele conta.
-  await expect(page.locator('#map-title')).toContainText('Sinais por região')
-  await expect(page.getByTestId('regional-map-legend')).toContainText('sinais')
-  await expect(page.getByTestId('regional-map-legend')).toContainText(
-    'não nota de qualidade',
-  )
-
-  await page.getByTestId('map-metric-iph').click()
+  await expect(page.locator('#regional-title')).toHaveText('Pressão sobre leitos (IPH) por região')
   await expect(page.locator('#map-title')).toContainText('IPH estimado')
+  await expect(page.getByRole('radiogroup', { name: 'O que a cor mostra' })).toHaveCount(0)
+  await expect(page.locator('[data-testid^="map-metric-"]')).toHaveCount(0)
   await expect(page.getByTestId('regional-map-legend')).toContainText('mínimo real')
-
-  await page.getByTestId('map-metric-sinais').click()
-  await expect(page.locator('#map-title')).toContainText('Sinais por região')
+  await expect(page.getByTestId('regional-map-legend')).toContainText('máximo real')
+  await expect(page.getByTestId('regional-map-legend')).not.toContainText('sinais')
+  await expect(page.getByTestId('regional-map-35073')).toHaveAttribute('aria-label', /IPH estimado/)
 })
 
 test('hierarquiza a região no painel e preserva os seis sinais recolhidos', async ({ page }) => {

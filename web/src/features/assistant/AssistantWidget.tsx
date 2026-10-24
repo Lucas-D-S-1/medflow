@@ -1,4 +1,3 @@
-import { entryQuestions } from '../../shared/publicNavigation'
 import { isEntryLocation } from '../../shared/entryNavigation'
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import { recentAnalysisSection } from '../../shared/analysisNavigation'
@@ -249,8 +248,6 @@ function AssistantRobot({ compact = false }: { compact?: boolean }) {
 export default function AssistantWidget() {
   const location = useLocation()
   const onEntry = isEntryLocation(location)
-  const [bubbleOpen, setBubbleOpen] = useState(true)
-  const [suggestionIndex, setSuggestionIndex] = useState(0)
   const {
     sourceState,
     sharedCompetence,
@@ -1176,14 +1173,6 @@ export default function AssistantWidget() {
 
   const widget = (
     <aside className={`assistant-widget${inlineHost ? ' inline-assistant' : ''}${onEntry ? ' entry-assistant' : location.pathname === '/metodologia' ? ' sources-assistant' : ''}`} aria-label="FlowIA, assistente do MedFlow">
-      {onEntry && !isOpen && bubbleOpen && <section className="assistant-entry-bubble" aria-label="Sugestão do FlowIA">
-        <div><strong>FlowIA</strong><button type="button" aria-label="Fechar sugestão" onClick={() => setBubbleOpen(false)}>×</button></div>
-        <p>{entryQuestions[suggestionIndex]}</p>
-        <div className="assistant-entry-actions">
-          <button type="button" onClick={() => { setQuestion(entryQuestions[suggestionIndex]); setIsOpen(true) }}>Perguntar</button>
-          <button type="button" onClick={() => setSuggestionIndex((index) => (index + 1) % entryQuestions.length)}>Outra pergunta</button>
-        </div>
-      </section>}
       {isOpen ? (
         <section className="assistant-panel" id="medflow-assistant-panel" aria-live="polite">
           <header className="assistant-header">
@@ -1284,7 +1273,7 @@ export default function AssistantWidget() {
           ref={launcherRef}
           className="assistant-launcher"
           type="button"
-          onClick={() => { if (onEntry && !bubbleOpen) setBubbleOpen(true); else setIsOpen(true) }}
+          onClick={() => setIsOpen(true)}
           aria-expanded="false"
           aria-controls="medflow-assistant-panel"
           aria-label="Abrir FlowIA — Posso ajudar?"

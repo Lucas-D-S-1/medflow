@@ -49,9 +49,6 @@ export default function RegionalView({ onViewHospitals }: RegionalViewProps) {
   const location = useLocation()
   const activeSection = useActiveSection(SECTION_IDS, true)
   const [seriesState, setSeriesState] = useState<SeriesState>({ kind: 'idle' })
-  // O mapa pode colorir por um indicador isolado ou pelo placar que consome os
-  // seis. O padrão é o placar: ele é o que responde "onde olhar primeiro".
-  const [mapMetric, setMapMetric] = useState<'sinais' | 'iph'>('sinais')
   const seriesRequest = useRef<AbortController | null>(null)
   const sourceData =
     sourceState.kind === 'live' || sourceState.kind === 'fallback'
@@ -164,7 +161,7 @@ export default function RegionalView({ onViewHospitals }: RegionalViewProps) {
       <div className="regional-workspace">
         <header className="regional-topline">
           <div className="regional-title-group">
-            <h1 id="regional-title">Sinais regionais</h1>
+            <h1 id="regional-title">Pressão sobre leitos (IPH) por região</h1>
             <nav className="regional-levels" aria-label="Etapas da análise">
               <button type="button" onClick={() => setSharedRegion('')} aria-current={!selectedItem ? 'step' : undefined}>São Paulo</button>
               <span aria-hidden="true">›</span>
@@ -220,15 +217,8 @@ export default function RegionalView({ onViewHospitals }: RegionalViewProps) {
               <>
                 <div className="regional-dashboard">
                   <section className="map-panel overview-map" aria-labelledby="map-title">
-                    <h3 id="map-title" className="visually-hidden">{mapMetric === 'sinais' ? 'Sinais por região' : 'IPH estimado por percentis'}</h3>
+                    <h3 id="map-title" className="visually-hidden">IPH estimado por percentis</h3>
                     <div className="overview-map-toolbar">
-                      <div className="map-metric" role="radiogroup" aria-label="O que a cor mostra">
-                        {(['sinais', 'iph'] as const).map((candidate) => (
-                          <button key={candidate} type="button" role="radio" aria-checked={mapMetric === candidate} onClick={() => setMapMetric(candidate)} data-testid={`map-metric-${candidate}`}>
-                            {candidate === 'sinais' ? 'Sinais' : 'IPH'}
-                          </button>
-                        ))}
-                      </div>
                       <p>Clique numa região para abrir os detalhes</p>
                     </div>
                     <p className="visually-hidden" data-testid="regional-map-selection">{selectedItem ? `Selecionada: ${selectedItem.region_name}` : 'Nenhuma região selecionada'}</p>
@@ -246,10 +236,9 @@ export default function RegionalView({ onViewHospitals }: RegionalViewProps) {
                       comparisonPeriods={comparisonPeriods}
                       onAskLocal={requestAssistantQuestion}
                       onViewHospitals={onViewHospitals}
-                      colorBy={mapMetric}
                     />
                     <details className="map-reference"><summary>Como ler o mapa</summary>
-                      <p data-testid="signals-reference">Referência dos sinais: {regionalData.items.length} regiões de São Paulo na competência selecionada. O filtro de rede não altera os limiares.</p>
+                      <p data-testid="iph-reference">Referência do IPH: {regionalData.items.length} regiões de São Paulo na competência selecionada. As cores usam percentis do IPH no recorte visível; não indicam ocupação em tempo real.</p>
                     </details>
                   </section>
                   <RegionalOverview

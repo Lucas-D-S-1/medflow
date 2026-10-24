@@ -57,11 +57,9 @@ export default function CidTable({
   const visibleItems = sorted.slice(0, visible)
 
   return (
-    <section className="hospital-panel" aria-labelledby="hospital-cid-title">
+    <section className="hospital-panel" aria-labelledby="hospital-diagnostics-title">
       <div className="block-heading">
         <div>
-          <p className="section-kicker">DIAGNÓSTICOS E PARES</p>
-          <h2 id="hospital-cid-title">Índice de permanência relativa por diagnóstico</h2>
           <p>
             IPR compara a permanência média do hospital com a dos demais hospitais da região no
             mesmo diagnóstico, no período agregado. Acima de 1 significa permanência maior que a dos
