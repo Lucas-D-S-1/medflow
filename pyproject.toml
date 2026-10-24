@@ -50,6 +50,8 @@ dev = [
     # na CI, que instala só `.[dev]`.
     "pyyaml>=6.0",
     "openapi-spec-validator>=0.7",
+    # Exportador Gold -> fixtures: valida os envelopes sem API ao vivo.
+    "jsonschema>=4.18",
 ]
 
 [project.scripts]

@@ -47,7 +47,7 @@ e a da validação controlada do Select AI, em
 
 **O acordo de disponibilidade.** O Autonomous Database é Always Free e para
 sozinho depois de sete dias sem atividade. Com ele no ar, a entrega é uma só,
-ao vivo contra o Oracle. Sem ele, o webapp cai para dez snapshots de
+ao vivo contra o Oracle. Sem ele, o webapp cai para nove snapshots de
 contingência, com selo explícito na tela, e recusa misturar as duas origens
 dentro do mesmo recorte.
 
