@@ -1,450 +1,164 @@
 # MedFlow: onde investigar primeiro
 
-**Do sinal territorial à hipótese: com fonte, amostra e limite à vista.**
+MVP de análise de dados públicos agregados sobre internações e capacidade
+hospitalar declarada em São Paulo. O MedFlow organiza fontes diferentes em
+indicadores mensais e permite explorar sinais regionais e hospitalares, com
+fonte, amostra e limites metodológicos visíveis.
 
-Enterprise Challenge FIAP × Oracle · Sprint 2 · Equipe Ômega Urban Tech
+**Projeto de equipe na FIAP.** Em 24 de outubro de 2026, conquistou o **2º lugar
+entre os três finalistas do Enterprise Challenge proposto pela Oracle,
+FIAP NEXT 2026**.
 
-## O problema, do lado de quem decide
+[Acesse o site oficial](https://lucas-d-s-1.github.io/medflow/).
+O vídeo de apresentação na página inicial inclui cena gerada com IA.
+[Assista ao vídeo do próprio site](https://lucas-d-s-1.github.io/medflow/video/medflow.mp4?v=v11.1).
 
-Para saber onde investigar primeiro, o gestor regional precisa cruzar à mão o
-SIH, o CNES, a população e a lista ICSAP, porque cada base foi feita para uma
-finalidade própria e nenhuma responde sozinha à pergunta dele.
+## O problema e a proposta
 
-A persona é o **gestor ou analista regional de saúde de São Paulo** que recebe
-uma nova competência de dados públicos hospitalares e precisa priorizar o que
-olhar. O MedFlow conduz uma triagem auditável em quatro passos, região →
-hospital → especialidade ou diagnóstico → hipótese, carregando fonte, amostra,
-benchmark e limitação em cada tela. A decisão e a ação continuam com as equipes
-locais.
+Gestores e analistas regionais de saúde precisam cruzar bases criadas para
+finalidades diferentes antes de decidir onde investigar. O MedFlow oferece
+uma jornada de triagem: região → hospital → especialidade ou diagnóstico →
+hipótese de investigação. Os indicadores ajudam a formular perguntas e
+comparar recortes; a decisão e a ação continuam com as equipes responsáveis.
 
-Recorte solicitado: Estado de São Paulo, competências de 2024 a 2026. Recorte
-alvo desta branch: **2024-01 a 2026-08 (32 meses)**. A preparação é local;
-Oracle e site publicado continuam no recorte anterior até liberação e reconciliação.
-Confira `data/gold/qualidade/METADADOS.json` para a cobertura materializada.
+O recorte registrado na versão do NEXT é o estado de São Paulo, de **janeiro
+de 2024 a agosto de 2026**, com **32 competências mensais**. Agosto de 2026 é
+a competência mais recente desse recorte, sem promessa de atualização contínua.
 
-## Os três formatos de dado, e o papel de cada um
+## Quatro famílias de fontes públicas
 
-| Formato | Fonte | Papel |
+As famílias abaixo agrupam os insumos por função. O número quatro não é uma
+contagem de arquivos ou de bases individuais.
+
+| Família | O que fornece |
+|---|---|
+| Registros públicos de internações | Internações, óbitos, diagnósticos, permanência, valores aprovados e município de residência |
+| Cadastro público de estabelecimentos de saúde | Leitos declarados por hospital e mês, além de informações cadastrais dos hospitais |
+| Referências do Ministério da Saúde | Regiões de saúde, classificações de diagnósticos, especialidades e condições sensíveis à atenção primária |
+| Referências do Instituto Brasileiro de Geografia e Estatística | População de 2022, geografia, natureza jurídica e índice de preços para corrigir valores monetários |
+
+Os nomes técnicos, contratos e referências de origem estão em
+[data/README.md](data/README.md),
+[contracts/NOMENCLATURA.md](contracts/NOMENCLATURA.md) e
+[docs/pesquisa/pesquisa.md](docs/pesquisa/pesquisa.md).
+
+## Arquitetura medalhão
+
+O pipeline usa Python, pandas e PyArrow. Cada camada tem uma responsabilidade:
+
+| Camada | Responsabilidade | Por que separar |
 |---|---|---|
-| Relacional | SIH/RD e as tabelas Gold | fatos, dimensões, indicadores e consultas |
-| JSON | API atual do CNES | cadastro atual do estabelecimento e atributos variáveis |
-| CSV / External Table | regiões de saúde e população IBGE 2022, do Ministério da Saúde | taxas populacionais e integração no Oracle |
-
-## O produto está no ar
-
-<https://lucas-d-s-1.github.io/medflow/>
-
-Site estático no GitHub Pages falando direto com o Autonomous Database pelo
-módulo ORDS público `api/v1`, somente leitura. Publicado e conferido no
-navegador em 16/08/2026. O histórico de versões está em
-[`Releases`](https://github.com/Lucas-D-S-1/medflow/releases), com Oracle
-carregado, API pública, WebApp no ar, FlowIA contextual e vinte casos aprovados
-na validação consolidada de perguntas humanas, Select AI governado no ORDS, busca
-hospitalar por alias e território municipal. A evidência da bateria está em
-[`docs/flowia/AVALIACAO_20_PERGUNTAS.md`](docs/flowia/AVALIACAO_20_PERGUNTAS.md),
-e a da validação controlada do Select AI, em
-[`docs/flowia/REVALIDACAO_SELECT_AI.md`](docs/flowia/REVALIDACAO_SELECT_AI.md).
-
-**O acordo de disponibilidade.** O Autonomous Database é Always Free e para
-sozinho depois de sete dias sem atividade. Com ele no ar, a entrega é uma só,
-ao vivo contra o Oracle. Sem ele, o webapp cai para nove snapshots de
-contingência, com selo explícito na tela, e recusa misturar as duas origens
-dentro do mesmo recorte.
-
-## Por onde continuar
-
-Fundamentação dos indicadores e validação do problema:
-[`docs/pesquisa/pesquisa.md`](docs/pesquisa/pesquisa.md).
-
-Arquitetura detalhada, e o que cada indicador não sustenta:
-[`ARQUITETURA.md`](ARQUITETURA.md).
-Nomenclatura:
-[`contracts/NOMENCLATURA.md`](contracts/NOMENCLATURA.md).
-Contrato da API:
-[`contracts/openapi.yaml`](contracts/openapi.yaml).
-
-## Pipeline atual
-
-O pipeline possui três camadas com responsabilidades explícitas:
+| Bronze | Preserva dados e metadados de origem, linhagem e manifesto | Permitir auditoria e reconstrução |
+| Prata (Silver) | Padroniza tipos, campos, chaves e domínios; organiza dimensões e fatos; verifica qualidade | Harmonizar fontes antes dos cálculos |
+| Ouro (Gold) | Calcula e materializa indicadores e tabelas analíticas | Centralizar fórmulas e evitar resultados divergentes entre consumidores |
 
 ```text
-SIH/RD + CNES/LT + referências oficiais MS/DATASUS/IBGE
-                  │
-                  ▼
-src/medflow/bronze/
-BRONZE: ingestão fiel, linhagem, manifesto e hashes
-                  │
-                  ▼
-src/medflow/silver/
-SILVER: tipos analíticos, de/paras, dimensões, fatos e qualidade
-                  │
-                  ▼
-src/medflow/gold.py + geografia.py
-GOLD: indicadores hospitalares/territoriais, fluxos, ICSAP e geografia
+Fontes públicas
+  → Bronze: origem e linhagem
+  → Prata: conformação e qualidade
+  → Ouro: indicadores e tabelas analíticas
+  → Oracle Autonomous AI Database 26ai Lakehouse
+  → Views e API ORDS
+  → Interface React, TypeScript e Vite no GitHub Pages
 ```
 
-### Bronze — não contém regra de negócio
+A interface apresenta os indicadores persistidos na Ouro. A API de leitura
+expõe os recortes analíticos sem transferir o cálculo das métricas ao frontend.
+O produto inclui pressão hospitalar estimada, mortalidade, permanência, custo
+médio, comparações sazonais, fluxos entre regiões e internações por condições
+sensíveis à atenção primária.
 
-A etapa Bronze, implementada em `src/medflow/bronze/`:
+Detalhes em [ARQUITETURA.md](ARQUITETURA.md),
+[src/medflow/README.md](src/medflow/README.md), [db/README.md](db/README.md)
+e [web/README.md](web/README.md).
 
-- preserva DBC em `data/bronze/origem/datasus/`;
-- mantém DBF apenas como cache em `data/bronze/intermediario/dbf/`;
-- descobre as competências comuns de SIH/RD e CNES/LT dentro de 2024–2026;
-- baixa somente arquivos ainda ausentes no cache a cada batch mensal;
-- serializa o conteúdo DBF em Parquet sem filtro, imputação ou de/para;
-- acrescenta apenas linhagem técnica de arquivo e competência;
-- preserva as respostas e arquivos oficiais de município, região de saúde,
-  CID-10, IPCA, natureza jurídica e cadastro atual dos estabelecimentos;
-- grava Parquets fiéis em `data/bronze/parquet/`;
-- grava `data/bronze/MANIFESTO.json` com fonte, volumetria e SHA-256;
-- preserva também o CSV oficial de regiões/população e a malha IBGE 2024.
+## FlowIA: perguntas em linguagem natural
 
-Saídas validadas:
+Na versão do NEXT, a FlowIA usa Haiku para gerar SQL diretamente para o Oracle
+ADB. Um guarda valida o SQL antes da execução. Uma segunda chamada ao modelo
+redige a resposta em português a partir do resultado. O contexto da interface
+ajuda a interpretar referências como “daqui” e o período selecionado.
 
-| Artefato | Linhas | Colunas |
-|---|---:|---:|
-| `sih_rd_sp_2024_2026.parquet` | 7.284.476 | 117 |
-| `cnes_lt_sp_2024_2026.parquet` | 251.457 | 31 |
-| `ibge_municipios_sp_raw.json` | 645 municípios | — |
-| `ms_regioes_saude_sp_raw.json` | 645 municípios | — |
-| `ms_cnes_estabelecimentos_atuais_raw.json` | 655 hospitais | — |
-| `datasus_cid10_2008.zip` | 6 tabelas | — |
-| `ibge_concla_natureza_juridica_2021.html` | página oficial | — |
-| `ibge_ipca_numero_indice_raw.json` | 30 competências | — |
+O Select AI da Oracle fez parte das etapas anteriores. Seus roteiros e
+avaliações permanecem no repositório como histórico técnico. A configuração
+do serviço no NEXT evoluiu em relação a esses documentos e aos scripts de
+instalação anteriores.
 
-As colunas adicionais em relação à fonte são somente de linhagem.
+O guarda reduz o alcance da execução, mas não garante que a interpretação ou
+a resposta de toda pergunta livre esteja correta. A FlowIA deve respeitar os
+limites dos indicadores e do recorte disponível.
 
-### Silver — dimensões e fatos conformados
+## Avaliação e alcance da evidência
 
-A etapa Silver, implementada em `src/medflow/silver/`:
+A [bateria documentada de 20 perguntas coloquiais e contextuais](docs/flowia/AVALIACAO_20_PERGUNTAS.md)
+foi consolidada em 29/08/2026, após correções, a partir de **quatro rodadas e
+uma regressão final dos 11 casos já aprovados**. Todos os 20 casos foram
+aprovados nesse processo. O resultado não representa uma execução única com
+20 acertos, nem uma nova validação completa do caminho Haiku adotado no NEXT.
 
-- tipa os campos usados analiticamente;
-- documenta e aplica os de/paras;
-- preserva `N_AIH`, `IDENT` e `COD_IDADE`;
-- separa AIH aprovada, internação nova e continuação de longa permanência;
-- distingue `QT_DIARIAS` de `DIAS_PERM`;
-- associa região e macrorregião oficiais pela referência municipal do MS;
-- preserva a região histórica do CNES/LT para auditoria de conflitos;
-- enriquece hospitais com nome e esfera **atuais**, sem tratá-los como
-  atributos historicamente vigentes;
-- usa `dropna=False` nos agregados e reconcilia os totais;
-- padroniza colunas em `snake_case` com prefixos semânticos;
-- publica somente dimensões e fatos, sem antecipar regra da Gold.
+Quando havia resposta objetiva, o SQL gerado era comparado com uma consulta
+convencional de referência sobre a mesma Ouro, conferindo também os rótulos
+essenciais da resposta. Nos outros casos, avaliava-se a recusa de afirmações
+indevidas ou a explicação correta do limite do dado.
 
-Saídas canônicas:
+Por exemplo, para “qual hospital tá mais cheio hoje?”, o comportamento aprovado
+era explicar a ausência de ocupação em tempo real e oferecer o índice mensal
+de pressão hospitalar com sua ressalva. Esta descrição é uma paráfrase do
+critério de avaliação.
 
-| Base | Linhas | Papel |
-|---|---:|---|
-| `silver/fatos/fato_internacao` | 7.284.476 | AIH aprovada, tipada e enriquecida |
-| `silver/fatos/fato_leito_mensal` | 19.341 | capacidade CNES por hospital e mês |
-| `silver/dimensoes/dim_municipio` | 645 | município, região e população IBGE 2022 |
-| 8 outras dimensões | — | tempo, hospital, especialidade, CID, domínios, território municipal, território atual do hospital e aliases |
+Há também uma [avaliação histórica de 13 casos técnicos do Select AI](docs/flowia/REVALIDACAO_SELECT_AI.md)
+e [testes de reconciliação entre API e Ouro](tests/reconciliacao/README.md).
+Essas evidências têm datas e escopos próprios. Elas não demonstram acurácia
+universal da assistente nem impacto operacional medido em hospitais.
 
-A Silver também gera:
+## Limites para interpretar os resultados
 
-- `DICIONARIO.md`;
-- `qualidade/DOMINIOS.md`;
-- `qualidade/RELATORIO_QUALIDADE.md`;
-- `qualidade/METADADOS.json`;
-- `contratos/MAPEAMENTO_COLUNAS_ORIGEM_SILVER.csv`.
+- Os dados são administrativos, públicos e agregados. Um registro de internação não equivale necessariamente a uma pessoa única, e há limitações de cobertura e registro.
+- As competências recentes podem ser reapresentadas e reprocessadas. Leitos declarados por mês não representam disponibilidade operacional ao vivo.
+- O Índice de Pressão Hospitalar (IPH) usa pacientes-dia e leitos-dia declarados para estimar pressão. Ele não mede ocupação real.
+- Os registros cobrem atendimentos realizados em São Paulo. Não mostram residentes paulistas atendidos em outros estados.
+- Os indicadores apoiam triagem e investigação. Não provam causalidade, qualidade, ineficiência ou impacto de gestão. O MVP não faz previsão, decisão automática, regulação ou prescrição.
+- O site depende da API Oracle. Quando ela está indisponível, snapshots identificados como contingência preservam algumas visões, com o recorte limitado ao snapshot.
 
-### Gold — índices e consumo
+## Explorar e executar
 
-A etapa Gold, implementada em `src/medflow/gold.py`, `icsap.py`, `ipca.py` e
-`geografia.py`, publica:
-
-| Mart | Linhas | Indicadores |
-|---|---:|---|
-| `mart_indicador_hospital_mensal` | 19.341 | IPH, TMH, CMI nominal/real e permanência |
-| `mart_indicador_hospital_especialidade_mensal` | 54.328 | TMH, CMI e permanência com amostra |
-| `mart_indicador_hospital_cid_periodo` | 455.054 | IPR e benchmark regional |
-| `mart_indicador_regiao_mensal` | 1.860 | oferta, residência, IS, fluxo e ICSAP |
-| `mart_indicador_regiao_periodo` | 62 | distribuição regional do IPR |
-| `mart_fluxo_assistencial_regiao_mensal` | 31.033 | origem–destino assistencial |
-| `mart_icsap_regiao_mensal` | 35.340 | 19 grupos ICSAP por residência |
-
-Também são gerados:
-
-- `dim_geografia_municipio.csv`;
-- `dim_geografia_regiao.csv`;
-- `mapa_regiao_saude_sp.geojson`;
-- `mapa_regiao_saude_sp.topojson`.
-
-### Oracle e Select AI — carga e comportamento validados
-
-A Gold está carregada no Autonomous AI Database 26ai `MEDFLOW`, workload
-Lakehouse, região São Paulo:
-
-- esquema de aplicação separado do `ADMIN`;
-- 5 dimensões, 7 marts, 225 colunas comentadas e 10 índices secundários;
-- 597.930 linhas carregadas e conferidas após a migração territorial;
-- 39/39 métricas Oracle com estado `ok`, incluindo as dimensões territoriais;
-- profile `MEDFLOW_GENAI` publicado com doze objetos analíticos; os roteiros
-  locais desta migração preparam a sincronização aditiva do décimo terceiro
-  objeto, sem afirmar que ela já foi executada no Oracle;
-- suíte de 13 perguntas em cinco blocos, oito com SQL de referência conferido
-  por execução. Na rodada de 23/08/2026, seis das oito coincidiram exatamente;
-  as divergências e as limitações de narrativa/conversação estão registradas,
-  não escondidas.
-
-Runbook e evidências:
-[`db/README.md`](db/README.md) e
-[`docs/flowia/REVALIDACAO_SELECT_AI.md`](docs/flowia/REVALIDACAO_SELECT_AI.md).
-A leitura dos limites medidos está em
-[`docs/flowia/LEITURA_SELECT_AI.md`](docs/flowia/LEITURA_SELECT_AI.md), e
-a base versionada da demonstração APEX, em [`db/apex/`](db/apex/README.md).
-
-### Webapp — concluído e revisado em 26/08/2026
-
-O produto é uma aplicação React + Vite em `web/`, servida por doze endpoints
-ORDS: onze analíticos somente leitura (`GET`) sobre views de projeção pura, e um
-`POST` governado para perguntas livres do assistente. Nenhum objeto da Gold é
-publicado por AutoREST.
-
-Os endpoints existem em dois módulos: `api/dev/v1`, que aceita só `localhost` e
-é onde se trabalha, e `api/v1`, que aceita só a origem do site publicado e é
-quem serve o link da entrega. O segundo é clone do primeiro, gerado dos
-metadados do ORDS e recusado se divergir. Ver [`db/README.md`](db/README.md).
-
-O contrato das doze operações está em
-[`contracts/openapi.yaml`](contracts/openapi.yaml), conferido por teste contra
-o SQL dos handlers e contra a API viva. Um contrato que ninguém confere vira
-só uma terceira versão da verdade.
-
-O produto tem duas páginas. A análise é contínua: território e hospital são
-etapas ancoradas da mesma investigação, e descer a página é estreitar o
-recorte. Competência e território ficam numa barra de contexto que acompanha a
-investigação inteira, e a URL preserva o recorte para abrir e compartilhar.
-
-| Endereço | O que entrega | Endpoints |
-|---|---|---|
-| `/#regional` | panorama das 62 regiões no mapa, totais do recorte, MoM, YoY, placar de sinais e série mensal | `regioes/resumo`, `regioes/{id}/serie` |
-| `/#hospital` | hospitais da região, comparação com pares, série, diagnósticos por especialidade/competência e perfil CID histórico recolhido | `hospitais`, `.../serie`, `.../especialidades`, `.../especialidades/{especialidade}/diagnosticos`, `.../cids` |
-| `/metodologia` | Posso confiar no número e quais são seus limites? | `status`, `metodologia` |
-| assistente flutuante | acompanha a etapa visível e o recorte ativo | respostas locais; fallback `POST assistente/perguntar` |
-
-A etapa abre em **panorama**: nenhuma região selecionada, as 62 comparáveis no
-mapa. Escolher um território é ato do usuário, pelo mapa ou pelo seletor abaixo
-dele. Clicar de novo na região escolhida volta ao panorama.
-
-Cada indicador do hospital aberto aparece com a **distribuição dos pares**:
-faixa interquartil, mediana e a posição dele. Dois grupos alternáveis, mesmo
-tipo e porte ou mesma região, sempre com o próprio hospital fora do grupo.
-
-Os caminhos antigos `/regional` e `/hospital` continuam válidos, reescritos para
-as âncoras equivalentes com o recorte intacto, antes do app montar. `/fluxos`
-cai no início da análise: a etapa de fluxos saiu por decisão de produto.
-
-A prestação de contas sobre origem, contrato e cobertura vive só em
-Metodologia. A área analítica não interrompe a leitura para provar o dado; as
-notas que restringem a leitura de um indicador continuam ao lado do número que
-elas limitam.
-
-Regras que o produto respeita, com os limites de cada indicador em
-[`ARQUITETURA.md`](ARQUITETURA.md):
-
-- nenhum indicador é calculado fora da Gold — o front formata com `Intl`, não
-  calcula, e não inventa faixas nem cortes;
-- ausência legítima nunca é exibida como falha do endpoint, e indicador sem
-  denominador diz o motivo em vez de mostrar número;
-- fontes nunca se misturam: quando o Oracle não responde, a tela vai para o
-  snapshot de contingência com selo explícito e recusa trocar de recorte;
-- endpoints da mesma rota falham de forma independente;
-- IPH não é apresentado como ocupação real, ICSAP não é apresentada como
-  evitabilidade individual e IPR não é apresentado como qualidade ou desfecho;
-- perguntas conceituais do assistente são determinísticas e não consomem IA;
-  perguntas livres têm limite de cinco por sessão no cliente e 50 por dia no
-  banco, com SQL guardado, auditado e nunca executado pela rota web;
-- nenhuma seção passa de metade da altura da página, sem rolagem horizontal em
-  1280x800 nem em 390x844.
-
-Os dados exibidos são validados contra a Gold **campo a campo, posicional e
-sem tolerância**. A última varredura completa, em 10/08/2026 sobre as 30
-competências, fez **8.403.103 comparações com zero divergências**, cobrindo os
-marts inteiros. Números renderizados foram lidos do DOM com Playwright e
-conferidos contra os parquets.
-
-Isso deixou de ser um evento manual: `make reconciliar-completo` reproduz a
-varredura, e `make reconciliar` roda a amostra em segundos. O método está em
-[`tests/reconciliacao/README.md`](tests/reconciliacao/README.md), junto da
-cobertura por endpoint.
-
-Para rodar o webapp em desenvolvimento, com o `.env` da raiz configurado:
-
-```bash
-cd web && npm run dev
-```
-
-O Vite serve em `http://127.0.0.1:5173` e faz proxy de `/api` para o ORDS, de
-modo que o navegador nunca recebe host nem credencial do Oracle. Testes:
-`npx playwright test`.
-
-## O que a validação encontrou
-
-| Controle | Resultado |
-|---|---:|
-| AIHs aprovadas | 7.284.476 |
-| AIHs distintas (`N_AIH`) | 7.155.059 |
-| Internações novas (`IDENT=1`) | 7.150.693 |
-| Continuações de longa permanência (`IDENT=5`) | 133.783 |
-| Cobertura dos 15 códigos `ESPEC` observados | 100% |
-| Cobertura de capítulo CID | 100% |
-| Hospitais SIH sem correspondência no CNES/LT | 0 |
-| Hospitais com região conflitante | 4 |
-| Registros sem região de saúde | 0 |
-| CIDs sem descrição | 0 |
-| Hospitais sem nome/esfera atuais | 0 |
-| Hospitais sem natureza jurídica | 0 |
-| `QT_DIARIAS == DIAS_PERM` | 70,0547% |
-| `QT_DIARIAS=0` e `DIAS_PERM>0` | 181.584 |
-| Internações que cruzam mês | 15,0798% |
-| Competência diferente do mês da saída | 18,7633% |
-
-## Situação metodológica dos índices
-
-| Índice | Contrato Gold |
+| Pasta | Conteúdo |
 |---|---|
-| TMH | óbitos / internações novas; mínimo de 30 para classificação |
-| IPR | permanência hospital/CID / benchmark regional sem o hospital; cortes 20/50/3 |
-| CMI | valor aprovado / internações novas; nominal preservado e real por IPCA |
-| IS | 2026 / média do mesmo mês em 2024 e 2025 |
-| IPH | pacientes-dia reconstruídos / leitos-dia mensais declarados |
-| Taxa residente | internações de residentes atendidos em SP / população × 100 mil |
-| Fluxo | residência × região do hospital; evasão somente intrastadual observada |
-| ICSAP | Portaria 221/2008 por residência, taxa e 19 grupos |
-| Permanência média | soma dos dias / internações novas |
+| [src/medflow/](src/medflow/README.md) | Pipeline e carga no Oracle |
+| [db/](db/README.md) | Schema, views e módulos ORDS |
+| [web/](web/README.md) | Interface pública |
+| [contracts/](contracts/README.md) | Contratos dos dados e da API |
+| [tests/](tests/README.md) | Testes de fórmulas, contratos e integrações |
+| [docs/](docs/README.md) | Pesquisa, decisões, avaliações e entregas datadas |
+| [notebooks/](notebooks/README.md) | Leitura narrada do pipeline |
 
-O IPH atual não usa `QT_DIARIAS`: os pacientes-dia são distribuídos pelos
-meses civis entre entrada e saída. O denominador ainda é capacidade mensal
-declarada no CNES, portanto o resultado é pressão estimada e não ocupação real.
-
-## Cobertura dos domínios
-
-Todos os códigos observados estão cobertos:
-
-- `NAT_JUR`: CONCLA/IBGE 2021;
-- `REGSAUDE`: referência oficial DEMAS/MS por município;
-- `DIAG_PRINC`: DATASUS CID-10 2008 e complementos oficiais do MS;
-- `MARCA_UTI`: MS/DATASUS e Centro de Estudos da Metrópole;
-- nome e esfera administrativa: API oficial atual do CNES.
-
-O recorte CNES/LT traz `ESFERA_A` vazio. Esse campo bruto continua vazio:
-nome e esfera atuais foram adicionados em colunas próprias, com flag temporal,
-para impedir que uma fotografia atual seja apresentada como cadastro de
-2024–2026.
-
-## Onde fica o quê
-
-Cada pasta tem um README que responde o quê, por quê e como. O mapa:
-
-| Pasta | O que é | README |
-|---|---|---|
-| `src/medflow/` | o pipeline: Bronze, Silver, Gold e a carga do Oracle | [ler](src/medflow/README.md) |
-| `db/` | **o backend**: schema, views de projeção e módulos ORDS | [ler](db/README.md) |
-| `web/` | o produto: página analítica contínua e Metodologia, em React + Vite | [ler](web/README.md) |
-| `contracts/` | o que o projeto promete, e quem confere cada promessa | [ler](contracts/README.md) |
-| `tests/` | três níveis, três garantias diferentes | [ler](tests/README.md) |
-| `data/` | as camadas materializadas; quase tudo fora do Git | [ler](data/README.md) |
-| `docs/` | decisões, pesquisa, evidência datada e entregas | [ler](docs/README.md) |
-| `notebooks/` | a narrativa do pipeline — leitura, não motor | [ler](notebooks/README.md) |
-| `scripts/` | utilitários de manutenção que não produzem dado | [ler](scripts/README.md) |
-
-## Como executar
-
-Pré-requisitos: Git, Make, Python 3.12+ e Node.js 24. `uv` é recomendado; sem
-ele, o Python precisa incluir os módulos `venv` e `pip`. Num clone limpo, o
-primeiro ciclo completo é:
+Pré-requisitos: Git, Make, Python 3.12+ e Node.js 24. `uv` é recomendado.
+Para preparar o ambiente e executar a suíte local sem credenciais:
 
 ```bash
 git clone https://github.com/Lucas-D-S-1/medflow.git
 cd medflow
-make setup                      # Python, frontend e Chromium do Playwright
-make test                       # não exige .env, wallet, Oracle nem dados locais
+make setup
+make test
 ```
 
-Para materializar os dados públicos e validar as três camadas:
+Os testes que dependem de dados materializados podem ser pulados num clone
+limpo. Integrações ao vivo e reconciliações têm alvos próprios, descritos em
+[tests/README.md](tests/README.md). A execução do pipeline, suas fontes e o
+armazenamento necessário estão em [data/README.md](data/README.md).
 
-```bash
-make pipeline                   # Bronze, Silver, Gold e geografia
-make validar
-```
+## English overview
 
-Esse caminho também não exige credenciais. Ele baixa as fontes públicas e
-ocupa cerca de 11 GB. Cada etapa é idempotente: reexecutar o mesmo recorte não
-duplica registro nem reescreve Parquet sem necessidade. A Bronze incorpora
-automaticamente as competências comuns novas de SIH/RD e CNES/LT.
+MedFlow is a FIAP team project for exploring aggregated public data on hospital
+admissions and declared hospital capacity in São Paulo, Brazil. It placed
+second among the three finalists in the Oracle-proposed Enterprise Challenge
+at FIAP NEXT 2026. The NEXT data scope spans January 2024 through August 2026.
 
-**Trocar o recorte é configuração, não código.** O padrão vive em
-`src/medflow/config.py` e acompanha o que foi entregue; para experimentar
-outro, use o ambiente:
+A Python medallion pipeline feeds Oracle 26ai and an ORDS API, consumed by a
+React interface. FlowIA uses Haiku to generate SQL, validates it before
+execution, and writes a Portuguese answer from the results. The documented
+20-question evaluation predates this NEXT integration and combines multiple
+rounds. Monthly indicators support investigation and do not measure real-time
+occupancy or establish clinical quality or causality.
 
-```bash
-MEDFLOW_PERIODO_FINAL=2026-08 make bronze silver gold
-```
-
-Para preparar snapshots sem Oracle, use `make fixtures-local`. O comando lê
-os Parquets Gold e valida os envelopes contra o OpenAPI, com origem `snapshot`.
-Para reconstruir DBCs sem baixar referências HTTP, use
-`medflow bronze --sobrescrever --referencias-cache`. Essa opção exige todas as
-referências no cache; a Gold exige IPCA para todos os meses, sem imputação.
-
-Os notebooks em `notebooks/` continuam sendo a leitura narrada do pipeline,
-mas não são mais o motor.
-
-### Testes
-
-```bash
-make test                    # Python + frontend, hermético e sem credenciais
-make lint                    # ruff
-make test-completo           # acrescenta Oracle e integrações ao vivo
-make reconciliar             # amostra: API contra a Gold, campo a campo
-make reconciliar-completo    # a varredura inteira, sob demanda
-```
-
-Os testes estão em três níveis, e cada um prova algo que os outros não provam:
-
-| Nível | Onde | O que garante |
-|---|---|---|
-| unidade | `tests/test_indicadores.py` | cada fórmula nas bordas: denominador zero, benchmark vazio, hospital sem leito declarado, competência ausente |
-| contrato | `tests/test_contratos_camadas.py` | cada camada obedece ao seu JSON, e o validador reprova o que deve reprovar |
-| contrato da API | `tests/test_openapi.py` | o `openapi.yaml` bate com o SQL dos handlers e com a API viva |
-| reconciliação | `tests/reconciliacao/` | o que a API devolve é o que está na Gold — mesmo dígito, mesma ordem |
-
-A suíte padrão é a mesma base hermética usada pela CI. Testes que precisam dos
-Parquets se pulam num clone ainda não materializado; integrações ao vivo ficam
-em alvos explícitos. O detalhe está em
-[`tests/README.md`](tests/README.md) e
-[`tests/reconciliacao/README.md`](tests/reconciliacao/README.md).
-
-Para o Oracle e o webapp, com o `.env` da raiz configurado a partir de
-`.env.example`:
-
-```bash
-python3 src/medflow/oracle/executar_sql.py db/views/07_vw_api_hospitais.sql
-python3 src/medflow/oracle/executar_sql.py db/ords/03_modulo_medflow_dev.sql
-cd web && npm run dev
-```
-
-Em `db/views/` há uma view por fatia. Em `db/ords/`, cada
-arquivo numerado é uma **redefinição cumulativa do módulo inteiro**: o `03`
-define onze handlers `GET` e o `POST` da FlowIA, e é o único que precisa ser reaplicado ao mudar
-qualquer endpoint.
-
-## Fontes
-
-- SIH/SUS — AIH reduzida (RD):
-  `ftp.datasus.gov.br/dissemin/publicos/SIHSUS/200801_/Dados`
-- CNES — Leitos (LT):
-  `ftp.datasus.gov.br/dissemin/publicos/CNES/200508_/Dados/LT`
-- IBGE — Localidades:
-  `servicodados.ibge.gov.br/api/v1/localidades/estados/35/municipios`
-- Ministério da Saúde — API de Dados Abertos:
-  `apidadosabertos.saude.gov.br`
-- DATASUS — tabelas CID-10:
-  `www2.datasus.gov.br/cid10/V2008/download.htm`
-- CONCLA/IBGE — Natureza Jurídica 2021:
-  `concla.ibge.gov.br/documentacao/3051-concla/estrutura/natureza-juridica-2021.html`
-- IBGE/SIDRA — IPCA, tabela 1737, variável 2266:
-  `apisidra.ibge.gov.br`
-- Ministério da Saúde — Lista Brasileira de ICSAP, Portaria SAS/MS 221/2008:
-  `bvsms.saude.gov.br/bvs/saudelegis/sas/2008/prt0221_17_04_2008.html`
+[Visit the official site](https://lucas-d-s-1.github.io/medflow/).
