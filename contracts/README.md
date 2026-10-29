@@ -1,4 +1,4 @@
-# `contracts/` — o que este projeto promete
+# `contracts/`: o que este projeto promete
 
 **O quê.** Os contratos que o resto do repositório tem de honrar: o das três
 camadas de dados, o da API e o de nomenclatura.
@@ -11,7 +11,7 @@ delas, porque parece autoridade.
 |---|---|---|
 | `dados/bronze.json`, `silver.json`, `gold.json` | esquema, linhas e descrição de cada coluna | `tests/test_contratos_camadas.py` |
 | `dados/MAPEAMENTO_COLUNAS_ORIGEM_SILVER.csv` | de onde veio cada coluna da Silver | revisão |
-| `openapi.yaml` | os 10 GET analíticos e o POST governado do assistente: parâmetros, envelope, itens e erros | `tests/test_openapi.py` |
+| `openapi.yaml` | os onze GETs e o POST do módulo `api/v1`: parâmetros, envelope, itens e erros | `tests/test_openapi.py` |
 | `NOMENCLATURA.md` | prefixos semânticos e `snake_case` | `validar.py` |
 
 ## O inventário é gerado sob demanda
@@ -26,3 +26,7 @@ rodou, e não uma promessa que alguém deva honrar.
 desejável. Inclusive onde o comportamento é discutível, como o 404 com HTML
 em parâmetro inválido. O motivo está no próprio arquivo: um contrato que
 descreve a intenção faz quem o lê parar de conferir.
+
+A FlowIA do NEXT usa `api/flowia-haiku-live/v1/perguntar` e `reserva`.
+Esse transporte próprio está descrito no [README da integração](../db/flowia_haiku/README.md).
+O `POST /assistente` do OpenAPI de `api/v1` não especifica toda essa integração.

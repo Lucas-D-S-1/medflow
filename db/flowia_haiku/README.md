@@ -1,93 +1,81 @@
-# FlowIA: ativação na prévia 4184
+# FlowIA no NEXT: integração e scripts de banco
 
-O caminho ativo de feira está em `010_live.sql` e `011_live_ords.sql`.
-Haiku 5.5 reescreve a pergunta com três rodadas de histórico; o perfil existente
-`MEDFLOW_GENAI` gera SQL com `showsql`. A narrativa usa as linhas dessa mesma
-consulta, sem uma segunda geração `narrate`. O pacote antigo não é alterado.
-Não há cotas diárias, por IP ou teto de orçamento nesse caminho. Usage serve
-somente para medição. As cotas antigas permanecem isoladas nas rotas antigas.
+A versão atual da FlowIA usa Haiku para gerar SQL diretamente, passa a consulta
+por um guarda antes de executar no Oracle ADB e faz uma segunda chamada ao
+Haiku para redigir a resposta em português a partir do resultado.
 
-## Recursos novos
+O serviço integra a versão publicada do MedFlow no GitHub Pages. O recorte
+é São Paulo, de janeiro de 2024 a agosto de 2026, em 32 competências mensais.
+O fluxo está descrito em [`docs/flowia/README.md`](../../docs/flowia/README.md).
 
-- `FLOWIA_HAIKU_SEGREDO`: uma chave, sem grants; lida só pelo pacote novo.
-- `FLOWIA_HAIKU_LIVE_API`: resolvedor, reescrita, guarda SQL, execução e reserva.
-- `FLOWIA_HAIKU_LIVE_USAGE`: tokens, custo, tempos, reescrita e SQL; sem cabeçalhos.
-- Módulo `flowia_haiku_live`, base `api/flowia-haiku-live/v1/`.
-- `POST perguntar`: caminho pago. `POST reserva`: consultas determinísticas sem LLM.
+## Contrato usado pela interface
 
-Ambas recebem `{question, context}`. O contexto tem `competence`, códigos e
-nomes opcionais de região/hospital/especialidade e `history: [{question, answer}]`.
-A resposta tem `status`, `narrative`, `provenance` e fonte/mês/limites completos.
-SQL e cabeçalhos não são enviados ao navegador. O pacote valida fontes e funções
-do SQL antes de executar. Apenas os 13 marts/dimensões do perfil são permitidos.
-Máximo de cinco linhas; hospital de maior pressão no singular retorna uma.
+O cliente `web/src/lib/api/haiku.ts` deriva a base da URL do ORDS e usa:
 
-## Chave e instalação
+| Rota | Finalidade |
+|---|---|
+| `POST api/flowia-haiku-live/v1/perguntar` | consulta em linguagem natural |
+| `POST api/flowia-haiku-live/v1/reserva` | resposta determinística de contingência |
 
-Use `scripts/flowia_haiku_live.py --env-file CAMINHO action`:
-`apply` cria objetos novos; `secret` grava `ANTHROPIC_API_KEY` já presente no
-ambiente do processo por bind; `ords` cria as rotas; `compile` atualiza somente
-o pacote novo; `inspect` verifica compilação e grants; `rollback` remove tudo
-que foi criado nesta ativação, inclusive a tabela do segredo.
+O corpo contém `question` e `context`. O contexto inclui competência, região,
+hospital e especialidade quando disponíveis, além de até três turnos do histórico.
+A resposta contém estado, narrativa, SQL opcional e proveniência. O cliente
+valida o contrato e oferece `Ver query` quando recebe SQL.
 
-Não passar o valor por argumento, literal SQL, arquivo intermediário ou `VITE_*`.
-O carregador autorizado lê a chave do arquivo de origem existente para o ambiente
-do processo. As exceções do driver não são impressas: podem conter cabeçalhos.
-A credencial anterior `FLOWIA_HAIKU_ANTHROPIC` é usada apenas como suporte de
-transporte HTTPS; `x-api-key` vem da tabela por bind transitório; `cache=false`.
+A interface inicia consulta e reserva em paralelo. O cliente concede 4,8 s à
+reserva e 25 s à consulta principal. Se a consulta falhar, tenta aproveitar a
+reserva disponível. Esses prazos são do cliente e não garantem cancelamento
+remoto ou limite de cobrança. A chave de integração permanece no ADB e não é
+enviada ao navegador.
 
-**Risco assumido para a feira:** o valor está em texto na tabela, sem grants.
-Não há cifragem adicional DBMS_CRYPTO nem gestor separado de chave de cifragem.
-O dono do esquema e administradores do banco conseguem acessá-lo. Não confundir
-esse isolamento com cifragem da aplicação. A autorização de Lucas permitiu essa
-alternativa; planejar cofre externo e rotação depois da feira.
+## Alcance dos arquivos SQL
 
-## Prazo e contingência
+Esta pasta contém definições de objetos, rotas e operações de manutenção.
+Ela não contém um manifesto verificado de reinstalação integral do serviço
+do NEXT. Cada arquivo precisa ser entendido pelo que efetivamente define.
 
-A interface inicia a consulta paga e uma reserva determinística em paralelo.
-A reserva tem prazo de 4,8 s. Se o caminho pago falhar ou passar de 15 s, usa a
-reserva já preparada. Respostas tardias não substituem o histórico exibido.
-O HTTP Anthropic mantém prazo de transferência de 7 s e `max_tokens=1000`;
-a configuração anterior de timeout da sessão Oracle é restaurada.
-Cancelar o fetch não garante cancelar a execução no ADB nem a cobrança.
-O Select AI pode terminar depois; os testes HTTP completos medem esse tempo.
+| Arquivo | Alcance verificado no código versionado |
+|---|---|
+| `000_credential.sql` | criação da credencial de transporte HTTPS |
+| `001_create.sql` | objetos e pacote de classificação e consultas determinísticas |
+| `010_live.sql` | definição de `FLOWIA_HAIKU_LIVE_API`; o gerador SQL desse arquivo chama `DBMS_CLOUD_AI.GENERATE` com `showsql` |
+| `011_live_ords.sql` | definição das rotas `perguntar` e `reserva` para o pacote `FLOWIA_HAIKU_LIVE_API` |
+| `012_live_rollback.sql` | remoção dos objetos e das rotas nomeados no arquivo |
+| `013_rollback_ajuste.sql` | substituição do corpo do pacote pela definição contida no arquivo |
+| `014_pages_cors.sql` | ajuste de CORS do módulo |
+| `098_rollback_rewrite.sql`, `099_rollback.sql` | operações de remoção dos objetos explicitamente listados nos scripts |
 
-Leitos livres agora são recusados antes da API. Definições continuam locais.
-Se também o ORDS falhar, a interface mantém as reservas locais e os painéis.
-O balão mostra progresso aos 2,5 s; não recebe telemetria de fase do ADB.
-As respostas identificam Haiku → Oracle ou reserva Oracle nesta prévia.
-Os 15 s são prazo de interface; OCI pode continuar após o abort.
-A conversa de feira foi validada em 06/2026, Jundiaí, sem alterar o perfil.
-Outros recortes e perguntas livres continuam sujeitos aos erros do Select AI.
+**Executar `010_live.sql` não instala o fluxo de duas chamadas Haiku descrito
+acima.** Esse arquivo não deve ser apresentado como a definição completa do
+backend publicado. As operações de recompilação e remoção também não
+constituem um procedimento verificado de recuperação do serviço atual.
 
-## Build e testes
+O helper `scripts/flowia_haiku_live.py` executa os arquivos desta pasta:
+`apply` lê `010_live.sql`, `compile` recompila o pacote definido nesse arquivo,
+`ords` lê `011_live_ords.sql` e `rollback` lê `012_live_rollback.sql`.
+`inspect` consulta compilação e grants dos objetos definidos pelo helper.
+Esses comandos não comprovam equivalência com o código instalado no ADB.
 
-No worktree, execute em `web/`:
+Para preparar uma reinstalação do NEXT, é necessário primeiro conferir as
+definições instaladas de geração SQL, guarda, narrativa, despacho e rotas,
+reconciliá-las com os arquivos de implantação e validar o conjunto. Essa
+reinstalação não foi executada nem comprovada nesta atualização documental.
 
-```sh
-VITE_FLOWIA_HAIKU=1 VITE_BASE=/medflow/ VITE_API_BASE=/api/dev/v1 npm run build
-```
+## Chave e configuração
 
-O tmux `medflow-preview-4184` já serve `web/dist` e encaminha `/api` ao ORDS.
-Não precisa reiniciar. Não mudar o preview 4183. `VITE_FLOWIA_HAIKU=0` conserva
-o comportamento do site público, que não foi publicado nem recebeu push.
+O helper recebe o caminho do arquivo de ambiente e usa bind para gravar a
+chave carregada no processo. O valor não deve entrar em SQL literal, argumentos,
+logs ou variáveis `VITE_*`. Os scripts que lidam com a chave não são necessários
+para ler a documentação ou executar testes herméticos.
 
-`web/e2e/flowia-haiku.spec.ts` valida transporte simulado, timeout, reserva e
-histórico em 1440 e 390 px. Ative `FLOWIA_HAIKU_E2E=1 VITE_FLOWIA_HAIKU=1`,
-use uma porta de teste isolada com `FLOWIA_E2E_PORT` e defina `ORDS_BASE_URL`.
-Os relatórios externos desta ativação guardam HTTP real, navegador e rollback.
+## Build e verificação
 
-## Pilotos anteriores
+O workflow `.github/workflows/pages.yml` ativa `VITE_FLOWIA_HAIKU=1` no build
+publicado. A URL-base do ORDS é configuração do ambiente, não uma credencial.
+O serviço já está integrado ao site oficial; não há dependência de uma sessão
+tmux de prévia para o visitante acessar a FlowIA.
 
-`001_create.sql` descreve o piloto antigo, cuja rota paga permanece desligada.
-`FLOWIA_HAIKU_REWRITE_API` conserva o candidato da avaliação conversacional.
-`098_rollback_rewrite.sql` e `099_rollback.sql` pertencem a esses experimentos.
-**Para reverter esta ativação use somente `012_live_rollback.sql`.**
-
-## Reverter o ajuste de 23/10
-
-`013_rollback_ajuste.sql` restaura somente o pacote da ativação anterior,
-conservando a chave, o usage e as rotas. Para desligar toda a ativação,
-`012_live_rollback.sql` continua removendo seus objetos e a rota nova.
-O rollback do frontend é o revert do commit de ajuste, seguido do build.
-O merge do cabeçalho pode ser conservado. Não alterar a prévia 4183.
+`web/e2e/flowia-haiku.spec.ts` verifica o transporte simulado, a validação da
+resposta, os prazos, a reserva e o histórico. Esses testes não validam por
+inferência o código instalado no Oracle. As avaliações datadas e seus limites
+estão no [índice da FlowIA](../../docs/flowia/README.md).

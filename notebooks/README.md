@@ -1,4 +1,4 @@
-# `notebooks/` — leitura, não motor
+# `notebooks/`: leitura, não motor
 
 **O quê.** Os três notebooks que narram o pipeline: extração, engenharia e
 análise.
@@ -21,6 +21,7 @@ contexto.
 acuse: o notebook não é coberto pelos testes. Se o número mostrado aqui
 discordar do `make validar`, o pacote é a fonte.
 
-A validação da IA do produto está em
-[`docs/flowia/`](../docs/flowia/README.md), com a bateria de perguntas e a
-suíte controlada do Select AI.
+A arquitetura atual da FlowIA e os métodos de avaliação estão em
+[`docs/flowia/`](../docs/flowia/README.md). Cada bateria registra sua data,
+perguntas, critérios e alcance; seus resultados não são uma validação
+integral do serviço publicado.

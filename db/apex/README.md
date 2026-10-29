@@ -1,14 +1,18 @@
-# APEX e o backend governado da FlowIA
+# Artefatos da demonstração APEX
 
-Esta pasta contém a implementação Oracle da interface conversacional do
-MedFlow. O pacote PL/SQL atende tanto o webapp publicado por ORDS quanto a
-aplicação APEX. As duas interfaces compartilham geração, segurança, cota,
-auditoria e narrativa.
+Esta pasta reúne o workspace, o pacote PL/SQL e a aplicação APEX exportada.
+A descrição abaixo se limita a esses arquivos e ao App 100. Ela não atribui ao
+pacote APEX a implantação da assistente web.
 
-## Arquitetura
+A FlowIA do NEXT usa Haiku para gerar SQL, um guarda antes da execução no
+Oracle e uma segunda chamada ao Haiku para redigir a resposta. Sua integração
+está em [`docs/flowia/README.md`](../../docs/flowia/README.md). Os arquivos APEX
+não constituem um instalador verificado desse serviço.
+
+## Estrutura da demonstração
 
 ```text
-WebApp / APEX
+App 100 / APEX
       │ pergunta + contexto
       ▼
 MEDFLOW_SELECT_AI.responder
@@ -42,12 +46,12 @@ auditável são recuperados por esse mesmo ID, sem novas chamadas ao modelo.
 O arquivo `05` é o artefato canônico da aplicação. Ele preserva a estrutura
 da página e evita que uma montagem manual se torne uma segunda fonte.
 
-## Contrato público do pacote
+## Contrato do pacote da demonstração
 
 | Símbolo | Papel |
 |---|---|
 | `responder(pergunta, contexto)` | executa uma rodada, grava o rastro e devolve o ID |
-| `json_da_resposta(id)` | resposta consumida pelo handler ORDS |
+| `json_da_resposta(id)` | resposta do handler vinculado à demonstração |
 | `sql_da_resposta(id)` | SQL aprovado exibido sob demanda |
 | `narrativa_da_resposta(id)` | narrativa vinculada ao resultado consultado |
 | `aviso_da_resposta(id)` | ressalva metodológica |
@@ -106,7 +110,7 @@ O App 100 organiza a resposta na ordem de leitura do usuário:
 O APEX não contém regra de indicador nem lógica de geração. Seu processo chama
 `responder` uma vez e as regiões seguintes consultam o ID devolvido.
 
-## Limites medidos
+## Limites registrados nas avaliações da demonstração
 
 - Comentários de tabela e coluna orientam o Select AI, mas não garantem que ele
   agregue antes de ranquear.

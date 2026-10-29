@@ -14,7 +14,7 @@ a todo o recorte ou a toda pergunta livre sem nova medição.
 | Pasta | Conteúdo | Quando ler |
 |---|---|---|
 | [`pesquisa/`](pesquisa/pesquisa.md) | desk research sobre indicadores hospitalares e territoriais, e a validação do problema | ao questionar a metodologia de um índice |
-| [`flowia/`](flowia/README.md) | avaliações datadas da assistente, métodos e limites | ao conferir o alcance de uma avaliação |
+| [`flowia/`](flowia/README.md) | arquitetura atual da FlowIA, integração e avaliações datadas | ao entender a assistente e o alcance das medições |
 | `entrega_sprint_2/` | o que foi entregue: o deck, os links e o pacote em `original/` | ao conferir o que a versão entregue continha |
 
 ## Evidência bruta e documentação curada

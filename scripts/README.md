@@ -1,7 +1,7 @@
-# `scripts/` — utilitários que não são pipeline
+# `scripts/`: utilitários que não são pipeline
 
-**O quê.** Duas ferramentas de manutenção que não pertencem ao pacote porque
-não produzem dado: elas mantêm artefatos derivados em dia com o que o pipeline
+**O quê.** Ferramentas de manutenção, geração de artefatos e avaliação.
+Os utilitários abaixo mantêm artefatos derivados em dia com o que o pipeline
 já produziu.
 
 | Script | O que faz | Quando rodar |
@@ -30,3 +30,13 @@ snapshot declare de qual Gold veio. Se **só** o carimbo mudou, `make
 fixtures-carimbo` resolve offline. Se o recorte avançou ou um contrato de
 endpoint mudou, o conteúdo mudou junto e é `make fixtures`, que precisa do
 Oracle no ar.
+
+## Helpers da FlowIA
+
+`scripts/flowia_haiku_live.py` e `scripts/flowia_haiku_db.py` operam os
+objetos definidos nos SQLs de `db/flowia_haiku/`. Esses arquivos têm alcance
+próprio e não formam uma reinstalação verificada da FlowIA do NEXT. O
+[README da integração](../db/flowia_haiku/README.md) identifica os arquivos
+e as operações disponíveis. As ferramentas de avaliação medem os casos e
+contratos que recebem; seus resultados não comprovam equivalência com o
+código instalado no Oracle.

@@ -2,24 +2,27 @@
 
 **Este diretório é o servidor da aplicação.** Não há Node nem Python entre a
 tela e o banco: o ORDS publica os endpoints direto do Autonomous Database, e as
-nove views mais os módulos ORDS daqui não são "scripts auxiliares do Oracle",
-são o código de servidor do produto. Menos peças reduzem a superfície
-operacional, e o dado nunca é recalculado fora do banco.
+views e os módulos ORDS publicam os indicadores produzidos na Gold.
+A FlowIA usa Haiku para gerar SQL, um guarda antes de executar no Oracle e
+outra chamada ao Haiku para redigir a resposta a partir do resultado.
 
 | Pasta | Papel |
 |---|---|
 | `schema/` | usuário, modelo dimensional e reconciliação da carga |
-| `views/` | nove views de projeção pura, uma por fatia do produto |
+| `views/` | projeções dos campos analíticos para publicação |
 | `ords/` | módulos REST; o `03` redefine o de trabalho, o `04` clona o público |
-| `select_ai/` | perfil semântico, casos de validação e SQL de referência |
-| `apex/` | pacote PL/SQL governado, compartilhado pelo assistente web, e workspace opcional |
+| `select_ai/` | definições de perfil e avaliação SQL, com escopo das medições em `docs/flowia/` |
+| [`apex/`](apex/README.md) | workspace, pacote e aplicação da demonstração APEX |
+| [`flowia_haiku/`](flowia_haiku/README.md) | integração da FlowIA e alcance dos scripts disponíveis |
 
 O contrato do que esses handlers expõem está em
 [`../contracts/openapi.yaml`](../contracts/openapi.yaml), e
 `tests/test_openapi.py` confere que ele não divergiu deste SQL nem da API viva.
 
-Configuração reproduzível e sem segredos para o Autonomous AI Database
-`MEDFLOW`. Nada neste diretório contém credencial: wallet, `.env`, chaves e
+Os arquivos configuram partes do Autonomous AI Database `MEDFLOW`. O
+[README da FlowIA no banco](flowia_haiku/README.md) delimita o que os scripts
+instalam; não há um procedimento verificado de reinstalação integral do NEXT.
+Credenciais ficam fora do código: wallet, `.env`, chaves e
 arquivos de conexão são ignorados pelo Git.
 
 ## Instância de referência
@@ -35,29 +38,22 @@ arquivos de conexão são ignorados pelo Git.
 | Autenticação | mTLS obrigatório, acesso seguro de qualquer lugar |
 | Criado em | 31/07/2026 |
 
-## O que está no banco
+## Banco da versão atual do NEXT
 
-- conexão mTLS como `MEDFLOW`, sem senha em arquivo versionado;
-- 5 dimensões e 7 marts, com 13 tabelas e 225 colunas comentadas, e 10 índices
-  secundários;
-- **597.930 linhas**: 597.018 nos marts e 912 nas dimensões;
-- reconciliação da carga com todas as métricas em `ok`, incluindo território, e
-  seis verificações adicionais de integridade com zero ocorrências;
-- Resource Principal OCI habilitado para o esquema, e o profile `MEDFLOW_GENAI`
-  ativo com OCI Generative AI em `sa-saopaulo-1`, sincronizado com os doze
-  objetos analíticos;
-- pacote `medflow_select_ai` instalado, servindo o assistente web e a
-  demonstração APEX;
-- heartbeat diário e `make preflight` conferindo o produto publicado.
+O recorte publicado é São Paulo, de janeiro de 2024 a agosto de 2026, com
+32 competências mensais. `/status` informa a competência mais recente e
+`/metodologia` informa cobertura e reconciliações. Contagens locais são lidas
+de `data/gold/qualidade/METADADOS.json` e precisam ser conferidas no banco.
 
-Nenhum desses números é para acreditar: `make oracle-carregar --conferir` e
-`schema/03_validar_carga.sql` os medem no banco, no momento em que você
-pergunta.
+A FlowIA usa `api/flowia-haiku-live/v1/perguntar` e `reserva`. O fluxo de
+geração SQL, execução e narrativa está em
+[`docs/flowia/README.md`](../docs/flowia/README.md). A descrição de um pacote
+versionado não comprova que ele equivale à definição instalada no serviço.
 
-As evidências atuais estão em
-[`../docs/flowia/REVALIDACAO_SELECT_AI.md`](../docs/flowia/REVALIDACAO_SELECT_AI.md),
-e a leitura dos limites medidos, em
-[`../docs/flowia/LEITURA_SELECT_AI.md`](../docs/flowia/LEITURA_SELECT_AI.md).
+`carregar_gold.py --conferir` e `schema/03_validar_carga.sql` medem a carga.
+As avaliações datadas e seus critérios estão no
+[índice da FlowIA](../docs/flowia/README.md). Elas não são prova de implantação
+nem validação completa de toda pergunta livre.
 
 ## Instalação
 
@@ -89,9 +85,9 @@ do wallet: no workload Lakehouse o esperado é `medflow_low`, `medflow_medium`,
 
 ## Ordem de execução
 
-Cada passo pressupõe o anterior. O `.env` aponta para o usuário `MEDFLOW`; o
-`ADMIN` é usado apenas no passo 1, conectando pelo Database Actions ou pelo
-SQLcl.
+A sequência organiza a camada analítica. A integração da FlowIA e os
+artefatos APEX têm alcance próprio, indicado nos respectivos READMEs.
+O `.env` aponta para o usuário `MEDFLOW`; a criação de esquema usa `ADMIN`.
 
 | # | Passo | Como | Usuário |
 |---|---|---|---|
@@ -101,14 +97,14 @@ SQLcl.
 | 4 | Carregar a Gold | `make oracle-carregar` | `MEDFLOW` |
 | 5 | Reconciliar a carga | `executar_sql.py db/schema/03_validar_carga.sql` | `MEDFLOW` |
 | 6 | Publicar as views | `executar_sql.py db/views/*.sql` | `MEDFLOW` |
-| 7 | Habilitar o Select AI e instalar o pacote governado | `db/select_ai/04_select_ai.sql` + `db/apex/02_pacote_select_ai.sql` | `ADMIN` + `MEDFLOW` |
+| 7 | Conferir a integração da FlowIA com a implantação do NEXT | [`flowia_haiku/README.md`](flowia_haiku/README.md); os scripts não formam um instalador integral verificado | Conforme a operação |
 | 8 | Publicar o módulo de trabalho | `executar_sql.py db/ords/03_modulo_medflow_dev.sql` | `MEDFLOW` |
 | 9 | Publicar o módulo público | `make ords-publicar` | `MEDFLOW` |
 | 10 | Importar a interface APEX opcional | `db/apex/05_aplicacao_medflow_select_ai.sql` | `ADMIN` + `MEDFLOW` |
 
-Em uma instância que já estava no modelo anterior, use
-`make oracle-migrar-territorio` em vez de recriar o schema. Depois, carregue só
-as novas dimensões, sem reter locks nos marts existentes:
+Para acrescentar dimensões territoriais a uma instância existente, use
+`make oracle-migrar-territorio` em vez de recriar o schema. A carga seletiva
+permite carregar essas dimensões sem reter locks nos marts:
 
 ```bash
 .venv/bin/python -m dotenv -f .env run -- \
@@ -120,8 +116,8 @@ as novas dimensões, sem reter locks nos marts existentes:
 
 O filtro `busca` de `/hospitais` e os campos territoriais do item só entram no
 módulo público depois da ordem normal `03_modulo_medflow_dev.sql` seguida de
-`make ords-publicar`. O profile Select AI pode ser atualizado sem inferência
-com `make select-ai-sincronizar-territorio`.
+`make ords-publicar`. Os módulos analíticos não substituem a implantação
+da rota própria da FlowIA.
 
 Para acrescentar o diagnóstico mensal por especialidade a uma instância já
 existente, não execute novamente o schema destrutivo `02`. Revise e execute,
@@ -133,13 +129,7 @@ nesta ordem, a migração aditiva, a carga isolada, a view e os módulos:
 safe-run .venv/bin/python src/medflow/oracle/carregar_gold.py \
   --somente mart_indicador_hospital_especialidade_cid_mensal
 .venv/bin/python src/medflow/oracle/executar_sql.py \
-  db/schema/08_ampliar_contexto_select_ai.sql
-.venv/bin/python src/medflow/oracle/executar_sql.py \
   db/views/10_vw_api_hospital_diagnosticos_especialidade.sql
-.venv/bin/python src/medflow/oracle/executar_sql.py \
-  db/apex/02_pacote_select_ai.sql
-.venv/bin/python src/medflow/oracle/executar_sql.py \
-  db/select_ai/05_sincronizar_profile_territorio.sql
 .venv/bin/python src/medflow/oracle/executar_sql.py \
   db/ords/03_modulo_medflow_dev.sql
 .venv/bin/python src/medflow/oracle/executar_sql.py \
@@ -200,12 +190,11 @@ make oracle-carregar          # ou, sem make:
   .venv/bin/python src/medflow/oracle/carregar_gold.py
 ```
 
-A carga é idempotente: esvazia cada tabela antes de inserir, na ordem inversa
-das chaves estrangeiras. São 597.930 linhas em 12 tabelas: 597.018 nos
-sete marts e 912 nas cinco dimensões. Para conferir sem carregar:
+A carga esvazia cada tabela selecionada antes de inserir, na ordem inversa
+das chaves estrangeiras. Quantidades de linhas e tabelas dependem da Gold
+validada e dos metadados usados. Para conferir sem carregar:
 
 ```bash
-make oracle-carregar          # ou, sem make:
 .venv/bin/python -m dotenv -f .env run -- \
   .venv/bin/python src/medflow/oracle/carregar_gold.py --conferir
 ```
@@ -230,34 +219,35 @@ os regenera a partir dos metadados, e exige `carregar_gold.py --conferir`
 antes: abençoar o estado do banco sem conferência independente seria só
 carimbar.
 
-### Passo 7: Select AI
+### Passo 7: FlowIA do NEXT
 
-**A suíte de perguntas não mora aqui.** Ela vive em
-`src/medflow/select_ai/perguntas.py` e roda com `make select-ai-revalidar`: são
-13 perguntas em cinco blocos, oito com comparação por execução contra o SQL de
-referência. A evidência e a leitura dela estão em
-[`../docs/flowia/`](../docs/flowia/README.md).
+A interface usa a rota `api/flowia-haiku-live/v1/perguntar` para perguntas e
+`reserva` para contingência determinística. Haiku gera o SQL, um guarda o
+restringe antes da execução no Oracle e uma segunda chamada redige a resposta.
+A chave de integração permanece no ADB e não chega ao navegador.
 
-O que está nesta pasta é a infraestrutura. `select_ai/04_select_ai.sql` registra
-o Dynamic Group, a policy IAM, a habilitação do Resource Principal e o profile. A configuração usa OCI Generative AI na própria região de São
-Paulo, sem chave de API externa.
+O cliente está em `web/src/lib/api/haiku.ts`, ativado por
+`VITE_FLOWIA_HAIKU=1` no workflow publicado. O OpenAPI de `api/v1` inclui um
+`POST /assistente`, mas esse endpoint não especifica a integração própria da
+FlowIA. O pacote da demonstração APEX tem escopo descrito em
+[`apex/README.md`](apex/README.md).
 
-A página APEX continua sendo uma demonstração opcional. O pacote versionado em
-[`apex/`](apex/README.md), porém, agora é também o backend do assistente web:
-limita a pergunta, guarda a rodada e recusa SQL que não seja de leitura.
+Os scripts de `flowia_haiku/` e seus helpers operam os objetos que definem.
+Executar `010_live.sql` ou a recompilação do helper não instala o fluxo de
+duas chamadas Haiku. O [README da integração](flowia_haiku/README.md) descreve
+esse limite. Uma reinstalação requer conferir geração SQL, guarda, narrativa,
+despacho e rotas com a definição da implantação, antes de validar o conjunto.
 
-## Dois riscos operacionais
+## Dependências operacionais
 
-**Select AI foi revalidado em 23/08/2026, mas continua sendo uma dependência
-externa do MVP.** Preserve o Dynamic Group `MedFlowADBGenAI`, a policy
-`use generative-ai-family` e o Resource Principal. Uma verificação ao vivo
-deve usar perguntas autossuficientes da suíte validada.
+A FlowIA depende do Oracle, do ORDS e da integração Haiku. A inferência é
+cobrada por consumo. O prazo do cliente não garante cancelamento remoto nem
+limite de cobrança. Erros de interpretação continuam possíveis.
 
-**Always Free hiberna por inatividade.** O workflow
-`.github/workflows/heartbeat.yml` executa SQL diariamente para mantê-lo ativo e
-falha de forma visível se ele já estiver parado. Antes de uma verificação
-externa, `make preflight` confirma o caminho público; a automação não substitui
-essa conferência.
+O Always Free pode hibernar por inatividade. `make preflight` verifica o caminho
+público. O heartbeat está definido em `.github/workflows/heartbeat.yml`; sua
+saída precisa ser conferida junto do período esperado e do `/status` real.
+Ele não inicia um banco já parado.
 
 ## Por que um esquema separado do ADMIN
 
@@ -266,20 +256,13 @@ esquema `MEDFLOW`, com quota e privilégios mínimos. Isso mantém a modelagem
 explícita, evita que o `ADMIN` acumule objeto de aplicação e permite habilitar
 o esquema no Database Actions sem expor a conta administrativa na interface.
 
-## Por que os COMMENT ON importam
+## Definições de tabelas e colunas
 
-O Select AI usa comentário de tabela e de coluna como contexto ao traduzir
-pergunta em SQL. É o que o atributo `"comments": "true"` do profile envia
-junto do prompt. Por isso `schema/02_criar_tabelas_gold.sql` comenta as 225
-colunas e as 13 tabelas, e não apenas as chaves. Erros de semântica devem ser corrigidos no
-comentário da coluna. Cortes de negócio ausentes da pergunta devem ser
-declarados explicitamente, sem ajustes por tentativa e erro.
-
-Caso concreto: o comentário de `nr_iph_estimado` diz explicitamente que o
-índice é pressão estimada sobre capacidade declarada, e **não** ocupação real
-de leito. Essa distinção é decisão de contrato do projeto: confundir os dois
-transforma um sinal de pressão estimada em uma afirmação sobre ocupação física
-que o dado não sustenta.
+Os comentários documentam granularidade, métricas e limites das colunas.
+Devem ser coerentes com os contratos e com o contexto usado pelo gerador SQL.
+Documentar um campo não comprova, por si, que um modelo interpreta toda pergunta
+corretamente. O fluxo da FlowIA está no
+[README da assistente](../docs/flowia/README.md).
 
 ## Dados
 

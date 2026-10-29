@@ -207,7 +207,7 @@ validar indicadores, corrigir dependências e executar o preflight.
 - [`contracts/NOMENCLATURA.md`](contracts/NOMENCLATURA.md): convenção de tabelas e colunas
 - [`db/README.md`](db/README.md): criação, carga, publicação e diagnóstico no Oracle
 - [`docs/pesquisa/pesquisa.md`](docs/pesquisa/pesquisa.md): validação do problema e benchmarking
-- [`docs/flowia/README.md`](docs/flowia/README.md): avaliações datadas, métodos e limites da assistente
+- [`docs/flowia/README.md`](docs/flowia/README.md): arquitetura da FlowIA, integração e avaliações datadas
 
 ### Oficiais
 

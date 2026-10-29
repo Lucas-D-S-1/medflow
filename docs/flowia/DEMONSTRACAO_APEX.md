@@ -1,13 +1,15 @@
-# FlowIA no Oracle APEX — implementação técnica
+# Demonstração APEX: estrutura do artefato
 
-A aplicação APEX demonstra o mesmo caminho governado usado pela FlowIA no
-webapp: pergunta em português, SQL gerado pelo Select AI, resultado consultado
-na Gold, narrativa e rastro auditável.
+Este documento descreve a aplicação APEX exportada e o pacote
+`MEDFLOW_SELECT_AI` associado ao App 100. O fluxo descrito abaixo pertence
+a esse artefato. As regras da demonstração ficam no pacote, no schema `MEDFLOW`.
 
-O APEX é uma segunda interface para o backend, não uma segunda implementação.
-As regras ficam no pacote `MEDFLOW_SELECT_AI`, dentro do schema `MEDFLOW`.
+A arquitetura da FlowIA do NEXT está no [README da assistente](README.md):
+Haiku gera SQL, um guarda valida a consulta antes da execução no Oracle e
+outra chamada ao Haiku redige a resposta. O export APEX não constitui uma
+reinstalação verificada desse serviço.
 
-## Estado implementado
+## Registro da demonstração
 
 | Componente | Estado |
 |---|---|

@@ -1,70 +1,63 @@
-# FlowIA — arquitetura, governança e validação
+# FlowIA: arquitetura, integração e avaliação
 
-A FlowIA é a camada conversacional do MedFlow. Ela recebe uma pergunta curta
-em português e o contexto analítico que já está visível na aplicação, consulta
-a camada Gold no Oracle Autonomous AI Database e devolve uma narrativa com o
-resultado e suas ressalvas.
+A FlowIA é a assistente da versão atual do MedFlow, apresentada no FIAP NEXT
+2026. Ela recebe uma pergunta em português e o contexto da tela, usa Haiku para
+gerar SQL, valida a consulta antes da execução no Oracle ADB e usa uma segunda
+chamada ao Haiku para redigir a resposta a partir do resultado.
 
-O Select AI participa da tradução de texto para SQL. Ele não recebe confiança
-implícita: o SQL gerado passa por um guarda de leitura, roda em transação
-somente leitura e deixa rastro antes de qualquer resultado chegar à interface.
+O recorte publicado é São Paulo, de janeiro de 2024 a agosto de 2026, com
+32 competências mensais.
 
-## Fluxo técnico
+## Fluxo do NEXT
 
-1. O webapp envia a pergunta e um contexto limitado: visão ativa, competência,
-   região, hospital e análise selecionada.
-2. O pacote `MEDFLOW_SELECT_AI` limita a entrada e acrescenta as regras do
-   modelo semântico.
-3. `DBMS_CLOUD_AI.GENERATE` produz o SQL candidato.
-4. O backend extrai o `SELECT`, recusa comandos de escrita e bloqueia termos
-   incompatíveis com o contrato analítico.
-5. A consulta aprovada roda contra as views e os marts Gold.
-6. A narrativa é produzida a partir do resultado e passa pela mesma verificação
-   terminológica.
-7. Pergunta, contexto, SQL, narrativa, aviso e motivo de recusa são gravados em
-   `SELECT_AI_RESPOSTA`.
+1. A interface envia a pergunta, a competência e os filtros disponíveis de
+   região, hospital e especialidade, além de até três turnos do histórico.
+2. Haiku produz uma consulta SQL a partir da pergunta e do contexto analítico.
+3. Um guarda restringe a consulta antes de sua execução no Oracle.
+4. O Oracle consulta os dados da Gold e devolve o resultado.
+5. Uma segunda chamada ao Haiku redige a resposta em português com base nesse
+   resultado. O serviço dispõe de resposta determinística como contingência.
+6. O widget apresenta a resposta e permite consultar o SQL retornado em
+   `Ver query`, quando disponível.
 
-O resultado exibido, o SQL auditável e os avisos leem a mesma linha de rastro.
-Isso evita que componentes da tela façam chamadas independentes e descrevam
-consultas diferentes.
+```text
+Pergunta e contexto → Haiku gera SQL → guarda → Oracle / Gold
+                                                   ↓
+Interface ← resposta em português ← Haiku recebe o resultado
+```
 
-## Componentes implementados
+O guarda limita a execução. A interpretação correta de uma pergunta depende
+também do modelo e precisa ser conferida quando o resultado orientar uma análise.
 
-| Responsabilidade | Implementação |
+## Integração disponível no repositório
+
+| Responsabilidade | Referência |
 |---|---|
-| Contexto enviado pelo webapp | `web/src/` e contrato `POST /assistente` |
-| Orquestração, guarda e auditoria | `db/apex/02_pacote_select_ai.sql` |
-| Perfil semântico do Select AI | `db/select_ai/` |
-| Casos controlados e SQL de referência | `src/medflow/select_ai/perguntas.py` |
-| Executor e comparador | `src/medflow/select_ai/executar.py` |
-| Perguntas coloquiais da FlowIA | `scripts/avaliar_flowia.py` |
-| Paridade entre Python e PL/SQL | `tests/test_select_ai.py` |
-| Aplicação APEX exportada | `db/apex/05_aplicacao_medflow_select_ai.sql` |
+| Contexto e apresentação da resposta | `web/src/features/assistant/AssistantWidget.tsx` |
+| Transporte, validação da resposta e contingência | `web/src/lib/api/haiku.ts` |
+| Ativação no build publicado | `VITE_FLOWIA_HAIKU=1` em `.github/workflows/pages.yml` |
+| Consulta da assistente | `POST api/flowia-haiku-live/v1/perguntar` |
+| Reserva determinística | `POST api/flowia-haiku-live/v1/reserva` |
+| Escopo dos scripts de banco | [`db/flowia_haiku/README.md`](../../db/flowia_haiku/README.md) |
 
-## Evidências curadas
+O cliente recebe narrativa, SQL opcional e proveniência, sem credenciais.
+Os indicadores determinísticos continuam disponíveis pelos GETs de `api/v1`.
+A rota da FlowIA é uma integração própria e não deve ser confundida com o
+`POST /assistente` descrito no OpenAPI desse módulo.
 
-| Documento | Evidência apresentada |
+Os scripts SQL versionados têm alcance definido no README do banco. Sua
+presença não comprova uma reinstalação completa do serviço do NEXT. Este
+documento descreve a integração e não fornece um comando de implantação integral.
+
+## Avaliações datadas
+
+| Documento | Evidência e alcance |
 |---|---|
-| [`AVALIACAO_20_PERGUNTAS.md`](AVALIACAO_20_PERGUNTAS.md) | as vinte perguntas coloquiais, a interpretação esperada e o resultado consolidado |
-| [`REVALIDACAO_SELECT_AI.md`](REVALIDACAO_SELECT_AI.md) | os treze casos técnicos, o método de comparação e as limitações observadas |
-| [`LEITURA_SELECT_AI.md`](LEITURA_SELECT_AI.md) | análise das causas, alcance dos comentários semânticos e consequências para o produto |
-| [`DEMONSTRACAO_APEX.md`](DEMONSTRACAO_APEX.md) | arquitetura da implementação APEX e o rastro de uma resposta |
+| [`AVALIACAO_20_PERGUNTAS.md`](AVALIACAO_20_PERGUNTAS.md) | vinte perguntas coloquiais, resultado consolidado de quatro rodadas e uma regressão, em 29/08/2026 |
+| [`REVALIDACAO_SELECT_AI.md`](REVALIDACAO_SELECT_AI.md) | treze casos técnicos, método de comparação e resultados da execução identificada no documento |
+| [`LEITURA_SELECT_AI.md`](LEITURA_SELECT_AI.md) | análise dos resultados e dos limites observados naquela avaliação |
+| [`DEMONSTRACAO_APEX.md`](DEMONSTRACAO_APEX.md) | funcionamento do artefato APEX e rastro da demonstração documentada |
 
-As saídas brutas das ferramentas ficam em `ULTIMA_EXECUCAO.md` e
-`ULTIMA_REVALIDACAO.md`. Elas são locais e ignoradas pelo Git. O repositório
-versiona a leitura técnica dos resultados, não o log de uma máquina.
-
-## Limites assumidos
-
-- A base é mensal por competência; a FlowIA não afirma tempo real.
-- IPH mede pressão estimada sobre a capacidade SUS declarada, não ocupação
-  física de leitos.
-- O modelo pode falhar quando precisa agregar antes de ranquear.
-- Cada pergunta é autossuficiente; chamadas isoladas de
-  `DBMS_CLOUD_AI.GENERATE` não preservam com segurança o turno anterior.
-- A bateria consolidada aprovou os vinte casos, mas eles não passaram juntos em
-  uma única rodada por causa da cota diária do Select AI.
-
-Esses limites determinam a arquitetura: as visões principais usam consultas
-determinísticas; a FlowIA acrescenta investigação em linguagem natural com
-guarda, rastreabilidade e avisos explícitos.
+Datas, perguntas, resultados e escopos dessas medições são preservados.
+Eles não constituem, por si, uma avaliação completa da integração NEXT.
+Os logs locais `ULTIMA_EXECUCAO.md` e `ULTIMA_REVALIDACAO.md` são ignorados pelo Git.
