@@ -1,9 +1,14 @@
-# `data/` — as camadas, quase todas fora do Git
+# `data/`: as camadas, quase todas fora do Git
 
 **O quê.** As três camadas materializadas. São cerca de 11 GB, então **o
 conteúdo é gitignored**: o que está versionado aqui são os artefatos pequenos
 que descrevem o resto: manifesto, dicionários, metadados de qualidade e
 geografia.
+
+O recorte da versão atual do NEXT é **São Paulo, janeiro de 2024 a agosto de
+2026, com 32 competências mensais**. O manifesto da Bronze, a lista de
+competências da Silver e os metadados da Gold registram essa cobertura.
+Os arquivos pesados não são distribuídos num clone do repositório.
 
 ```text
 bronze/   origem (DBC), intermediário (DBF, cache), parquet e MANIFESTO.json

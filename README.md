@@ -21,9 +21,11 @@ uma jornada de triagem: região → hospital → especialidade ou diagnóstico �
 hipótese de investigação. Os indicadores ajudam a formular perguntas e
 comparar recortes; a decisão e a ação continuam com as equipes responsáveis.
 
-O recorte registrado na versão do NEXT é o estado de São Paulo, de **janeiro
-de 2024 a agosto de 2026**, com **32 competências mensais**. Agosto de 2026 é
+O recorte da versão atual, apresentada no NEXT, é o estado de São Paulo,
+de **janeiro de 2024 a agosto de 2026**, com **32 competências mensais**. Agosto de 2026 é
 a competência mais recente desse recorte, sem promessa de atualização contínua.
+Esse período está disponível na API pública e nos snapshots de contingência
+versionados. A cobertura é informada em `/status` e `/metodologia`.
 
 ## Quatro famílias de fontes públicas
 
@@ -74,15 +76,10 @@ e [web/README.md](web/README.md).
 
 ## FlowIA: perguntas em linguagem natural
 
-Na versão do NEXT, a FlowIA usa Haiku para gerar SQL diretamente para o Oracle
-ADB. Um guarda valida o SQL antes da execução. Uma segunda chamada ao modelo
+Na versão atual do NEXT, a FlowIA usa Haiku para gerar SQL para o Oracle ADB.
+Um guarda valida o SQL antes da execução. Uma segunda chamada ao modelo
 redige a resposta em português a partir do resultado. O contexto da interface
 ajuda a interpretar referências como “daqui” e o período selecionado.
-
-O Select AI da Oracle fez parte das etapas anteriores. Seus roteiros e
-avaliações permanecem no repositório como histórico técnico. A configuração
-do serviço no NEXT evoluiu em relação a esses documentos e aos scripts de
-instalação anteriores.
 
 O guarda reduz o alcance da execução, mas não garante que a interpretação ou
 a resposta de toda pergunta livre esteja correta. A FlowIA deve respeitar os
@@ -106,10 +103,10 @@ era explicar a ausência de ocupação em tempo real e oferecer o índice mensal
 de pressão hospitalar com sua ressalva. Esta descrição é uma paráfrase do
 critério de avaliação.
 
-Há também uma [avaliação histórica de 13 casos técnicos do Select AI](docs/flowia/REVALIDACAO_SELECT_AI.md)
-e [testes de reconciliação entre API e Ouro](tests/reconciliacao/README.md).
-Essas evidências têm datas e escopos próprios. Elas não demonstram acurácia
-universal da assistente nem impacto operacional medido em hospitais.
+Os [testes de reconciliação entre API e Ouro](tests/reconciliacao/README.md)
+conferem a consistência dos valores publicados. Cada evidência tem data e
+escopo próprios. Essas verificações não demonstram acurácia universal da
+assistente nem impacto operacional medido em hospitais.
 
 ## Limites para interpretar os resultados
 
@@ -152,7 +149,9 @@ armazenamento necessário estão em [data/README.md](data/README.md).
 MedFlow is a FIAP team project for exploring aggregated public data on hospital
 admissions and declared hospital capacity in São Paulo, Brazil. It placed
 second among the three finalists in the Oracle-proposed Enterprise Challenge
-at FIAP NEXT 2026. The NEXT data scope spans January 2024 through August 2026.
+at FIAP NEXT 2026. The current version, presented at NEXT, spans January 2024
+through August 2026, across 32 monthly reporting periods. This scope is served
+by the public API and included in the versioned fallback snapshots.
 
 A Python medallion pipeline feeds Oracle 26ai and an ORDS API, consumed by a
 React interface. FlowIA uses Haiku to generate SQL, validates it before

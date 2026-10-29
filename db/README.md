@@ -1,4 +1,4 @@
-# `db/` — o backend do MedFlow
+# `db/`: o backend do MedFlow
 
 **Este diretório é o servidor da aplicação.** Não há Node nem Python entre a
 tela e o banco: o ORDS publica os endpoints direto do Autonomous Database, e as
@@ -27,7 +27,7 @@ arquivos de conexão são ignorados pelo Git.
 | Item | Valor |
 |---|---|
 | Nome / DB name | `MedFlow` / `MEDFLOW` |
-| Workload | **Lakehouse** — a evolução do Autonomous Data Warehouse no 26ai, com suporte a Iceberg e dados externos em Object Storage ([doc oficial](https://docs.oracle.com/en-us/iaas/autonomous-database-serverless/doc/about-autonomous-database-workloads.html)) |
+| Workload | **Lakehouse**: a evolução do Autonomous Data Warehouse no 26ai, com suporte a Iceberg e dados externos em Object Storage ([doc oficial](https://docs.oracle.com/en-us/iaas/autonomous-database-serverless/doc/about-autonomous-database-workloads.html)) |
 | Versão | 26ai |
 | Tipo de instância | Always Free |
 | Região | Brazil East, `sa-saopaulo-1` |
@@ -155,7 +155,7 @@ guardada por confirmação em
 depois da retirada de todas as dependências. Nenhum desses comandos foi
 executado nesta implementação local.
 
-### Passos 8 e 9 — dois módulos, uma definição
+### Passos 8 e 9: dois módulos, uma definição
 
 | Módulo | Caminho | Origem aceita no CORS | Para quê |
 |---|---|---|---|
@@ -179,7 +179,7 @@ make contrato-publico        # o openapi.yaml contra a API que o site consome
 make reconciliar-publico     # amostra campo a campo contra a Gold
 ```
 
-### Passo 2 — teste de conexão
+### Passo 2: teste de conexão
 
 Na raiz do repositório:
 
@@ -192,7 +192,7 @@ make oracle-ping              # ou, sem make:
 O teste consulta apenas o nome do banco, o esquema conectado e o horário do
 servidor. Nenhuma credencial é exibida.
 
-### Passo 4 — carga
+### Passo 4: carga
 
 ```bash
 make oracle-carregar          # ou, sem make:
@@ -210,22 +210,27 @@ make oracle-carregar          # ou, sem make:
   .venv/bin/python src/medflow/oracle/carregar_gold.py --conferir
 ```
 
-### Passo 5 — reconciliação
+### Passo 5: reconciliação
 
 `schema/03_validar_carga.sql` compara as métricas de reconciliação contra
 `data/gold/qualidade/METADADOS.json`. A contagem e a versão do contrato não
 ficam escritas aqui: os dois números já andaram para a frente sem esta linha
 acompanhar, e é o próprio arquivo de metadados que os carrega. **Toda linha tem de
 sair como `ok`.** Os marts partem do mesmo fato e precisam fechar no mesmo
-total de internações novas, 7.150.693 no recorte atual; se um divergir, a
+total de internações novas registrado em `internacoes_novas_reconciliadas`
+nos metadados da Gold; se um divergir, a
 carga perdeu dado e o dashboard não deve ser construído sobre essa base.
+
+O recorte da versão atual do NEXT é SP, de janeiro de 2024 a agosto de 2026,
+com 32 competências. A API pública informa essa cobertura em `/status` e
+`/metodologia`. Conferir os metadados não substitui a reconciliação da carga.
 
 Os valores esperados do SQL não são digitados à mão: `scripts/atualizar_esperados_sql.py`
 os regenera a partir dos metadados, e exige `carregar_gold.py --conferir`
 antes: abençoar o estado do banco sem conferência independente seria só
 carimbar.
 
-### Passo 7 — Select AI
+### Passo 7: Select AI
 
 **A suíte de perguntas não mora aqui.** Ela vive em
 `src/medflow/select_ai/perguntas.py` e roda com `make select-ai-revalidar`: são

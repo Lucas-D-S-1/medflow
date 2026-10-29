@@ -1,6 +1,6 @@
 # Arquitetura do MedFlow
 
-Este documento apresenta o mapa técnico do MedFlow no recorte oficial de São Paulo, de janeiro de 2024 a junho de 2026. Ele registra o desenho vigente, as decisões que orientam o projeto e o ponto atual da entrega. Detalhes operacionais ficam nos READMEs de cada camada e nos contratos versionados no repositório.
+Este documento apresenta a arquitetura da versão atual do MedFlow, apresentada no FIAP NEXT 2026. O recorte é São Paulo, de janeiro de 2024 a agosto de 2026, com 32 competências mensais. A API pública e os snapshots versionados cobrem esse período, sem promessa de atualização contínua. Detalhes operacionais ficam nos READMEs de cada camada e nos contratos versionados no repositório.
 
 ## 1. Fluxo end-to-end
 
@@ -26,7 +26,7 @@ Cada etapa tem uma responsabilidade única:
 - **Bronze não aplica regra de negócio.** A camada preserva o conteúdo de origem, acrescentando somente rastreabilidade e controles de integridade.
 - **Silver concentra a conformação.** Tipos, nomes canônicos, relacionamentos e de/paras documentados são resolvidos antes de qualquer indicador.
 - **Gold é a única fonte dos indicadores.** Banco, API e frontend apenas carregam, expõem ou formatam os resultados dessa camada.
-- **O recorte oficial é SP, de 2024-01 a 2026-06.** Generalização multi-UF não faz parte da entrega atual.
+- **O recorte oficial é SP, de 2024-01 a 2026-08, com 32 competências.** Generalização multi-UF não faz parte da entrega atual.
 - **Contratos e metadados substituem números fixos.** Manifestos, schemas e reconciliações verificam estrutura, proveniência e volume sem acoplar o código a totais históricos.
 - **Oracle é o backend único.** Não existe uma segunda base operacional para servir a aplicação.
 - **ORDS publica somente leitura.** Produção replica os módulos validados em desenvolvimento e passa por uma verificação de identidade antes da publicação.
@@ -56,8 +56,8 @@ que ela já tinha sido descartada.
 O caso do IPH merece o detalhe, porque é o mais fácil de dizer errado. O cálculo
 histórico `SUM(QT_DIARIAS) / (leitos_SUS × dias_do_mês)` sobrevive apenas como
 `proxy_iph_diarias_faturadas` e **não** prova ocupação física: `QT_DIARIAS` é
-faturamento, 18,76% das competências divergem do mês da saída, 15,08% das
-internações cruzam o mês, e somar na competência não distribui a ocupação pelo
+faturamento, a competência pode divergir do mês da saída, internações podem
+cruzar o mês, e somar na competência não distribui a ocupação pelo
 calendário. Denominador zero recebe IPH nulo, não zero.
 
 **Sobre previsibilidade.** O MedFlow não faz previsão nem aprendizado de
@@ -71,14 +71,14 @@ série mais longa e validação com usuários.
 
 | Área | Situação |
 |---|---|
-| Bronze, Silver e Gold | Implementadas e validadas para SP, 2024-01 a 2026-06, em 30 competências |
+| Bronze, Silver e Gold | Manifesto e metadados registram SP, 2024-01 a 2026-08, em 32 competências |
 | Contrato de dados | `0.5.0`, lido de `src/medflow/contratos.py`; nenhum consumidor crava a versão |
-| Oracle | 12 tabelas analíticas carregadas — 5 dimensões e 7 marts —, incluindo 3 dimensões territoriais |
-| Reconciliação | 8.403.103 comparações de campos entre Gold e Oracle, sem divergências |
-| API pública | `api/v1` publicada com **dez endpoints `GET` e o `POST` governado do assistente**; amostra de 31.792 campos reconciliada sem divergências |
+| Oracle | Dimensões e marts Gold publicados por views de leitura, com competência mais recente em 2026-08 |
+| Reconciliação | Métricas e critérios em `data/gold/qualidade/METADADOS.json` e `tests/reconciliacao/README.md`; totais dependem do recorte conferido |
+| API pública | `api/v1` publicada com onze endpoints `GET`; `/status` informa `data_through: 2026-08` e `/metodologia` informa 32 competências |
 | Web app | Publicado em [lucas-d-s-1.github.io/medflow](https://lucas-d-s-1.github.io/medflow/) |
-| Web app — escopo | **Duas páginas**: a análise contínua, em `/#regional` e `/#hospital`, e a `/metodologia`. A etapa de fluxos saiu por decisão de produto; a matriz origem–destino continua na Gold e na API |
-| IA do produto | FlowIA publicada e aprovada em 20 de 20 na bateria de perguntas humanas; Select AI governado pelo pacote PL/SQL, que recusa SQL que não seja de leitura |
+| Web app: escopo | Entrada com vídeo, análise em `/#regional` e `/#hospital`, `/metodologia` e `/metodologia/tecnico`; a matriz origem–destino permanece na Gold e na API |
+| IA do produto | FlowIA com Haiku para geração de SQL, guarda antes da execução no Oracle e resposta em português a partir do resultado; a bateria datada de 20 perguntas não constitui uma validação completa da integração NEXT |
 | Próximos portões | Sustentar o link público e o banco ativo, e medir utilidade com usuários reais |
 
 ## 4. Construção técnica por etapa
@@ -93,15 +93,15 @@ A Silver vive em `src/medflow/silver/` e é produzida por `medflow silver` ou `m
 
 ### 4.3 Gold
 
-A Gold é construída principalmente por `src/medflow/gold.py`, com módulos especializados para ICSAP, IPCA e geografia, e executada por `medflow gold` ou `make gold`. Ela consome somente a Silver contratada e materializa sete marts analíticos, duas dimensões geográficas e os artefatos GeoJSON/TopoJSON usados na visualização. Nessa etapa são calculados os indicadores oficiais do projeto, entre eles tempo médio de permanência, proporção de internações, índice de sazonalidade, custo médio nominal e real, um proxy de pressão hospitalar, fluxos territoriais e ICSAP em 19 grupos. Fórmulas, denominadores, arredondamentos e limites de aplicabilidade ficam centralizados no código e descritos nos metadados; valores exibidos não são digitados manualmente. O comando Gold inclui a geração geográfica para manter um contrato único de nove tabelas entre arquivo, banco e API. Validações conferem invariantes, bordas temporais, reconciliação de somas e consistência espacial, produzindo a evidência técnica da execução. Gold é a fronteira semântica do sistema: qualquer consumidor posterior deve utilizar seus resultados prontos. Essa regra evita que SQL, ORDS ou React criem versões concorrentes de um mesmo indicador e torna divergências rastreáveis até um único ponto de cálculo.
+A Gold é construída principalmente por `src/medflow/gold.py`, com módulos especializados para ICSAP, IPCA e geografia, e executada por `medflow gold` ou `make gold`. Ela consome somente a Silver contratada e materializa oito marts analíticos, incluindo diagnósticos por especialidade e mês, além dos artefatos GeoJSON/TopoJSON usados na visualização. Nessa etapa são calculados os indicadores oficiais do projeto, entre eles tempo médio de permanência, proporção de internações, índice de sazonalidade, custo médio nominal e real, pressão hospitalar estimada, fluxos territoriais e ICSAP em 19 grupos. Fórmulas, denominadores, arredondamentos e limites de aplicabilidade ficam centralizados no código e descritos nos metadados; valores exibidos não são digitados manualmente. O comando Gold inclui a geração geográfica para manter os contratos entre arquivo, banco e API. Validações conferem invariantes, bordas temporais, reconciliação de somas e consistência espacial, produzindo a evidência técnica da execução. Gold é a fronteira semântica do sistema: qualquer consumidor posterior deve utilizar seus resultados prontos. Essa regra evita que SQL, ORDS ou React criem versões concorrentes de um mesmo indicador e torna divergências rastreáveis até um único ponto de cálculo.
 
 ### 4.4 Oracle Database
 
-O backend usa Oracle Autonomous AI Database 26ai Lakehouse no schema `MEDFLOW`. Scripts em `db/` criam e carregam cinco dimensões e sete marts na ordem exigida pelas dependências, preservando no banco a mesma granularidade e os mesmos tipos lógicos das camadas contratadas. A migração aditiva acrescentou distrito, subprefeitura, CRS, STS, atribuição espacial atual do CNES e aliases de hospital sem recriar os marts. Views de projeção formam a fronteira de publicação: elas selecionam e nomeiam os campos necessários, mas não recalculam indicadores. Sobre essas views, o ORDS expõe dez handlers GET; a lista de hospitais aceita busca por nome ou alias e devolve a atribuição territorial atual quando disponível. O módulo `api/dev/v1` é usado para homologação local; `api/v1` é a versão pública, com CORS restrito ao domínio do GitHub Pages e uma verificação de identidade entre os artefatos homologados e publicados. O perfil Select AI foi sincronizado com os doze objetos analíticos, sem reexecutar a bateria de inferência. Credenciais, wallet mTLS e arquivos `.env` nunca entram no Git e só são necessários para carga, reconciliação ao vivo ou administração. Para o trabalho comum, os testes estáticos e o pipeline de arquivos funcionam sem acesso ao Oracle. A documentação operacional separa criação, carga, publicação e diagnóstico para reduzir ações acidentais.
+O backend usa Oracle Autonomous AI Database 26ai Lakehouse no schema `MEDFLOW`. Scripts em `db/` criam e carregam as dimensões e os marts na ordem exigida pelas dependências, preservando no banco a mesma granularidade e os mesmos tipos lógicos das camadas contratadas. O modelo inclui distrito, subprefeitura, CRS, STS, atribuição espacial atual do CNES e aliases de hospital. Views de projeção formam a fronteira de publicação: elas selecionam e nomeiam os campos necessários, mas não recalculam indicadores. O ORDS expõe onze endpoints GET; a lista de hospitais aceita busca por nome ou alias e devolve a atribuição territorial atual quando disponível. O módulo `api/dev/v1` é usado para homologação local; `api/v1` é a versão pública, com CORS restrito ao domínio do GitHub Pages. A FlowIA recebe pergunta e contexto por uma rota POST própria, gera SQL com Haiku e valida a consulta antes de executar no Oracle. Credenciais, wallet mTLS e arquivos `.env` nunca entram no Git e só são necessários para carga, reconciliação ao vivo ou administração. Para o trabalho comum, os testes estáticos e o pipeline de arquivos funcionam sem acesso ao Oracle. A documentação operacional separa criação, carga, publicação e diagnóstico para reduzir ações acidentais.
 
 ### 4.5 Web app
 
-O web app é uma aplicação React 19 com TypeScript e Vite, organizada por funcionalidades e publicada no GitHub Pages. As rotas cobrem visão regional, fluxos, hospital e metodologia, apoiadas por dez clientes que correspondem aos endpoints públicos do ORDS. A URL-base da API é centralizada: durante o desenvolvimento, o Vite encaminha `/api/dev/v1` ao Oracle; no build público, a aplicação usa a origem absoluta de `api/v1`. `base`, `basename` e a página de fallback tratam corretamente o subcaminho `/medflow/` e a navegação direta em rotas do Pages. Componentes não calculam indicadores: recebem valores contratados e aplicam apenas formatação de apresentação com `Intl`. Cada endpoint possui snapshot de contingência compatível com o mesmo recorte, e a interface informa de modo explícito se a origem é Oracle ao vivo ou snapshot; o fallback não pode alterar silenciosamente o período exibido. Estados de carregamento, ausência e erro fazem parte do comportamento esperado. Playwright cobre cenários herméticos e, separadamente, smoke tests contra a API publicada. O workflow de Pages executa `npm ci`, build e deploy, seguido de verificações do HTML e do bundle. A aplicação está disponível em [lucas-d-s-1.github.io/medflow](https://lucas-d-s-1.github.io/medflow/).
+O web app é uma aplicação React 19 com TypeScript e Vite, organizada por funcionalidades e publicada no GitHub Pages. As rotas cobrem entrada, análise regional e hospitalar, metodologia e detalhes técnicos. Os clientes da API correspondem aos endpoints públicos do ORDS. A URL-base da API é centralizada: durante o desenvolvimento, o Vite encaminha `/api/dev/v1` ao Oracle; no build público, a aplicação usa a origem absoluta de `api/v1`. `base`, `basename` e a página de fallback tratam corretamente o subcaminho `/medflow/` e a navegação direta em rotas do Pages. Componentes não calculam indicadores: recebem valores contratados e aplicam apenas formatação de apresentação com `Intl`. Cada endpoint possui snapshot de contingência compatível com o mesmo recorte, e a interface informa de modo explícito se a origem é Oracle ao vivo ou snapshot; o fallback não pode alterar silenciosamente o período exibido. Estados de carregamento, ausência e erro fazem parte do comportamento esperado. Playwright cobre cenários herméticos e, separadamente, smoke tests contra a API publicada. O workflow de Pages executa `npm ci`, build e deploy, seguido de verificações do HTML e do bundle. A aplicação está disponível em [lucas-d-s-1.github.io/medflow](https://lucas-d-s-1.github.io/medflow/).
 
 ## 5. Segurança, privacidade e governança
 
@@ -113,14 +113,14 @@ manter essa fronteira explícita.
 - wallet, `.env`, senhas e tokens permanecem fora do Git, e o navegador nunca
   recebe credencial Oracle;
 - os endpoints aceitam somente leitura, com parâmetros enumerados e validados;
-- estruturas internas não são publicadas por AutoREST — cada handler é escrito
+- estruturas internas não são publicadas por AutoREST: cada handler é escrito
   sobre uma view de projeção;
 - o CORS é restrito aos domínios conhecidos e não é tratado como autenticação;
 - logs não registram segredo nem payload sensível;
 - cada publicação registra versão, competência e hash;
 - mudança de fórmula exige nova versão do contrato e revalidação;
-- o Select AI roda em ambiente controlado, e o SQL gerado é revisado antes de
-  qualquer narrativa.
+- o SQL gerado pela FlowIA passa por um guarda antes da execução; essa
+  restrição não garante que toda pergunta tenha sido interpretada corretamente.
 
 Se o produto vier a incorporar dado pessoal, acesso institucional ou ações de
 gestão, esta arquitetura de API pública deixa de ser suficiente: passariam a ser
@@ -139,26 +139,26 @@ continua de pé pelo snapshot e diz na tela que está em contingência.
 | ORDS ainda inicializando | erro HTTP logo após o start | aguardar cerca de 5 minutos e repetir o preflight |
 | workflow agendado desativado | ausência de execução recente | `workflow_dispatch` e atividade periódica no repositório |
 | endpoint lento | timeout do cliente | contingência, log do erro e nova tentativa manual |
-| carga Oracle divergente | reconciliação diferente de 36/36 | não promover a nova versão |
+| carga Oracle divergente | divergência na reconciliação com a Gold | não promover a carga |
 | Gold local divergente | o portão do pipeline falha | não exportar snapshot nem carregar o Oracle |
-| Select AI gera SQL incorreto | comparação com o SQL de referência | não executar nem narrar; usar o SQL validado |
+| FlowIA interpreta a pergunta incorretamente | conferência do SQL e comparação com uma consulta de referência | revisar o resultado antes de usá-lo na investigação |
 | competência mais recente parcial | metadado de corte e reprocessamento | rotular a competência e evitar linguagem de tempo real |
 
 ### Preflight do produto público
 
 A parte automatizável roda num comando, `make preflight`, que fala com o
 produto publicado pelo mesmo caminho que qualquer visitante usa: sem `.env`, wallet
-ou Gold local. São doze verificações: Oracle ao vivo, versão do contrato,
+ou Gold local. As verificações cobrem Oracle ao vivo, versão do contrato,
 competência mais recente, os endpoints de cada visão, as 62 regiões carregadas,
 o 404 documentado para parâmetro inválido e o link público abrindo.
 
 O que a máquina não checa continua na mão, e o comando imprime a lista no fim:
 
-1. abrir as duas páginas em janela anônima, sem cache nem login;
+1. abrir entrada, análise e metodologia em janela anônima, sem cache nem login;
 2. testar um filtro regional e um par hospital/CID elegível;
 3. simular a contingência e conferir o selo de origem na tela;
 4. abrir o link em outra rede ou no celular, fora do wi-fi da sala;
-5. executar um caso controlado do Select AI e conferir SQL, narrativa e aviso;
+5. executar um caso controlado da FlowIA e conferir SQL, narrativa e aviso;
 6. registrar visualmente a versão publicada como evidência de recuperação.
 
 ### Manter o banco acordado
@@ -182,16 +182,16 @@ console OCI, esperar cerca de cinco minutos pelo ORDS e reexecutar.
 | backend próprio 24×7 | não usar agora | o ORDS já publica consultas HTTPS/JSON sobre o Oracle |
 | AutoREST das tabelas | não usar | superfície maior e contrato acoplado ao modelo físico |
 | fórmulas no frontend | não usar | criaria uma segunda fonte de regra de negócio |
-| chat Select AI público | não usar agora | exigiria controles adicionais de custo, segurança e validação |
+| consultas livres sem guarda SQL | não usar | ampliariam o alcance da execução no banco |
 | esconder a indisponibilidade | não usar | o snapshot sempre recebe selo de contingência |
 | semáforo clínico arbitrário | não usar | falta validação de especialista e ajuste de risco |
 
 ## 8. Custos e dependências
 
-O desenho busca custo financeiro recorrente zero no MVP:
+O desenho usa infraestrutura gratuita no MVP e inferência cobrada por consumo:
 
 - Oracle Autonomous AI Database Always Free;
-- OCI Generative AI conforme a disponibilidade e os limites da conta acadêmica;
+- inferência Haiku conforme o consumo da FlowIA, com cobrança separada;
 - GitHub Pages e GitHub Actions em repositório público;
 - React, TypeScript e bibliotecas de visualização open source.
 
@@ -203,17 +203,17 @@ validar indicadores, corrigir dependências e executar o preflight.
 
 ### Internas
 
-- [`contracts/openapi.yaml`](contracts/openapi.yaml) — o contrato dos dez `GET` e do `POST` do assistente
-- [`contracts/NOMENCLATURA.md`](contracts/NOMENCLATURA.md) — convenção de tabelas e colunas
-- [`db/README.md`](db/README.md) — criação, carga, publicação e diagnóstico no Oracle
-- [`docs/pesquisa/pesquisa.md`](docs/pesquisa/pesquisa.md) — validação do problema e benchmarking
-- [`docs/flowia/README.md`](docs/flowia/README.md) — a IA do produto e a prova de que ela acerta
+- [`contracts/openapi.yaml`](contracts/openapi.yaml): o contrato dos onze `GET` e do `POST` do assistente
+- [`contracts/NOMENCLATURA.md`](contracts/NOMENCLATURA.md): convenção de tabelas e colunas
+- [`db/README.md`](db/README.md): criação, carga, publicação e diagnóstico no Oracle
+- [`docs/pesquisa/pesquisa.md`](docs/pesquisa/pesquisa.md): validação do problema e benchmarking
+- [`docs/flowia/README.md`](docs/flowia/README.md): avaliações datadas, métodos e limites da assistente
 
 ### Oficiais
 
-- [Oracle — Always Free Autonomous AI Database](https://docs.oracle.com/en-us/iaas/autonomous-database-serverless/doc/autonomous-always-free.html)
-- [Oracle — inatividade e parada do Always Free](https://docs.oracle.com/en/cloud/paas/autonomous-database/serverless/adbsb/autonomous-always-free.html)
-- [Oracle — ORDS Developer's Guide](https://docs.oracle.com/en/database/oracle/oracle-rest-data-services/26.2/orddg/oracle-rest-data-services-developers-guide.pdf)
-- [Oracle — Select AI](https://docs.oracle.com/en/database/oracle/oracle-database/26/nfcoa/select_ai.html)
-- [GitHub — criação de site no Pages](https://docs.github.com/en/pages/getting-started-with-github-pages/creating-a-github-pages-site)
-- [GitHub — eventos agendados em Actions](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows)
+- [Oracle: Always Free Autonomous AI Database](https://docs.oracle.com/en-us/iaas/autonomous-database-serverless/doc/autonomous-always-free.html)
+- [Oracle: inatividade e parada do Always Free](https://docs.oracle.com/en/cloud/paas/autonomous-database/serverless/adbsb/autonomous-always-free.html)
+- [Oracle: ORDS Developer's Guide](https://docs.oracle.com/en/database/oracle/oracle-rest-data-services/26.2/orddg/oracle-rest-data-services-developers-guide.pdf)
+- [Oracle: Select AI](https://docs.oracle.com/en/database/oracle/oracle-database/26/nfcoa/select_ai.html)
+- [GitHub: criação de site no Pages](https://docs.github.com/en/pages/getting-started-with-github-pages/creating-a-github-pages-site)
+- [GitHub: eventos agendados em Actions](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows)

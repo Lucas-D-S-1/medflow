@@ -1,4 +1,4 @@
-# `tests/` — três níveis, três garantias diferentes
+# `tests/`: três níveis, três garantias diferentes
 
 Cada nível prova algo que os outros não provam. Rodar só um deixa um buraco
 específico, e vale saber qual.
@@ -59,6 +59,6 @@ próprio explicando por que quase nada está escrito lá.
 ## Uma regra que atravessa os quatro
 
 **Nenhum valor esperado é digitado.** Sai do contrato, do manifesto, dos
-metadados ou da fixture. A regra custou caro para ser aprendida: quando o
-recorte avançou de 29 para 30 competências, 24 asserções continuaram passando
-enquanto descreviam um recorte que não existia mais.
+metadados ou da fixture. A versão atual do NEXT cobre SP, de janeiro de 2024
+a agosto de 2026, com 32 competências. Os testes devem conferir essa cobertura
+contra os artefatos de entrada, sem memorizar totais de outra materialização.

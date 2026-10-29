@@ -1,8 +1,12 @@
-# `src/medflow/` — o pipeline
+# `src/medflow/`: o pipeline
 
 **O quê.** O pacote Python que produz as três camadas de dados: Bronze fiel à
 fonte, Silver conformada, Gold com os indicadores. É ele que roda, não os
 notebooks.
+
+O recorte da versão atual do NEXT é **SP, de janeiro de 2024 a agosto de 2026,
+com 32 competências mensais**. Esse período é o padrão de `config.py` e está
+registrado no manifesto da Bronze e nos metadados das camadas.
 
 **Por quê aqui.** Até a fatia 4 da reorganização a lógica vivia dentro dos
 notebooks, o que a tornava impossível de testar, de reexecutar em lote e de
@@ -19,10 +23,10 @@ medflow bronze | silver | gold | geografia | validar | inventario
 
 | Módulo | Responsabilidade |
 |---|---|
-| `config.py` | recorte, UF, caminhos e logging — tudo do ambiente |
+| `config.py` | recorte, UF, caminhos e logging: tudo do ambiente |
 | `bronze/` | ingestão, conversão DBF→Parquet, manifesto e referências oficiais |
 | `silver/` | dimensões, fatos, de/paras e agregados conformados |
-| `gold.py` | os sete marts e os seis indicadores: IPH, IPR, IPE, IS, TMH e CMI |
+| `gold.py` | marts analíticos e indicadores IPH, IPR, IPE, IS, TMH e CMI |
 | `icsap.py` | os 19 grupos da Portaria SAS/MS 221/2008 |
 | `ipca.py` | número-índice do IPCA e o fator de correção do CMI real |
 | `geografia.py` | regiões, população IBGE 2022 e as malhas GeoJSON/TopoJSON |
@@ -36,10 +40,9 @@ medflow bronze | silver | gold | geografia | validar | inventario
 ## Duas regras que o código segue
 
 **Nenhum total é memorizado.** Contagens e reconciliações são medidas contra o
-manifesto e os metadados, nunca contra um número escrito no código. A regra
-nasceu de três defeitos reais: o recorte avançou de 29 para 30 competências e
-tudo que guardava um número passou a mentir em silêncio.
+manifesto e os metadados, nunca contra um número escrito no código. Assim,
+as verificações acompanham a cobertura efetivamente materializada.
 
-**Trocar o recorte é configuração.** `MEDFLOW_PERIODO_FINAL=2026-07 make gold`
+**O recorte é configuração.** `MEDFLOW_PERIODO_FINAL=2026-08 make gold`
 funciona sem editar uma linha. O padrão em `config.py` acompanha o recorte
 entregue, e um teste o confere contra o manifesto real da Bronze.
